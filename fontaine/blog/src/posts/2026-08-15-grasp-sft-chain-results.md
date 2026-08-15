@@ -1,19 +1,20 @@
-# Grasp-SFT bootstrap — the chain, end to end (stage D pending)
+# Grasp-SFT bootstrap — the chain, end to end (probe read banked)
 
 *2026-08-15, drafted ~09:2xZ during the stage-C ride (pre-reg:
-[grasp-SFT bootstrap](2026-08-14-prereg-grasp-sft-bootstrap.md)).
-Status: **DRAFT — overtaken by owner steering mid-morning 08-15**: the
-stage-C run was killed at step 2040 on the owner's order (10:10Z) and
-the formal stage-D exam is suspended; in its place a two-arm probe of
-the step-2000 checkpoint ran on unseen vs training seeds. First
-result: **28/100 successes on the unseen holdout** (vs the ~1–2/100
-pre-SFT anchors) — banked in
-`reports/analysis__grasp_sft_step2000_probe.json`; the train-seed arm
-and the full comparison land next. A data-pipeline bug found the same
-morning (corrupt q01/q99 quantile rows — see the ledger) caps this
-checkpoint's ceiling; the retrain happens on our first-class stack
-(`bijou.train`) per the owner's standing decision. This page keeps the
-A–C record; the probe/retrain story gets its own update.*
+[grasp-SFT bootstrap](2026-08-14-prereg-grasp-sft-bootstrap.md));
+probe section finalized ~13:4xZ. Status: the stage-C run was killed at
+step 2040 on the owner's order (10:10Z) and the formal stage-D exam is
+suspended; in its place a **two-arm probe of the step-2000
+checkpoint** ran and is now fully banked — see the probe section
+below. Headline: **9 → 28/100 on the unseen holdout, ≈3.1× the
+released base we warm-started from** (the owner-agreed primary
+anchor), with **no memorization signature** on the training band. A
+data-pipeline bug found the same morning (corrupt q01/q99 quantile
+rows — see the ledger) caps this checkpoint's ceiling; the
+corrected-table retrain is
+[pre-registered (owner-gated)](2026-08-15-prereg-grasp-sft-retrain-corrected-table.md)
+on our first-class stack (`bijou.train`) per the owner's standing
+decision.*
 
 **Plain words.** Our previous reinforcement-learning experiment ended
 with an unusual verdict: the robot was too clumsy for rewards to teach
@@ -23,14 +24,17 @@ that chain: (A) we wrote a scripted "expert" that can solve the task
 by cheating (it reads the simulator's exact object positions), and
 tuned it until it succeeded on held-out scenarios it had never seen;
 (B) we let that expert perform the task hundreds of times overnight
-and kept the 313 successful attempts as demonstrations; (C) we are
-fine-tuning the robot's neural policy on those demonstrations right
-now; and (D) later today the tuned policy takes a 100-scenario exam it
-has never seen — pass marks pre-committed before any of this started.
-At least 20 passes and reinforcement learning gets its rematch on a
-competent student; 5–19 and we collect more demonstrations first;
-fewer than 5 and the problem is somewhere else entirely (most likely
-in what the robot *sees*, not what it does).
+and kept the 313 successful attempts as demonstrations; (C) we
+fine-tuned the robot's neural policy on those demonstrations; and (D)
+the tuned policy sat a 100-scenario exam it had never seen. The
+result: it now completes the task **28 times in 100** where the model
+we started from managed 9 — and, reassuringly, it is *not* just
+replaying the demonstrations from memory: it does no better (actually
+slightly worse) on the exact scenarios it studied than on brand-new
+ones. A separate bug we caught the same morning means the model was
+trained with a mis-calibrated sense of one wrist joint's range, so 28
+is probably an undercount of what the demonstrations can teach; the
+corrected re-run is queued behind the owner's GPU time.
 
 ## Stage A — a scripted expert that earns its gate
 
@@ -112,7 +116,56 @@ terms (different data, different starting distance from the target
 behavior); the reference is shape and stability, and both show the
 same clean settle with no instability at this LR.
 
-## Stage D — the exam (PENDING)
+## The step-2000 probe — what the checkpoint actually learned
+
+The owner's 10:10Z re-steer replaced the formal exam with a sharper
+question: *does the tuned policy generalize, or does it replay its
+demonstrations?* The probe ran the step-2000 checkpoint (converted
+from the killed run's last banked save) under the frozen eval
+protocol on two arms — the 100 unseen exam seeds, and the first 100
+seeds of the demo-collection band, which the banked collection state
+splits into **64 spawns the policy actually trained on** (the
+scripted expert succeeded there, so those episodes are in the SFT
+set) and **36 spawns the expert failed on** — a free,
+same-distribution holdout.
+
+![step2000 probe: success by seed band vs anchors](../img/grasp_sft/probe_bands.png)
+
+| band | successes | moved > 0.5 cm | mean progress |
+|---|---|---|---|
+| trained spawns (kept demos) | **9/64 (14%)** | 26 | +1.25 cm |
+| expert-failed spawns (never trained) | **9/36 (25%)** | 20 | +2.15 cm |
+| unseen seeds 0–99 | **28/100 (28%)** | 42 | +1.97 cm |
+| released base — **primary anchor** | 9/100 | — | — |
+| ftrig4k / stage-1 W0 (context) | ~1 / 2 per 100 | — | — |
+
+Two reads, both banked in
+`reports/analysis__grasp_sft_step2000_probe.json`:
+
+- **The causal read of the SFT is 9 → 28 ≈ 3.1× on truly unseen
+  seeds.** The right comparator is the released checkpoint we
+  warm-started from, which scored 9/100 on the same scenarios under
+  its own intact normalization (owner-corrected framing, agreed
+  12:0xZ). The ~1–2/100 ftrig4k/W0 rows are different-lineage context,
+  not the baseline. And since the step-2000 checkpoint both trained
+  and served under the corrupt quantile table, 3.1× is a **floor** on
+  what the demonstration data is worth.
+- **No memorization signature — if anything the sign is inverted.**
+  The policy is *worst* on the exact spawns it saw demonstrations for
+  (14%) and best on seeds it never saw (28%). At these sample sizes
+  the inversion is ~2 standard errors — suggestive, not proven — but
+  the memorization signature (trained ≫ unseen) is decisively absent,
+  and the sim's determinism makes this a strong test: a
+  trajectory-replaying policy would ace its own training spawns. One
+  candidate mechanism for the inversion: "kept" spawns are the ones
+  the *scripted* expert could solve, and scripted-expert-friendly need
+  not be policy-friendly — the bands aren't difficulty-matched.
+
+Probe ledger: ~3.4 GPU-h vs the 4.0 gate, 0 reset strikes across all
+200 episodes, 200 videos banked under
+`outputs/sim/grasp_sft/step2000_probe/`.
+
+## Stage D — the exam (SUSPENDED by the 10:10Z re-steer)
 
 At the stage-C endpoint the checkpoint is converted (two-hop, carrying
 the demo-set-recomputed normalization — the same identity frame it
@@ -131,18 +184,30 @@ frozen in the pre-reg **before stage A ran**:
 Context anchors (record-only, not gates): ftrig4k read ~1/100
 successes with +0.08 cm mean progress on this exact protocol; the
 stage-1 W0 arm read 2/100. Those are what "before the bootstrap"
-looks like. **This section and the strip fill in when the verdict
-banks — expected later today.**
+looks like. **The formal exam never ran**: the 10:10Z owner re-steer
+killed stage C at step 2040 and replaced the exam with the two-arm
+probe above; the frozen verdict surface transfers to whichever
+corrected-table checkpoint the owner banks next.
 
 ## Ledger
 
-- Chain spend so far: ~0.9 (A) + ~4.0 (B) + ~4.1 projected (C)
-  GPU-h; stage D adds ~1–1.5 vs the pre-registered ≤13 chain gate.
+- Chain spend, final: ~0.9 (A) + ~4.0 (B) + ~2.7 (C, killed at step
+  2040) + ~3.4 (probe) ≈ **11 GPU-h** vs the pre-registered ≤13 gate.
 - Banked artifacts: `reports/analysis__grasp_sft_stageA_gate.json`,
   `..._a1.json` (+ 20 gate videos under
   `outputs/sim/grasp_sft/stageA_gate_a1/`),
   `reports/curve__grasp_sft_stageb_collect.json`,
-  `reports/curve__grasp_sft_stagec_ar_loss.json`, and — pending —
-  `reports/analysis__grasp_sft_stageD_sim100.json`.
+  `reports/curve__grasp_sft_stagec_ar_loss.json`,
+  `reports/analysis__grasp_sft_step2000_probe.json` (+ 200 probe
+  videos), and the step-2000 weights-only delta on
+  `fontaine-checkpoints/molmoact2_grasp_sft_stagec_ar_step2000`.
+- The quantile class bug (lerobot per-episode quantile aggregation:
+  q01/q99 = weighted *mean* of per-episode quantiles; wrist_roll's
+  true ±157° box banked as [35.5, 94.4], ~19% of frames clamped) is
+  fixed in `collect_demos.rewrite_quantile_stats()` with an oracle;
+  the dataset's `stats.json` is corrected and re-uploaded. This
+  checkpoint remains trained-on-corrupt — the
+  [corrected-table retrain pre-reg](2026-08-15-prereg-grasp-sft-retrain-corrected-table.md)
+  (owner-gated) prices the difference.
 - Charts regenerate from banked JSONs only:
   `fontaine/scripts/grasp_sft_chain_charts.py`.

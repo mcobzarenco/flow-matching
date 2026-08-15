@@ -64,6 +64,7 @@ CURVE_C = REPORTS / "curve__grasp_sft_stagec_ar_loss.json"
 CURVE_B = REPORTS / "curve__grasp_sft_stageb_collect.json"
 STAGED_AR = REPO / "outputs/sim/grasp_sft/stageD/ar.json"
 FTRIG4K_100 = REPO / "outputs/sim/eval100/ftrig4k.json"
+PROBE_ANALYSIS = REPORTS / "analysis__grasp_sft_step2000_probe.json"
 
 STEP_RE = re.compile(r"\[step=(\d+)/\d+")
 LOSS_RE = re.compile(r"train/action_flow_loss=([0-9.eE+-]+|nan|inf)")
@@ -417,6 +418,55 @@ def fig_staged() -> None:
     save(fig, "staged_progress_strip.png")
 
 
+def fig_probe() -> None:
+    """step2000 two-arm probe: success rate by seed band vs the anchor
+    lineages (bar form — one measure, six identities; identity lives on
+    the category axis + direct labels, hue follows the banked entity
+    colors)."""
+    if not PROBE_ANALYSIS.exists():
+        return
+    probe = json.loads(PROBE_ANALYSIS.read_text())
+    rows: list[tuple[str, int, int, str]] = []  # label, successes, n, color
+    band_specs = (
+        ("train_band_kept", "trained spawns (kept demos)"),
+        ("train_band_nonkept_expert_failed", "expert-failed spawns\n(never trained)"),
+        ("unseen_0_99", "unseen seeds 0–99"),
+    )
+    for key, label in band_specs:
+        arm = probe.get(key)
+        if arm:
+            rows.append((label, arm["successes"], arm["n"], MAGENTA))
+    rows.append(("released base (init)\nPRIMARY ANCHOR", 9, 100, BLUE))
+    rows.append(("ftrig4k (our flow stack)", 1, 100, GOLD))
+    rows.append(("stage-1 W0", 2, 100, GRAY))
+
+    fig, ax = new_fig(9.0, 3.4)
+    y = np.arange(len(rows))[::-1]
+    rates = [s / n * 100 for _, s, n, _ in rows]
+    for yi, rate, (_label, s, n, color) in zip(y, rates, rows, strict=True):
+        ax.barh(yi, rate, height=0.62, color=color, zorder=3)
+        ax.text(
+            rate + 1.2,
+            yi,
+            f"{s}/{n}  ({rate:.0f}%)",
+            va="center",
+            color=TEXT,
+            fontsize=9,
+        )
+    ax.set_yticks(y)
+    ax.set_yticklabels([r[0] for r in rows], fontsize=9)
+    ax.set_xlim(0, max(rates) * 1.25)
+    ax.set_xlabel("success rate (%)", fontsize=10)
+    ax.set_title(
+        "step2000 probe — success by seed band vs anchors "
+        "(base 9/100 = the causal comparator; corrupt-table checkpoint)",
+        fontsize=11,
+        loc="left",
+        color=TEXT,
+    )
+    save(fig, "probe_bands.png")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument(
@@ -432,6 +482,7 @@ def main() -> None:
     fig_stageb()
     fig_stagec()
     fig_staged()
+    fig_probe()
 
 
 if __name__ == "__main__":

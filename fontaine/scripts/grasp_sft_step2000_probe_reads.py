@@ -64,6 +64,7 @@ def main() -> int:
         "order": "owner 2026-08-15 10:10:20Z (kill + train-vs-unseen probe)",
         "checkpoint": "molmoact2_grasp_sft_stagec_ar_step2000 (killed @2040)",
         "protocol": "euler-10, sequential, 30 s episodes, videos banked",
+        "anchor_primary": "released base (SFT init) 9/100 — release_officialmap_a_100ep_30s, owner-agreed primary comparator 2026-08-15 12:0xZ",
         "anchors_record_only": "ftrig4k ~1/100, stage-1 W0 2/100 (unseen protocol)",
     }
 

@@ -1,6 +1,8 @@
 # Babysit run registry (#21 P1). One entry per LIVE run; update at
 # launch time, prune at completion. Schema: fontaine/scripts/babysit.py.
 
+no_live_runs_reason = "declared 13:4xZ 08-15 work session: grasp_sft_step2000_probe COMPLETE and pruned (train arm banked clean ~13:41Z, ~3.4/4.0 GPU-h; no-memorization read posted 1538180830470602903). GPU is OWNER-RESERVED (their 13:35Z message) — no launches until they free it; the corrected-table retrain is prepped + pre-registered (owner-gated), image-augment-sim2real queued CPU-side."
+
 
 # (no_live_runs_reason cleared 11:2xZ 08-13 — molmoact2_ar100 launched under the owner 11:07Z delegation; prior: "declared 01:1xZ 08-13 work session: grpo_signal_probe COMPLETE and pruned (re-scoped cells 1/2/5, both families clear, unit stopped 01:08:05Z at the cell-5 boundary). Local GPU idle; next GPU legs pend owner calls (v3-rerun unhold, cells 3/4 re-queue, phase-2 token-GRPO design first lands CPU-side).")
 
@@ -861,28 +863,35 @@
 # arm 2 train band 1000-1099 (kept-subset ~64 = actual training
 # seeds, post-filter vs curve__grasp_sft_stageb_collect.json;
 # non-kept rest = expert-failed spawns, bonus read).
-[[run]]
-name = "grasp_sft_step2000_probe"
-kind = "progress-log"
-host = "local"
-pgrep = "rollout_sim"
-pgrep_min = 1
-gpu_indices = [0]
-gpu_mem_min_mib = 4000
-log = "/home/ubuntu/eval__grasp_sft_step2000_probe.log"
-progress_re = "seed +[0-9]+"
-started_utc = "2026-08-15T10:13:05Z"
-gpu_hours_per_wall_hour = 1.0
-boundary = "OWNER-ORDERED step2000 probe (10:10:20Z, overrides the frozen stage C->D ladder): euler-10 sequential, videos on, unit fontaine-grasp-sft-step2000-probe, arms unseen(0-99) then train(1000-1099), out outputs/sim/grasp_sft/step2000_probe/{unseen,train}.json. At each arm DONE: post success + progress numbers in-channel (owner asked for updates AS IT RUNS). Report = train-seed success (kept subset) vs unseen-seed success + anchors ftrig4k ~1/100, W0 2/100. ~2-2.5 GPU-h expected total"
-anchors = [
-    "ARM 1 BANKED 11:51Z: unseen 0-99 = 28/100 successes (42 moved, +1.97 cm mean, 0 strikes) vs anchors ftrig4k ~1 / W0 2 — posted 1538153322215899198; TRAIN ARM live since ~11:51Z (seeds 1000-1099, ETA ~13:5x)",
-    "at train.json DONE: grasp_sft_step2000_probe_reads.py (kept-subset split automatic) -> post train-vs-unseen comparison; then prune this entry",
-    "kill lines: unit inactive with no train.json; reset strikes > 0; wall > 4 h total",
-    "context: quantile class bug fixed same morning (stats.json corrected, fontaine-sim re-uploaded); step2000 stays trained-on-corrupt — retrain via bijou.train is owner-gated (memory bijou-train-only); step2000 delta upload NOT yet run (remit on the queue item)",
-]
-[[run.gates]]
-kind = "gpu_hours_max"
-value = 4.0
+# PRUNED 13:4xZ 08-15 — probe DONE clean (unit inactive, train.json
+# banked, ~3.4/4.0 GPU-h). FINAL: trained-kept 9/64 (14%), expert-
+# failed 9/36 (25%), unseen 28/100 (28%) — no memorization signature
+# (inversion suggestive, ~2 SE). reports/analysis__grasp_sft_
+# step2000_probe.json + 200 videos banked; comparison posted
+# 1538180830470602903. GPU handed to the OWNER (their 13:35Z ask) —
+# no launches until they free it; retrain arms parked owner-gated.
+# [[run]]
+# name = "grasp_sft_step2000_probe"
+# kind = "progress-log"
+# host = "local"
+# pgrep = "rollout_sim"
+# pgrep_min = 1
+# gpu_indices = [0]
+# gpu_mem_min_mib = 4000
+# log = "/home/ubuntu/eval__grasp_sft_step2000_probe.log"
+# progress_re = "seed +[0-9]+"
+# started_utc = "2026-08-15T10:13:05Z"
+# gpu_hours_per_wall_hour = 1.0
+# boundary = "OWNER-ORDERED step2000 probe (10:10:20Z, overrides the frozen stage C->D ladder): euler-10 sequential, videos on, unit fontaine-grasp-sft-step2000-probe, arms unseen(0-99) then train(1000-1099), out outputs/sim/grasp_sft/step2000_probe/{unseen,train}.json. At each arm DONE: post success + progress numbers in-channel (owner asked for updates AS IT RUNS). Report = train-seed success (kept subset) vs unseen-seed success + anchors ftrig4k ~1/100, W0 2/100. ~2-2.5 GPU-h expected total"
+# anchors = [
+#     "ARM 1 BANKED 11:51Z: unseen 0-99 = 28/100 successes (42 moved, +1.97 cm mean, 0 strikes) vs anchors ftrig4k ~1 / W0 2 — posted 1538153322215899198; TRAIN ARM live since ~11:51Z (seeds 1000-1099, ETA ~13:5x)",
+#     "at train.json DONE: grasp_sft_step2000_probe_reads.py (kept-subset split automatic) -> post train-vs-unseen comparison; then prune this entry",
+#     "kill lines: unit inactive with no train.json; reset strikes > 0; wall > 4 h total",
+#     "context: quantile class bug fixed same morning (stats.json corrected, fontaine-sim re-uploaded); step2000 stays trained-on-corrupt — retrain via bijou.train is owner-gated (memory bijou-train-only); step2000 delta upload NOT yet run (remit on the queue item)",
+# ]
+# [[run.gates]]
+# kind = "gpu_hours_max"
+# value = 4.0
 #
 # [[run]]
 # name = "grasp_sft_stageC_flow"
