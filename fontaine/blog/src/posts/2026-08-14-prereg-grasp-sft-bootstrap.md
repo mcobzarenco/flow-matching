@@ -3,7 +3,7 @@
 *2026-08-14, ~22:2xZ. Drafted at the owner's go (22:07Z: "do as much
 in parallel as you reasonably can") following the 21:53Z question —
 "what should we do next to train a policy which solves over 90% of
-seeds successfully?" Status: **FINAL as of 2026-08-15 ~01:5xZ** — §6
+seeds successfully?" Status: **FINAL as of 2026-08-15 ~01:4xZ** — §6
 freezes the checklist (demo seeds, targets, recipe params, arm list,
 convention seam) and opens the objection window. Stage A landed
 CPU-side while the draft stood (14/16 on the engineering smoke).*
@@ -93,7 +93,7 @@ and the AR arm carries alone; if **F-live**, the demo render config
 inherits whatever wrist-fidelity decision the owner takes, as a
 registered amendment before stage B.
 
-## §6 Status — FINAL (frozen 2026-08-15 ~01:5xZ)
+## §6 Status — FINAL (frozen 2026-08-15 ~01:4xZ)
 
 The draft checklist, resolved item by item:
 
@@ -144,7 +144,7 @@ amendment that flips demo-writing to shim-frame (the GRPO
 training-row contract).
 
 **(2) Objection window.** Open at the in-channel finalization post
-(~01:5xZ 08-15). GPU stages launch at the **next work-session
+(~01:4xZ 08-15). GPU stages launch at the **next work-session
 boundary** absent objection; an explicit owner go collapses the
 window; any objection re-opens finalization. Stage A's gate read is
 the first GPU leg.
