@@ -1,32 +1,30 @@
 # Now
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-15 22:42–22:4xZ (real `date -u` at stamp: 22:42) —
+tick: **quiet hold — no change.***
+
+**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
+OWNER** (13:35Z), untouched. Main unmoved (`origin/main` =
+`1fb709a`, fully merged). 0 GPU-h.
+
+**Steering**: none new — Discord read + inbox empty at 22:42;
+history shows no new reactions (the 22:27 phase-7bce merge report
+still unreacted; the four earlier merge posts remain 👍'd). The
+three owner decisions remain pending: retrain arm pick
+(continue-from-2k vs from-base), route A/B/C, GPU release.
+
+**Done**: routine tick only — Discord + history polls, GPU/process
+check, fetch confirms main unmoved, queue validate OK depth 2 (17
+open), `run_work_next` stays disarmed (both queued items gpu-local
+and owner-gated, no executable CPU-side items). No posts.
+
+**Next**: unchanged — ticks hold until an owner decision lands (arm
+pick + route A/B/C unblock the retrain launch, either arm is one
+command against phase-7 HEAD; GPU release unblocks any launch). GPU
+oracle re-runs (convmap tripwires + sim_parallel_oracle) attach to
+the next free-GPU boundary.*
 
 *Updated 2026-08-15 22:31–22:3xZ (real `date -u` at stamp: 22:33) —
 tick: **quiet hold — post-merge steady state, one orphaned generated
@@ -88,40 +86,14 @@ phase-7 HEAD). GPU oracle re-runs (convmap tripwires +
 sim_parallel_oracle) attach to the next free-GPU boundary. No
 executable CPU-side items remain → run_work_next stays disarmed.*
 
-*Updated 2026-08-15 22:15–22:2xZ (real `date -u` at stamp: 22:19) —
-tick: **main moved — phase 7b/7c/7e + VERDICT landed; work session
-armed for the merge.***
-
-**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
-OWNER** (13:35Z), untouched. Owner pushed to main 21:40–22:10Z:
-`c75814d` 7b (per-trunk memories — GemmaMemory/Molmo2Memory, static
-caches), `234dae9` 7c (decoders return natural products,
-BijouPrediction deleted), `a93c5d1` 7e (snapflow constants →
-payload, SDE/phi_s reads hoisted), `4ee456d` phase 7 VERDICT ("all
-five seam dissolutions landed, oracle-gated"), `d799192`
-probe_grpo_replay_parity (RELEASE_BIJOU → VLA-format conversion).
-Our 21:15Z merge covered only 7a+7d — **merge-main-phase7bce is now
-pending CPU-side work**.
-
-**Steering**: none new — Discord read + inbox empty at 22:16;
-history shows no new reactions (all five merge posts remain 👍'd).
-The three owner decisions remain pending: retrain arm pick
-(continue-from-2k vs from-base), route A/B/C, GPU release.
-
-**Done**: pull surfaced the 5 new main commits; Discord + history
-polls, GPU/process check, queue validate OK depth 2 (17 open),
-**`run_work_next` ARMED** — the chained work session merges
-7b/7c/7e+VERDICT+parity-probe into fontaine and runs the standing
-seam checklist (check.py, gradflow oracles exact, both retrain arms
-full-parse, GRPO 33/33, straggler grep, parents[3] carry), then
-posts the merge report. No posts this tick. 0 GPU-h.
-
-**Next**: work session executes the phase-7bce merge + re-verify;
-retrain launch stays owner-gated (arm pick + route A/B/C + GPU
-release). GPU oracle re-runs still attach to the next free-GPU
-boundary.*
-
 ## Utilization footer
+
+Session 2026-08-15 22:42–22:4xZ (tick; 0 GPU-h): quiet hold — no
+change. Discord read + inbox empty, no new reactions (22:27 merge
+post still unreacted), main unmoved at `1fb709a` (fully merged),
+GPU owner-reserved idle (0%) untouched, queue OK depth 2 (17 open),
+`run_work_next` disarmed; arm pick, route A/B/C, GPU release still
+pending.
 
 Session 2026-08-15 22:31–22:3xZ (tick; 0 GPU-h): quiet hold —
 post-merge steady state; boot audit committed the orphaned
@@ -129,14 +101,6 @@ regenerated queue.md from the 22:18Z work session. Discord read +
 inbox empty, no new reactions, main unmoved, GPU owner-reserved idle
 (0%) untouched, queue OK depth 2 (17 open), `run_work_next`
 disarmed; arm pick, route A/B/C, GPU release still pending.
-
-Session 2026-08-15 22:18–22:2xZ (work, exploit; 0 GPU-h):
-merge-main-phase7bce DONE — main's six commits (7b/7c/7e + VERDICT +
-parity probe + box-gate close) merged clean `9e786b7`, 6-point seam
-checklist all green (check.py 903, gradflow EXACT, both arms parse,
-GRPO 40/40, stragglers clean, parents[3], augment 11/11); report
-posted in-channel. GPU owner-reserved idle untouched; queue OK depth
-2; arm pick, route A/B/C, GPU release still pending.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
