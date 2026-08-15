@@ -44,12 +44,11 @@ from ..gemma4.text import DecoderLayer
 from ..interface import (
     InputsCollator,
     MemoryStream,
-    ObservationEncoder,
     ObservationMemory,
     PromptInputs,
-    StreamGeometry,
     kv_stream_name,
 )
+from ..nn import RopeParameters
 
 
 @dataclass(frozen=True, slots=True)
@@ -289,10 +288,30 @@ class GemmaInputsCollator:
         )
 
 
-class GemmaEncoder(ObservationEncoder[GemmaInputs, Gemma4Model]):
+@dataclass(frozen=True, slots=True)
+class StreamGeometry:
+    """Static per-stream contract, known at construction time — what a
+    stream-consuming decoder needs to size its query projections and
+    RoPE behavior without the weights.
+
+    ``rope`` set: keys arrive position-encoded and the decoder must RoPE
+    its queries at positions ≥ the per-sample real memory width (the
+    Gemma streams' contract). ``rope`` None: positions are baked into the
+    memory (e.g. an adapter with learned positions); the decoder applies
+    no query RoPE for this stream.
+    """
+
+    kv_heads: int
+    head_dim: int
+    rope: RopeParameters | None
+
+
+class GemmaEncoder(nn.Module):
     """The Gemma prompt-side strategy: collation, prefix encoding, and the
-    backbone's unfreeze surface (see the module docstring). ``exports`` are
-    the global layers whose K/V become the memory streams.
+    backbone's unfreeze surface (a plain module speaking the encoder
+    convention — :mod:`bijou.modelling.interface`'s module docstring).
+    ``exports`` are the global layers whose K/V become the memory
+    streams.
 
     The backbone itself is NOT owned here — the family class owns it once
     and passes it into the compute methods; this module carries exactly the
@@ -340,10 +359,11 @@ class GemmaEncoder(ObservationEncoder[GemmaInputs, Gemma4Model]):
         assert self.state_proj.bias is not None
         nn.init.zeros_(self.state_proj.bias)
 
-    @override
     def stream_geometries(self) -> dict[str, StreamGeometry]:
         """Static geometry per stream name; keys and order match every
-        ObservationMemory this encoder produces."""
+        ObservationMemory this encoder produces. Names are this
+        encoder's vocabulary (``kv{i}``); decoder schedules reference
+        them and composition validates the references."""
         text = self.config.text
         geometry = StreamGeometry(
             kv_heads=text.num_global_key_value_heads or text.num_key_value_heads,
@@ -352,7 +372,6 @@ class GemmaEncoder(ObservationEncoder[GemmaInputs, Gemma4Model]):
         )
         return {kv_stream_name(layer): geometry for layer in self.exports}
 
-    @override
     def inputs_collator(self) -> InputsCollator[GemmaInputs]:
         """The encoder-specific half of collation (pickleable into
         dataloader workers)."""
@@ -450,7 +469,6 @@ class GemmaEncoder(ObservationEncoder[GemmaInputs, Gemma4Model]):
             cache=cache if retain_cache else None,
         )
 
-    @override
     def encode(
         self,
         backbone: Gemma4Model,
@@ -535,7 +553,6 @@ class GemmaEncoder(ObservationEncoder[GemmaInputs, Gemma4Model]):
         assert backbone.embed_vision is not None
         yield from backbone.embed_vision.parameters()
 
-    @override
     def param_groups(self, backbone: Gemma4Model) -> dict[str, list[nn.Parameter]]:
         """Named unfreezable backbone subsets — the component-lr flags route
         here. Groups are exact: DDP requires every grad-enabled parameter

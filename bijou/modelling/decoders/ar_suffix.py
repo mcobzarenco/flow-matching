@@ -140,6 +140,49 @@ class ARDecoderConfig:
             )
 
 
+def suffix_positions(
+    memory: ObservationMemory,
+    *,
+    batch: int,
+    seq_len: int,
+    fed: int,
+    device: torch.device,
+) -> tuple[Tensor, Tensor | None]:
+    """Query positions and full attention mask for suffix tokens
+    continued against a prefix cache — the one geometry every suffix
+    concrete shares. Positions continue per-sample after each REAL
+    prompt length (padding-mask sum; ``memory.length`` for unpadded
+    batches) plus ``fed`` suffix positions already in the cache from
+    previous calls (decode loop). The mask covers prefix + fed + new
+    suffix columns, True = attendable (suffix positions are always
+    real); None for unpadded batches (causal masking suffices).
+
+    Shapes:
+      - ``memory.padding_mask`` (when present): [B, P] (True = real)
+      - returns positions: [B, S] long; full_mask: [B, P + fed + S]
+        bool, or None
+    """
+    offsets = torch.arange(seq_len, device=device)[None, :] + fed
+    if memory.padding_mask is not None:
+        real = memory.padding_mask.to(device=device, dtype=torch.bool)
+        positions = real.long().sum(dim=1, keepdim=True) + offsets
+        full_mask = torch.cat(
+            [
+                real,
+                torch.ones(
+                    (batch, fed + seq_len),
+                    dtype=torch.bool,
+                    device=device,
+                ),
+            ],
+            dim=1,
+        )
+    else:
+        positions = torch.full((batch, 1), memory.length, device=device) + offsets
+        full_mask = None
+    return positions, full_mask
+
+
 def _sample_action_ids(
     logits: Tensor,
     allowed: Tensor,

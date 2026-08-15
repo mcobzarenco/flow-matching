@@ -44,29 +44,29 @@ rebase error between them is silent everywhere except here):
   (release: 151932/151933/151934), verified against the REAL
   tokenizer, never assumed.
 
-Continuation semantics are the Molmo2 concrete's verbatim: all-layer
-continuation against the prefix :class:`~bijou.modelling.molmo2.cache.Molmo2KVCache`
-(built by ``MolmoAct2Encoder.encode(retain_cache=True)``), text-typed
-suffix queries under shifted-causal masking, and the same non-cuDNN
-sdpa pin (cheap insurance; if the decode-parity fixture gate ever
-disagrees, this pin and the mount dtype are the first suspects — the
-reference implementation decoded under the full kernel dispatcher).
+Continuation IS the shared Molmo2-stack half
+(:func:`~bijou.modelling.decoders.ar_molmo2.continue_molmo2_suffix`):
+all-layer continuation against the prefix
+:class:`~bijou.modelling.molmo2.cache.Molmo2KVCache` (built by
+``MolmoAct2Encoder.encode(retain_cache=True)``), text-typed suffix
+queries under shifted-causal masking, and the non-cuDNN sdpa pin
+(cheap insurance; if the decode-parity fixture gate ever disagrees,
+that pin and the mount dtype are the first suspects — the reference
+implementation decoded under the full kernel dispatcher).
 """
 
 from __future__ import annotations
 
 from typing import override
 
-import torch
 from torch import Tensor
-from torch.nn.attention import SDPBackend, sdpa_kernel
 
 from ..codecs import ActionCodec
 from ..interface import ObservationMemory
-from ..molmo2.cache import Molmo2KVCache
 from ..molmo2.config import Molmo2TextConfig
 from ..molmo2.model import Molmo2Model
 from ..molmo2.tokenizer import Molmo2TextTokenizer
+from .ar_molmo2 import continue_molmo2_suffix
 from .ar_suffix import MOLMOACT2_SUFFIX_FORMAT, ARDecoderConfig, ARSuffixDecoder
 
 # The trunk-tokenizer anchors verified at construction: token string →
@@ -166,62 +166,11 @@ class MolmoAct2ARDecoder(ARSuffixDecoder[Molmo2Model]):
         tokens: Tensor,
         fed: int,
     ) -> Tensor:
-        cache = memory.cache
-        if cache is None:
-            raise ValueError(
-                "ObservationMemory carries no prefix cache — encode with "
-                "retain_cache=True (suffix-decoder families do)",
-            )
-        if not isinstance(cache, Molmo2KVCache):
-            # The seam types the cache opaquely (trunk-private contract);
-            # this decoder continues the MOLMO2 stack through it.
-            raise TypeError(
-                f"MolmoAct2ARDecoder continues the Molmo2 prefix cache; "
-                f"the memory carries {type(cache).__name__}",
-            )
-        transformer = backbone.text.transformer
         # Trunk-native: every suffix id (bins AND the two specials) is a
         # base-matrix row — plain lookup, no extension-table select, no
         # scaling (Molmo2 embeds unscaled).
-        embeds = transformer.wte(tokens)
-        batch, seq_len = tokens.shape
-        device = embeds.device
-        offsets = torch.arange(seq_len, device=device)[None, :] + fed
-        if memory.padding_mask is not None:
-            real = memory.padding_mask.to(device=device, dtype=torch.bool)
-            positions = real.long().sum(dim=1, keepdim=True) + offsets
-            full_mask = torch.cat(
-                [
-                    real,
-                    torch.ones(
-                        (batch, fed + seq_len),
-                        dtype=torch.bool,
-                        device=device,
-                    ),
-                ],
-                dim=1,
-            )
-        else:
-            positions = torch.full((batch, 1), memory.length, device=device) + offsets
-            full_mask = None
-        # Same non-cuDNN pin as the Gemma/Molmo2 concretes (the cuDNN
-        # fused backward crashed twice on ragged suffix-vs-cache
-        # geometry, pytorch#122695 family). Parity note: the reference
-        # decode ran the FULL dispatcher — if the box byte gate ever
-        # disagrees, suspect this pin before any tolerance.
-        with sdpa_kernel(
-            [
-                SDPBackend.FLASH_ATTENTION,
-                SDPBackend.EFFICIENT_ATTENTION,
-                SDPBackend.MATH,
-            ],
-        ):
-            return transformer(
-                inputs_embeds=embeds,
-                position_ids=positions,
-                padding_mask=full_mask,
-                cache=cache,
-            )
+        embeds = backbone.text.transformer.wte(tokens)
+        return continue_molmo2_suffix(backbone, memory, embeds, fed)
 
     @override
     def _logits(self, backbone: Molmo2Model, hidden: Tensor) -> Tensor:

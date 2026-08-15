@@ -51,13 +51,77 @@ from ..molmo2.cache import Molmo2KVCache
 from ..molmo2.config import Molmo2TextConfig
 from ..molmo2.model import Molmo2Model
 from ..nn import DeviceLike
-from .ar_suffix import ARDecoderConfig, ARSuffixDecoder
+from .ar_suffix import ARDecoderConfig, ARSuffixDecoder, suffix_positions
 
 # The ChatML assistant-turn opener — the trunk's own generation prompt
 # bytes (chat_template.jinja's add_generation_prompt tail), the analogue
 # of Gemma's aux_text.GENERATION_OPENER. A trained contract: change only
 # with a MOLMO2_PROMPT_FORMAT bump.
 MOLMO2_GENERATION_OPENER = "<|im_start|>assistant\n"
+
+
+def continue_molmo2_suffix(
+    backbone: Molmo2Model,
+    memory: ObservationMemory,
+    embeds: Tensor,
+    fed: int,
+) -> Tensor:
+    """Run suffix embeddings through ALL Molmo2 layers against the
+    prefix cache (which they extend in place) — the continuation half
+    every Molmo2-trunk suffix concrete shares: the cache guards, the
+    :func:`~bijou.modelling.decoders.ar_suffix.suffix_positions`
+    geometry, the non-cuDNN sdpa pin, and the transformer call. What
+    stays per-concrete is exactly how suffix ids become ``embeds``.
+
+    ``fed`` = suffix positions already in the cache from previous
+    calls (decode loop).
+
+    Shapes:
+      - ``embeds``: [B, S, hidden]
+      - returns: final-normed hidden states [B, S, hidden]
+    """
+    cache = memory.cache
+    if cache is None:
+        raise ValueError(
+            "ObservationMemory carries no prefix cache — encode with "
+            "retain_cache=True (suffix-decoder families do)",
+        )
+    if not isinstance(cache, Molmo2KVCache):
+        # The seam types the cache opaquely (trunk-private contract);
+        # this continuation rides the MOLMO2 stack.
+        raise TypeError(
+            f"the Molmo2 suffix continuation extends the Molmo2 prefix "
+            f"cache; the memory carries {type(cache).__name__}",
+        )
+    batch, seq_len, _ = embeds.shape
+    positions, full_mask = suffix_positions(
+        memory,
+        batch=batch,
+        seq_len=seq_len,
+        fed=fed,
+        device=embeds.device,
+    )
+    # Same non-cuDNN pin as the Gemma concrete: the cuDNN fused
+    # backward crashed twice on Gemma's ragged suffix-vs-cache geometry
+    # (pytorch#122695 family); Molmo2's head_dim-128 suffix is standard
+    # geometry, but the pin is cheap insurance and the prefix encode —
+    # the dominant cost — keeps the full dispatcher. Parity note
+    # (MolmoAct2 decode fixtures): the reference decode ran the FULL
+    # dispatcher — if the box byte gate ever disagrees, suspect this
+    # pin before any tolerance.
+    with sdpa_kernel(
+        [
+            SDPBackend.FLASH_ATTENTION,
+            SDPBackend.EFFICIENT_ATTENTION,
+            SDPBackend.MATH,
+        ],
+    ):
+        return backbone.text.transformer(
+            inputs_embeds=embeds,
+            position_ids=positions,
+            padding_mask=full_mask,
+            cache=cache,
+        )
 
 
 class Molmo2ARDecoder(ARSuffixDecoder[Molmo2Model]):
@@ -103,7 +167,6 @@ class Molmo2ARDecoder(ARSuffixDecoder[Molmo2Model]):
                 "(vocab + image specials) — the Molmo2 block is a second "
                 "extension range, not a tail reuse",
             )
-        self.text_vocab_size = text_config.vocab_size
         # Columns between the shipped head (base vocab) and the FAST
         # block: the image-special input ids — never targets, never
         # emitted; masked to the dtype minimum in _logits.
@@ -163,19 +226,6 @@ class Molmo2ARDecoder(ARSuffixDecoder[Molmo2Model]):
         tokens: Tensor,
         fed: int,
     ) -> Tensor:
-        cache = memory.cache
-        if cache is None:
-            raise ValueError(
-                "ObservationMemory carries no prefix cache — encode with "
-                "retain_cache=True (suffix-decoder families do)",
-            )
-        if not isinstance(cache, Molmo2KVCache):
-            # The seam types the cache opaquely (trunk-private contract);
-            # this decoder continues the MOLMO2 stack through it.
-            raise TypeError(
-                f"Molmo2ARDecoder continues the Molmo2 prefix cache; the "
-                f"memory carries {type(cache).__name__}",
-            )
         transformer = backbone.text.transformer
         is_text = (tokens < self.config.block_base)[..., None]
         block_ids = (tokens - self.config.block_base).clamp(min=0)
@@ -193,44 +243,7 @@ class Molmo2ARDecoder(ARSuffixDecoder[Molmo2Model]):
             text_embeds,
             self.fast_embed(block_ids).to(text_embeds.dtype),
         )
-        batch, seq_len = tokens.shape
-        device = embeds.device
-        offsets = torch.arange(seq_len, device=device)[None, :] + fed
-        if memory.padding_mask is not None:
-            real = memory.padding_mask.to(device=device, dtype=torch.bool)
-            positions = real.long().sum(dim=1, keepdim=True) + offsets
-            full_mask = torch.cat(
-                [
-                    real,
-                    torch.ones(
-                        (batch, fed + seq_len),
-                        dtype=torch.bool,
-                        device=device,
-                    ),
-                ],
-                dim=1,
-            )
-        else:
-            positions = torch.full((batch, 1), memory.length, device=device) + offsets
-            full_mask = None
-        # Same non-cuDNN pin as the Gemma concrete: the cuDNN fused
-        # backward crashed twice on Gemma's ragged suffix-vs-cache
-        # geometry (pytorch#122695 family); Molmo2's head_dim-128 suffix
-        # is standard geometry, but the pin is cheap insurance and the
-        # prefix encode — the dominant cost — keeps the full dispatcher.
-        with sdpa_kernel(
-            [
-                SDPBackend.FLASH_ATTENTION,
-                SDPBackend.EFFICIENT_ATTENTION,
-                SDPBackend.MATH,
-            ],
-        ):
-            return transformer(
-                inputs_embeds=embeds,
-                position_ids=positions,
-                padding_mask=full_mask,
-                cache=cache,
-            )
+        return continue_molmo2_suffix(backbone, memory, embeds, fed)
 
     @override
     def _logits(self, backbone: Molmo2Model, hidden: Tensor) -> Tensor:

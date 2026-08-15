@@ -2,10 +2,20 @@
 
 An encoder strategy turns one observation (instruction + camera frames
 [+ state, eventually]) into an :class:`ObservationMemory`: named memory
-streams a decoder cross-attends. The streams' static geometry (:class:`
-StreamGeometry`) is declared by the encoder at construction time so a
-decoder can size its query projections and RoPE behavior without knowing
-what kind of backbone produced the memory (see ``docs/plan.md``).
+streams a decoder cross-attends and/or a retained prefix cache a
+suffix decoder continues.
+
+Encoders are plain nn.Modules — a CONVENTION, not a base class (the
+composition rule): each trunk's prompt-side strategy exposes
+``inputs_collator()`` (the pickleable collation half, an
+:class:`InputsCollator`), ``encode(backbone, inputs, *, with_grad,
+retain_cache)`` producing the memory, and ``param_groups(backbone)``
+(named unfreezable trunk subsets — EXACT sets: DDP requires every
+grad-enabled parameter to receive gradients each step). The module
+carries exactly the PROMPT-side parameters (e.g. the Gemma strategy's
+soft-state projection), never trunk ones; every consumer reaches the
+encoder through its family's trait surface, so conformance is the
+family's construction, not a subtype check.
 
 Stream names are defined by the encoder (the Gemma backbone exports its
 global layers' K/V as ``"kv{layer}"``); decoder schedules reference those
@@ -14,15 +24,13 @@ export = loud error).
 
 The backbone network itself is owned by the model family (the concrete
 :class:`bijou.vla.VLA` classes in ``bijou.models``), not by the encoder:
-the encoder is the prompt-side strategy (collation, prefix encode,
-unfreeze partition) and receives the backbone as an argument — one
-network can serve several roles (prefix encoder for cross-attention
-decoders; prefix + suffix runner for the decoder-only path).
+the encoder receives the backbone as an argument — one network can
+serve several roles (prefix encoder for cross-attention decoders;
+prefix + suffix runner for the decoder-only path).
 """
 
 from __future__ import annotations
 
-import abc
 import dataclasses
 from dataclasses import dataclass
 from enum import Enum
@@ -30,7 +38,7 @@ from typing import Any, Protocol, Self, override
 
 import numpy as np
 import torch
-from torch import Tensor, nn
+from torch import Tensor
 
 from ..annotations import ConditionField
 from .aux_text import (
@@ -45,7 +53,6 @@ from .aux_text import (
 )
 from .codecs import ActionCodec
 from .image_augment import augment_image
-from .nn import RopeParameters
 
 
 class SamplingMethod(Enum):
@@ -76,22 +83,6 @@ def kv_stream_name(layer_idx: int) -> str:
     level because producer (observation encode) and consumer (the flow
     decoder's int-schedule config) both spell it."""
     return f"kv{layer_idx}"
-
-
-@dataclass(frozen=True, slots=True)
-class StreamGeometry:
-    """Static per-stream contract, known at construction time.
-
-    ``rope`` set: keys arrive position-encoded and the decoder must RoPE
-    its queries at positions ≥ the per-sample real memory width (the
-    Gemma streams' contract). ``rope`` None: positions are baked into the
-    memory (e.g. an adapter with learned positions); the decoder applies
-    no query RoPE for this stream.
-    """
-
-    kv_heads: int
-    head_dim: int
-    rope: RopeParameters | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -351,55 +342,6 @@ class InputsCollator[I: BatchInputs](Protocol):
     ``__getstate__``."""
 
     def __call__(self, samples: list[PromptInputs]) -> I: ...
-
-
-class ObservationEncoder[I: BatchInputs, B: nn.Module](nn.Module, abc.ABC):
-    """ABC of a trunk's prompt-side strategy (``docs/plan.md``): the
-    inputs-collation strategy, the prefix encode, and the trunk's
-    unfreeze surface. Generic over its collated-inputs type ``I`` and
-    its trunk type ``B`` — the owning family class holds the trunk
-    network once and passes it into the compute methods, pairing
-    trunk and encoder consistently by construction.
-
-    The module carries exactly the PROMPT-side parameters (e.g. the
-    Gemma strategy's soft-state projection), never trunk ones — trunk
-    subsets are exposed through :meth:`param_groups` instead, so the
-    root can route component learning rates without owning the split."""
-
-    @abc.abstractmethod
-    def stream_geometries(self) -> dict[str, StreamGeometry]:
-        """Static geometry per stream name; keys and order match every
-        ObservationMemory this encoder produces. Names are the encoder's
-        vocabulary (``kv{i}``/``res{i}`` today); decoder schedules
-        reference them and composition validates the references."""
-
-    @abc.abstractmethod
-    def inputs_collator(self) -> InputsCollator[I]:
-        """The encoder-specific half of collation (pickleable into
-        spawned dataloader workers)."""
-
-    @abc.abstractmethod
-    def encode(
-        self,
-        backbone: B,
-        inputs: I,
-        *,
-        with_grad: bool,
-        retain_cache: bool = False,
-    ) -> ObservationMemory:
-        """Run the trunk over one collated batch's multimodal prefix and
-        export the memory streams. ``with_grad=False`` runs under
-        no_grad (eval/rollout/frozen training); True leaves autograd on
-        for live-trunk training. ``retain_cache`` keeps the trunk's full
-        prefix cache on the returned memory (ObservationMemory.cache)
-        for decoders that continue the trunk through it."""
-
-    @abc.abstractmethod
-    def param_groups(self, backbone: B) -> dict[str, list[nn.Parameter]]:
-        """Named unfreezable trunk subsets (e.g. ``"text"``/``"vision"``)
-        — the component-lr flags route here. Groups must be EXACT (only
-        parameters that participate in a forward): DDP requires every
-        grad-enabled parameter to receive gradients each step."""
 
 
 # Action decoders are plain nn.Modules; each family class composes the
