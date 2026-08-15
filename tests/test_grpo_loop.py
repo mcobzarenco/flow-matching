@@ -92,14 +92,13 @@ def _observation() -> dict[str, Any]:
 
 @pytest.fixture(scope="module")
 def subject(tmp_path_factory: pytest.TempPathFactory) -> MolmoAct2DiscreteStack:
-    """The retirement phase-4 subject: the first-class discrete stack
-    over a tiny release-class bijou checkpoint (the port predictor's
-    tiny-fabrication analog, fp32 CPU like the port suite ran)."""
-    _, checkpoint = write_tiny_molmoact2_release(
-        tmp_path_factory.mktemp("grpo-loop") / "tiny",
-    )
+    """The suite's subject: the discrete stack over a tiny
+    release-class bijou checkpoint, loaded through the family registry
+    (the builder's VLA-format conversion; fp32 CPU)."""
+    root = tmp_path_factory.mktemp("grpo-loop") / "tiny"
+    write_tiny_molmoact2_release(root)
     return MolmoAct2DiscreteStack.load(
-        checkpoint,
+        root / "checkpoint_vla",
         device="cpu",
         dtype=torch.float32,
         fast_tokenizer=str(

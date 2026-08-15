@@ -93,7 +93,7 @@ def first_action_deltas(
         seed=0,
         sample_steps=10,
         method=SamplingMethod.EULER,
-        expert_dtype=torch.bfloat16,
+        flow_decoder_dtype=torch.bfloat16,
         molmo_norm=(
             MolmoNorm.CONVENTION_MAP
             if seam_checkpoint is not None
@@ -127,9 +127,9 @@ def first_action_deltas(
 
 def main() -> int:
     args = parse_args()
-    from bijou.loading import read_checkpoint_info
+    from bijou.checkpoint import read_metadata
 
-    table = read_checkpoint_info(args.checkpoint).normalization
+    table = read_metadata(args.checkpoint).stats
     seam = seam_convention_map(args.seam_stats, table, args.convmap_override)
 
     print("== fit ==")

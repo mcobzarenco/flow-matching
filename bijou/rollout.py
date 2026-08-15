@@ -61,9 +61,9 @@ from lerobot.robots.so_follower import SOFollower, SOFollowerRobotConfig
 from .annotations import ConditionField
 from .data import DatasetStats
 from .eval.policies import BijouPolicy
-from .model import SamplingMethod
 from .modelling.aux_text import AuxField, AuxGeneration
 from .modelling.decoders.molmo_flow import MolmoFlowDecoder
+from .modelling.interface import SamplingMethod
 from .rollout_async import AsyncExecutor, AsyncPlanner, PredictFn, sustainable
 from .rollout_safety import (
     JointFrameTransform,
@@ -210,10 +210,11 @@ def parse_args() -> argparse.Namespace:
         nargs="*",
         choices=[f.value for f in AuxField],
         default=None,
-        help="ar_backbone request set: fields to elicit before each chunk "
+        help="narrated request set: fields to elicit before each chunk "
         "(template order; 'actions' implicit and terminal; aux-trained "
-        "checkpoints only; ~1 extra suffix forward per requested field "
-        "plus its value tokens per replan). Omit for the fast path",
+        "narrating checkpoints only; ~1 extra suffix forward per "
+        "requested field plus its value tokens per replan). Omit for "
+        "the fast path",
     )
     parser.add_argument(
         "--outcome",
@@ -290,15 +291,17 @@ def parse_args() -> argparse.Namespace:
         "--offload-ple",
         action="store_true",
         help="park the backbone's per-layer-embedding token table in "
-        "host RAM (4.7 GB of the full-depth ar_backbone's 9.6 GB bf16 "
-        "weights, lookup-only at inference) — fits ≤8 GiB GPUs at "
-        "negligible latency cost",
+        "host RAM (4.7 GB of the full-depth Gemma AR trunk's 9.6 GB "
+        "bf16 weights, lookup-only at inference) — fits ≤8 GiB GPUs at "
+        "negligible latency cost; gemma_ar checkpoints only (other "
+        "families have no PLE table and refuse it loudly)",
     )
     parser.add_argument(
-        "--expert-dtype",
+        "--flow-decoder-dtype",
         choices=["float32", "bfloat16"],
         default="float32",
-        help="bfloat16 halves expert memory for small inference GPUs",
+        help="bfloat16 halves flow-decoder memory for small inference "
+        "GPUs (post-load cast of the checkpoint's action decoder)",
     )
     parser.add_argument(
         "--seed",
@@ -494,7 +497,7 @@ def main() -> int:
         tickets=args.noise_ticket,
         sample_draws=args.sample_draws,
         target_time=0.0 if args.target_time == "zero" else None,
-        expert_dtype=getattr(torch, args.expert_dtype),
+        flow_decoder_dtype=getattr(torch, args.flow_decoder_dtype),
         generate=tuple(AuxField(f) for f in (args.generate or ())),
         include_subgoal_condition=args.subgoal is not None,
         offload_ple=args.offload_ple,
@@ -509,7 +512,7 @@ def main() -> int:
     # need no second gate (their model frame IS the rig stats frame).
     model_envelope = (
         state_envelope(policy.info.normalization, expected_dim=len(SO_MOTORS))
-        if isinstance(policy.model.decoder, MolmoFlowDecoder)
+        if isinstance(policy.flow_decoder, MolmoFlowDecoder)
         else None
     )
     predict = frame_transformed_predict(policy, frame)
@@ -536,7 +539,7 @@ def main() -> int:
         decode_tag += f"-mean{args.sample_draws}"
     print(
         f"policy: {policy.name} (chunk {chunk_size}, "
-        f"{decode_tag}, {args.expert_dtype} expert)",
+        f"{decode_tag}, {args.flow_decoder_dtype} decoder)",
     )
     if policy.tickets is not None:
         # Attribution line: a physical run under a fixed ticket must be

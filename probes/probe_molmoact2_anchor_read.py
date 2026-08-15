@@ -64,7 +64,7 @@ for step_dir in sys.argv[1:]:
         seed=0,
         sample_steps=10,
         method=SamplingMethod.EULER,
-        expert_dtype=torch.float32,
+        flow_decoder_dtype=torch.float32,
     )
     preds: list[torch.Tensor] = []
     for start in range(0, len(items), BATCH):

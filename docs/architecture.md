@@ -1987,7 +1987,13 @@ replay; row NPZ + loop `.pt` formats frozen) — frozen-wave replay
 gate PASSED on both R1 banks (masks bit-equal 1904+904 rows;
 port-vs-first-class ≤5.7e-5 under the re-baselined 1e-4
 cross-decomposition bound; fresh v2 wave through the new driver ran
-end-to-end). Full record: docs/molmoact2-retirement.md.**
+end-to-end). Since the VLA phase-5c apps port the stack is a thin
+adapter over `bijou.loading.load_vla` — `sim/grpo_loop.py
+--checkpoint` and `sim/rollout_sim_parallel.py --molmoact2-discrete`
+take VLA-format (converted) directories; decode/replay ops and the
+wave formats are unchanged, with the banked-wave parity re-run
+pending on the box (docs/vla-architecture.md, 5c VERDICT). Full
+record: docs/molmoact2-retirement.md.**
 
 **Decisions (register).**
 

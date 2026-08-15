@@ -134,9 +134,11 @@ def parse_args() -> argparse.Namespace:
         "1-NFE SnapFlow students (euler-1 IS their training target)",
     )
     parser.add_argument(
-        "--expert-dtype",
+        "--flow-decoder-dtype",
         default="bfloat16",
         choices=["float32", "bfloat16"],
+        help="post-load cast of the checkpoint's action decoder "
+        "(bfloat16 halves flow-decoder memory)",
     )
     parser.add_argument(
         "--wrist-transform",
@@ -520,7 +522,7 @@ def main() -> int:
             method=SamplingMethod[args.method.upper()],
             ar_temperature=args.ar_temperature,
             sde_noise_level=args.sde_noise_level,
-            expert_dtype=getattr(torch, args.expert_dtype),
+            flow_decoder_dtype=getattr(torch, args.flow_decoder_dtype),
         )
         horizon = min(args.execute_horizon, policy.info.chunk_size)
         print(
@@ -588,7 +590,7 @@ def main() -> int:
                 "draws": args.draws,
                 "ar_temperature": args.ar_temperature,
                 "sde_noise_level": args.sde_noise_level,
-                "expert_dtype": args.expert_dtype,
+                "flow_decoder_dtype": args.flow_decoder_dtype,
                 "wrist_transform": args.wrist_transform,
                 "control_hz": CONTROL_HZ,
                 "task": TASK,

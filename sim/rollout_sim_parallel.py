@@ -174,9 +174,11 @@ def parse_args() -> argparse.Namespace:
         "1-NFE SnapFlow students (euler-1 IS their training target)",
     )
     parser.add_argument(
-        "--expert-dtype",
+        "--flow-decoder-dtype",
         default="bfloat16",
         choices=["float32", "bfloat16"],
+        help="post-load cast of the checkpoint's action decoder "
+        "(bfloat16 halves flow-decoder memory)",
     )
     parser.add_argument(
         "--post-backend",
@@ -732,7 +734,7 @@ def main() -> int:
             method=SamplingMethod[args.method.upper()],
             ar_temperature=args.ar_temperature,
             sde_noise_level=args.sde_noise_level,
-            expert_dtype=getattr(torch, args.expert_dtype),
+            flow_decoder_dtype=getattr(torch, args.flow_decoder_dtype),
             molmo_norm=(
                 MolmoNorm.CONVENTION_MAP
                 if args.convmap_seam_stats is not None
@@ -766,14 +768,21 @@ def main() -> int:
         )
         print(f"training rows -> {args.emit_training_rows}")
     elif args.emit_training_rows is not None:
-        from bijou.modelling.decoders.ar_suffix import ARSuffixDecoder
-
         assert policy is not None  # parse_args refused --hold
-        if not isinstance(policy.model.decoder, ARSuffixDecoder):
+        # Capability narrowing (the trait handles, never a concrete
+        # class): the rows instrument records the SERVING decode's
+        # token stream, so the family must both carry an AR decoder
+        # and serve through it (a joint family serves flow — its rows
+        # would not be the executed decode's).
+        if policy.ar is None or policy.flow is not None:
             raise SystemExit(
-                "--emit-training-rows records the AR token stream; this "
-                "checkpoint's decoder is "
-                f"{type(policy.model.decoder).__name__}",
+                "--emit-training-rows records the AR-serving token "
+                f"stream, but {policy.spec.family.value} "
+                + (
+                    "serves through its flow decoder"
+                    if policy.ar is not None
+                    else "has no AR action decoder"
+                ),
             )
         policy.capture_token_rows = True
         row_writer = TrainingRowWriter(
@@ -784,7 +793,7 @@ def main() -> int:
                 "ar_temperature": args.ar_temperature,
                 "sample_steps": args.sample_steps,
                 "method": args.method,
-                "expert_dtype": args.expert_dtype,
+                "flow_decoder_dtype": args.flow_decoder_dtype,
                 "stats_repo_id": STATS_REPO_ID,
                 "commit": commit,
                 # The RNG-key convention: each row's sampling stream is
@@ -1040,7 +1049,7 @@ def main() -> int:
                 "draws": args.draws,
                 "ar_temperature": args.ar_temperature,
                 "sde_noise_level": args.sde_noise_level,
-                "expert_dtype": args.expert_dtype,
+                "flow_decoder_dtype": args.flow_decoder_dtype,
                 "wrist_transform": args.wrist_transform,
                 "top_transform": args.top_transform,
                 "control_hz": CONTROL_HZ,
