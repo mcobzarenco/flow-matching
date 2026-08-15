@@ -1,6 +1,31 @@
 # Now
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-15 17:17–17:2xZ (real `date -u` at stamp: 17:18) —
+tick: **quiet hold — GPU owner-reserved and idle (0%), nothing to
+babysit, no launches.***
+
+**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
+OWNER** (13:35Z), untouched. No babysit entries, no training
+processes.
+
+**Steering**: none new — Discord read + inbox empty at 17:18;
+history shows nothing past our own 17:03 phase-5a merge post (last
+owner activity remains the recorded 👍 on the 15:37 merge post).
+All three owner decisions still pending: retrain arm pick
+(continue-from-2k vs from-base), route A/B/C (flow retrain / token
+arm / joint), GPU release.
+
+**Done**: Discord + history polls, GPU/process check, queue validate
+OK depth 2 (17 open, both queued items owner-gated),
+`run_work_next` confirmed disarmed (no CPU-executable items to
+chain into). No posts (nothing owner-facing changed). 0 GPU-h.
+
+**Next**: ticks hold until an owner decision lands — arm pick +
+route A/B/C unblock the retrain launch (either arm is one command
+post-merge), GPU release unblocks any launch at all.*
 
 *Updated 2026-08-15 17:07–17:1xZ (real `date -u` at stamp: 17:07) —
 tick: **quiet hold — GPU owner-reserved and idle (0%), nothing to
@@ -63,54 +88,20 @@ the retrain launch (either arm is now one command), GPU release
 unblocks any launch at all. `run_work_next` stays disarmed — no
 CPU-executable items remain.*
 
-*Updated 2026-08-15 16:45–16:5xZ (real `date -u` at stamp: 16:47) —
-tick: **two changes after four quiet holds — owner 👍 on the merge
-post recorded as steering, and main phase 5a landed → work session
-armed for the merge.***
-
-**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
-OWNER** (13:35Z), untouched. No babysit entries, no training
-processes.
-
-**Steering**: owner **👍 on our 15:37Z merge/seam-verification
-post** — new since the 16:34 tick (last recorded reaction was the
-🎉 on the 14:21 augment post). Read as agreement with the phase 0–4
-merge + the launch-ready seam state; no action change, the three
-decisions (arm pick, route A/B/C, GPU release) stay pending. No
-messages; read + inbox empty at 16:46.
-
-**Done**: caught **main phase 5a** (`a51b172`, owner-pushed 16:34Z:
-"bijou.train on the family CLI + the VLA checkpoint format",
-+3115/−2046 across 20 files — train args, checkpoint_backbone,
-convert_molmoact2, new test_train_vla). That churns every
-pre-registered launch-path seam, so: queued
-**merge-main-phase5a** (cpu, no owner hold) with the full re-verify
-checklist mirroring the 15:37Z post, queue validate OK depth 3 (18
-open), **`run_work_next` ARMED** — the chained work session merges +
-re-verifies so the retrain stays launch-ready the moment the owner
-decides. No posts (merge result will be the post). 0 GPU-h.
-
-**Next**: chained work session executes merge-main-phase5a
-(CPU-only, GPU untouched); ticks otherwise hold until an owner
-decision lands — arm pick + route A/B/C unblock the retrain launch,
-GPU release unblocks any launch at all.*
-
 ## Utilization footer
 
-Session 2026-08-15 17:07–17:1xZ (tick; 0 GPU-h): quiet hold — GPU
+Session 2026-08-15 17:17–17:2xZ (tick; 0 GPU-h): quiet hold — GPU
 owner-reserved and idle (0%), no launches, no training processes;
 Discord/inbox/history empty past our own 17:03 phase-5a merge post,
 all three owner decisions pending (arm pick, route A/B/C, GPU
 release); queue validate OK depth 2 (17 open, both items
 owner-gated), `run_work_next` disarmed.
 
-Session 2026-08-15 16:50–17:1xZ (work, exploit; 0 GPU-h, CPU-only):
-merge-main-phase5a — phase 5a merged (`351c56e`, 922 green), two
-launch-path breaks fixed (`--expert-init`→`--flow-decoder-init`
-rename; checkpoint-format break → both conversions migrated via
-convert_legacy), continue-from-2k arm built real
-(step2000_corrected_v1), both retrain arms full-parse green; pre-reg
-§3+§8 amended; GPU owner-reserved and untouched.
+Session 2026-08-15 17:07–17:1xZ (tick; 0 GPU-h): quiet hold — GPU
+owner-reserved and idle (0%), no launches, no training processes;
+Discord/inbox/history empty past our own 17:03 phase-5a merge post,
+all three owner decisions pending; queue OK depth 2 (17 open, both
+owner-gated), `run_work_next` disarmed.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
