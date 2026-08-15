@@ -128,8 +128,8 @@ Conventions: `docs/code-styleguide.md`.
 |---|---|
 | `bijou/modelling/gemma4/` | pure-torch Gemma-4 E-series (text+vision), bit-exact vs HF on greedy text+image generation (`verify_parity.py`); bench + tiny-checkpoint tooling |
 | `bijou/modelling/molmo2/` | pure-torch Molmo2-4B (SigLIP tower + Qwen3 decoder), same parity discipline; tiny-checkpoint tooling |
-| `bijou/modelling/interface.py` | the encoder×decoder seam: ObservationMemory (streams and/or prefix KV cache), collation, instrument currencies |
-| `bijou/modelling/encoders/` | per-trunk observation encoding strategies (prompt build, prefill, stream export, unfreeze partition) |
+| `bijou/modelling/interface.py` | the encoder×decoder seam: collation, memory streams, instrument currencies |
+| `bijou/modelling/encoders/` | per-trunk observation encoding strategies (prompt build, prefill, stream export, unfreeze partition) + their memory types (GemmaMemory, Molmo2Memory) |
 | `bijou/modelling/decoders/` | FlowDecoder (flow matching), GemmaARDecoder/Molmo2ARDecoder/MolmoAct2ARDecoder (decoder-only suffix), MolmoFlowDecoder, action codecs |
 | `bijou/vla.py` | the VLA trait lattice (ARVLA/FlowVLA/NarratingVLA capabilities) train/eval/rollout program against |
 | `bijou/models/` | one family class per real model (gemma_flow, gemma_ar, molmo2_ar, molmoact2_flow/ar/joint) + objective/serving payloads |
