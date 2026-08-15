@@ -1,15 +1,19 @@
 """The observation-encoder ↔ action-decoder seam.
 
 An encoder strategy turns one observation (instruction + camera frames
-[+ state, eventually]) into an :class:`ObservationMemory`: named memory
-streams a decoder cross-attends and/or a retained prefix cache a
-suffix decoder continues.
+[+ state, eventually]) into its trunk's PER-TRUNK memory value — the
+dataclass defined beside the encoder (``encoders/gemma4.GemmaMemory``:
+named memory streams a decoder cross-attends, plus the prefix cache
+where a suffix decoder continues it; ``encoders/molmo2.Molmo2Memory``:
+the typed prefix cache, the whole product). Cache types are static on
+those values — a decoder states its trunk's memory in its signature and
+the wrong pairing is a type error, not a runtime narrow.
 
 Encoders are plain nn.Modules — a CONVENTION, not a base class (the
 composition rule): each trunk's prompt-side strategy exposes
 ``inputs_collator()`` (the pickleable collation half, an
-:class:`InputsCollator`), ``encode(backbone, inputs, *, with_grad,
-retain_cache)`` producing the memory, and ``param_groups(backbone)``
+:class:`InputsCollator`), ``encode(backbone, inputs, *, with_grad, …)``
+producing its memory value, and ``param_groups(backbone)``
 (named unfreezable trunk subsets — EXACT sets: DDP requires every
 grad-enabled parameter to receive gradients each step). The module
 carries exactly the PROMPT-side parameters (e.g. the Gemma strategy's
@@ -44,7 +48,6 @@ from ..annotations import ConditionField
 from .aux_text import (
     IMAGE_KEY_PREFIX,
     AuxField,
-    AuxGeneration,
     AuxSpec,
     assemble_suffix,
     camera_prompt_order,
@@ -93,74 +96,6 @@ class MemoryStream:
 
     key: Tensor
     value: Tensor
-
-
-@dataclass(frozen=True, slots=True)
-class BijouPrediction:
-    """Everything the model predicts for one observation batch, crossing
-    the seam back to the caller: one action chunk per sample (RAW units
-    — the field mirrors ``CollatedBatch.actions``, the ground truth it
-    is scored against) plus, for decoders with a text surface
-    (ar_backbone), one :class:`AuxGeneration` per row. ``None``
-    generations = this decoder kind produces no text (the flow kinds);
-    ar_backbone always returns the list — rows are empty-text under ACT
-    decode.
-
-    ``noise`` is the initial noise the flow solver actually integrated
-    (supplied or drawn), kept so a paired re-decode can reuse it — the
-    Q3 conditioning tripwire needs |Δ| against the SAME draw, or the
-    sampling variance floors the signal for a conditioning-blind model.
-    None for decoders that draw none (the AR kinds).
-
-    Shapes: actions [B, chunk, action_dim] (raw action units);
-    noise [B, chunk, action_dim] (normalized units)."""
-
-    actions: Tensor
-    generations: list[AuxGeneration] | None
-    noise: Tensor | None = None
-
-
-@dataclass(frozen=True, slots=True)
-class ObservationMemory:
-    """The value crossing the encoder → decoder seam: named memory streams
-    (insertion-ordered as the encoder's exports) plus the (padded) memory
-    width P and, for padded batches, the True-means-real padding mask
-    [B, P]. Per-sample real lengths (decoder query position bases) derive
-    from the mask; ``length`` is the KV width and the position base only
-    for unpadded batches.
-
-    ``cache`` is the full prefix KV cache the encode produced — every
-    non-KV-shared layer's K/V, of which the named streams are zero-copy
-    views — retained only when the decoder consumes the whole prefix
-    state (the decoder-only backbone path continues the suffix through
-    it; molmo_flow reads every layer of it); None for stream-consuming
-    decoders, freeing the non-exported layers.
-    Its concrete type is a TRUNK-private contract between the producing
-    encoder and the decoder that continues the trunk (the Gemma path's
-    ``gemma4.cache.KVCache``) — opaque at this seam so the seam depends
-    on no trunk. Consumers check for None and isinstance-narrow to their
-    trunk's cache type, failing fast on either mismatch."""
-
-    streams: dict[str, MemoryStream]
-    length: int
-    padding_mask: Tensor | None
-    cache: object | None = None
-    # The decoder-conditioning mask over the PROMPT, [B, P] bool (True =
-    # a cross-attending decoder may attend) — distinct from
-    # ``padding_mask`` (real tokens: the positions/attention source,
-    # which must keep counting EOS). Carries the molmoact2 formats'
-    # ``action_mode`` flavor (EOS/span-strip under 'both', load-bearing
-    # for converted expert weights); None = padding semantics apply.
-    conditioning_mask: Tensor | None = None
-
-    @property
-    def batch_size(self) -> int:
-        if self.streams:
-            return next(iter(self.streams.values())).key.shape[0]
-        # Cache-consuming compositions (suffix decoders, molmo_flow) may
-        # export no streams; the padding mask carries the batch there.
-        assert self.padding_mask is not None  # streams or padded cache
-        return self.padding_mask.shape[0]
 
 
 class BatchInputs(Protocol):
@@ -351,8 +286,10 @@ class InputsCollator[I: BatchInputs](Protocol):
 # the backbone itself), and every consumer goes through the family's
 # trait surface. Shared conventions: training objectives are
 # module-level functions beside each decoder (``flow_matching_loss``,
-# ``ar_backbone_loss``), and ``predict_chunk`` returns
-# RAW-unit chunks [B, chunk, action_dim] (per-sample stats applied inside).
+# ``ar_backbone_loss``), and ``predict_chunk`` returns its NATURAL raw
+# product — RAW-unit chunks [B, chunk, action_dim] plus the decode's
+# other output (the integrated noise draw / the per-row generations) —
+# which the family wraps into its typed prediction struct (bijou.vla).
 
 _IMAGE_KEY_PREFIX = IMAGE_KEY_PREFIX
 

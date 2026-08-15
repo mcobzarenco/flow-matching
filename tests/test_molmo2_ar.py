@@ -24,8 +24,8 @@ from bijou.modelling.aux_text import SUFFIX_FORMAT
 from bijou.modelling.codecs import FastActionCodec
 from bijou.modelling.decoders.ar_molmo2 import MOLMO2_GENERATION_OPENER, Molmo2ARDecoder
 from bijou.modelling.decoders.ar_suffix import ARDecoderConfig, suffix_targets
-from bijou.modelling.encoders.molmo2 import Molmo2Encoder, Molmo2Inputs
-from bijou.modelling.interface import CollatedBatch, NormStats, ObservationMemory
+from bijou.modelling.encoders.molmo2 import Molmo2Encoder, Molmo2Inputs, Molmo2Memory
+from bijou.modelling.interface import CollatedBatch, NormStats
 from bijou.modelling.molmo2.config import Molmo2Config
 from bijou.modelling.molmo2.model import Molmo2Model, build_multimodal_mask, load_model
 from bijou.modelling.molmo2.testing import tiny_config_json, write_tiny_text_checkpoint
@@ -120,12 +120,11 @@ def encode_memory(
     model: Molmo2Model,
     *,
     with_grad: bool = False,
-) -> ObservationMemory:
+) -> Molmo2Memory:
     return encoder.encode(
         model,
         tiny_inputs(),
         with_grad=with_grad,
-        retain_cache=True,
     )
 
 
@@ -420,14 +419,12 @@ def test_left_pad_invariance_of_the_suffix_loss(
             model,
             padded_inputs,
             with_grad=False,
-            retain_cache=True,
         )
         padded_logits = decoder(model, padded_memory, suffix)
         solo_memory = encoder.encode(
             model,
             solo_inputs,
             with_grad=False,
-            retain_cache=True,
         )
         solo_logits = decoder(model, solo_memory, suffix)
     torch.testing.assert_close(padded_logits, solo_logits, rtol=1e-4, atol=1e-4)
@@ -441,16 +438,14 @@ def test_predict_chunk_decodes_a_valid_chunk(
     encoder = build_encoder(tiny_checkpoint)
     sample = batch(loaded, tiny_inputs())
     memory = encode_memory(encoder, model)
-    prediction = decoder.predict_chunk(model, memory, sample)
-    assert prediction.actions.shape == (
+    actions, generations = decoder.predict_chunk(model, memory, sample)
+    assert actions.shape == (
         BATCH,
         loaded.time_horizon,
         loaded.action_dim,
     )
-    assert torch.isfinite(prediction.actions).all()
-    assert prediction.generations is not None
-    assert len(prediction.generations) == BATCH
-    assert prediction.noise is None
+    assert torch.isfinite(actions).all()
+    assert len(generations) == BATCH
 
 
 def test_generation_opener_is_chatml() -> None:

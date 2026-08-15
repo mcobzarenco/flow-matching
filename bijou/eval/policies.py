@@ -46,6 +46,7 @@ from ..modelling.aux_text import AuxField, AuxGeneration, subgoal_text
 from ..modelling.decoders.ar_suffix import ARSuffixDecoder
 from ..modelling.decoders.flow import FlowDecoder
 from ..modelling.decoders.molmo_flow import MolmoFlowDecoder
+from ..modelling.encoders.gemma4 import GemmaMemory
 from ..modelling.gemma4.loading import to_device_with_ple_parked
 from ..modelling.interface import (
     ActionCaptureStep,
@@ -55,7 +56,6 @@ from ..modelling.interface import (
     InputsCollator,
     MemoryStream,
     NormStats,
-    ObservationMemory,
     SamplingMethod,
     ValueCandidate,
     mask_state_item,
@@ -387,14 +387,14 @@ def noise_for_item(
     return draw_noise(seed, index, draw, shape)
 
 
-def tile_memory(memory: ObservationMemory, draws: int) -> ObservationMemory:
+def tile_memory(memory: GemmaMemory, draws: int) -> GemmaMemory:
     """Draws-major tiling of an encoded observation for batched
     ensembling: every K/V stream and the padding mask repeat along the
     batch dim ([B, …] → [draws·B, …], whole-batch-major, so row
     d·B + i is (draw d, item i) — the collapse_draws layout). A KV
     cache cannot be tiled (AR-only surface) and must be absent."""
     if memory.cache is not None:
-        raise ValueError("cannot tile an ObservationMemory carrying a KV cache")
+        raise ValueError("cannot tile a GemmaMemory carrying a KV cache")
     return dataclasses.replace(
         memory,
         streams={
@@ -756,7 +756,7 @@ class BijouPolicy:
             vla,
             GemmaARVLA | Molmo2ARVLA | MolmoAct2ARVLA | MolmoAct2JointVLA,
         ):
-            self.ar_decoder: ARSuffixDecoder[Any] | None = vla.ar_decoder
+            self.ar_decoder: ARSuffixDecoder[Any, Any] | None = vla.ar_decoder
         else:
             self.ar_decoder = None
         if flow_decoder_dtype is not torch.float32:
@@ -1288,14 +1288,15 @@ class BijouPolicy:
                 self.sample_draws,
                 shape,
             ).to(self.device)
-            stacked = model.flow_decoder.predict_chunk(
+            tiled_actions, _ = model.flow_decoder.predict_chunk(
                 tile_memory(memory, self.sample_draws),
                 tile_stats(batch, self.sample_draws),
                 noise=noise,
                 num_steps=self.sample_steps,
                 method=self.method,
                 target_time=self.target_time,
-            ).actions.reshape(self.sample_draws, len(items), *shape)
+            )
+            stacked = tiled_actions.reshape(self.sample_draws, len(items), *shape)
             means, self.last_draws = collapse_draws(stacked)
             return means, None
         if self.ar_temperature is not None:
@@ -1343,22 +1344,17 @@ class BijouPolicy:
                 return means, None
             return [chunk.cpu() for chunk in stacked[0]], None
         if self.sde_noise_level is not None:
-            # SDE stochastic decode (Euler–Maruyama, the gemma flow
-            # family's trainable sampler — family-concrete): initial
-            # noise stays the stable keyed stream; per-step ε comes
-            # pre-drawn per item from its own keyed domain, so the
-            # batched decode stays batch-composition-invariant like
-            # every other stable stream. Draw identity rides the item's
-            # repo_id (the rollout drivers' draw-suffix convention), so
-            # the in-call draw index is always 0.
+            # SDE stochastic decode (the gemma flow family's concrete
+            # predict_flow_sde — Euler-only by construction; __init__
+            # refused any other --method): initial noise stays the
+            # stable keyed stream; per-step ε comes pre-drawn per item
+            # from its own keyed domain, so the batched decode stays
+            # batch-composition-invariant like every other stable
+            # stream. Draw identity rides the item's repo_id (the
+            # rollout drivers' draw-suffix convention), so the in-call
+            # draw index is always 0.
             model = self.gemma_flow
             assert model is not None  # __init__ guarded
-            memory = model.encoder.encode(
-                model.backbone,
-                batch.encoder_inputs,
-                with_grad=False,
-                retain_cache=False,
-            )
             shape = (batch.actions.shape[1], batch.actions.shape[2])
             sde_noise = self._flow_noise(items, indices, 1, shape).to(self.device)
             step_noise = torch.stack(
@@ -1376,14 +1372,12 @@ class BijouPolicy:
                 ],
                 dim=1,
             ).to(self.device)
-            prediction = model.flow_decoder.predict_chunk(
-                memory,
+            prediction = model.predict_flow_sde(
                 batch,
-                noise=sde_noise,
+                noise_level=self.sde_noise_level,
                 num_steps=self.sample_steps,
-                method=self.method,
-                sde_noise_level=self.sde_noise_level,
-                sde_step_noise=step_noise,
+                noise=sde_noise,
+                step_noise=step_noise,
             )
             return [chunk.cpu() for chunk in prediction.actions], None
         if self.capture_token_rows:
@@ -1432,22 +1426,16 @@ class BijouPolicy:
             )
         if self.flow is not None:
             if self.target_time is not None:
-                # The φ_s shortcut read — a gemma-flow-concrete
-                # instrument (__init__ validated the extension).
+                # The φ_s shortcut read — the gemma flow family's
+                # concrete predict_flow widening (__init__ validated
+                # the extension).
                 model = self.gemma_flow
                 assert model is not None  # __init__ guarded
-                memory = model.encoder.encode(
-                    model.backbone,
-                    batch.encoder_inputs,
-                    with_grad=False,
-                    retain_cache=False,
-                )
-                actions = model.flow_decoder.predict_chunk(
-                    memory,
+                actions = model.predict_flow(
                     batch,
-                    noise=noise,
                     num_steps=self.sample_steps,
                     method=self.method,
+                    noise=noise,
                     target_time=self.target_time,
                 ).actions
             else:

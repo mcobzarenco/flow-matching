@@ -34,15 +34,16 @@ Quick start::
 
 from .loading import load_vla
 from .modelling.decoders.flow import FlowDecoder, FlowDecoderConfig, SelfAttentionMode
-from .modelling.interface import MemoryStream, ObservationMemory
+from .modelling.encoders.gemma4 import GemmaMemory
+from .modelling.interface import MemoryStream
 from .vla import VLA, VLAFamily
 
 __all__ = [
     "VLA",
     "FlowDecoder",
     "FlowDecoderConfig",
+    "GemmaMemory",
     "MemoryStream",
-    "ObservationMemory",
     "SelfAttentionMode",
     "VLAFamily",
     "load_vla",

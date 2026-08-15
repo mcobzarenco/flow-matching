@@ -69,6 +69,7 @@ from .loading import (
     parse_decoder_config,
 )
 from .modelling.decoders.ar_molmoact2 import MolmoAct2ARDecoder
+from .modelling.encoders.molmo2 import Molmo2Memory
 from .modelling.encoders.molmoact2 import MolmoAct2InputsCollator
 from .modelling.interface import (
     ActionCaptureStep,
@@ -76,7 +77,6 @@ from .modelling.interface import (
     CameraFrame,
     CollatedBatch,
     NormStats,
-    ObservationMemory,
     PromptInputs,
 )
 from .modelling.molmo2.loading import load_config as load_molmo2_config
@@ -202,16 +202,15 @@ class MolmoAct2DiscreteStack:
             "(molmoact2_flow/ar/joint checkpoints)",
         )
 
-    def encode(self, inputs: Any, *, with_grad: bool) -> ObservationMemory:
-        """Prefix-encode collated inputs against the trunk with the
-        cache retained (the suffix decoder consumes it) — the ONE
+    def encode(self, inputs: Any, *, with_grad: bool) -> Molmo2Memory:
+        """Prefix-encode collated inputs against the trunk (the memory
+        carries the cache the suffix decoder consumes) — the ONE
         encode both the rollout decode and the teacher-forced replay
         ride, so the two sides cannot drift."""
         return self.encoder.encode(
             self.trunk,
             inputs,
             with_grad=with_grad,
-            retain_cache=True,
         )
 
     def _batch(self, inputs: Any, state: Tensor) -> CollatedBatch[Any]:

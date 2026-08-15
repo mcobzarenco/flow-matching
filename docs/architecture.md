@@ -140,7 +140,8 @@ retained prefix KV cache.
   sample from the judge annotations (§1); ⟨state⟩ = soft token
       │  E2B prefix: layers 0..14 (bf16), LEFT-padded batches
       ▼
-  prefix K/V — ObservationMemory, encoded once per observation
+  prefix K/V — the trunk's memory value (GemmaMemory here; Molmo2
+  compositions produce Molmo2Memory), encoded once per observation
       │
       ├─ cross-attention family: exported GLOBAL streams {4, 9, 14}
       │    FlowDecoder (404M fp32), 16 layers, each =
@@ -170,7 +171,7 @@ Batch & sequence:
 - `T` — total key/value length in self-attention: `seen + S` with a KV
   cache, `= S` at prefill / no cache
 - `P` — memory width: the encoded-observation tokens the decoder
-  cross-attends (the `ObservationMemory` width; for the Gemma trunk this
+  cross-attends (the encoded memory's width; for the Gemma trunk this
   is the prompt length)
 - `suffix` — decoder-side token count: the expert's `[state][a_1..a_chunk]`
   (`= 1 + chunk`); variable-width for ar_backbone
@@ -352,12 +353,18 @@ Camera NAMES remain positional slots (community image/image2
 keys carry no reliable wrist-vs-scene semantics — SmolVLA precedent);
 the kind TAG is the first reliable viewpoint signal.
 
-**What the decoders consume.** The cross-attention family reads the
-exported streams of an `ObservationMemory`; the suffix decoders
-additionally retain the FULL prefix `KVCache` on the memory
-(`retain_cache=True`, a construction fact of each family's encode —
-the exported streams are zero-copy views into it) and extend it in
-place while decoding.
+**What the decoders consume.** Each encoder produces its trunk's
+PER-TRUNK memory value, defined beside it, and decoders state that
+type in their signatures (cache pairing is static, not a runtime
+narrow). The Gemma side is `GemmaMemory`: the cross-attention family
+reads its exported streams; the suffix decoder additionally needs the
+FULL prefix `KVCache` retained on it (`retain_cache=True`, a
+construction fact of the gemma_ar family's encode — the exported
+streams are zero-copy views into it) and extends it in place while
+decoding. The Molmo2 side is `Molmo2Memory`: the typed `Molmo2KVCache`
+IS the product (always carried — those encoders export no streams);
+suffix decoders continue it, molmo_flow conditions on every layer of
+it.
 
 **Vision geometry** (encoder-free E-series tower, 768 hidden, 16-px
 patches, 3×3 spatial pool): a 640×480 frame → resized 624×480 → 39×30

@@ -44,7 +44,6 @@ from ..gemma4.text import DecoderLayer
 from ..interface import (
     InputsCollator,
     MemoryStream,
-    ObservationMemory,
     PromptInputs,
     kv_stream_name,
 )
@@ -289,6 +288,38 @@ class GemmaInputsCollator:
 
 
 @dataclass(frozen=True, slots=True)
+class GemmaMemory:
+    """The Gemma trunk's encoded prefix — the value crossing this
+    encoder's seam to the Gemma-trunk decoders: named memory streams
+    (insertion-ordered as the encoder's exports) plus the (padded)
+    memory width P and, for padded batches, the True-means-real padding
+    mask [B, P]. Per-sample real lengths (decoder query position bases)
+    derive from the mask; ``length`` is the KV width and the position
+    base only for unpadded batches.
+
+    ``cache`` is the full prefix :class:`~bijou.modelling.gemma4.cache.
+    KVCache` the encode produced — every non-KV-shared layer's K/V, of
+    which the named streams are zero-copy views — retained only when the
+    decoder consumes the whole prefix state (the suffix decoder
+    continues the trunk through it); None for stream-consuming decoders
+    (the flow path), freeing the non-exported layers.
+
+    Shapes: streams[name].key/value [B, kv_heads, P, head_dim];
+    padding_mask [B, P] (True = real token) or None."""
+
+    streams: dict[str, MemoryStream]
+    length: int
+    padding_mask: Tensor | None
+    cache: KVCache | None = None
+
+    @property
+    def batch_size(self) -> int:
+        # Streams are never empty: the encoder refuses zero exports at
+        # construction (an export-less memory would carry nothing).
+        return next(iter(self.streams.values())).key.shape[0]
+
+
+@dataclass(frozen=True, slots=True)
 class StreamGeometry:
     """Static per-stream contract, known at construction time — what a
     stream-consuming decoder needs to size its query projections and
@@ -336,7 +367,7 @@ class GemmaEncoder(nn.Module):
         super().__init__()
         if not exports:
             raise ValueError(
-                "an encoder with no K/V exports produces an empty observation memory",
+                "an encoder with no K/V exports produces an empty memory",
             )
         self.config = config
         self.exports = exports
@@ -361,7 +392,7 @@ class GemmaEncoder(nn.Module):
 
     def stream_geometries(self) -> dict[str, StreamGeometry]:
         """Static geometry per stream name; keys and order match every
-        ObservationMemory this encoder produces. Names are this
+        GemmaMemory this encoder produces. Names are this
         encoder's vocabulary (``kv{i}``); decoder schedules reference
         them and composition validates the references."""
         text = self.config.text
@@ -391,7 +422,7 @@ class GemmaEncoder(nn.Module):
         state: Tensor | None = None,
         state_slot: int | None = None,
         retain_cache: bool = False,
-    ) -> ObservationMemory:
+    ) -> GemmaMemory:
         """Run the truncated backbone over the multimodal prefix and export
         the memory streams (grad-transparent — callers choose no_grad).
         Cache the result across flow steps (and, if the observation is
@@ -421,7 +452,7 @@ class GemmaEncoder(nn.Module):
           - image_position_ids: [images, patches, 2]  ((x, y) spatial ids)
           - padding_mask (when present): [B, P]  (True = real token)
           - state (when present): [B, state_dim]  (normalized)
-          - returns ObservationMemory: streams["kv{layer}"].key/value each
+          - returns GemmaMemory: streams["kv{layer}"].key/value each
             [B, kv_heads, P, head_dim]; padding_mask [B, P] or None
         """
         if (state is None) != (state_slot is None):
@@ -462,7 +493,7 @@ class GemmaEncoder(nn.Module):
                 key=layer.keys,
                 value=layer.values,
             )
-        return ObservationMemory(
+        return GemmaMemory(
             streams=streams,
             length=input_ids.shape[1],
             padding_mask=padding_mask,
@@ -476,7 +507,7 @@ class GemmaEncoder(nn.Module):
         *,
         with_grad: bool,
         retain_cache: bool = False,
-    ) -> ObservationMemory:
+    ) -> GemmaMemory:
         """Encode one collated batch (shapes on GemmaInputs); ``with_grad``
         selects the live-backbone training path (grad-transparent, not
         force-enabled) vs the no-grad eval path. ``retain_cache`` as on

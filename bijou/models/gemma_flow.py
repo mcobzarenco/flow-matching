@@ -25,8 +25,6 @@ from torch import Tensor, nn
 
 from ..checkpoint import backbone_directory, read_metadata
 from ..modelling.decoders.flow import (
-    SNAPFLOW_ALPHA,
-    SNAPFLOW_LAMBDA,
     FlowDecoder,
     flow_matching_loss_sums,
     snapflow_distill_loss_sums,
@@ -92,22 +90,15 @@ class GemmaFlowVLA(FlowVLA[GemmaInputs]):
         self.flow_decoder = flow_decoder
         self.objective = objective
         self.serving = serving
-        if isinstance(objective, SnapflowObjective):
-            if not flow_decoder.config.target_time_embed:
-                raise SystemExit(
-                    "the snapflow objective needs a φ_s-extended decoder "
-                    "(target_time_embed) — extend the checkpoint at init "
-                    "(the φ_s MLP is zero-initialized, so extension is "
-                    "function-preserving)",
-                )
-            frozen = (SNAPFLOW_ALPHA, SNAPFLOW_LAMBDA)
-            if (objective.alpha, objective.shortcut_weight) != frozen:
-                raise SystemExit(
-                    f"snapflow payload (alpha={objective.alpha}, "
-                    f"shortcut_weight={objective.shortcut_weight}) differs "
-                    f"from the mix constants frozen in code {frozen} — the "
-                    "kernel cannot honor other values yet",
-                )
+        if isinstance(objective, SnapflowObjective) and (
+            not flow_decoder.config.target_time_embed
+        ):
+            raise SystemExit(
+                "the snapflow objective needs a φ_s-extended decoder "
+                "(target_time_embed) — extend the checkpoint at init "
+                "(the φ_s MLP is zero-initialized, so extension is "
+                "function-preserving)",
+            )
 
     @property
     @override
@@ -154,12 +145,16 @@ class GemmaFlowVLA(FlowVLA[GemmaInputs]):
                 with_grad=live,
                 retain_cache=False,
             )
-        sums = (
-            snapflow_distill_loss_sums
-            if isinstance(self.objective, SnapflowObjective)
-            else flow_matching_loss_sums
-        )
-        loss_sum, count = sums(self.flow_decoder, memory, batch)
+        if isinstance(self.objective, SnapflowObjective):
+            loss_sum, count = snapflow_distill_loss_sums(
+                self.flow_decoder,
+                memory,
+                batch,
+                alpha=self.objective.alpha,
+                shortcut_weight=self.objective.shortcut_weight,
+            )
+        else:
+            loss_sum, count = flow_matching_loss_sums(self.flow_decoder, memory, batch)
         world = dist.get_world_size() if dist.is_initialized() else 1
         # Per-rank scalar whose DDP MEAN is the global objective:
         # sum_r · W / global_count.
@@ -187,23 +182,72 @@ class GemmaFlowVLA(FlowVLA[GemmaInputs]):
         method: SamplingMethod,
         noise: Tensor | None = None,
         generator: torch.Generator | None = None,
+        target_time: float | None = None,
     ) -> FlowPrediction:
+        """The trait decode, plus this family's φ_s shortcut read:
+        ``target_time`` (a family-concrete widening — φ_s-extended
+        decoders only, refused otherwise) conditions every solver
+        forward on the constant jump target s; None is the standard s=t
+        integration every family serves. The 1-NFE read is
+        ``target_time=0.0`` with euler/1."""
         memory = self.encoder.encode(
             self.backbone,
             batch.encoder_inputs,
             with_grad=False,
             retain_cache=False,
         )
-        prediction = self.flow_decoder.predict_chunk(
+        actions, drawn = self.flow_decoder.predict_chunk(
             memory,
             batch,
             generator=generator,
             noise=noise,
             num_steps=num_steps,
             method=method,
+            target_time=target_time,
         )
-        assert prediction.noise is not None  # flow decodes always carry the draw
-        return FlowPrediction(actions=prediction.actions, noise=prediction.noise)
+        return FlowPrediction(actions=actions, noise=drawn)
+
+    @torch.no_grad()
+    def predict_flow_sde(
+        self,
+        batch: CollatedBatch[GemmaInputs],
+        *,
+        noise_level: float,
+        num_steps: int,
+        noise: Tensor | None = None,
+        step_noise: Tensor | None = None,
+        generator: torch.Generator | None = None,
+    ) -> FlowPrediction:
+        """The Euler–Maruyama stochastic decode — a family-concrete
+        instrument, not a capability (Flow-GRPO's trainable sampler on
+        this decoder lineage): Euler-only by construction, no φ_s.
+        ``step_noise`` supplies every step's ε explicitly (the
+        batch-composition-invariant keyed path); ``noise_level=0``
+        reproduces the Euler ODE decode bit-for-bit.
+
+        Shapes:
+          - ``noise``/returned noise: [B, chunk, action_dim] —
+            normalized units (the initial draw, ALWAYS returned)
+          - ``step_noise`` (when given): [num_steps, B, chunk,
+            action_dim]
+        """
+        memory = self.encoder.encode(
+            self.backbone,
+            batch.encoder_inputs,
+            with_grad=False,
+            retain_cache=False,
+        )
+        actions, drawn = self.flow_decoder.predict_chunk(
+            memory,
+            batch,
+            generator=generator,
+            noise=noise,
+            num_steps=num_steps,
+            method=SamplingMethod.EULER,
+            sde_noise_level=noise_level,
+            sde_step_noise=step_noise,
+        )
+        return FlowPrediction(actions=actions, noise=drawn)
 
     @override
     def param_groups(self) -> dict[str, list[nn.Parameter]]:

@@ -52,11 +52,10 @@ from typing import Any, cast, override
 import torch
 from torch import Tensor, nn
 
+from ..encoders.gemma4 import GemmaMemory
 from ..interface import (
-    BijouPrediction,
     CollatedBatch,
     MemoryStream,
-    ObservationMemory,
     SamplingMethod,
     kv_stream_name,
 )
@@ -398,7 +397,7 @@ class FlowDecoder(nn.Module):
     @override
     def forward(
         self,
-        memory: ObservationMemory,
+        memory: GemmaMemory,
         state: Tensor,
         noisy_actions: Tensor,
         time: Tensor,
@@ -490,7 +489,7 @@ class FlowDecoder(nn.Module):
             dtype,
         )
         self_attention_mask = self._self_attention_mask(batch, dtype, device)
-        cross_mask = cross_attention_mask(memory, dtype, device)
+        cross_mask = cross_attention_mask(memory.padding_mask, dtype, device)
 
         for layer, stream_name in zip(
             self.layers,
@@ -519,7 +518,7 @@ class FlowDecoder(nn.Module):
     @torch.no_grad()
     def sample_actions(
         self,
-        memory: ObservationMemory,
+        memory: GemmaMemory,
         state: Tensor,
         *,
         num_steps: int = 5,
@@ -595,7 +594,7 @@ class FlowDecoder(nn.Module):
     @torch.no_grad()
     def sample_actions_sde(
         self,
-        memory: ObservationMemory,
+        memory: GemmaMemory,
         state: Tensor,
         *,
         noise_level: float = 0.5,
@@ -701,7 +700,7 @@ class FlowDecoder(nn.Module):
     @torch.no_grad()
     def predict_chunk(
         self,
-        memory: ObservationMemory,
+        memory: GemmaMemory,
         batch: CollatedBatch[Any],
         *,
         generator: torch.Generator | None = None,
@@ -711,22 +710,32 @@ class FlowDecoder(nn.Module):
         target_time: float | None = None,
         sde_noise_level: float | None = None,
         sde_step_noise: Tensor | None = None,
-    ) -> BijouPrediction:
-        """RAW-unit chunk prediction (BijouPrediction, generations None —
-        flow has no text surface): normalize the batch's state with its
+    ) -> tuple[Tensor, Tensor]:
+        """RAW-unit chunk prediction: normalize the batch's state with its
         per-sample stats, integrate the field, and unnormalize with the
         action stats. ``num_steps``/``method``/``target_time`` are
         flow-specific solver knobs (other decoder kinds have none).
 
+        Returns ``(actions, noise)`` — the raw natural product; the
+        family wraps it into its prediction struct. ``noise`` is ALWAYS
+        the initial draw the solver actually integrated (supplied or
+        drawn) — paired re-decodes must reuse it, or sampling variance
+        floors any conditioning-sensitivity signal.
+
         ``sde_noise_level`` routes the decode through
         :meth:`sample_actions_sde` (Euler-only, no φ_s) with the same
         normalization seam — ``method`` must be EULER and ``target_time``
-        None so an SDE read can never silently wear ODE solver knobs."""
+        None so an SDE read can never silently wear ODE solver knobs.
+
+        Shapes:
+          - returns actions: [B, chunk, action_dim] — RAW action units
+          - returns noise: [B, chunk, action_dim] — normalized units
+        """
         state = (batch.state - batch.state_stats.mean) / batch.state_stats.std
         if noise is None:
             # The identical draw sample_actions would make (same shape/
             # dtype/device/generator ⇒ bit-exact result and generator
-            # consumption) — made here so the prediction can carry it.
+            # consumption) — made here so the return can carry it.
             noise = torch.randn(
                 state.shape[0],
                 self.config.chunk_size,
@@ -772,12 +781,12 @@ class FlowDecoder(nn.Module):
             sampled.float() * batch.action_stats.std[:, None, :]
             + batch.action_stats.mean[:, None, :]
         )
-        return BijouPrediction(actions=chunks, generations=None, noise=noise)
+        return chunks, noise
 
 
 def flow_matching_loss(
     decoder: FlowDecoder,
-    memory: ObservationMemory,
+    memory: GemmaMemory,
     batch: CollatedBatch[Any],
 ) -> Tensor:
     """``batch`` must already be device-resident; no transfers happen here.
@@ -824,7 +833,7 @@ def flow_matching_loss(
 
 def flow_matching_loss_sums(
     decoder: FlowDecoder,
-    memory: ObservationMemory,
+    memory: GemmaMemory,
     batch: CollatedBatch[Any],
 ) -> tuple[Tensor, Tensor]:
     """Sum-form objective for chunked backward: (squared-error SUM with
@@ -856,15 +865,9 @@ def flow_matching_loss_sums(
     return squared.sum(), torch.tensor(squared.numel(), device=squared.device)
 
 
-# SnapFlow (arXiv:2604.05656) loss mix, frozen in
-# code: L = α·L_FM + (1−α)·λ·L_shortcut.
-SNAPFLOW_ALPHA = 0.5
-SNAPFLOW_LAMBDA = 0.1
-
-
 def _snapflow_squared_errors(
     decoder: FlowDecoder,
-    memory: ObservationMemory,
+    memory: GemmaMemory,
     batch: CollatedBatch[Any],
 ) -> tuple[Tensor, Tensor]:
     """Per-element squared errors of the two SnapFlow terms, each
@@ -920,28 +923,36 @@ def _snapflow_squared_errors(
 
 def snapflow_distill_loss(
     decoder: FlowDecoder,
-    memory: ObservationMemory,
+    memory: GemmaMemory,
     batch: CollatedBatch[Any],
+    *,
+    alpha: float,
+    shortcut_weight: float,
 ) -> Tensor:
-    """SnapFlow self-distillation objective (mean form):
-    ``SNAPFLOW_ALPHA·mean(fm) + (1−SNAPFLOW_ALPHA)·SNAPFLOW_LAMBDA·
-    mean(shortcut)``. Requires a φ_s-extended decoder (the s=0 forward
-    refuses otherwise). Same contract as :func:`flow_matching_loss`."""
+    """SnapFlow (arXiv:2604.05656) self-distillation objective (mean
+    form): ``alpha·mean(fm) + (1−alpha)·shortcut_weight·
+    mean(shortcut)`` — the mix knobs are the SnapflowObjective
+    payload's, threaded by the family. Requires a φ_s-extended decoder
+    (the s=0 forward refuses otherwise). Same contract as
+    :func:`flow_matching_loss`."""
     fm_squared, shortcut_squared = _snapflow_squared_errors(
         decoder,
         memory,
         batch,
     )
     return (
-        SNAPFLOW_ALPHA * fm_squared.mean()
-        + (1 - SNAPFLOW_ALPHA) * SNAPFLOW_LAMBDA * shortcut_squared.mean()
+        alpha * fm_squared.mean()
+        + (1 - alpha) * shortcut_weight * shortcut_squared.mean()
     )
 
 
 def snapflow_distill_loss_sums(
     decoder: FlowDecoder,
-    memory: ObservationMemory,
+    memory: GemmaMemory,
     batch: CollatedBatch[Any],
+    *,
+    alpha: float,
+    shortcut_weight: float,
 ) -> tuple[Tensor, Tensor]:
     """Sum-form SnapFlow objective for chunked backward: (weighted
     squared-error SUM with graph, element count). Both terms share one
@@ -955,8 +966,8 @@ def snapflow_distill_loss_sums(
         batch,
     )
     weighted_sum = (
-        SNAPFLOW_ALPHA * fm_squared.sum()
-        + (1 - SNAPFLOW_ALPHA) * SNAPFLOW_LAMBDA * shortcut_squared.sum()
+        alpha * fm_squared.sum()
+        + (1 - alpha) * shortcut_weight * shortcut_squared.sum()
     )
     return weighted_sum, torch.tensor(
         fm_squared.numel(),

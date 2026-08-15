@@ -93,14 +93,14 @@ def test_low_temperature_limit_recovers_greedy(
     decoder, loaded = build_decoder(model)
     encoder = build_encoder(tiny_checkpoint)
     sample = batch(loaded, tiny_inputs())
-    greedy = decoder.predict_chunk(model, encode_memory(encoder, model), sample)
-    cold = decoder.predict_chunk(
+    greedy, _ = decoder.predict_chunk(model, encode_memory(encoder, model), sample)
+    cold, _ = decoder.predict_chunk(
         model,
         encode_memory(encoder, model),
         sample,
         sampling=ARSampling(temperature=1e-4, rngs=rngs(0)),
     )
-    assert torch.equal(cold.actions, greedy.actions)
+    assert torch.equal(cold, greedy)
 
 
 def test_sampled_decode_valid_deterministic_and_draw_distinct(
@@ -118,12 +118,12 @@ def test_sampled_decode_valid_deterministic_and_draw_distinct(
         encode_memory(encoder, model),
         sample,
         sampling=ARSampling(temperature=2.0, rngs=rngs(draw)),
-    )
+    )[0]
     first, again, other = hot(0), hot(0), hot(1)
-    assert first.actions.shape == (BATCH, loaded.time_horizon, loaded.action_dim)
-    assert bool(torch.isfinite(first.actions).all())
-    assert torch.equal(first.actions, again.actions)
-    assert not torch.equal(first.actions, other.actions)
+    assert first.shape == (BATCH, loaded.time_horizon, loaded.action_dim)
+    assert bool(torch.isfinite(first).all())
+    assert torch.equal(first, again)
+    assert not torch.equal(first, other)
 
 
 def test_cache_snapshot_restore_shares_one_prefill_exactly(
@@ -140,17 +140,17 @@ def test_cache_snapshot_restore_shares_one_prefill_exactly(
     memory = encode_memory(encoder, model)
     sampling = lambda: ARSampling(temperature=2.0, rngs=rngs(0))
     snapshot = decoder.cache_snapshot(memory)
-    first = decoder.predict_chunk(model, memory, sample, sampling=sampling())
+    first, _ = decoder.predict_chunk(model, memory, sample, sampling=sampling())
     decoder.cache_restore(memory, snapshot)
-    second = decoder.predict_chunk(model, memory, sample, sampling=sampling())
-    fresh = decoder.predict_chunk(
+    second, _ = decoder.predict_chunk(model, memory, sample, sampling=sampling())
+    fresh, _ = decoder.predict_chunk(
         model,
         encode_memory(encoder, model),
         sample,
         sampling=sampling(),
     )
-    assert torch.equal(first.actions, second.actions)
-    assert torch.equal(first.actions, fresh.actions)
+    assert torch.equal(first, second)
+    assert torch.equal(first, fresh)
 
 
 def test_molmo2_cache_update_rebinds_never_writes() -> None:
@@ -193,13 +193,13 @@ def test_ar_predict_sampled_dispatches_molmo2(
         sample,
         sampling=ARSampling(temperature=2.0, rngs=rngs(0)),
     )
-    direct = decoder.predict_chunk(
+    direct, _ = decoder.predict_chunk(
         model,
         encode_memory(encoder, model),
         sample,
         sampling=ARSampling(temperature=2.0, rngs=rngs(0)),
     )
-    assert torch.equal(via_model.actions, direct.actions)
+    assert torch.equal(via_model.actions, direct)
 
 
 def test_bf16_mounted_trunk_decodes_with_fp32_patch(
@@ -214,13 +214,13 @@ def test_bf16_mounted_trunk_decodes_with_fp32_patch(
     decoder, loaded = build_decoder(bf16)
     encoder = build_encoder(tiny_checkpoint)
     sample = batch(loaded, tiny_inputs())
-    prediction = decoder.predict_chunk(
+    actions, _ = decoder.predict_chunk(
         bf16,
         encode_memory(encoder, bf16),
         sample,
     )
-    assert prediction.actions.shape == (BATCH, loaded.time_horizon, loaded.action_dim)
-    assert bool(torch.isfinite(prediction.actions).all())
+    assert actions.shape == (BATCH, loaded.time_horizon, loaded.action_dim)
+    assert bool(torch.isfinite(actions).all())
 
 
 def aux_config() -> AuxDecodeConfig:
@@ -283,17 +283,15 @@ def test_narrated_generate_decodes_fields_on_the_molmo2_trunk(
     decoder, loaded = build_aux_decoder(model)
     encoder = build_encoder(tiny_checkpoint)
     request = aux_config().fields
-    prediction = decoder.predict_chunk(
+    actions, generations = decoder.predict_chunk(
         model,
         encode_memory(encoder, model),
         batch(loaded, tiny_inputs()),
         generate=request,
     )
-    generations = prediction.generations
-    assert generations is not None
     assert len(generations) == BATCH
-    assert prediction.actions.shape == (BATCH, loaded.time_horizon, loaded.action_dim)
-    assert bool(torch.isfinite(prediction.actions).all())
+    assert actions.shape == (BATCH, loaded.time_horizon, loaded.action_dim)
+    assert bool(torch.isfinite(actions).all())
     for generation in generations:
         # holding is candidate-constrained (yes/no) — always parses.
         assert generation.holding is not None

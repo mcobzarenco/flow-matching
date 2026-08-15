@@ -25,13 +25,13 @@ from ..checkpoint import read_metadata
 from ..modelling.decoders.ar_molmoact2 import MolmoAct2ARDecoder
 from ..modelling.decoders.ar_suffix import ar_backbone_counts, ar_backbone_loss_sums
 from ..modelling.decoders.molmo_flow import MolmoFlowDecoder, molmo_flow_loss_sums
+from ..modelling.encoders.molmo2 import Molmo2Memory
 from ..modelling.encoders.molmoact2 import MolmoAct2Encoder, MolmoAct2Inputs
 from ..modelling.interface import (
     ActionCaptureStep,
     ARSampling,
     CollatedBatch,
     InputsCollator,
-    ObservationMemory,
     SamplingMethod,
 )
 from ..modelling.molmo2.model import Molmo2Model
@@ -141,13 +141,13 @@ class MolmoAct2JointVLA(ARVLA[MolmoAct2Inputs], FlowVLA[MolmoAct2Inputs]):
         batch: CollatedBatch[MolmoAct2Inputs],
         *,
         with_grad: bool,
-    ) -> ObservationMemory:
-        # Both decoders consume the whole prefix cache — always retained.
+    ) -> Molmo2Memory:
+        # Both decoders consume the whole prefix cache (the memory always
+        # carries it).
         return self.encoder.encode(
             self.backbone,
             batch.encoder_inputs,
             with_grad=with_grad,
-            retain_cache=True,
         )
 
     @override
@@ -236,7 +236,7 @@ class MolmoAct2JointVLA(ARVLA[MolmoAct2Inputs], FlowVLA[MolmoAct2Inputs]):
         generator: torch.Generator | None = None,
     ) -> FlowPrediction:
         memory = self._encode(batch, with_grad=False)
-        prediction = self.flow_decoder.predict_chunk(
+        actions, drawn = self.flow_decoder.predict_chunk(
             memory,
             batch,
             generator=generator,
@@ -244,8 +244,7 @@ class MolmoAct2JointVLA(ARVLA[MolmoAct2Inputs], FlowVLA[MolmoAct2Inputs]):
             num_steps=num_steps,
             method=method,
         )
-        assert prediction.noise is not None  # flow decodes always carry the draw
-        return FlowPrediction(actions=prediction.actions, noise=prediction.noise)
+        return FlowPrediction(actions=actions, noise=drawn)
 
     @override
     @torch.no_grad()

@@ -20,7 +20,8 @@ from bijou.modelling.decoders.flow import (
     SelfAttentionMode,
     TimeConditioning,
 )
-from bijou.modelling.interface import MemoryStream, ObservationMemory
+from bijou.modelling.encoders.gemma4 import GemmaMemory
+from bijou.modelling.interface import MemoryStream
 from bijou.modelling.nn import RopeParameters, RopeType
 
 BATCH, PREFIX_LEN, CHUNK, ACTION_DIM, STATE_DIM, HIDDEN = 2, 5, 4, 6, 6, 32
@@ -52,12 +53,12 @@ def tiny_config(time_conditioning: TimeConditioning) -> FlowDecoderConfig:
     )
 
 
-def fabricate() -> tuple[ObservationMemory, torch.Tensor, torch.Tensor, torch.Tensor]:
+def fabricate() -> tuple[GemmaMemory, torch.Tensor, torch.Tensor, torch.Tensor]:
     generator = torch.Generator().manual_seed(1)
     head_dim = 16
     key = torch.randn(BATCH, 1, PREFIX_LEN, head_dim, generator=generator)
     value = torch.randn(BATCH, 1, PREFIX_LEN, head_dim, generator=generator)
-    memory = ObservationMemory(
+    memory = GemmaMemory(
         streams={"kv0": MemoryStream(key=key, value=value)},
         length=PREFIX_LEN,
         padding_mask=None,

@@ -95,7 +95,7 @@ def _flow_checkpoint_info() -> CheckpointResolution:
         family=VLAFamily.GEMMA_FLOW,
         backbone="google/gemma-4-e2b-it",
         step=100,
-        objective_kind="flow",
+        objective={"kind": "flow"},
         train_args=CheckpointTrainArgs(
             decoder="flow",
             decoder_hidden=768,

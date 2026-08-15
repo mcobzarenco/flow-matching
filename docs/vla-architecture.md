@@ -1414,6 +1414,84 @@ structs; (d) the `suffix_positions` + `continue_molmo2_suffix`
 extractions (three copies → one); (e) snapflow constants →
 `SnapflowObjective` fields + CLI. Gate per sub-step: `check.py` + the
 five oracles bitwise + decode fixtures.
+VERDICT: PASS — five commits, landed d → a → b → c → e (fb74f7f,
+a460258, c75814d, 234dae9, a93c5d1). The gate held at EVERY sub-step:
+`check.py` CHECKS PASSED (865 passed, 21 skipped through 7c; 866 at 7e
+— one new snapflow-CLI test) and all five oracles bitwise through the
+CLI (runs in `outputs/train/oracle_p7{d,a,b,c,e}_*`): gemma flow
+2.7903/1.9152; gemma ar 27.8306/27.767; molmoact2 flow 1.3906/1.3305,
+ar 12.2254/12.3317, joint(KI, λ=1) 13.616/13.6621 with the
+cross-oracle exact (loss_action ≡ 1.3906/1.3305, loss_aux ≡
+12.2254/12.3317); decode fixtures ride check.py. Per sub-step:
+(d) `suffix_positions` landed in `ar_suffix.py` and
+`continue_molmo2_suffix` in `ar_molmo2.py` (3 verbatim copies → 1
+each); the only control-flow move was guard placement (error path
+only); `Molmo2ARDecoder`'s dead `text_vocab_size` died with it.
+(a) the `ObservationEncoder` ABC deleted — encoders are plain modules
+speaking a documented convention; `stream_geometries` retreated into
+the gemma encoder by fan-in (the molmo implementations returned `{}`
+purely for the ABC); `kv_stream_name` stays in `interface.py`
+(genuinely shared across the seam).
+(b) memory shape CHOSEN: per-trunk dataclasses beside their encoders
+— `encoders/gemma4.GemmaMemory` (streams + length + padding_mask +
+`cache: KVCache | None`, honestly optional: the flow path drops it,
+the suffix path retains it — `retain_cache` stays a Gemma-encoder
+knob) and `encoders/molmo2.Molmo2Memory` (`cache: Molmo2KVCache`
+TOTAL — the cache IS that trunk's product — + the molmoact2
+`conditioning_mask` flavor; the molmoact2 encoder imports the sibling
+type, and the Molmo2-side encoders dropped `retain_cache` outright:
+every caller passed True, so the None state was dead). interface.py
+keeps only the genuinely shared seam pieces (collation/instrument
+currencies, `MemoryStream`, `kv_stream_name` — the 7a fan-in rule);
+contra §6's sketch, the per-trunk memory types do NOT live in
+interface.py — the producer owns its product's type, which adds the
+decoders → encoders DAG edge (styleguide re-grounded). Guard
+disposition exactly as planned: `continue_molmo2_suffix` and
+`layer_kv_pairs` lost BOTH cache guards (types prove them);
+`ar_gemma._continue_suffix` lost the isinstance narrow but KEEPS the
+None guard (types cannot prove retention). The scaffold went generic —
+`ARSuffixDecoder[B, M: PrefixMemory]` with consumer-side Protocols
+(`PrefixMemory`/`PrefixCache`/`PrefixCacheLayer` in `ar_suffix.py`:
+exactly the lossy surface the trunk-generic scaffold reads; concretes
+bind their trunk's memory, so cache typing is static where it
+matters). Amendments: `decode_value_line` now reads batch size off the
+memory and device off the trunk's parameters (metadata only, ops
+unchanged) — which also fixed the latent StopIteration a
+`Molmo2ARVLA.predict_with_value_candidates` call would have hit on its
+stream-less memory; `blocks.cross_attention_mask` takes the padding
+mask directly (all it ever read), keeping `blocks.py`
+memory-type-free.
+(c) `FlowDecoder`/`MolmoFlowDecoder.predict_chunk` → `(actions,
+noise)` with the noise half ALWAYS the integrated draw (the
+`FlowPrediction.noise` contract rides through; the fallback draw
+stayed inside `predict_chunk` — bit-safety over relocation);
+`ARSuffixDecoder.predict_chunk` → `(actions, generations)` and its
+dead `noise`/`generator` parameters retired with the None-union;
+families wrap into `FlowPrediction`/`ARPrediction`/
+`NarratedPrediction`; `BijouPrediction` deleted from
+`modelling/interface.py` — `grep -rn "BijouPrediction" --include="*.py"
+bijou sim tests probes fontaine` empty. The only consumer residuals
+beyond 5b/5c's trait ports were eval's three family-concrete decoder
+reads (draws-tiling, SDE, φ_s), which unpack the pair.
+(e) `SNAPFLOW_ALPHA`/`SNAPFLOW_LAMBDA` deleted;
+`snapflow_distill_loss{,_sums}` take `alpha`/`shortcut_weight`;
+`GemmaFlowVLA` threads its payload (its frozen-constants refusal died
+with the constants); `--distill snapflow` now REQUIRES
+`--snapflow-alpha`/`--snapflow-shortcut-weight` (refused without
+--distill snapflow; refused under --resume where the RECORDED
+objective payload reconstructs them — `CheckpointResolution` carries
+the full tagged dict now, `objective_kind` is derived; historical
+values 0.5/0.1 live in the help text, never as defaults);
+`tests/test_snapflow_distill.py` pins the same numbers with the knobs
+threaded at the historical values. Folded in (the 5b-leftover hoist):
+`GemmaFlowVLA.predict_flow_sde` and a `target_time` widening on its
+`predict_flow` override — eval's SDE and φ_s branches now call the
+family methods, op-identically. Leftovers: the ticket-geometry checks
+and the draws-tiling instrument stay eval-side by design (noise
+provenance and `tile_memory` are eval machinery; molmo-side draw
+ensembling still awaits a Molmo2 KV tile path — the standing §8.13
+loose end); the phase-5 box gate remains PENDING-BOX (phase 5's, not
+this phase's); `materialize_joint_ar_view` still prunes with phase 8.
 
 **Phase 8 — conversion campaign + adoption.** Convert the real
 checkpoint inventory, verify each (recorded eval/loss numbers where
@@ -1497,3 +1575,12 @@ decomposition, so their claims stay bitwise.
   this plan is a refactor — the models it produces are numerically
   the models we already have, and every gate exists to prove exactly
   that.
+**Phase-5 box gate CLOSED**: `probe_grpo_replay_parity` on
+fontaine's machine against the VLA-format release conversion
+(`converted/vla_molmoact2_so100_101_release`): masks bit-equal on
+all 1903 (v1) + 1904 (v2) banked rows; report-only
+banked-vs-replay spreads reproduce the previously recorded values
+(v1 median 5.677e-1 / max 3.915, v2 median 5.517e-1 / max 8.843);
+WAVE INTEGRITY: PASS, exit 0. Log:
+`~/marius-convert-gate/outputs/grpo_gate_p5close.log`. Phase 5 is
+fully closed; remaining work is phase 8 only.

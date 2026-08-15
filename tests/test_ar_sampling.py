@@ -43,14 +43,14 @@ def test_low_temperature_limit_recovers_greedy() -> None:
     greedy decode, proving both share one decision point."""
     backbone, decoder, loaded = build()
     sample = batch(loaded)
-    greedy = decoder.predict_chunk(backbone, encode_memory(backbone), sample)
-    cold = decoder.predict_chunk(
+    greedy, _ = decoder.predict_chunk(backbone, encode_memory(backbone), sample)
+    cold, _ = decoder.predict_chunk(
         backbone,
         encode_memory(backbone),
         sample,
         sampling=ARSampling(temperature=1e-4, rngs=rngs(0)),
     )
-    assert torch.equal(cold.actions, greedy.actions)
+    assert torch.equal(cold, greedy)
 
 
 def test_sampled_decode_valid_deterministic_and_draw_distinct() -> None:
@@ -64,12 +64,12 @@ def test_sampled_decode_valid_deterministic_and_draw_distinct() -> None:
         encode_memory(backbone),
         sample,
         sampling=ARSampling(temperature=2.0, rngs=rngs(draw)),
-    )
+    )[0]
     first, again, other = hot(0), hot(0), hot(1)
-    assert first.actions.shape == (BATCH, loaded.time_horizon, loaded.action_dim)
-    assert bool(torch.isfinite(first.actions).all())
-    assert torch.equal(first.actions, again.actions)
-    assert not torch.equal(first.actions, other.actions)
+    assert first.shape == (BATCH, loaded.time_horizon, loaded.action_dim)
+    assert bool(torch.isfinite(first).all())
+    assert torch.equal(first, again)
+    assert not torch.equal(first, other)
 
 
 def test_sampler_rows_are_batch_composition_independent() -> None:
@@ -106,12 +106,12 @@ def test_cache_snapshot_restore_shares_one_prefill_exactly() -> None:
     sample = batch(loaded)
     memory = encode_memory(backbone)
     snapshot = decoder.cache_snapshot(memory)
-    first = decoder.predict_chunk(backbone, memory, sample)
+    first, _ = decoder.predict_chunk(backbone, memory, sample)
     decoder.cache_restore(memory, snapshot)
-    second = decoder.predict_chunk(backbone, memory, sample)
-    fresh = decoder.predict_chunk(backbone, encode_memory(backbone), sample)
-    assert torch.equal(first.actions, second.actions)
-    assert torch.equal(first.actions, fresh.actions)
+    second, _ = decoder.predict_chunk(backbone, memory, sample)
+    fresh, _ = decoder.predict_chunk(backbone, encode_memory(backbone), sample)
+    assert torch.equal(first, second)
+    assert torch.equal(first, fresh)
 
 
 def test_stable_sample_rng_keying() -> None:

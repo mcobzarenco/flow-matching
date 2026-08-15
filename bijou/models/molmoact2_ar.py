@@ -23,13 +23,13 @@ from torch import Tensor, nn
 from ..checkpoint import VLAMetadata, read_metadata
 from ..modelling.decoders.ar_molmoact2 import MolmoAct2ARDecoder
 from ..modelling.decoders.ar_suffix import MOLMOACT2_SUFFIX_FORMAT
+from ..modelling.encoders.molmo2 import Molmo2Memory
 from ..modelling.encoders.molmoact2 import MolmoAct2Encoder, MolmoAct2Inputs
 from ..modelling.interface import (
     ActionCaptureStep,
     ARSampling,
     CollatedBatch,
     InputsCollator,
-    ObservationMemory,
 )
 from ..modelling.molmo2.loading import load_config as load_molmo2_config
 from ..modelling.molmo2.model import Molmo2Model
@@ -145,13 +145,11 @@ class MolmoAct2ARVLA(ARVLA[MolmoAct2Inputs]):
         batch: CollatedBatch[MolmoAct2Inputs],
         *,
         with_grad: bool,
-    ) -> ObservationMemory:
-        # The suffix role continues the prefix cache — always retained.
+    ) -> Molmo2Memory:
         return self.encoder.encode(
             self.backbone,
             batch.encoder_inputs,
             with_grad=with_grad,
-            retain_cache=True,
         )
 
     @override

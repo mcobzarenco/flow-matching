@@ -27,13 +27,12 @@ from torch import Tensor, nn
 from ..checkpoint import backbone_directory, read_metadata
 from ..modelling.aux_text import AuxField
 from ..modelling.decoders.ar_molmo2 import Molmo2ARDecoder
-from ..modelling.encoders.molmo2 import Molmo2Encoder, Molmo2Inputs
+from ..modelling.encoders.molmo2 import Molmo2Encoder, Molmo2Inputs, Molmo2Memory
 from ..modelling.interface import (
     ActionCaptureStep,
     ARSampling,
     CollatedBatch,
     InputsCollator,
-    ObservationMemory,
     ValueCandidate,
 )
 from ..modelling.molmo2.loading import load_config as load_molmo2_config
@@ -110,13 +109,11 @@ class Molmo2ARVLA(ARVLA[Molmo2Inputs], NarratingVLA[Molmo2Inputs]):
         batch: CollatedBatch[Molmo2Inputs],
         *,
         with_grad: bool,
-    ) -> ObservationMemory:
-        # The suffix role continues the prefix cache — always retained.
+    ) -> Molmo2Memory:
         return self.encoder.encode(
             self.backbone,
             batch.encoder_inputs,
             with_grad=with_grad,
-            retain_cache=True,
         )
 
     @override

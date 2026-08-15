@@ -32,7 +32,7 @@ Their serving prompt, as a first-class bijou encoder strategy:
   are pinned and verified). The ``action_mode`` mask flavor computes
   the decoder-conditioning mask over the prompt (EOS/span-strip under
   ``'both'`` — load-bearing for the expert weights) which rides
-  ``ObservationMemory.conditioning_mask``.
+  ``Molmo2Memory.conditioning_mask``.
 
 Assembly is OWNED here (template, split, batching); the leaf transforms
 (task normalization, state binning, uint8 image path, token expansion,
@@ -56,7 +56,6 @@ from torch import Tensor, nn
 from ..gemma4.loading import resolve_checkpoint_dir
 from ..interface import (
     InputsCollator,
-    ObservationMemory,
     PromptInputs,
 )
 from ..molmo2.cache import Molmo2KVCache
@@ -66,6 +65,7 @@ from ..molmo2.model import (
     ensure_per_sample_patch_alignment,
 )
 from ..molmo2.tokenizer import Molmo2TextTokenizer
+from .molmo2 import Molmo2Memory
 from .molmoact2_processing import (
     CONTROL_END_TOKEN,
     CONTROL_START_TOKEN,
@@ -396,9 +396,10 @@ class MolmoAct2Encoder(nn.Module):
     """The MolmoAct2 prompt-side strategy: their-format collation and the
     multimodal prefix encode (a plain module speaking the encoder
     convention — :mod:`bijou.modelling.interface`'s module docstring).
-    The whole product is the prefix KV cache (``retain_cache=True`` —
-    the molmo_flow decoder conditions on it and the narration suffix
-    continues it) plus the ``conditioning_mask``.
+    The whole product is the prefix KV cache (the molmo_flow decoder
+    conditions on it and the narration suffix continues it, so
+    :class:`~bijou.modelling.encoders.molmo2.Molmo2Memory` always
+    carries it) plus the ``conditioning_mask``.
 
     NO prompt-side parameters: state enters as discrete tokens (no soft
     state token, no ``state_proj``), so ``prompt.safetensors`` for this
@@ -454,11 +455,10 @@ class MolmoAct2Encoder(nn.Module):
         inputs: MolmoAct2Inputs,
         *,
         with_grad: bool,
-        retain_cache: bool = False,
-    ) -> ObservationMemory:
+    ) -> Molmo2Memory:
         """Run the full multimodal prefix (vision inject + causal-OR-
-        image-block mask — NO state splice, state is in the ids), retain
-        the prefix cache when asked, and carry the conditioning mask to
+        image-block mask — NO state splice, state is in the ids),
+        filling the prefix cache, and carry the conditioning mask to
         the decoder seam."""
         padding_mask = inputs.attention_mask if inputs.has_padding else None
         with torch.no_grad() if not with_grad else contextlib.nullcontext():
@@ -478,22 +478,17 @@ class MolmoAct2Encoder(nn.Module):
                 dtype=embeds.dtype,
                 device=embeds.device,
             )
-            cache = (
-                Molmo2KVCache(len(backbone.text.transformer.blocks))
-                if retain_cache
-                else None
-            )
+            cache = Molmo2KVCache(len(backbone.text.transformer.blocks))
             backbone.text.transformer(
                 inputs_embeds=embeds,
                 position_ids=position_ids,
                 attention_mask=mask,
                 cache=cache,
             )
-        return ObservationMemory(
-            streams={},
+        return Molmo2Memory(
+            cache=cache,
             length=inputs.input_ids.shape[1],
             padding_mask=padding_mask,
-            cache=cache,
             conditioning_mask=inputs.conditioning_mask,
         )
 

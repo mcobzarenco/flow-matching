@@ -2,7 +2,7 @@
 
 The prompt — which carries the ``[generate|…]`` request conditioning
 and the projected state token (prompt format 3) — is prefill-encoded
-once (the ObservationMemory retains the full prefix KV cache); this
+once (the encoder's memory retains the full prefix KV cache); this
 decoder continues the suffix-format-5 sequence
 ``[<|turn>model\\n][value\\n per requested][BOA][t_1..t_k]`` through ALL
 backbone layers — the KV-shared deep half included — and reads
@@ -46,8 +46,9 @@ chunk by remaining symbol budget.
 from __future__ import annotations
 
 import abc
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Any, override
+from typing import Any, Protocol, override
 
 import numpy as np
 import torch
@@ -68,9 +69,7 @@ from ..codecs import ActionCodec
 from ..interface import (
     ActionCaptureStep,
     ARSampling,
-    BijouPrediction,
     CollatedBatch,
-    ObservationMemory,
     ValueCandidate,
 )
 
@@ -140,8 +139,51 @@ class ARDecoderConfig:
             )
 
 
+class PrefixCacheLayer(Protocol):
+    """One stored layer of a trunk's prefix KV cache: rebindable K/V
+    references (``update()`` rebinds to new tensors and never writes
+    into stored ones — the append-only contract snapshot/restore leans
+    on). None until the layer's first forward fills it."""
+
+    keys: Tensor | None
+    values: Tensor | None
+
+
+class PrefixCache(Protocol):
+    """What the trunk-generic scaffold needs of a prefix KV cache — the
+    structural surface both trunk caches (``gemma4.cache.KVCache``,
+    ``molmo2.cache.Molmo2KVCache``) share: a mutable fed-token counter
+    and per-layer rebindable K/V."""
+
+    seen_tokens: int
+
+    @property
+    def layers(self) -> Sequence[PrefixCacheLayer]: ...
+
+
+class PrefixMemory(Protocol):
+    """The encoded-prefix surface the trunk-generic suffix scaffold
+    reads — what the per-trunk memory dataclasses (``GemmaMemory``,
+    ``Molmo2Memory``) share structurally. Concrete decoders bind their
+    trunk's memory type; only the scaffold sees this view (its ``cache``
+    read is lossy — ``PrefixCache | None`` — which is why the None
+    guard survives HERE while the concretes' types prove theirs)."""
+
+    @property
+    def length(self) -> int: ...
+
+    @property
+    def padding_mask(self) -> Tensor | None: ...
+
+    @property
+    def cache(self) -> PrefixCache | None: ...
+
+    @property
+    def batch_size(self) -> int: ...
+
+
 def suffix_positions(
-    memory: ObservationMemory,
+    memory: PrefixMemory,
     *,
     batch: int,
     seq_len: int,
@@ -205,18 +247,19 @@ def _sample_action_ids(
     return (scaled + torch.from_numpy(gumbel).to(scaled.device)).argmax(dim=-1)
 
 
-class ARSuffixDecoder[B: nn.Module](nn.Module, abc.ABC):
+class ARSuffixDecoder[B: nn.Module, M: PrefixMemory](nn.Module, abc.ABC):
     """Trunk-generic half of the backbone-suffix role: the format-5
     scaffold (opener, value lines, BOA, grammar-masked action decode),
     the codec/config guards, and the teacher-forced forward shape.
 
-    Generic over the trunk type ``B``: the trunk-specific compute — how
-    suffix ids become embeddings, how they continue through the stack
-    against the prefix cache, and how full-id-space logits are read —
-    lives in the three abstract methods. The Gemma concrete is
-    :class:`GemmaARDecoder`; the Molmo2 concrete rides the same
-    scaffold (checkpoint decoder kind stays ``ar_backbone`` — the trunk
-    axis is the PROMPT kind).
+    Generic over the trunk type ``B`` and its memory type ``M``: the
+    trunk-specific compute — how suffix ids become embeddings, how they
+    continue through the stack against the prefix cache, and how
+    full-id-space logits are read — lives in the three abstract
+    methods, and each concrete binds its trunk's memory so cache typing
+    is static there. The Gemma concrete is :class:`GemmaARDecoder`; the
+    Molmo2 concrete rides the same scaffold (checkpoint decoder kind
+    stays ``ar_backbone`` — the trunk axis is the PROMPT kind).
 
     ``codec`` is a runtime resource (BPE + quantile glue), not a module;
     checkpoints reference the tokenizer artifact by id. ``opener_text``
@@ -308,7 +351,7 @@ class ARSuffixDecoder[B: nn.Module](nn.Module, abc.ABC):
     def _suffix_hidden(
         self,
         backbone: B,
-        memory: ObservationMemory,
+        memory: M,
         tokens: Tensor,
         fed: int,
     ) -> Tensor:
@@ -330,7 +373,7 @@ class ARSuffixDecoder[B: nn.Module](nn.Module, abc.ABC):
     def forward(
         self,
         backbone: B,
-        memory: ObservationMemory,
+        memory: M,
         tokens: Tensor,
     ) -> Tensor:
         """Next-token logits over the suffix (BACKBONE ids — mixed value
@@ -353,23 +396,20 @@ class ARSuffixDecoder[B: nn.Module](nn.Module, abc.ABC):
     def predict_chunk(
         self,
         backbone: B,
-        memory: ObservationMemory,
+        memory: M,
         batch: CollatedBatch[Any],
         *,
         generate: tuple[AuxField, ...] = (),
-        generator: torch.Generator | None = None,
-        noise: Tensor | None = None,
         sampling: ARSampling | None = None,
         action_capture: list[ActionCaptureStep] | None = None,
-    ) -> BijouPrediction:
+    ) -> tuple[Tensor, list[AuxGeneration]]:
         """The single decode path, fully scaffolded by the request set.
         Deterministic greedy by default; ``sampling`` switches the
         ACTION block (only) to per-row temperature sampling — the
-        sampled-draws eval instrument. ``generator``/``noise``
-        unused/must be None. ``action_capture`` (mcselect): a list
-        the ACTION phase appends one :class:`ActionCaptureStep` to per
-        decode step — the conditional scoring surface, captured from
-        the very logits the decode chose from (no re-forward, no
+        sampled-draws eval instrument. ``action_capture`` (mcselect): a
+        list the ACTION phase appends one :class:`ActionCaptureStep` to
+        per decode step — the conditional scoring surface, captured
+        from the very logits the decode chose from (no re-forward, no
         numeric drift vs the executed decode).
 
         ``generate`` must equal the request the PROMPT was collated with
@@ -387,10 +427,9 @@ class ARSuffixDecoder[B: nn.Module](nn.Module, abc.ABC):
         Requires an aux-trained checkpoint for non-empty ``generate``
         (requested-but-untrained fields would be elicited off-manifold).
 
-        Returns a BijouPrediction: chunks [B, chunk, action_dim] raw
-        units + one AuxGeneration per row (empty for ``generate=()``)."""
-        if noise is not None:
-            raise ValueError("GemmaARDecoder.predict_chunk takes no noise")
+        Returns ``(actions, generations)`` — the raw natural product;
+        the family wraps it: chunks [B, chunk, action_dim] raw units +
+        one AuxGeneration per row (empty-text for ``generate=()``)."""
         config = self.config
         if generate:
             trained = () if config.aux is None else config.aux.fields
@@ -616,16 +655,13 @@ class ARSuffixDecoder[B: nn.Module](nn.Module, abc.ABC):
             )
             for row in value_ids
         ]
-        return BijouPrediction(
-            actions=torch.stack(chunks).to(device),
-            generations=generations,
-        )
+        return torch.stack(chunks).to(device), generations
 
     @torch.no_grad()
     def teacher_forced_block_logits(
         self,
         backbone: B,
-        memory: ObservationMemory,
+        memory: M,
         action_ids: list[list[int] | None],
     ) -> list[Tensor | None]:
         """Teacher-forced next-token BLOCK logits over given per-row
@@ -690,7 +726,7 @@ class ARSuffixDecoder[B: nn.Module](nn.Module, abc.ABC):
     def decode_value_line(
         self,
         backbone: B,
-        memory: ObservationMemory,
+        memory: M,
         *,
         field: AuxField,
         sampling: ARSampling | None = None,
@@ -730,9 +766,11 @@ class ARSuffixDecoder[B: nn.Module](nn.Module, abc.ABC):
                 "over fixed candidates) — free-text candidate decoding "
                 "does not apply",
             )
-        streams = next(iter(memory.streams.values()))
-        batch_size = int(streams.key.shape[0])
-        device = streams.key.device
+        batch_size = memory.batch_size
+        # The trunk's device (the teacher_forced_block_logits rationale):
+        # the value decode runs through the trunk either way, and the
+        # memory type is scaffold-opaque here.
+        device = next(backbone.parameters()).device
         if sampling is not None and len(sampling.rngs) != batch_size:
             raise ValueError(
                 f"sampling carries {len(sampling.rngs)} row RNGs for a "
@@ -825,7 +863,7 @@ class ARSuffixDecoder[B: nn.Module](nn.Module, abc.ABC):
     def _step(
         self,
         backbone: B,
-        memory: ObservationMemory,
+        memory: M,
         feed: Tensor,
         fed: int,
     ) -> tuple[Tensor, int]:
@@ -837,7 +875,7 @@ class ARSuffixDecoder[B: nn.Module](nn.Module, abc.ABC):
 
     @staticmethod
     def cache_snapshot(
-        memory: ObservationMemory,
+        memory: PrefixMemory,
     ) -> tuple[int, list[tuple[Tensor | None, Tensor | None]]]:
         """Capture the prefix cache by REFERENCE so N sampled decodes
         share one prefill (draws differ only in suffix K/V — the
@@ -848,7 +886,7 @@ class ARSuffixDecoder[B: nn.Module](nn.Module, abc.ABC):
         restoring the old references recovers the exact prefill state
         at zero copy cost. A future in-place (preallocated) cache
         breaks this contract — its snapshot must copy."""
-        cache: Any = memory.cache
+        cache = memory.cache
         if cache is None:
             raise ValueError(
                 "cache_snapshot on a memory without a retained prefix "
@@ -858,12 +896,12 @@ class ARSuffixDecoder[B: nn.Module](nn.Module, abc.ABC):
 
     @staticmethod
     def cache_restore(
-        memory: ObservationMemory,
+        memory: PrefixMemory,
         snapshot: tuple[int, list[tuple[Tensor | None, Tensor | None]]],
     ) -> None:
         """Rewind the memory's cache to a :meth:`cache_snapshot` — the
         suffix K/V appended since are dropped by rebinding."""
-        cache: Any = memory.cache
+        cache = memory.cache
         if cache is None:
             raise ValueError("cache_restore on a memory without a cache")
         seen_tokens, layers = snapshot
@@ -908,7 +946,7 @@ def _parse_aux(
 
 
 def suffix_targets(
-    decoder: ARSuffixDecoder[Any],
+    decoder: ARSuffixDecoder[Any, Any],
     batch: CollatedBatch[Any],
 ) -> tuple[Tensor, Tensor, Tensor | None]:
     """(full suffix ids [B, 1+S], shifted CE targets [B, S], aux-position
@@ -958,7 +996,7 @@ def suffix_targets(
 
 
 def ar_backbone_counts(
-    decoder: ARSuffixDecoder[Any],
+    decoder: ARSuffixDecoder[Any, Any],
     batch: CollatedBatch[Any],
 ) -> tuple[Tensor, Tensor | None]:
     """(action target count, aux target count | None) for one batch —
@@ -973,10 +1011,10 @@ def ar_backbone_counts(
     return (valid & ~is_aux).sum(), (valid & is_aux).sum()
 
 
-def ar_backbone_loss_sums[B: nn.Module](
+def ar_backbone_loss_sums[B: nn.Module, M: PrefixMemory](
     backbone: B,
-    decoder: ARSuffixDecoder[B],
-    memory: ObservationMemory,
+    decoder: ARSuffixDecoder[B, M],
+    memory: M,
     batch: CollatedBatch[Any],
 ) -> tuple[Tensor, Tensor, Tensor | None, Tensor | None]:
     """Sum-form objective for chunked backward: (action CE SUM with
@@ -1013,10 +1051,10 @@ def ar_backbone_loss_sums[B: nn.Module](
     )
 
 
-def ar_backbone_losses[B: nn.Module](
+def ar_backbone_losses[B: nn.Module, M: PrefixMemory](
     backbone: B,
-    decoder: ARSuffixDecoder[B],
-    memory: ObservationMemory,
+    decoder: ARSuffixDecoder[B, M],
+    memory: M,
     batch: CollatedBatch[Any],
 ) -> tuple[Tensor, Tensor, Tensor | None, Tensor | None]:
     """Teacher-forced FULL-VOCABULARY cross-entropy over the format-5
@@ -1061,10 +1099,10 @@ def ar_backbone_losses[B: nn.Module](
     return total, action, aux_sum, aux_count
 
 
-def ar_backbone_loss[B: nn.Module](
+def ar_backbone_loss[B: nn.Module, M: PrefixMemory](
     backbone: B,
-    decoder: ARSuffixDecoder[B],
-    memory: ObservationMemory,
+    decoder: ARSuffixDecoder[B, M],
+    memory: M,
     batch: CollatedBatch[Any],
 ) -> Tensor:
     """Scalar objective (see :func:`ar_backbone_losses`; the sum forms

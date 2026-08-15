@@ -398,12 +398,12 @@ def phase_probe() -> None:
         item = dataset[index]
         items = policy.apply_overrides([item])
         batch = policy.collator(items).to(policy.device)
-        # The suffix role continues the prefix cache — always retained.
+        # The suffix role continues the prefix cache (the Molmo2 memory
+        # always carries it).
         memory = model.encoder.encode(
             backbone,
             batch.encoder_inputs,
             with_grad=False,
-            retain_cache=True,
         )
         return item, memory
 

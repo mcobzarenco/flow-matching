@@ -50,13 +50,11 @@ import torch
 import torch.nn.functional as F
 from torch import Tensor, nn
 
+from ..encoders.molmo2 import Molmo2Memory
 from ..interface import (
-    BijouPrediction,
     CollatedBatch,
-    ObservationMemory,
     SamplingMethod,
 )
-from ..molmo2.cache import Molmo2KVCache
 
 
 def _modulate(x: Tensor, shift: Tensor, scale: Tensor) -> Tensor:
@@ -790,14 +788,14 @@ class MolmoFlowDecoder(nn.Module):
     @torch.no_grad()
     def predict_chunk(
         self,
-        memory: ObservationMemory,
+        memory: Molmo2Memory,
         batch: CollatedBatch[Any],
         *,
         generator: torch.Generator | None = None,
         noise: Tensor | None = None,
         num_steps: int | None = None,
         method: SamplingMethod = SamplingMethod.EULER,
-    ) -> BijouPrediction:
+    ) -> tuple[Tensor, Tensor]:
         """RAW-unit chunk prediction — their serving tail on our seam:
         extract per-layer KV off the prefix cache, integrate (default =
         the checkpoint's recorded ``num_flow_steps``, Euler — their
@@ -806,10 +804,15 @@ class MolmoFlowDecoder(nn.Module):
         ``batch`` stats are deliberately unused — normalization is
         decoder-owned (§8.13 decision 6).
 
+        Returns ``(actions, noise)`` — the raw natural product; the
+        family wraps it. ``noise`` is ALWAYS the initial draw the
+        solver integrated (supplied or drawn).
+
         Shapes:
-        - ``noise`` (when given): [B, action_horizon, max_action_dim]
-        - returns: BijouPrediction actions [B, n_action_steps,
-          action_dim] fp32 raw units; generations None
+        - ``noise`` (given or returned): [B, action_horizon,
+          max_action_dim] — the decoder's own geometry
+        - returns actions: [B, n_action_steps, action_dim] fp32 raw
+          units
         """
         del batch  # stats intentionally unused; signature mirrors flow's
         runtime = self._configured()
@@ -843,7 +846,7 @@ class MolmoFlowDecoder(nn.Module):
         # BACK to the sampled dtype, then fp32 — the bf16 quantization is
         # part of the reference output when the expert runs bf16.
         actions = unnormalized.to(sliced.dtype).to(torch.float32)
-        return BijouPrediction(actions=actions, generations=None, noise=noise)
+        return actions, noise
 
     def iter_blocks(self) -> Iterator[MolmoFlowBlock]:
         for block in self.blocks:
@@ -1187,36 +1190,26 @@ class MolmoFlowDecoder(nn.Module):
 
 
 def layer_kv_pairs(
-    memory: ObservationMemory,
+    memory: Molmo2Memory,
     *,
     num_blocks: int,
     detach: bool = False,
 ) -> list[tuple[Tensor, Tensor]]:
     """Per-layer conditioning pairs off the prefix cache in the memory —
     the trunk-specific extraction at the seam (the ``ar_molmo2``
-    precedent: this decoder consumes the Molmo2 cache directly; the
-    cache layout [B, kv_heads, S, head_dim] is OUR contract, so the
-    flatten needs no layout inference). ``detach`` is the knowledge-
-    insulation seam (§8.13 decision 8): detached pairs carry no graph,
-    so flow gradients into every trunk parameter are exactly zero.
+    precedent: this decoder consumes the Molmo2 cache directly — the
+    memory type carries it, statically; the cache layout
+    [B, kv_heads, S, head_dim] is OUR contract, so the flatten needs no
+    layout inference). ``detach`` is the knowledge-insulation seam
+    (§8.13 decision 8): detached pairs carry no graph, so flow
+    gradients into every trunk parameter are exactly zero.
 
     Shapes:
     - ``memory.cache`` layers: K/V [B, kv_heads, S, head_dim] each
     - returns: ``num_blocks`` pairs of [B, S, kv_heads * head_dim]
     """
-    cache = memory.cache
-    if cache is None:
-        raise ValueError(
-            "ObservationMemory carries no prefix cache — encode with "
-            "retain_cache=True (the molmoact2 families do)",
-        )
-    if not isinstance(cache, Molmo2KVCache):
-        raise TypeError(
-            f"molmo_flow conditions on the Molmo2 prefix cache; the memory "
-            f"carries {type(cache).__name__}",
-        )
     pairs: list[tuple[Tensor, Tensor]] = []
-    for layer_idx, layer in enumerate(cache.layers):
+    for layer_idx, layer in enumerate(memory.cache.layers):
         keys, values = layer.keys, layer.values
         if keys is None or values is None:
             raise ValueError(
@@ -1237,7 +1230,7 @@ def layer_kv_pairs(
     return pairs
 
 
-def conditioning_mask_of(memory: ObservationMemory) -> Tensor | None:
+def conditioning_mask_of(memory: Molmo2Memory) -> Tensor | None:
     """The expert's prompt mask: the encoder-computed conditioning mask
     (the ``action_mode`` flavor) when present, else the padding mask —
     None only for unpadded memories with no flavor (everything
@@ -1255,7 +1248,7 @@ def conditioning_mask_of(memory: ObservationMemory) -> Tensor | None:
 
 def molmo_flow_loss_sums(
     decoder: MolmoFlowDecoder,
-    memory: ObservationMemory,
+    memory: Molmo2Memory,
     batch: CollatedBatch[Any],
     *,
     insulate: bool = False,
@@ -1326,7 +1319,7 @@ def molmo_flow_loss_sums(
 
 def molmo_flow_loss(
     decoder: MolmoFlowDecoder,
-    memory: ObservationMemory,
+    memory: Molmo2Memory,
     batch: CollatedBatch[Any],
     *,
     insulate: bool = False,

@@ -32,12 +32,13 @@ from test_flow_decoder import (
 
 from bijou.eval.policies import tile_memory, tile_stats
 from bijou.modelling.decoders.flow import FlowDecoder, TimeConditioning
-from bijou.modelling.interface import NormStats, ObservationMemory, SamplingMethod
+from bijou.modelling.encoders.gemma4 import GemmaMemory
+from bijou.modelling.interface import NormStats, SamplingMethod
 
 DRAWS = 3
 
 
-def fabricate_padded() -> tuple[ObservationMemory, torch.Tensor]:
+def fabricate_padded() -> tuple[GemmaMemory, torch.Tensor]:
     """A padded two-item memory with UNEQUAL real lengths (5 vs 3), so
     the decoder's per-sample cross-attention position bases differ by
     row — the part of the memory contract a whole-batch tile could

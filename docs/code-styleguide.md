@@ -196,8 +196,10 @@ cited, and the doc-cited `probe_rollout_vram.py` is lost outright
   landed with absolute self-imports.)
 - **The import DAG is strict** and reviewed:
   `train`/`eval`/`rollout`/`judge` → `loading` → `models/*` →
-  `vla`/`sections` → `modelling/*` (`…/encoders`/`…/decoders` →
-  `modelling/interface` → `modelling/gemma4`/`modelling/molmo2`) →
+  `vla`/`sections` → `modelling/*` (`…/decoders` → `…/encoders` →
+  `modelling/interface` → `modelling/gemma4`/`modelling/molmo2` —
+  decoders import the encoders' per-trunk memory types: the producer
+  owns its product's type) →
   `fast`, importing downward only; `data` sits beside the model stack
   (loading imports both; `judge` touches only `data`);
   `modelling/aux_text` and `annotations` are leaves.

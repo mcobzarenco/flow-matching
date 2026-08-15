@@ -50,12 +50,11 @@ from bijou.modelling.decoders.flow import (
     flow_matching_loss,
     flow_matching_loss_sums,
 )
-from bijou.modelling.gemma4.cache import KVCache
+from bijou.modelling.encoders.gemma4 import GemmaMemory
 from bijou.modelling.interface import (
     CollatedBatch,
     MemoryStream,
     NormStats,
-    ObservationMemory,
 )
 from bijou.train import ChunkedBatch, ChunkingCollator
 
@@ -89,13 +88,12 @@ def slice_batch(sample: CollatedBatch[Any], i: int) -> CollatedBatch[Any]:
     )
 
 
-def slice_memory(memory: ObservationMemory, i: int) -> ObservationMemory:
+def slice_memory(memory: GemmaMemory, i: int) -> GemmaMemory:
     """Row i of a batched memory, cache included — the SAME prefix
     numerics as the batch prefill (bit-identical slices), so gradient
     comparisons isolate the chunk decomposition itself."""
     cache = memory.cache
     if cache is not None:
-        assert isinstance(cache, KVCache)  # opaque at the seam; Gemma here
         sliced = copy.copy(cache)
         sliced.layers = []
         for layer in cache.layers:
@@ -105,7 +103,7 @@ def slice_memory(memory: ObservationMemory, i: int) -> ObservationMemory:
                 layer_copy.values = layer_copy.values[i : i + 1]
             sliced.layers.append(layer_copy)
         cache = sliced
-    return ObservationMemory(
+    return GemmaMemory(
         streams={
             name: MemoryStream(s.key[i : i + 1], s.value[i : i + 1])
             for name, s in memory.streams.items()

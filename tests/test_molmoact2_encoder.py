@@ -18,9 +18,10 @@ golden fixtures). Pinned:
   positions source must not change);
 - bijou-only prompt surfaces are refused loudly (condition/[generate|…]
   has no bytes in this format), as are empty setup/control strings;
-- ``MolmoAct2Encoder.encode``: prefix cache retained and filled, the
-  conditioning mask rides ``ObservationMemory``, and NO state splice
-  happens (state lives in the ids — there is no ``state_proj``).
+- ``MolmoAct2Encoder.encode``: prefix cache filled (the typed
+  ``Molmo2Memory`` always carries it), the conditioning mask rides the
+  memory, and NO state splice happens (state lives in the ids — there
+  is no ``state_proj``).
 """
 
 from __future__ import annotations
@@ -49,7 +50,6 @@ from bijou.modelling.encoders.molmoact2_processing import (
     pack_action_example,
 )
 from bijou.modelling.interface import CameraFrame, PromptInputs
-from bijou.modelling.molmo2.cache import Molmo2KVCache
 from bijou.modelling.molmo2.config import Molmo2Config
 from bijou.modelling.molmo2.model import Molmo2Model
 from bijou.modelling.molmo2.text import Molmo2TextModel
@@ -380,9 +380,10 @@ def _tiny_trunk() -> Molmo2Model:
 
 
 def test_encoder_encode_retains_cache_and_conditioning_mask() -> None:
-    """The encode product: a filled prefix cache (every layer), the
-    conditioning mask threaded onto ObservationMemory, empty streams —
-    and no state splice anywhere (this encoder has no parameters)."""
+    """The encode product: a filled prefix cache (every layer — the
+    typed Molmo2Memory always carries it), the conditioning mask
+    threaded onto the memory — and no state splice anywhere (this
+    encoder has no parameters)."""
     trunk = _tiny_trunk()
     encoder = MolmoAct2Encoder(
         "unused",
@@ -395,14 +396,11 @@ def test_encoder_encode_retains_cache_and_conditioning_mask() -> None:
     assert len(list(encoder.parameters())) == 0
     collator = _collator(action_mode="both")
     inputs = collator([_sample("Pick up the cube.", 8), _sample("Pick.", 9)])
-    memory = encoder.encode(trunk, inputs, with_grad=False, retain_cache=True)
-    assert memory.streams == {}
-    assert isinstance(memory.cache, Molmo2KVCache)
+    memory = encoder.encode(trunk, inputs, with_grad=False)
     assert memory.cache.seen_tokens == inputs.input_ids.shape[1]
     for layer in memory.cache.layers:
         assert layer.keys is not None and layer.values is not None
+    assert memory.batch_size == inputs.input_ids.shape[0]
     assert memory.conditioning_mask is not None
     assert torch.equal(memory.conditioning_mask, inputs.conditioning_mask)
     assert memory.padding_mask is not None  # mixed prompt lengths
-    without = encoder.encode(trunk, inputs, with_grad=False, retain_cache=False)
-    assert without.cache is None

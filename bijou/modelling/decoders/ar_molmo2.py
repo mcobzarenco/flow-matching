@@ -24,8 +24,8 @@ compute:
   and are never legal targets or emissions: their columns are filled
   with the dtype minimum (softmax weight → 0, argmax never selects).
 - **Continuation**: the suffix continues through all 36 layers against
-  the prefix :class:`~bijou.modelling.molmo2.cache.Molmo2KVCache` (built by
-  ``Molmo2Encoder.encode(retain_cache=True)``); suffix queries are
+  the prefix :class:`~bijou.modelling.molmo2.cache.Molmo2KVCache` (every
+  ``Molmo2Encoder.encode`` product carries it); suffix queries are
   text-typed, so plain shifted-causal masking is exactly the reference
   ``or_mask`` semantics for them (image-block bidirectionality concerns
   image QUERIES, which all live in the prefill).
@@ -46,8 +46,7 @@ from torch.nn.attention import SDPBackend, sdpa_kernel
 
 from ..aux_text import SUFFIX_FORMAT, AuxRuntime, TextTokenizer
 from ..codecs import ActionCodec
-from ..interface import ObservationMemory
-from ..molmo2.cache import Molmo2KVCache
+from ..encoders.molmo2 import Molmo2Memory
 from ..molmo2.config import Molmo2TextConfig
 from ..molmo2.model import Molmo2Model
 from ..nn import DeviceLike
@@ -62,16 +61,18 @@ MOLMO2_GENERATION_OPENER = "<|im_start|>assistant\n"
 
 def continue_molmo2_suffix(
     backbone: Molmo2Model,
-    memory: ObservationMemory,
+    memory: Molmo2Memory,
     embeds: Tensor,
     fed: int,
 ) -> Tensor:
     """Run suffix embeddings through ALL Molmo2 layers against the
     prefix cache (which they extend in place) — the continuation half
-    every Molmo2-trunk suffix concrete shares: the cache guards, the
+    every Molmo2-trunk suffix concrete shares: the
     :func:`~bijou.modelling.decoders.ar_suffix.suffix_positions`
     geometry, the non-cuDNN sdpa pin, and the transformer call. What
     stays per-concrete is exactly how suffix ids become ``embeds``.
+    The memory type IS the pairing guard: a :class:`Molmo2Memory`
+    always carries its typed cache, so there is no runtime narrowing.
 
     ``fed`` = suffix positions already in the cache from previous
     calls (decode loop).
@@ -80,19 +81,6 @@ def continue_molmo2_suffix(
       - ``embeds``: [B, S, hidden]
       - returns: final-normed hidden states [B, S, hidden]
     """
-    cache = memory.cache
-    if cache is None:
-        raise ValueError(
-            "ObservationMemory carries no prefix cache — encode with "
-            "retain_cache=True (suffix-decoder families do)",
-        )
-    if not isinstance(cache, Molmo2KVCache):
-        # The seam types the cache opaquely (trunk-private contract);
-        # this continuation rides the MOLMO2 stack.
-        raise TypeError(
-            f"the Molmo2 suffix continuation extends the Molmo2 prefix "
-            f"cache; the memory carries {type(cache).__name__}",
-        )
     batch, seq_len, _ = embeds.shape
     positions, full_mask = suffix_positions(
         memory,
@@ -120,11 +108,11 @@ def continue_molmo2_suffix(
             inputs_embeds=embeds,
             position_ids=positions,
             padding_mask=full_mask,
-            cache=cache,
+            cache=memory.cache,
         )
 
 
-class Molmo2ARDecoder(ARSuffixDecoder[Molmo2Model]):
+class Molmo2ARDecoder(ARSuffixDecoder[Molmo2Model, Molmo2Memory]):
     """The Molmo2 trunk's suffix role (see the module docstring).
 
     ``text_config`` is the FULL decoder architecture — construction
@@ -222,7 +210,7 @@ class Molmo2ARDecoder(ARSuffixDecoder[Molmo2Model]):
     def _suffix_hidden(
         self,
         backbone: Molmo2Model,
-        memory: ObservationMemory,
+        memory: Molmo2Memory,
         tokens: Tensor,
         fed: int,
     ) -> Tensor:

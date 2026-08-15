@@ -62,13 +62,13 @@ from bijou.modelling.decoders.ar_suffix import (
     ARDecoderConfig,
     suffix_targets,
 )
+from bijou.modelling.encoders.molmo2 import Molmo2Memory
 from bijou.modelling.encoders.molmoact2 import MOLMOACT2_PROMPT_FORMAT, MolmoAct2Encoder
 from bijou.modelling.interface import (
     ActionCaptureStep,
     ARSampling,
     CollatedBatch,
     NormStats,
-    ObservationMemory,
 )
 from bijou.modelling.molmo2.cache import Molmo2KVCache
 from bijou.modelling.molmo2.config import Molmo2Config
@@ -193,7 +193,7 @@ def encode_memory(
     model: Molmo2Model,
     *,
     padded: bool = False,
-) -> ObservationMemory:
+) -> Molmo2Memory:
     """A text-only prefill with a retained cache — the decoder is
     prompt-agnostic (it continues a Molmo2KVCache); the MolmoAct2
     PROMPT's own bytes are the encoder suite's contract, not this
@@ -221,11 +221,10 @@ def encode_memory(
             attention_mask=mask,
             cache=cache,
         )
-    return ObservationMemory(
-        streams={},
+    return Molmo2Memory(
+        cache=cache,
         length=9,
         padding_mask=real if padded else None,
-        cache=cache,
     )
 
 
@@ -455,13 +454,13 @@ def test_predict_chunk_masked_decode_and_capture(
     sample = batch(raw, sequences)
     capture: list[ActionCaptureStep] = []
     with torch.no_grad():
-        prediction = decoder.predict_chunk(
+        actions, _ = decoder.predict_chunk(
             model,
             encode_memory(model),
             sample,
             action_capture=capture,
         )
-    assert prediction.actions.shape == (BATCH, T, D)
+    assert actions.shape == (BATCH, T, D)
     assert len(capture) > 0
     lengths = loaded.symbol_lengths
     bins_per_row: list[list[int]] = [[] for _ in range(BATCH)]
@@ -483,7 +482,7 @@ def test_predict_chunk_masked_decode_and_capture(
         expected = torch.from_numpy(
             loaded.decode(bins_per_row[row], Q01, Q99),
         ).float()
-        torch.testing.assert_close(prediction.actions[row], expected)
+        torch.testing.assert_close(actions[row], expected)
 
 
 def test_sampled_decode_is_keyed_deterministic(
@@ -505,7 +504,7 @@ def test_sampled_decode_is_keyed_deterministic(
                 encode_memory(model),
                 sample,
                 sampling=sampling,
-            ).actions
+            )[0]
 
     assert torch.equal(draw(), draw())
 

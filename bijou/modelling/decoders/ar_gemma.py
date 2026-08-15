@@ -23,15 +23,14 @@ from ..aux_text import (
     TextTokenizer,
 )
 from ..codecs import ActionCodec
-from ..gemma4.cache import KVCache
+from ..encoders.gemma4 import GemmaMemory
 from ..gemma4.config import Gemma4TextConfig
 from ..gemma4.model import Gemma4Model
-from ..interface import ObservationMemory
 from ..nn import DeviceLike
 from .ar_suffix import ARDecoderConfig, ARSuffixDecoder, suffix_positions
 
 
-class GemmaARDecoder(ARSuffixDecoder[Gemma4Model]):
+class GemmaARDecoder(ARSuffixDecoder[Gemma4Model, GemmaMemory]):
     """The Gemma backbone's suffix role (see the module docstring).
 
     ``text_config`` is the FULL backbone architecture — construction
@@ -195,7 +194,7 @@ class GemmaARDecoder(ARSuffixDecoder[Gemma4Model]):
     def _continue_suffix(
         self,
         backbone: Gemma4Model,
-        memory: ObservationMemory,
+        memory: GemmaMemory,
         embeds: Tensor,
         per_layer: Tensor,
         fed: int,
@@ -207,16 +206,11 @@ class GemmaARDecoder(ARSuffixDecoder[Gemma4Model]):
         Returns final-normed hidden states [B, S, hidden]."""
         cache = memory.cache
         if cache is None:
+            # The type cannot prove retention: the Gemma encoder also
+            # serves the flow path, which drops the cache.
             raise ValueError(
-                "ObservationMemory carries no prefix cache — encode with "
+                "GemmaMemory carries no prefix cache — encode with "
                 "retain_cache=True (suffix-decoder families do)",
-            )
-        if not isinstance(cache, KVCache):
-            # The seam types the cache opaquely (trunk-private contract);
-            # this decoder continues the GEMMA stack through it.
-            raise TypeError(
-                f"ar_backbone continues the Gemma prefix cache; the memory "
-                f"carries {type(cache).__name__}",
             )
         batch, seq_len, _ = embeds.shape
         positions, full_mask = suffix_positions(
@@ -257,7 +251,7 @@ class GemmaARDecoder(ARSuffixDecoder[Gemma4Model]):
     def _suffix_hidden(
         self,
         backbone: Gemma4Model,
-        memory: ObservationMemory,
+        memory: GemmaMemory,
         tokens: Tensor,
         fed: int,
     ) -> Tensor:

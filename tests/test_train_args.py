@@ -64,15 +64,20 @@ def _checkpoint(**overrides: object) -> CheckpointResolution:
         "family": VLAFamily.GEMMA_FLOW,
         "backbone": "google/gemma-4-e2b-it",
         "step": 1000,
-        "objective_kind": "flow",
+        "objective": {"kind": "flow"},
         "train_args": train_args,
         "condition_fields": (),
         "generate_bracket": True,
     }
+    # "objective" is ambiguous between the two records: here it names
+    # the RESOLUTION's metadata dict (the tagged objective payload),
+    # never the legacy train_args string (CheckpointTrainArgs.objective
+    # — convert-time family inference, not a resolution input).
     train_args_overrides = {
         k: v
         for k, v in overrides.items()
-        if k in {f.name for f in dataclasses.fields(CheckpointTrainArgs)}
+        if k != "objective"
+        and k in {f.name for f in dataclasses.fields(CheckpointTrainArgs)}
     }
     if train_args_overrides:
         fields["train_args"] = dataclasses.replace(train_args, **train_args_overrides)
@@ -173,14 +178,59 @@ def test_resume_refuses_every_arch_flag() -> None:
 
 def test_resume_refuses_distill() -> None:
     """The objective is recorded and locked under --resume; a recorded
-    snapflow objective restores WITHOUT the flag."""
+    snapflow objective restores WITHOUT the flags — mix knobs included,
+    from the recorded payload."""
     info = _checkpoint()
     with pytest.raises(SystemExit):
         _parse(["--resume", "ckpt", "--distill", "snapflow"], info)
-    recorded = _checkpoint(objective_kind="snapflow", target_time_embed=True)
+    recorded = _checkpoint(
+        objective={"kind": "snapflow", "alpha": 0.5, "shortcut_weight": 0.1},
+        target_time_embed=True,
+    )
+    with pytest.raises(SystemExit):
+        _parse(["--resume", "ckpt", "--snapflow-alpha", "0.5"], recorded)
     args = _parse(["--resume", "ckpt"], recorded)
     assert args.distill == "snapflow"
+    assert args.snapflow_alpha == 0.5
+    assert args.snapflow_shortcut_weight == 0.1
     assert args.target_time_embed is True
+
+
+def test_snapflow_mix_flags_are_required_and_scoped() -> None:
+    """--distill snapflow declares its mix explicitly (no silent
+    defaults) and the mix flags are refused without it."""
+    snapflow = ["--family", "gemma_flow", "--distill", "snapflow"]
+    with pytest.raises(SystemExit):
+        _parse(snapflow)  # no mix flags
+    with pytest.raises(SystemExit):
+        _parse([*snapflow, "--snapflow-alpha", "0.5"])  # half a mix
+    with pytest.raises(SystemExit):
+        # Flags without the objective they parameterize.
+        _parse(["--family", "gemma_flow", "--snapflow-alpha", "0.5"])
+    with pytest.raises(SystemExit):
+        # Value invariants live on the payload: alpha=1 is FlowObjective.
+        _parse(
+            [
+                *snapflow,
+                "--snapflow-alpha",
+                "1.0",
+                "--snapflow-shortcut-weight",
+                "0.1",
+            ],
+        )
+    args = _parse(
+        [
+            *snapflow,
+            "--snapflow-alpha",
+            "0.5",
+            "--snapflow-shortcut-weight",
+            "0.1",
+        ],
+    )
+    assert args.distill == "snapflow"
+    assert args.snapflow_alpha == 0.5
+    assert args.snapflow_shortcut_weight == 0.1
+    assert args.target_time_embed is True  # implied where mutable
 
 
 def test_resume_resolves_recorded_architecture() -> None:
@@ -200,7 +250,7 @@ def test_resume_ar_family_infers_implied_bracket() -> None:
     implicitly — resolution must infer True, not the recorded False."""
     info = _checkpoint(
         family=VLAFamily.GEMMA_AR,
-        objective_kind="ar",
+        objective={"kind": "ar", "aux_loss_weight": 1.0},
         fast_tokenizer="user/repo/tok_v2",
         # Real AR records carry the flow-only knobs at their defaults
         # (the parser refused anything else for non-flow).
@@ -290,24 +340,28 @@ def test_objective_refused_off_family_and_fresh() -> None:
 
 
 def test_snapflow_implies_phi_s_where_mutable() -> None:
+    mix = ["--snapflow-alpha", "0.5", "--snapflow-shortcut-weight", "0.1"]
     fresh = _parse(
         [
             "--family",
             "gemma_flow",
             "--distill",
             "snapflow",
+            *mix,
             "--time-conditioning",
             "adarms",
         ],
     )
     assert fresh.target_time_embed is True
     # --init-from may declare a new objective (stage-2 flows); φ_s is
-    # implied there too (the sanctioned zero-init extension).
+    # implied there too (the sanctioned zero-init extension), and the
+    # mix is re-declared explicitly (a NEW objective, not the record).
     extended = _parse(
-        ["--init-from", "ckpt", "--distill", "snapflow"],
+        ["--init-from", "ckpt", "--distill", "snapflow", *mix],
         _checkpoint(target_time_embed=False),
     )
     assert extended.target_time_embed is True
+    assert extended.snapflow_alpha == 0.5
 
 
 def test_ar_family_shape_flags_refused_fresh() -> None:

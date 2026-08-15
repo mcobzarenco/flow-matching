@@ -46,8 +46,9 @@ from bijou.eval.policies import (
     token_rows_from_capture,
 )
 from bijou.modelling.decoders.ar_gemma import GemmaARDecoder
+from bijou.modelling.encoders.gemma4 import GemmaMemory
 from bijou.modelling.gemma4.model import Gemma4Model
-from bijou.modelling.interface import ActionCaptureStep, ARSampling, ObservationMemory
+from bijou.modelling.interface import ActionCaptureStep, ARSampling
 from sim.rollout_sim_parallel import TrainingRowWriter
 from sim.rollout_sim_parallel import parse_args as rollout_parse_args
 
@@ -69,7 +70,7 @@ def unpack(row: TokenRow) -> torch.Tensor:
 def greedy_rows() -> tuple[
     Gemma4Model,
     GemmaARDecoder,
-    ObservationMemory,
+    GemmaMemory,
     list[ActionCaptureStep],
     list[TokenRow],
 ]:
@@ -91,16 +92,16 @@ def test_greedy_capture_is_pure_observation() -> None:
     """The surface records the decode; it must never steer it — actions
     with capture on are bit-identical to the plain greedy path."""
     backbone, decoder, loaded = build()
-    plain = decoder.predict_chunk(backbone, encode_memory(backbone), batch(loaded))
+    plain, _ = decoder.predict_chunk(backbone, encode_memory(backbone), batch(loaded))
     capture: list[ActionCaptureStep] = []
-    captured = decoder.predict_chunk(
+    captured, _ = decoder.predict_chunk(
         backbone,
         encode_memory(backbone),
         batch(loaded),
         action_capture=capture,
     )
     assert capture, "action phase must capture at least one step"
-    assert torch.equal(plain.actions, captured.actions)
+    assert torch.equal(plain, captured)
 
 
 def test_greedy_logprobs_match_teacher_forced_reforward() -> None:
@@ -171,7 +172,7 @@ def test_sampled_rows_record_the_sampled_stream() -> None:
 
     def decode(draw: int) -> tuple[torch.Tensor, list[TokenRow]]:
         capture: list[ActionCaptureStep] = []
-        prediction = decoder.predict_chunk(
+        actions, _ = decoder.predict_chunk(
             backbone,
             encode_memory(backbone),
             batch(loaded),
@@ -183,7 +184,7 @@ def test_sampled_rows_record_the_sampled_stream() -> None:
             block_base=decoder.config.block_base,
             temperature=2.0,
         )
-        return prediction.actions, rows
+        return actions, rows
 
     actions, rows = decode(0)
     _, again = decode(0)

@@ -165,16 +165,14 @@ def test_request_decode_is_budgeted_and_always_yields_chunks() -> None:
     sample = batch(loaded)
     memory = encode_memory(backbone)
     request = (AuxField.SUBGOAL, AuxField.HOLDING)
-    prediction = decoder.predict_chunk(
+    actions, generations = decoder.predict_chunk(
         backbone,
         memory,
         sample,
         generate=request,
     )
-    generations = prediction.generations
-    assert generations is not None
-    assert prediction.actions.shape == (BATCH, loaded.time_horizon, loaded.action_dim)
-    assert bool(torch.isfinite(prediction.actions).all())
+    assert actions.shape == (BATCH, loaded.time_horizon, loaded.action_dim)
+    assert bool(torch.isfinite(actions).all())
     budget = sum(VALUE_BUDGETS[f] for f in request)
     for generation in generations:
         # Values decode as text (char stub): never block ids, bounded;
@@ -201,15 +199,13 @@ def test_zero_budget_forces_terminator_and_counts_fallback(
     )
     backbone, decoder = build_with_aux()
     loaded = codec()
-    prediction = decoder.predict_chunk(
+    actions, generations = decoder.predict_chunk(
         backbone,
         encode_memory(backbone),
         batch(loaded),
         generate=(AuxField.SUBGOAL,),
     )
-    generations = prediction.generations
-    assert generations is not None
-    assert prediction.actions.shape[1] == loaded.time_horizon
+    assert actions.shape[1] == loaded.time_horizon
     # Budget 0: no value text possible; the terminator was forced on
     # every row (a random model never argmaxes \n against 250 text ids)
     # and the empty line parses as a MISSING subgoal.

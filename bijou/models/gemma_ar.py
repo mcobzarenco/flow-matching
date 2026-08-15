@@ -27,7 +27,7 @@ from torch import Tensor, nn
 from ..checkpoint import backbone_directory, read_metadata
 from ..modelling.aux_text import AuxField
 from ..modelling.decoders.ar_gemma import GemmaARDecoder
-from ..modelling.encoders.gemma4 import GemmaEncoder, GemmaInputs
+from ..modelling.encoders.gemma4 import GemmaEncoder, GemmaInputs, GemmaMemory
 from ..modelling.gemma4.loading import load_config
 from ..modelling.gemma4.model import Gemma4Model
 from ..modelling.interface import (
@@ -35,7 +35,6 @@ from ..modelling.interface import (
     ARSampling,
     CollatedBatch,
     InputsCollator,
-    ObservationMemory,
     ValueCandidate,
 )
 from ..sections import (
@@ -111,7 +110,7 @@ class GemmaARVLA(ARVLA[GemmaInputs], NarratingVLA[GemmaInputs]):
         batch: CollatedBatch[GemmaInputs],
         *,
         with_grad: bool,
-    ) -> ObservationMemory:
+    ) -> GemmaMemory:
         # The suffix role continues the prefix cache — always retained.
         return self.encoder.encode(
             self.backbone,

@@ -82,8 +82,9 @@ from bijou.modelling.decoders.molmo_flow import (
     molmo_flow_loss,
     molmo_flow_loss_sums,
 )
+from bijou.modelling.encoders.molmo2 import Molmo2Memory
 from bijou.modelling.encoders.molmoact2 import MolmoAct2Encoder
-from bijou.modelling.interface import Collator, ObservationMemory, SamplingMethod
+from bijou.modelling.interface import Collator, SamplingMethod
 from bijou.modelling.molmo2.cache import Molmo2KVCache
 from bijou.modelling.molmo2.model import Molmo2Model, build_multimodal_mask, load_model
 from bijou.models.molmoact2_joint import JointObjective, MolmoAct2JointVLA
@@ -188,7 +189,7 @@ def joint_model(
     )
 
 
-def encode_memory_with_grad(trunk: Molmo2Model) -> ObservationMemory:
+def encode_memory_with_grad(trunk: Molmo2Model) -> Molmo2Memory:
     """The text-only prefill of test_molmoact2_ar's builder, WITHOUT the
     no_grad wrapper — the gradient contracts need a live graph from the
     cache back into the trunk."""
@@ -204,17 +205,16 @@ def encode_memory_with_grad(trunk: Molmo2Model) -> ObservationMemory:
     )
     cache = Molmo2KVCache(len(transformer.blocks))
     transformer(inputs_embeds=embeds, attention_mask=mask, cache=cache)
-    return ObservationMemory(
-        streams={},
+    return Molmo2Memory(
+        cache=cache,
         length=PROMPT_LEN,
         padding_mask=None,
-        cache=cache,
     )
 
 
 def joint_terms_on(
     model: MolmoAct2JointVLA,
-    memory: ObservationMemory,
+    memory: Molmo2Memory,
     sample: object,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     """The joint family's two loss terms in ITS forward's op order on an
@@ -614,7 +614,7 @@ def test_objective_cli_validations() -> None:
         ["--resume", "ckpt", "--backbone-text-lr", "1e-5"],
         molmoact2_source(
             family=VLAFamily.MOLMOACT2_JOINT,
-            objective_kind="joint",
+            objective={"kind": "joint", "ce_weight": 1.0, "insulate_flow": True},
         ),
     )
     assert resumed.family == "molmoact2_joint"
