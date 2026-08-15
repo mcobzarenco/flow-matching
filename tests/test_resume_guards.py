@@ -21,15 +21,16 @@ from pathlib import Path
 import pytest
 import torch
 
-from bijou.data import DatasetStats
-from bijou.loading import CheckpointInfo, CheckpointTrainArgs
+from bijou.loading import CheckpointTrainArgs
 from bijou.modelling.decoders.flow import SelfAttentionMode, TimeConditioning
 from bijou.train import (
+    CheckpointResolution,
     TrainArgs,
     _build_parser,
     check_resume_seed,
     resume_hyperparameter_notes,
 )
+from bijou.vla import VLAFamily
 
 
 def checkpoint_dir(tmp_path: Path, train_args: dict | None) -> Path:
@@ -38,7 +39,7 @@ def checkpoint_dir(tmp_path: Path, train_args: dict | None) -> Path:
     meta: dict = {"step": 100}
     if train_args is not None:
         meta["train_args"] = train_args
-    (ckpt / "bijou_config.json").write_text(json.dumps(meta))
+    (ckpt / "metadata.json").write_text(json.dumps(meta))
     return ckpt
 
 
@@ -85,18 +86,16 @@ def test_not_a_checkpoint_dies_cleanly(tmp_path: Path) -> None:
 # ---- the CLI flag only applies to --resume -------------------------
 
 
-def _flow_checkpoint_info() -> CheckpointInfo:
-    """A fabricated flow checkpoint's metadata — parse-time resume tests
-    go through TrainArgs.from_namespace so no fixture checkpoint (and no
-    file I/O) is needed (the from_json/from_dict split)."""
-    stats = DatasetStats.from_state_dict(
-        {
-            "action": {"mean": [0.0], "std": [1.0]},
-            "observation.state": {"mean": [0.0], "std": [1.0]},
-        },
-    )
-    return CheckpointInfo(
+def _flow_checkpoint_info() -> CheckpointResolution:
+    """A fabricated gemma_flow checkpoint's resolution facts —
+    parse-time resume tests go through TrainArgs.from_namespace so no
+    fixture checkpoint (and no file I/O) is needed (the
+    from_json/from_dict split)."""
+    return CheckpointResolution(
+        family=VLAFamily.GEMMA_FLOW,
         backbone="google/gemma-4-e2b-it",
+        step=100,
+        objective_kind="flow",
         train_args=CheckpointTrainArgs(
             decoder="flow",
             decoder_hidden=768,
@@ -112,9 +111,6 @@ def _flow_checkpoint_info() -> CheckpointInfo:
             target_time_embed=False,
             fast_tokenizer=None,
         ),
-        step=100,
-        normalization=stats,
-        per_dataset_normalization={},
         condition_fields=(),
         generate_bracket=False,
     )
@@ -122,7 +118,10 @@ def _flow_checkpoint_info() -> CheckpointInfo:
 
 def _parse(*extra: str) -> TrainArgs:
     parser = _build_parser()
-    raw = parser.parse_args(["--train-data", "corpus", *extra])
+    argv = ["--train-data", "corpus", *extra]
+    if "--resume" not in argv:
+        argv = ["--family", "gemma_flow", *argv]
+    raw = parser.parse_args(argv)
     checkpoint = _flow_checkpoint_info() if raw.resume is not None else None
     return TrainArgs.from_namespace(raw, parser, checkpoint=checkpoint)
 

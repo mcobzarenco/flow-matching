@@ -36,7 +36,7 @@ from __future__ import annotations
 import json
 import shutil
 from pathlib import Path
-from typing import Any
+from typing import Any, override
 
 import numpy as np
 import pytest
@@ -68,20 +68,24 @@ from bijou.modelling.aux_text import SUFFIX_FORMAT
 from bijou.modelling.codecs import FastActionCodec, MolmoAct2ActionCodec
 from bijou.modelling.decoders.ar_gemma import GemmaARDecoder
 from bijou.modelling.decoders.ar_molmoact2 import MolmoAct2ARDecoder
+from bijou.modelling.decoders.ar_suffix import ARSuffixDecoder
 from bijou.modelling.decoders.flow import (
     FlowDecoder,
     SelfAttentionMode,
     TimeConditioning,
 )
+from bijou.modelling.decoders.molmo_flow import MolmoFlowDecoder, molmo_flow_loss_sums
 from bijou.modelling.encoders.gemma4 import GemmaInputs
 from bijou.modelling.gemma4.config import Gemma4Config
 from bijou.modelling.gemma4.loading import load_config
 from bijou.modelling.gemma4.model import Gemma4Model
 from bijou.modelling.gemma4.testing import tiny_config_json as gemma_tiny_config_json
 from bijou.modelling.interface import (
+    BatchInputs,
     CameraFrame,
     CollatedBatch,
     NormStats,
+    ObservationMemory,
     PromptInputs,
     SamplingMethod,
 )
@@ -98,7 +102,6 @@ from bijou.testing import (
     tiny_molmoact2_flow_section,
     write_tiny_molmoact2_release,
 )
-from bijou.train import BijouTrainStep
 from bijou.vla import VLA, VLAFamily
 
 TINY_FAST_FIXTURE = Path(__file__).parent / "fixtures" / "tiny_fast_tokenizer"
@@ -110,6 +113,119 @@ GEMMA_DIM = 6
 GEMMA_CHUNK = 10
 GEMMA_PROMPT_LEN = 12
 JOINT_CE_WEIGHT = 0.5
+
+
+# ---------------------------------------------------------------------------
+# The old world's train-step composition, inlined: bijou.train now
+# drives the family classes; the parity suite keeps the historical
+# sum-form composition as its reference until phase 6 retires the suite
+# with BijouModel.
+
+
+class BijouTrainStep[I: BatchInputs](torch.nn.Module):
+    """The historical one-module train forward (prefix encode + decoder
+    objective), reduced to the sum-form protocol this suite exercises
+    on CPU (the autocast contexts construct disabled there —
+    byte-identical to the recorded math)."""
+
+    def __init__(
+        self,
+        model: BijouModel[I, Any],
+        *,
+        backbone_trained: bool,
+    ) -> None:
+        super().__init__()
+        self.model = model
+        self.backbone_trained = backbone_trained
+
+    @override
+    def forward(
+        self,
+        batch: CollatedBatch[I],
+        normalizers: (
+            tuple[Tensor, Tensor | None] | tuple[Tensor, Tensor, Tensor | None] | None
+        ) = None,
+    ) -> tuple[Tensor, Tensor, Tensor | None, Tensor | None]:
+        inputs = batch.encoder_inputs
+        device_type = next(iter(inputs.tensors().values())).device.type
+        autocast_on = device_type == "cuda" and self.backbone_trained
+        with torch.autocast(device_type, torch.bfloat16, enabled=autocast_on):
+            memory = self.model.encode(inputs, with_grad=self.backbone_trained)
+            if isinstance(self.model.decoder, ARSuffixDecoder):
+                if normalizers is None:
+                    return self.model.loss_components(memory, batch)
+                assert len(normalizers) == 2  # AR runs: (action, aux)
+                return self._chunk_share(memory, batch, normalizers)
+        if self.model.joint_ce is not None:
+            decoder = self.model.decoder
+            assert isinstance(decoder, MolmoFlowDecoder)
+            flow_sums = molmo_flow_loss_sums(
+                decoder,
+                memory,
+                batch,
+                insulate=self.model.insulate_expert,
+            )
+            with torch.autocast(device_type, torch.bfloat16, enabled=autocast_on):
+                ce_sums = self.model.joint_ce_loss_sums(memory, batch)
+            if normalizers is not None:
+                assert len(normalizers) == 3  # joint runs: 3 normalizers
+                return self._joint_share(flow_sums, ce_sums, normalizers)
+            return self._joint_share(flow_sums, ce_sums, None)
+        if normalizers is None:
+            return self.model.loss_components(memory, batch)
+        assert len(normalizers) == 2  # non-joint runs: (action, aux)
+        return self._chunk_share(memory, batch, normalizers)
+
+    def _joint_share(
+        self,
+        flow_sums: tuple[Tensor, Tensor],
+        ce_sums: tuple[Tensor, Tensor, Tensor | None, Tensor | None],
+        normalizers: tuple[Tensor, Tensor, Tensor | None] | None,
+    ) -> tuple[Tensor, Tensor, Tensor | None, Tensor | None]:
+        flow_sum, flow_count = flow_sums
+        ce_action_sum, ce_action_count, ce_aux_sum, _ = ce_sums
+        assert ce_aux_sum is None  # rider constructed aux-None
+        if normalizers is None:
+            flow_norm, ce_action_norm = flow_count, ce_action_count
+        else:
+            flow_norm, ce_action_norm, _ = normalizers
+        loss = flow_sum / flow_norm + self.model.joint_ce_weight * (
+            ce_action_sum / ce_action_norm
+        )
+        return (
+            loss,
+            (
+                (flow_sum / flow_norm).detach()
+                if normalizers is None
+                else flow_sum.detach()
+            ),
+            ce_action_sum.detach(),
+            ce_action_count,
+        )
+
+    def _chunk_share(
+        self,
+        memory: ObservationMemory,
+        batch: CollatedBatch[I],
+        normalizers: tuple[Tensor, Tensor | None],
+    ) -> tuple[Tensor, Tensor, Tensor | None, Tensor | None]:
+        action_norm, aux_norm = normalizers
+        action_sum, _, aux_sum, aux_count = self.model.loss_component_sums(
+            memory,
+            batch,
+        )
+        loss = action_sum / action_norm
+        if aux_sum is not None:
+            decoder = self.model.decoder
+            assert isinstance(decoder, ARSuffixDecoder)
+            assert aux_norm is not None
+            loss = loss + decoder.aux_loss_weight * (aux_sum / aux_norm.clamp(min=1))
+        return (
+            loss,
+            action_sum.detach(),
+            None if aux_sum is None else aux_sum.detach(),
+            aux_count,
+        )
 
 
 # ---------------------------------------------------------------------------

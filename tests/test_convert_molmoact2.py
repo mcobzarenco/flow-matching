@@ -1,4 +1,4 @@
-"""Oracles for the MolmoAct2 → bijou checkpoint converter (§8.13 step 2).
+"""Oracles for the MolmoAct2 → bijou VLA-checkpoint converter.
 
 CPU tier over a fabricated tiny source in their exact layout (keys
 measured on the real artifacts 2026-08-11: released SO-100/101 =
@@ -9,17 +9,18 @@ is a box run, pre-registered in architecture.md §8.13.
 
 Pinned here:
 
-- happy path: sections round-trip through bijou.loading
-  (read_checkpoint_info), expert bytes verbatim (digest match source),
-  deterministic + idempotent output;
-- the stored tensor names are the PORT module's state_dict names minus
-  the loader-injected compat tensors — the step-3 decoder adopts the
-  same names, so this is the contract that makes expert.safetensors
-  load strictly there;
+- happy path: the VLA metadata round-trips (family molmoact2_flow,
+  component sections, serving point), expert bytes verbatim (digest
+  match source), deterministic output + the immutability refusal on an
+  existing destination;
+- the stored tensor names are the flow module's state_dict names minus
+  the loader-injected compat tensors — the family decoder adopts the
+  same names, so this is the contract that makes
+  flow_decoder.safetensors load strictly there;
 - P2 guards at convert time: nonzero expert dropout, missing/≠1
   n_obs_steps, unsupported action_mode/state_format, missing stats
   rows, missing tokenizer;
-- model assembly refuses loudly until step 5 (from_checkpoint guard).
+- model assembly end-to-end through the family from_checkpoint.
 """
 
 from __future__ import annotations
@@ -33,15 +34,18 @@ import pytest
 import torch
 from safetensors.torch import save_file
 
+from bijou.checkpoint import read_metadata, validate_checkpoint
 from bijou.convert_molmoact2 import convert
 from bijou.loading import (
+    CheckpointTrainArgs,
     MolmoAct2PromptConfig,
     MolmoFlowDecoderConfig,
-    checkpoint_sections,
-    from_checkpoint,
-    read_checkpoint_info,
+    parse_decoder_config,
+    parse_prompt_config,
 )
 from bijou.modelling.decoders.molmo_flow import MolmoFlowConfig
+from bijou.models.molmoact2_flow import MolmoAct2FlowVLA
+from bijou.vla import VLAFamily
 
 _ACTION_DIM = 6
 _STATE_DIM = 6
@@ -285,32 +289,39 @@ def test_norm_stats_from_substitutes_the_table(
         backbone_ref="user/tiny-hf",
         norm_stats_from=str(alternate),
     )
-    sub_info = read_checkpoint_info(substituted)
-    assert sub_info.normalization.action_q01 == (-7.0,) * _ACTION_DIM
-    assert sub_info.normalization.action_q99 == (7.0,) * _ACTION_DIM
-    assert sub_info.normalization.state_q01 == (-9.0,) * _STATE_DIM
-    assert sub_info.normalization.state_q99 == (9.0,) * _STATE_DIM
-    plain_meta = json.loads((plain / "bijou_config.json").read_text())
-    sub_meta = json.loads((substituted / "bijou_config.json").read_text())
-    assert sub_meta["converted_from"]["norm_stats_from"] == str(alternate)
-    assert "norm_stats_from" not in plain_meta["converted_from"]
+    sub_meta = read_metadata(substituted)
+    assert sub_meta.stats.action_q01 == (-7.0,) * _ACTION_DIM
+    assert sub_meta.stats.action_q99 == (7.0,) * _ACTION_DIM
+    assert sub_meta.stats.state_q01 == (-9.0,) * _STATE_DIM
+    assert sub_meta.stats.state_q99 == (9.0,) * _STATE_DIM
+    assert sub_meta.stats_note is not None
+    plain_meta = read_metadata(plain)
+    assert plain_meta.stats_note is None
+    assert sub_meta.train_args["converted_from"]["norm_stats_from"] == str(alternate)
+    assert "norm_stats_from" not in plain_meta.train_args["converted_from"]
     # Weights are untouched by the substitution.
     assert (
-        sub_meta["converted_from"]["expert_sha256"]
-        == plain_meta["converted_from"]["expert_sha256"]
+        sub_meta.train_args["converted_from"]["expert_sha256"]
+        == plain_meta.train_args["converted_from"]["expert_sha256"]
     )
 
 
 def test_happy_path_round_trips(source_dir: Path, tmp_path: Path) -> None:
     out = _convert(source_dir, tmp_path / "converted")
-    info = read_checkpoint_info(out)
-    assert info.backbone == "user/tiny-hf"
-    assert info.step == 0
-    assert info.train_args.decoder == "molmo_flow"
-    assert info.train_args.chunk_size == _HORIZON
+    metadata = validate_checkpoint(out)
+    assert metadata.family is VLAFamily.MOLMOACT2_FLOW
+    assert metadata.backbone_id == "user/tiny-hf"
+    assert metadata.backbone_trained is False
+    assert metadata.step == 0
+    assert metadata.objective == {"kind": "flow"}
+    assert metadata.serving == {"kind": "flow", "num_steps": 10, "method": "euler"}
+    train_args = CheckpointTrainArgs.from_dict(metadata.train_args)
+    assert train_args.decoder == "molmo_flow"
+    assert train_args.chunk_size == _HORIZON
 
-    sections = checkpoint_sections(json.loads((out / "bijou_config.json").read_text()))
-    prompt = sections.prompt
+    assert metadata.components["prompt"]["weights"] is False
+    assert metadata.components["flow_decoder"]["weights"] is True
+    prompt = parse_prompt_config(dict(metadata.components["prompt"]["config"]))
     assert isinstance(prompt, MolmoAct2PromptConfig)
     assert prompt.action_mode == "both"
     assert prompt.setup_type == "tiny rig"
@@ -319,7 +330,7 @@ def test_happy_path_round_trips(source_dir: Path, tmp_path: Path) -> None:
     assert prompt.camera_keys == ("observation.images.front",)
     assert prompt.generate_bracket is False
     assert prompt.condition_fields == ()
-    decoder = sections.decoder
+    decoder = parse_decoder_config(dict(metadata.components["flow_decoder"]["config"]))
     assert isinstance(decoder, MolmoFlowDecoderConfig)
     assert decoder.num_layers == _TINY_AE.num_layers
     assert decoder.llm_kv_dim == 16
@@ -334,9 +345,9 @@ def test_happy_path_round_trips(source_dir: Path, tmp_path: Path) -> None:
     assert decoder.beta_beta == 1.5
 
     # The q01/q99 fields of the normalization table ARE the clamp table.
-    assert info.normalization.action_q01 == (-3.0,) * _ACTION_DIM
-    assert info.normalization.action_q99 == (3.0,) * _ACTION_DIM
-    assert info.normalization.action_std == (2.0,) * _ACTION_DIM
+    assert metadata.stats.action_q01 == (-3.0,) * _ACTION_DIM
+    assert metadata.stats.action_q99 == (3.0,) * _ACTION_DIM
+    assert metadata.stats.action_std == (2.0,) * _ACTION_DIM
 
 
 def test_expert_bytes_verbatim_and_names_match_port(
@@ -346,7 +357,7 @@ def test_expert_bytes_verbatim_and_names_match_port(
     out = _convert(source_dir, tmp_path / "converted")
     from safetensors import safe_open
 
-    with safe_open(out / "expert.safetensors", framework="pt", device="cpu") as f:
+    with safe_open(out / "flow_decoder.safetensors", framework="pt", device="cpu") as f:
         written = {key: f.get_tensor(key) for key in f.keys()}  # noqa: SIM118
     source = {
         key.removeprefix("model.action_expert."): value
@@ -367,34 +378,41 @@ def test_expert_bytes_verbatim_and_names_match_port(
     assert set(written) == module_names
 
 
-def test_idempotent_and_deterministic(source_dir: Path, tmp_path: Path) -> None:
+def test_deterministic_and_refuses_overwrite(
+    source_dir: Path,
+    tmp_path: Path,
+) -> None:
     first = _convert(source_dir, tmp_path / "a")
     second = _convert(source_dir, tmp_path / "b")
-    _convert(source_dir, tmp_path / "a")  # overwrite in place
-    for name in ("bijou_config.json", "expert.safetensors"):
+    for name in ("metadata.json", "flow_decoder.safetensors"):
         assert (first / name).read_bytes() == (second / name).read_bytes()
-    meta = json.loads((first / "bijou_config.json").read_text())
+    # Checkpoints are immutable once published: re-converting onto an
+    # existing directory is refused, never silently overwritten.
+    with pytest.raises(SystemExit, match="refusing to overwrite"):
+        _convert(source_dir, tmp_path / "a")
+    meta = json.loads((first / "metadata.json").read_text())
     digest = hashlib.sha256(
         (source_dir / "config.json").read_bytes(),
     ).hexdigest()
-    assert meta["converted_from"]["source_config_sha256"] == digest
+    assert meta["train_args"]["converted_from"]["source_config_sha256"] == digest
 
 
 def test_from_checkpoint_assembles_molmo_flow(
     source_dir: Path,
     tmp_path: Path,
 ) -> None:
-    """The step-5 assembly path end-to-end on the tiny converted
-    checkpoint (backbone ref = the source dir, no hub access): decoder
-    built + configured off the sections, expert weights byte-equal the
-    source, compat tensors injected, encoder carries the prompt facts,
-    q01/q99 table on the decoder buffers."""
+    """The family assembly end-to-end on the tiny converted checkpoint
+    (self-contained: the trunk mounts from the checkpoint's own
+    backbone/ mirror, no hub access): decoder built + configured off
+    the recorded sections, expert weights byte-equal the source, compat
+    tensors injected, encoder carries the prompt facts, q01/q99 table
+    on the decoder buffers."""
     from bijou.modelling.decoders.molmo_flow import MolmoFlowDecoder
     from bijou.modelling.encoders.molmoact2 import MolmoAct2Encoder
 
     out = _convert(source_dir, tmp_path / "converted", backbone_ref=str(source_dir))
-    model, info = from_checkpoint(out)
-    decoder = model.decoder
+    model = MolmoAct2FlowVLA.from_checkpoint(out, device="cpu", dtype=torch.float32)
+    decoder = model.flow_decoder
     assert isinstance(decoder, MolmoFlowDecoder)
     assert decoder.config.num_layers == _TINY_AE.num_layers
     assert decoder.config.llm_kv_dim == 16
@@ -429,7 +447,6 @@ def test_from_checkpoint_assembles_molmo_flow(
     assert encoder.setup_type == "tiny rig"
     assert encoder.action_mode == "both"
     assert encoder.narration is False
-    assert info.train_args.decoder == "molmo_flow"
     assert len(list(encoder.parameters())) == 0
 
 

@@ -1,38 +1,45 @@
-"""Convert a MolmoAct2 HF checkpoint into a bijou checkpoint (§8.13 step 2).
+"""Convert a MolmoAct2 HF checkpoint into a bijou VLA checkpoint.
 
 Conversion-first loading (architecture.md §8.13): runtime
-never reads their HF layout — this CLI materializes a normal bijou
-checkpoint directory once, and everything downstream (`--init-from`,
-eval, rollout) consumes it like any other checkpoint:
+never reads their HF layout — this CLI materializes a normal VLA
+checkpoint directory (``bijou/checkpoint.py``) once, and everything
+downstream (`--init-from`, eval, rollout) consumes it like any other
+checkpoint:
 
-- ``bijou_config.json``: format-3 sections — backbone (a REFERENCE to
-  the source artifact: their trunk IS this checkpoint's pristine
-  backbone, so no 20 GB copy and no ``backbone.safetensors``; the same
-  convention as every checkpoint's ``google/gemma-4-e2b-it`` ref),
-  prompt (``MolmoAct2PromptConfig``: their template facts, discrete
-  state, the ``action_mode`` mask flavor — load-bearing for the expert
-  weights), decoder (``MolmoFlowDecoderConfig``: expert geometry +
-  flow parameters + the real action geometry of the norm tag).
-- ``normalization``: the tag's merged stats table verbatim (their
-  mean/std/q01/q99 rows, unfloored — the q01/q99 fields ARE the
-  decoder-owned clamp table, stored once).
-- ``expert.safetensors``: the 588 ``model.action_expert.*`` tensors,
-  prefix-stripped, bytes verbatim (the parity oracle byte-compares all
-  three artifacts: their export, the port, the step-3 decoder). The
-  compat tensors their loader injects (identity ``state_encoder``,
-  zero ``kv_proj``) are deliberately NOT materialized — injection is
-  the loader's job, matching their own export convention.
-- ``converted_from``: provenance (source ref, file digests, tensor
-  census). No timestamps — conversion is deterministic and idempotent.
+- ``metadata.json``: family ``molmoact2_flow``, prompt component
+  (``MolmoAct2PromptConfig``: their template facts, discrete state,
+  the ``action_mode`` mask flavor — load-bearing for the expert
+  weights; parameterless — ``weights: false``), flow_decoder component
+  (``MolmoFlowDecoderConfig``: expert geometry + flow parameters + the
+  real action geometry of the norm tag), objective ``flow``, serving
+  ``euler`` at the recorded step count, and the tag's merged stats
+  table verbatim (their mean/std/q01/q99 rows, unfloored — the q01/q99
+  fields ARE the decoder-owned clamp table, stored once).
+- ``backbone/``: a hard-linked mirror of the source artifact snapshot
+  (their trunk IS this checkpoint's pristine backbone — ~zero bytes on
+  one filesystem, self-contained: tokenizer.json and config.json ride
+  along).
+- ``flow_decoder.safetensors``: the 588 ``model.action_expert.*``
+  tensors, prefix-stripped, bytes verbatim (the parity oracle
+  byte-compares all three artifacts: their export, the port, the
+  decoder). The compat tensors their loader injects (identity
+  ``state_encoder``, zero ``kv_proj``) are deliberately NOT
+  materialized — injection is the loader's job, matching their own
+  export convention.
+- ``train_args.converted_from``: provenance (source ref, file digests,
+  tensor census) inside the free-form provenance record. No timestamps
+  — conversion is deterministic (same source → content-identical
+  output; an existing destination is refused, checkpoints being
+  immutable once published).
 
 The P2 guards run at convert time, loudly: ``n_obs_steps`` present and
 1, every dropout-like expert key 0.0, a supported ``action_mode``, the
 setup/control prompt strings non-empty (via ``load_norm_stats``).
 
-The tokenizer stays in the source artifact (the backbone ref carries
-it — their tokenizer.json re-homes the image specials and holds the
-state-token block). A LOCAL source path makes the converted checkpoint
-non-portable; ``--backbone-ref`` records a hub id instead.
+The recorded backbone id stays a REFERENCE for provenance and
+trained-trunk descendants; loading is self-contained through the
+mirror. A LOCAL source path makes the recorded ref non-portable;
+``--backbone-ref`` records a hub id instead.
 """
 
 from __future__ import annotations
@@ -45,17 +52,15 @@ from pathlib import Path
 from typing import Any
 
 from safetensors import safe_open
-from safetensors.torch import save_file
 from torch import Tensor
 
+from .checkpoint import VLAMetadata, read_metadata, validate_checkpoint
+from .checkpoint import write_checkpoint as write_vla_checkpoint
 from .data import DatasetStats
 from .loading import (
-    BackboneConfig,
     BackboneDepth,
-    CheckpointMetadata,
     MolmoAct2PromptConfig,
     MolmoFlowDecoderConfig,
-    read_checkpoint_info,
 )
 from .modelling.encoders.molmoact2 import MOLMOACT2_PROMPT_FORMAT
 from .modelling.encoders.molmoact2_processing import (
@@ -64,6 +69,7 @@ from .modelling.encoders.molmoact2_processing import (
     validate_inference_config,
 )
 from .modelling.gemma4.loading import resolve_checkpoint_dir
+from .vla import VLAFamily
 
 _EXPERT_PREFIX = "model.action_expert."
 
@@ -204,8 +210,9 @@ def convert(
     backbone_ref: str | None,
     norm_stats_from: str | None = None,
 ) -> Path:
-    """Materialize the bijou checkpoint; returns ``out``. Deterministic
-    and idempotent (same source -> byte-identical output).
+    """Materialize the VLA checkpoint; returns ``out``. Deterministic
+    (same source -> content-identical output; an existing ``out`` is
+    refused — checkpoints are immutable once published).
 
     ``norm_stats_from`` loads the q01/q99 tables (and the tag's
     geometry/setup fields) from ANOTHER artifact's ``norm_stats.json``
@@ -213,7 +220,8 @@ def convert(
     the table is RECOMPUTED on the target-domain data at fine-tune
     start (e.g. released weights under a rig table, exactly a rig
     fine-tune's starting point). Weights still come from ``source``;
-    the substitution is recorded in ``converted_from``."""
+    the substitution is recorded in ``converted_from`` and
+    ``stats_note``."""
     source_dir = resolve_checkpoint_dir(source)
     config = json.loads((source_dir / "config.json").read_text())
     _validate_source_config(config)
@@ -290,17 +298,9 @@ def convert(
 
     expert = _extract_expert_tensors(source_dir)
     expert_sha256 = _tensor_digest(expert)
-    metadata = CheckpointMetadata(
-        backbone=BackboneConfig(id=str(recorded_backbone), depth=BackboneDepth.FULL),
-        prompt=prompt_config,
-        decoder=decoder_config.to_dict(),
-        normalization=_dataset_stats(tag, real_action_dim),
-        per_dataset_normalization={},
-        train_args=_synthesized_train_args(decoder_config),
-        step=0,
-    )
-    payload = metadata.to_json_dict()
-    payload["converted_from"] = {
+    stats = _dataset_stats(tag, real_action_dim)
+    train_args = _synthesized_train_args(decoder_config)
+    train_args["converted_from"] = {
         "source": str(source),
         "source_config_sha256": hashlib.sha256(
             (source_dir / "config.json").read_bytes(),
@@ -317,18 +317,55 @@ def convert(
         "expert_sha256": expert_sha256,
         "converter": "bijou.convert_molmoact2",
     }
+    metadata = VLAMetadata(
+        family=VLAFamily.MOLMOACT2_FLOW,
+        chunk_size=decoder_config.action_horizon,
+        action_dim=real_action_dim,
+        backbone_id=str(recorded_backbone),
+        backbone_depth=BackboneDepth.FULL.value,
+        backbone_trained=False,
+        objective={"kind": "flow"},
+        serving={
+            "kind": "flow",
+            "num_steps": decoder_config.num_flow_steps,
+            "method": "euler",
+        },
+        components={
+            # The prompt side owns zero parameters — config-only.
+            "prompt": {"config": prompt_config.to_dict(), "weights": False},
+            "flow_decoder": {"config": decoder_config.to_dict(), "weights": True},
+        },
+        artifacts={},
+        stats=stats,
+        per_dataset_stats={},
+        train_args=train_args,
+        step=0,
+        stats_note=(
+            f"norm table loaded from {norm_stats_from} (their fine-tune "
+            "table-recompute semantics)"
+            if norm_stats_from is not None
+            else None
+        ),
+    )
+    write_vla_checkpoint(
+        out,
+        metadata=metadata,
+        components={"flow_decoder": expert},
+        backbone=source_dir,
+    )
 
-    out.mkdir(parents=True, exist_ok=True)
-    save_file(expert, str(out / "expert.safetensors"))
-    (out / "bijou_config.json").write_text(json.dumps(payload, indent=2) + "\n")
-
-    # Self-verification (the step-2 gates, run on every conversion):
-    # the metadata round-trips through bijou.loading, and the written
-    # expert bytes reproduce the source digest.
-    info = read_checkpoint_info(out)
-    if info.train_args.decoder != "molmo_flow":
-        raise SystemExit("round-trip failed: train_args decoder kind mismatch")
-    with safe_open(out / "expert.safetensors", framework="pt", device="cpu") as f:
+    # Self-verification (run on every conversion): the directory
+    # validates as self-contained, the metadata round-trips, and the
+    # written expert bytes reproduce the source digest.
+    validate_checkpoint(out)
+    reread = read_metadata(out)
+    if reread.family is not VLAFamily.MOLMOACT2_FLOW:
+        raise SystemExit("round-trip failed: recorded family mismatch")
+    with safe_open(
+        out / "flow_decoder.safetensors",
+        framework="pt",
+        device="cpu",
+    ) as f:
         written = {key: f.get_tensor(key) for key in f.keys()}  # noqa: SIM118
     if _tensor_digest(written) != expert_sha256:
         raise SystemExit("round-trip failed: written expert bytes differ from source")
@@ -349,9 +386,10 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog="python -m bijou.convert_molmoact2",
         description="Convert a MolmoAct2 HF checkpoint (released or rig-ft "
-        "export) into a bijou checkpoint directory (architecture.md §8.13 "
-        "step 2). The trunk/tokenizer stay in the source artifact — the "
-        "converted checkpoint records it as its backbone.",
+        "export) into a bijou VLA checkpoint directory (architecture.md "
+        "§8.13). The trunk/tokenizer mirror into the checkpoint's "
+        "backbone/ (hard links); the recorded backbone id stays the "
+        "provenance reference.",
     )
     parser.add_argument(
         "--source",

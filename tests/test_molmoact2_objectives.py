@@ -56,7 +56,7 @@ from test_molmoact2_ar import (
     tiny_stats,
     write_tiny_molmoact2_trunk,
 )
-from test_train_args import _checkpoint_info, _parse
+from test_train_args import _checkpoint, _parse
 
 from bijou.data import DatasetStats
 from bijou.fast.molmoact2 import MolmoAct2FastTokenizer
@@ -471,22 +471,35 @@ def test_collator_merged_action_table_override() -> None:
 
 
 def molmoact2_source(**overrides: object):  # noqa: ANN201  # test_train_args' fabricator type
-    # The shared fabricator picks ADARMS to differ from ARCH defaults;
-    # molmo_flow inherits it and would trip the flow-only τ guard —
-    # molmoact2 sources record additive.
-    return _checkpoint_info(
-        decoder="molmo_flow",
-        chunk_size=T,
-        time_conditioning=TimeConditioning.ADDITIVE,
+    # The shared fabricator picks ADARMS/BIDIRECTIONAL to differ from
+    # ARCH defaults; the molmoact2 families refuse the gemma_flow-only
+    # τ knob — their sources record additive (the converter's
+    # synthesized train_args).
+    from bijou.modelling.decoders.flow import SelfAttentionMode
+    from bijou.vla import VLAFamily
+
+    facts: dict[str, object] = {
+        "family": VLAFamily.MOLMOACT2_FLOW,
+        "decoder": "molmo_flow",
+        "chunk_size": T,
+        "time_conditioning": TimeConditioning.ADDITIVE,
+        "self_attention_mode": SelfAttentionMode.BIDIRECTIONAL,
         **overrides,
-    )
+    }
+    return _checkpoint(**facts)
 
 
 def test_objective_cli_validations() -> None:
+    """The pathway matrix through the REAL parser (new-CLI names): the
+    --objective transition selects the family under --init-from, the
+    live-trunk/λ/insulation rules ride the resolved family, and
+    --flow-decoder-init keeps --expert-init's explicitness rules."""
+    from bijou.vla import VLAFamily
+
     init = ["--init-from", "ckpt"]
-    # Family scoping: --objective is molmoact2-only.
+    # Family scoping: --objective selects a molmoact2 pathway.
     with pytest.raises(SystemExit):
-        _parse(["--objective", "ar"])  # fresh gemma flow run
+        _parse(["--family", "gemma_flow", "--objective", "ar"])  # fresh run
     # ar/joint require a live trunk (the head owns no parameters).
     with pytest.raises(SystemExit):
         _parse([*init, "--objective", "ar"], molmoact2_source())
@@ -494,7 +507,7 @@ def test_objective_cli_validations() -> None:
         [*init, "--objective", "ar", "--backbone-text-lr", "1e-5"],
         molmoact2_source(),
     )
-    assert (args.objective, args.decoder) == ("ar", "molmo_flow")
+    assert args.family == "molmoact2_ar"
     # λ rules: joint-only, > 0.
     with pytest.raises(SystemExit):
         _parse(
@@ -526,8 +539,9 @@ def test_objective_cli_validations() -> None:
         ],
         molmoact2_source(),
     )
-    assert (joint.objective, joint.joint_ce_weight) == ("joint", 0.25)
-    # --expert-init: --init-from only; never with ar; refused on resume.
+    assert (joint.family, joint.joint_ce_weight) == ("molmoact2_joint", 0.25)
+    # --flow-decoder-init: --init-from only; never with ar (nothing to
+    # initialize); refused on resume.
     with pytest.raises(SystemExit):
         _parse(
             [
@@ -536,23 +550,26 @@ def test_objective_cli_validations() -> None:
                 "ar",
                 "--backbone-text-lr",
                 "1e-5",
-                "--expert-init",
+                "--flow-decoder-init",
                 "fresh",
             ],
             molmoact2_source(),
         )
     with pytest.raises(SystemExit):
         _parse(
-            ["--resume", "ckpt", "--expert-init", "fresh"],
+            ["--resume", "ckpt", "--flow-decoder-init", "fresh"],
             molmoact2_source(),
         )
-    # Resume inherits the recorded objective (the ARCH_FLAGS refusal
+    # Resume inherits the recorded family (the ARCH_FLAGS refusal
     # covers explicit passing).
     resumed = _parse(
         ["--resume", "ckpt", "--backbone-text-lr", "1e-5"],
-        molmoact2_source(objective="joint"),
+        molmoact2_source(
+            family=VLAFamily.MOLMOACT2_JOINT,
+            objective_kind="joint",
+        ),
     )
-    assert resumed.objective == "joint"
+    assert resumed.family == "molmoact2_joint"
     with pytest.raises(SystemExit):
         _parse(["--resume", "ckpt", "--objective", "joint"], molmoact2_source())
     # KI matrix: flow+live trunk refused with the joint remedy; joint OK.
@@ -564,7 +581,7 @@ def test_objective_cli_validations() -> None:
                 "flow",
                 "--backbone-text-lr",
                 "1e-5",
-                "--insulate-expert",
+                "--insulate-flow",
             ],
             molmoact2_source(),
         )
@@ -575,11 +592,11 @@ def test_objective_cli_validations() -> None:
             "joint",
             "--backbone-text-lr",
             "1e-5",
-            "--insulate-expert",
+            "--insulate-flow",
         ],
         molmoact2_source(),
     )
-    assert ki.insulate_expert and ki.objective == "joint"
+    assert ki.insulate_flow and ki.family == "molmoact2_joint"
     with pytest.raises(SystemExit):
         _parse(
             [
@@ -588,7 +605,7 @@ def test_objective_cli_validations() -> None:
                 "ar",
                 "--backbone-text-lr",
                 "1e-5",
-                "--insulate-expert",
+                "--insulate-flow",
             ],
             molmoact2_source(),
         )

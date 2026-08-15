@@ -1145,6 +1145,58 @@ smoke (a 4-frame report end-to-end); box gate on fontaine's machine:
 GRPO masks bit-equal + logprobs within the registered 1e-4
 cross-decomposition bound on the banked R1-A/R1-B waves;
 `probe_grpo_replay_parity` PASS; fontaine boundary post (§0).
+5a VERDICT (the train slice: `train.py`, `testing.py`,
+`convert_molmoact2.py`; eval/rollout/grpo/sim re-points are 5b/5c):
+PASS — all five oracles bitwise through the NEW CLI (gemma flow
+2.7903/1.9152 as `--family gemma_flow`; gemma ar 27.8306/27.767 as
+`--family gemma_ar --fast-tokenizer tests/fixtures/tiny_fast_tokenizer`;
+molmoact2 flow 1.3906/1.3305, ar 12.2254/12.3317, joint(KI, λ=1)
+13.6160/13.6621 with the cross-oracle exact, via `--init-from
+outputs/tiny-molmoact2/checkpoint_vla` — the committed fixture
+CONVERTED by `bijou.convert_legacy`, never regenerated — with
+`--objective` flags), grad norms identical to the old CLI at every
+step; shapes re-recorded in architecture.md; resume gate green
+(joint save at step 2 → `--resume` to step 4 twice, fresh seed:
+bitwise-identical continuations, scheduler on-schedule);
+`probe_unfreeze_gradflow` anchors reproduced (1.6948 flow, 27.8546
+ar_backbone); `check.py` 885 green (new: `--family`
+requirement/refusals, LR-vs-offer reconciliation both directions, the
+new-format save round-trip through `load_vla`, the family-level
+summed-counts invariant, φ_s strict-load tolerance). Amendments at
+execution: (1) `--decoder`'s --init-from section-replacement path died
+with the flag — DECODER-section flags are refused under --init-from
+unconditionally; a fresh decoder on an inherited trunk is spelled
+`--backbone-init-from` + `--family` (the stage-2 path, one spelling).
+(2) `--distill` joined the recorded-objective lock: refused under
+--resume (the recorded objective reconstructs the payload — §4's rule,
+now at the parse boundary); converted legacy snapflow runs continue
+via --init-from. (3) TrainArgs lost its `objective` FIELD — the family
+encodes the pathway; the `--objective` flag survives as the
+--init-from transition selector (recorded family →
+`molmoact2_{flow,ar,joint}`). (4) The LR-vs-offer reconciliation
+splits in two: the decoder half runs at PARSE time off the family fact
+(molmoact2_ar's structurally-empty decoder group refuses an explicit
+`--decoder-lr`, whose argparse default became a None sentinel for
+exactness), the backbone halves at build time against the real offer,
+with offered-without-LR freeze prints added; main() asserts the
+parse-time fact against the built offer. (5) `bijou/checkpoint.py`
+untouched: train serializes `optimizer.pt` to a scratch file the
+toolkit hard-links into staging, and `convert_molmoact2`'s
+`converted_from` provenance moved INSIDE `train_args` (the free-form
+provenance record). (6) Component logging generalized to the
+(sum, count) window protocol for EVERY component (the aux convention;
+D5's counts are all-reduced before forward, so multi-rank uneven-count
+normalization becomes the exact global mean — single-process numbers
+bitwise unchanged, log_every-1 oracles unaffected). (7) `testing.py`
+emits the new format by CONVERTING its own legacy output as the final
+build step — the legacy layout stays the anchors' provenance and the
+parity/GRPO suites' old-world input until phase 6; the parity suite
+and `probe_unfreeze_gradflow` inlined the old `BijouTrainStep` harness
+they pin (train.py no longer imports `model.py`). (8) The in-train
+probe narrows capability traits: flow families integrate 10 steps at
+the family's RECORDED serving method (exactly the historical
+heun-10/euler-10), AR families decode greedily, narrated tables behind
+`NarratingVLA`.
 
 **Phase 6 — delete the old world.** `model.py`, the live old-format
 read path in `loading`, `BijouPrediction`, the phase-4 parity bridges
