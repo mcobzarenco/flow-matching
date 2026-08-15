@@ -181,3 +181,40 @@ seams this pre-reg's eval protocol touches did move:
 Gradflow loss oracles re-anchor exact post-merge (flow 1.6948,
 ar_backbone 27.8546). Launch remains owner-gated (arm pick + route +
 GPU release).
+
+## §10 Amendment — main phase 6 re-verify (2026-08-15 19:4xZ)
+
+Phase 6 (`393163f`, "delete the old world — BijouModel, the live
+legacy read path") merged into fontaine, check.py 902 green (925
+minus the 23 retired `test_vla_parity` tests; the five loss oracles
+remain the standing gate). Nothing in the frozen §3 command moved —
+**both arms re-parse green verbatim** (family still
+checkpoint-inferred `molmoact2_flow`, `--flow-decoder-init inherit`).
+What did move, verified:
+
+1. **Legacy read path deleted:** `bijou.loading` no longer reads
+   `bijou_config.json` at all (`read_checkpoint_info` /
+   `from_checkpoint` / `from_backbone` gone, 856→259 lines); the
+   layout survives solely in `bijou.convert_legacy` (frozen format-3
+   reader). Legacy dirs now refuse loudly — `SystemExit` naming the
+   exact `convert_legacy` command. Smoke-verified on the real
+   stage-C step2000 legacy dir: conversion rc=0,
+   `validate_checkpoint` OK, output **bit-identical** (recursive
+   hash sweep, 0 diffs) to the banked §8 conversion.
+2. **Gradflow oracle probe reworked upstream** onto the family
+   classes (`GemmaFlowVLA`/`GemmaARVLA`): both anchors reproduce
+   EXACT post-merge — flow **1.6948**, ar_backbone **27.8546**, all
+   partition checks PASS.
+3. **Reference-trunk conversion:** `er_60k/step_060000` was still
+   legacy-format and every eval/init mount now requires VLA format —
+   converted this session →
+   `~/checkpoints/converted/er_60k_step_060000_vla`
+   (family `molmo2_ar`, backbone `allenai/Molmo2-ER`, step 60000,
+   mean/std stats rows carried; `validate_checkpoint` OK). The
+   sim100/OOD-probe and rig-mixture `--init-from` mounts stay
+   one-command-ready.
+
+GRPO seam 33/33 targeted post-merge (`test_grpo_loop` +
+`test_molmo_flow_integration`, now on `MolmoAct2FlowVLA` /
+`MolmoAct2DiscreteStack`). Launch remains owner-gated (arm pick +
+route + GPU release), exactly as §7 states.

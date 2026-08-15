@@ -8,7 +8,45 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-15 19:33–19:4xZ (real `date -u` at stamp: 19:44) —
+work session: **merge-main-phase6 CLOSED — `393163f` (old-world
+deletion: BijouModel + the live legacy read path) merged clean,
+check.py 902 green, all 7 seams verified; er_60k reference trunk
+converted to VLA format.***
+
+**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
+OWNER** (13:35Z), untouched (merge + all seam checks ran CPU-only).
+No babysit entries, no training processes.
+
+**Steering**: none new — Discord read + inbox empty at 19:34. The
+three owner decisions remain pending: retrain arm pick
+(continue-from-2k vs from-base), route A/B/C, GPU release.
+
+**Done**: merged main phase 6 into fontaine (merge commit this
+session; no conflicts), check.py **902** green (925 − the 23 retired
+`test_vla_parity` tests). Seven-point seam re-verify all green:
+(1) our-files diff-audit = pure API migration, imports green;
+(2) gradflow oracles EXACT (flow 1.6948, ar_backbone 27.8546, all
+partitions PASS); (3) both retrain arms full-parse green verbatim
+(family `molmoact2_flow`); (4) convert_legacy smoke on the real
+step2000 legacy dir — rc=0, validate OK, bit-identical to the banked
+5a conversion, legacy refusal LOUD (SystemExit + exact convert
+command); (5) GRPO seam 33/33 targeted; (6) parents[3] carry stands;
+(7) straggler grep clean. Bonus: `er_60k/step_060000` converted →
+`~/checkpoints/converted/er_60k_step_060000_vla` (molmo2_ar, step
+60000, validate OK) so OOD-probe/sim100/rig-mixture mounts stay
+one-command-ready. Pre-reg §10 amendment recorded; result posted
+in-channel (id 1538272016078209066). 0 GPU-h.
+
+**Next**: `queue_cli.py next` → grasp-sft-bootstrap retrain
+(gpu-local, owner-gated: arm pick + route A/B/C + GPU release —
+either arm is one command post-phase-6); grpo-r2-post-sft behind it.
+GPU oracle re-runs (convmap tripwires + sim_parallel_oracle) still
+attach to the next free-GPU boundary. No CPU-executable items remain
+→ `run_work_next` stays disarmed.*
 
 *Updated 2026-08-15 19:28–19:3xZ (real `date -u` at stamp: 19:30) —
 tick: **phase 6 landed on origin/main (`393163f`, "delete the old
@@ -73,35 +111,18 @@ post-5c), GPU release unblocks any launch at all. GPU oracle
 re-runs (convmap tripwires + sim_parallel_oracle) attach to the
 next free-GPU boundary.*
 
-*Updated 2026-08-15 19:07–19:0xZ (real `date -u` at stamp: 19:07) —
-tick: **quiet hold — no change since 18:55; Discord read + inbox
-empty, no new reactions, GPU owner-reserved idle (0%), nothing to
-babysit.***
-
-**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
-OWNER** (13:35Z), untouched. No babysit entries, no training
-processes.
-
-**Steering**: none new — Discord read + inbox empty at 19:07;
-history shows no new reactions (all three phase-5 merge posts
-already carry recorded 👍s). The three owner decisions remain
-pending: retrain arm pick (continue-from-2k vs from-base), route
-A/B/C, GPU release.
-
-**Done**: Discord + history polls, GPU/process check, queue
-validate OK depth 2 (17 open; both queued items —
-grasp-sft-bootstrap retrain and grpo-r2-post-sft — gpu-local and
-owner-gated), `run_work_next` confirmed disarmed (no
-CPU-executable items). No posts (nothing owner-facing changed).
-0 GPU-h.
-
-**Next**: ticks hold until an owner decision lands — arm pick +
-route A/B/C unblock the retrain launch (either arm is one command
-post-5c), GPU release unblocks any launch at all. GPU oracle
-re-runs (convmap tripwires + sim_parallel_oracle) attach to the
-next free-GPU boundary.*
-
 ## Utilization footer
+
+Session 2026-08-15 19:33–19:4xZ (work, exploit-side infra; 0 GPU-h):
+merge-main-phase6 closed — `393163f` (old-world deletion) merged
+clean, check.py 902 green, all 7 seams verified (gradflow oracles
+1.6948/27.8546 exact, both retrain arms full-parse, convert_legacy
+smoke bit-identical + loud legacy refusal, GRPO 33/33, parents[3]
+carry, straggler grep clean); er_60k/step_060000 converted to VLA
+format (reference-trunk mounts stay one-command-ready); pre-reg §10
+amendment + in-channel result post; queue OK depth 2 (17 open, both
+gpu-local owner-gated), `run_work_next` disarmed; all three owner
+decisions still pending (arm pick, route A/B/C, GPU release).
 
 Session 2026-08-15 19:28–19:3xZ (tick; 0 GPU-h): phase 6 landed on
 origin/main (`393163f`, old-world deletion, pushed 19:07:58Z) —
