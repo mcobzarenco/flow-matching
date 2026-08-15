@@ -47,10 +47,8 @@ from torch import Tensor, nn
 from ..gemma4.loading import resolve_checkpoint_dir
 from ..interface import (
     InputsCollator,
-    ObservationEncoder,
     ObservationMemory,
     PromptInputs,
-    StreamGeometry,
 )
 from ..molmo2.cache import Molmo2KVCache
 from ..molmo2.model import (
@@ -310,9 +308,11 @@ class Molmo2InputsCollator:
         )
 
 
-class Molmo2Encoder(ObservationEncoder[Molmo2Inputs, Molmo2Model]):
+class Molmo2Encoder(nn.Module):
     """The Molmo2 prompt-side strategy: collation, multimodal prefix
-    encoding, and the trunk's unfreeze surface.
+    encoding, and the trunk's unfreeze surface (a plain module speaking
+    the encoder convention — :mod:`bijou.modelling.interface`'s module
+    docstring).
 
     AR-first: the encoder exports NO
     memory streams — its whole product is the prefix KV cache the suffix
@@ -363,17 +363,9 @@ class Molmo2Encoder(ObservationEncoder[Molmo2Inputs, Molmo2Model]):
         assert self.state_proj.bias is not None
         nn.init.zeros_(self.state_proj.bias)
 
-    @override
-    def stream_geometries(self) -> dict[str, StreamGeometry]:
-        """No K/V streams on this trunk — the prefix cache is the
-        export."""
-        return {}
-
-    @override
     def inputs_collator(self) -> InputsCollator[Molmo2Inputs]:
         return Molmo2InputsCollator(self.checkpoint, self.max_crops)
 
-    @override
     def encode(
         self,
         backbone: Molmo2Model,
@@ -429,14 +421,14 @@ class Molmo2Encoder(ObservationEncoder[Molmo2Inputs, Molmo2Model]):
             cache=cache,
         )
 
-    @override
     def param_groups(self, backbone: Molmo2Model) -> dict[str, list[nn.Parameter]]:
-        """Named unfreezable trunk subsets (exactness contract in the
-        ABC): ``"text"`` = every decoder block + ``ln_f`` (the suffix
-        runs all of them and ln_f feeds the head; the prefix feeds the
-        suffix through the cache, so every block receives gradients);
-        ``"vision"`` = tower + connector. Embedding matrices and the
-        shipped lm_head stay out — frozen by design (class docstring)."""
+        """Named unfreezable trunk subsets (EXACT sets — the encoder
+        convention's DDP contract): ``"text"`` = every decoder block +
+        ``ln_f`` (the suffix runs all of them and ln_f feeds the head;
+        the prefix feeds the suffix through the cache, so every block
+        receives gradients); ``"vision"`` = tower + connector.
+        Embedding matrices and the shipped lm_head stay out — frozen by
+        design (class docstring)."""
         text: list[nn.Parameter] = []
         for block in backbone.text.transformer.blocks:
             text.extend(block.parameters())

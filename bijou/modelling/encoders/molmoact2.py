@@ -56,10 +56,8 @@ from torch import Tensor, nn
 from ..gemma4.loading import resolve_checkpoint_dir
 from ..interface import (
     InputsCollator,
-    ObservationEncoder,
     ObservationMemory,
     PromptInputs,
-    StreamGeometry,
 )
 from ..molmo2.cache import Molmo2KVCache
 from ..molmo2.model import (
@@ -394,11 +392,13 @@ class MolmoAct2InputsCollator:
         )
 
 
-class MolmoAct2Encoder(ObservationEncoder[MolmoAct2Inputs, Molmo2Model]):
+class MolmoAct2Encoder(nn.Module):
     """The MolmoAct2 prompt-side strategy: their-format collation and the
-    multimodal prefix encode. The whole product is the prefix KV cache
-    (``retain_cache=True`` — the molmo_flow decoder conditions on it and
-    the narration suffix continues it) plus the ``conditioning_mask``.
+    multimodal prefix encode (a plain module speaking the encoder
+    convention — :mod:`bijou.modelling.interface`'s module docstring).
+    The whole product is the prefix KV cache (``retain_cache=True`` —
+    the molmo_flow decoder conditions on it and the narration suffix
+    continues it) plus the ``conditioning_mask``.
 
     NO prompt-side parameters: state enters as discrete tokens (no soft
     state token, no ``state_proj``), so ``prompt.safetensors`` for this
@@ -438,13 +438,6 @@ class MolmoAct2Encoder(ObservationEncoder[MolmoAct2Inputs, Molmo2Model]):
         # normalization row.
         self.action_table: tuple[tuple[float, ...], tuple[float, ...]] | None = None
 
-    @override
-    def stream_geometries(self) -> dict[str, StreamGeometry]:
-        """No K/V streams: the prefix cache is the export (the molmo2
-        AR convention; molmo_flow reads every layer of it)."""
-        return {}
-
-    @override
     def inputs_collator(self) -> InputsCollator[MolmoAct2Inputs]:
         return MolmoAct2InputsCollator(
             self.checkpoint,
@@ -455,7 +448,6 @@ class MolmoAct2Encoder(ObservationEncoder[MolmoAct2Inputs, Molmo2Model]):
             narration=self.narration,
         )
 
-    @override
     def encode(
         self,
         backbone: Molmo2Model,
@@ -505,7 +497,6 @@ class MolmoAct2Encoder(ObservationEncoder[MolmoAct2Inputs, Molmo2Model]):
             conditioning_mask=inputs.conditioning_mask,
         )
 
-    @override
     def param_groups(self, backbone: Molmo2Model) -> dict[str, list[nn.Parameter]]:
         """Same trunk surface as the molmo2 encoder (same trunk, same
         freezing split): ``"text"`` = decoder blocks + ``ln_f``,
