@@ -1,11 +1,12 @@
-# Pre-reg (DRAFT) — grasp-rich SFT bootstrap: competence before RL pressure
+# Pre-reg (FINAL) — grasp-rich SFT bootstrap: competence before RL pressure
 
 *2026-08-14, ~22:2xZ. Drafted at the owner's go (22:07Z: "do as much
 in parallel as you reasonably can") following the 21:53Z question —
 "what should we do next to train a policy which solves over 90% of
-seeds successfully?" Status: **DRAFT** — finalization (frozen params,
-objection window) before any GPU stage runs. Stage A is CPU-executable
-immediately.*
+seeds successfully?" Status: **FINAL as of 2026-08-15 ~01:5xZ** — §6
+freezes the checklist (demo seeds, targets, recipe params, arm list,
+convention seam) and opens the objection window. Stage A landed
+CPU-side while the draft stood (14/16 on the engineering smoke).*
 
 **Plain words.** Our robot policies touch the toy boat but almost
 never finish the job — the best row completes the task on about 1 of
@@ -92,20 +93,70 @@ and the AR arm carries alone; if **F-live**, the demo render config
 inherits whatever wrist-fidelity decision the owner takes, as a
 registered amendment before stage B.
 
-## §6 Status
+## §6 Status — FINAL (frozen 2026-08-15 ~01:5xZ)
 
-**DRAFT.** Finalization checklist before any GPU stage: (1) freeze
-demo-seed range, kept-success target, SFT recipe params (LR/steps
-from the rig-ft runbook class) and the stage-D arm list; (2) owner
-objection window in-channel; (3) HEAD re-pin; (4) **pin the
-state/action convention seam for stages B/C** (owner question
-2026-08-14 23:19Z): declare the demo rows' `state_units` and whether
-stage C trains against the release's GLOBAL q01/q99 table (demos must
-then be written through the official v3.0→v2.1 shim —
-`MOLMOACT2_OFFICIAL_SIGNS/OFFSETS`, state in / actions back through
-the inverse, exactly the GRPO training-row contract) or a recomputed
-dataset table (identity, frame-self-consistent — the rig-ft recipe
-class default); the choice rides the rows JSON as provenance. **Stage A (the scripted
-expert itself) is CPU-executable now** and lands with its own oracles
-(waypoint reachability on 3 spawn draws, jaw-close force sanity, no
-eval-seed usage asserted in code).
+The draft checklist, resolved item by item:
+
+**(1) Frozen parameters.**
+
+- **Stage-A gate read: 20 held seeds 1020–1039**, ≥ 70% (≥ 14/20)
+  scripted success, rendered (videos banked for the record, ~0.2
+  GPU-h class). Honesty note: seeds **1000–1015 were the engineering
+  smoke set the expert's fixes were tuned on** (14/16 there) — the
+  gate runs on a disjoint stream precisely so tuning-to-the-smoke
+  can't pass it.
+- **Stage-B collection**: demo seeds ascend from 1000 (the smoke
+  seeds are legitimate demos), production visual config, successes
+  kept. Target **400 kept successes; gate ≥ 300 within ≤ 4 GPU-h**.
+- **Stage-C primary (AR)**: molmoact2 `train_lerobot.py`,
+  base `allenai/MolmoAct2-SO100_101`, the rig-ft recipe class
+  verbatim — `ft_action_expert=true` only (`ft_vlm=false`,
+  `ft_embedding=none`, `lora=false`), action-expert LR **5e-5**,
+  global batch **64** (device 8), save every 500 —
+  with **max_duration 3000 steps** (the runbook's 2000 was sized for
+  the smaller rig set; 300–600 kept demos ≈ 45–90k frames ≈ 2–4
+  epochs at batch 64; every 500-step checkpoint is retained as
+  fallback). Endpoint = final step.
+- **Stage-C optional flow arm**: ftrig4k recipe verbatim (4k steps,
+  decoder LR 1e-5, dataset swapped to the demo set). The wrist
+  screen closed **F-instrument** (01:3xZ 08-15) — not F-null/F-flat —
+  so the §5 drop clause does **not** fire: the flow arm stays in,
+  conditional only on the ≤ 13 GPU-h gate after the primary
+  chain lands.
+- **Stage-D arm list**: the SFT-AR endpoint on the frozen sim100
+  (100 eval seeds, standard gates + reset-strike checks); the flow
+  endpoint too if trained. Context anchors (not gates): banked
+  ftrig4k +0.08 cm / 47 moved / ~1 success class, and the fresh
+  stage-1 W0 in-run row (+0.054 / 44 / 2 successes, post-fitted-lens
+  + v3-wrist substrate).
+
+**(4) Convention seam (owner question 23:19Z 08-14), frozen.** Stage
+C trains against a **recomputed per-dataset q01/q99 table** (the
+rig-ft recipe default), so demo rows are written in the
+**controller-native rig frame, identity — no shim**; the rows JSON
+carries `state_units: "rig (identity — recomputed dataset table)"` as
+provenance. The official v3.0→v2.1 shim
+(`MOLMOACT2_OFFICIAL_SIGNS/OFFSETS`) is the released-global-table
+contract and is NOT applied anywhere in stages B–D: stage-D rollouts
+consume the endpoint through the same recomputed-table frame it
+trained in. Any move to the release's global table is a registered
+amendment that flips demo-writing to shim-frame (the GRPO
+training-row contract).
+
+**(2) Objection window.** Open at the in-channel finalization post
+(~01:5xZ 08-15). GPU stages launch at the **next work-session
+boundary** absent objection; an explicit owner go collapses the
+window; any objection re-opens finalization. Stage A's gate read is
+the first GPU leg.
+
+**(3) HEAD re-pin.** The finalization commit id rides the in-channel
+post; the gate read launches from that HEAD or later on the
+`fontaine` branch (expert code: `b564337` → `d1b2552` → `2435a6d`,
+14/16 smoke).
+
+**Stage-A status at finalization**: landed CPU-side with 5 oracles
+(IK reachability over the spawn band, perpendicular alignment < 6°,
+scratch-data purity, eval-seed refusal at `DEMO_SEED_BASE` 1000) plus
+the settle-before-release and deck-strike jam-recovery mechanisms;
+14/16 on the tuning smoke. The gate read (seeds 1020–1039) is what
+counts.
