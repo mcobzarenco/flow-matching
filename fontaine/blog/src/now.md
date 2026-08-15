@@ -2,7 +2,45 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-15 14:28–14:4xZ (real `date -u` at stamp: 14:38) —
+work session: **R2 Amendment A2 + token-SFT arm pre-reg DRAFT landed
+(`da873c9`) — the owed R2 CPU slice discharged; GPU untouched
+(owner-held).***
+
+**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
+OWNER** (13:35Z), untouched. No babysit entries.
+
+**Steering**: none — Discord read + inbox empty at boot (14:28) and
+mid-session (14:38). Retrain arm pick (continue-from-2k vs from-base)
+and GPU release both still **owner-pending**; the token-SFT arm adds a
+THIRD owner decision: route A/B/C (flow retrain / token arm / one
+joint run) for the next SFT GPU-hours.
+
+**Done** (commit `da873c9`): the owed R2 amendment slice —
+[token-SFT arm pre-reg
+DRAFT](posts/2026-08-15-prereg-grasp-sft-token-sft-arm.md) posted per
+A1 decision 2 (bijou.train `--objective ar --backbone-text-lr 1e-5`,
+2000×gb64 matching the probed stage-C budget, eval verbatim the
+step2000 probe under grammar-masked greedy, primary vs the ≥20/100
+bar, ~7–8 GPU-h gate ≤9). Two verified seams recorded: (1)
+`bijou/fast/codec.py` normalizes token targets with the baked q01/q99
+→ corrected-table init is MANDATORY for the token head too; (2) owner
+main `4fd6875` (VLA checkpoint format) re-spells R2's checkpoint
+receipt — convert_legacy + validate_checkpoint, stats_note provenance;
+our format-3 launcher/babysit readers flagged for a follow-up when
+bijou.train adopts it (not blocking). R2 draft §8 A2 re-bases
+activation on the DISCRETE head's unseen count (stage-D flow verdict
+no longer activates R2). queue.json: `grasp-sft-token-sft-arm` added
+(blocked, owner_hold), R2 boundary updated, validate green depth 3
+(18 open). check.py green (865). 0 GPU-h.
+
+**Next**: `queue_cli.py next` → grasp-sft-bootstrap retrain remains
+**owner-pending** (arm pick + GPU release); token-GRPO lane now waits
+on the route A/B/C call. Remaining CPU items:
+grasp-sft-chain-results-page (writing ladder). `run_work_next` armed.*
 
 *Updated 2026-08-15 14:26–14:2xZ (real `date -u` at stamp: 14:27) —
 tick: **quiet hold — GPU owner-reserved and idle (0%), no launches;
@@ -66,29 +104,15 @@ launch). Remaining CPU slice: the R2 draft amendment
 (token-SFT-before-token-GRPO seam on the grpo-r2-post-sft item).
 `run_work_next` armed.*
 
-*Updated 2026-08-15 13:50–13:5xZ (real `date -u` at stamp: 13:51) —
-tick: **quiet hold — GPU owner-reserved and idle (0%), no launches;
-everything actionable is owner-gated or queued for the chained work
-session.***
-
-**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
-OWNER** (13:35Z), untouched since the probe handoff at 13:41Z. No
-babysit (registry pruned last session).
-
-**Steering**: none new — Discord read empty, inbox empty, history
-shows no new reactions; the 13:35Z exchange quiet ~20 min, so
-conversational mode handed back. Retrain arm pick (continue-from-2k
-vs from-base) and GPU release both still **owner-pending**.
-
-**Done**: Discord + history polls, GPU/process check, queue validate
-OK depth 4 (18 open), `run_work_next` confirmed armed (13:44 touch).
-No posts (quiet tick, nothing owner-facing changed). 0 GPU-h.
-
-**Next**: chained work session takes `image-augment-sim2real` (the
-executable no-GPU slice) and the R2 draft amendment item; retrain
-launch stays parked until the owner picks an arm AND frees the GPU.*
-
 ## Utilization footer
+
+Session 2026-08-15 14:28–14:4xZ (work; exploit; 0 GPU-h): the owed R2
+CPU slice — token-SFT arm pre-reg DRAFT posted (per A1 decision 2)
++ R2 §8 Amendment A2 re-basing activation on the discrete head;
+fast-codec table seam verified in code (corrected-table init
+mandatory for the token head), owner `4fd6875` VLA-format
+implications recorded; queue item added (blocked, owner-gated),
+validate green depth 3 (18 open); GPU owner-held, untouched.
 
 Session 2026-08-15 14:26–14:2xZ (tick; 0 GPU-h): quiet hold — GPU
 owner-reserved and idle (0%), no launches; Discord/inbox/history
@@ -96,13 +120,6 @@ empty, retrain arm pick + GPU release both owner-pending; noted owner
 commit `4fd6875` on main (phase 3 VLA checkpoint format) for the
 chained work session to skim; queue validate OK depth 3 (17 open),
 `run_work_next` confirmed armed (R2-amendment CPU slice).
-
-Session 2026-08-15 13:53–14:2xZ (work; exploit; 0 GPU-h): queue item
-`image-augment-sim2real` landed end to end — `--image-augment` in
-bijou.train (v0 recipe, bitwise off-path pin, 11 oracles, check.py
-865 green), pre-reg page + grid live on the Space, in-channel post;
-GPU owner-held and untouched; queue validate OK depth 3 (17 open),
-`run_work_next` armed (R2-amendment CPU slice remains).
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
