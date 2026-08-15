@@ -15,9 +15,9 @@ to infer judged-ness from appearance.
 
 Ownership: this module owns ONLY the new parameters (~11M at E2B scale)
 — the FAST block's input-embedding + per-layer-embedding rows. The
-backbone is owned by BijouModel and passed into every call; the state
-projection is PROMPT-side and lives in GemmaEncoder (format 3 moved
-state into the user turn).
+backbone is owned by the family class and passed into every call; the
+state projection is PROMPT-side and lives in GemmaEncoder (format 3
+moved state into the user turn).
 
 Id spaces: the collator's ``action_tokens`` and the codec speak CODEC
 ids [0, vocab_total); the head/targets speak backbone ids
@@ -1024,8 +1024,8 @@ def ar_backbone_loss[B: nn.Module](
     memory: ObservationMemory,
     batch: CollatedBatch[Any],
 ) -> Tensor:
-    """Scalar objective (see :func:`ar_backbone_losses`; BijouModel.loss
-    dispatches here — the train step calls the tuple form for component
-    logging)."""
+    """Scalar objective (see :func:`ar_backbone_losses`; the sum forms
+    below are what the family loss paths compose — this is the plain
+    mean-form entry)."""
     total, _, _, _ = ar_backbone_losses(backbone, decoder, memory, batch)
     return total

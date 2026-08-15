@@ -55,7 +55,7 @@ from ..interface import (
 @dataclass(frozen=True, slots=True)
 class GemmaInputs:
     """The backbone-specific half of a collated batch: one chat-templated
-    prompt per sample, ready for ``BijouModel.encode_observation``.
+    prompt per sample, ready for :meth:`GemmaEncoder.encode`.
 
     The prompt layout (which tokens are images, where padding sits, P
     itself) is decided at collate time and carried by ``input_ids``;
@@ -294,8 +294,8 @@ class GemmaEncoder(ObservationEncoder[GemmaInputs, Gemma4Model]):
     backbone's unfreeze surface (see the module docstring). ``exports`` are
     the global layers whose K/V become the memory streams.
 
-    The backbone itself is NOT owned here — BijouModel owns it once and
-    passes it into the compute methods; this module carries exactly the
+    The backbone itself is NOT owned here — the family class owns it once
+    and passes it into the compute methods; this module carries exactly the
     prompt-side parameters: ``state_proj`` (prompt format 3's soft state
     token — ZERO-initialized so the prompt starts undisturbed; it still
     receives gradients through its K/V use), serialized as the

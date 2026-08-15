@@ -12,12 +12,12 @@ global layers' K/V as ``"kv{layer}"``); decoder schedules reference those
 names, and composition validates the references (unknown name or unused
 export = loud error).
 
-The backbone network itself is owned by the composition root
-(:class:`bijou.model.BijouModel`), not by the encoder: the encoder is
-the prompt-side strategy (collation, prefix encode, unfreeze partition)
-and receives the backbone as an argument — one network can serve several
-roles (prefix encoder for cross-attention decoders; prefix + suffix
-runner for the decoder-only path).
+The backbone network itself is owned by the model family (the concrete
+:class:`bijou.vla.VLA` classes in ``bijou.models``), not by the encoder:
+the encoder is the prompt-side strategy (collation, prefix encode,
+unfreeze partition) and receives the backbone as an argument — one
+network can serve several roles (prefix encoder for cross-attention
+decoders; prefix + suffix runner for the decoder-only path).
 """
 
 from __future__ import annotations
@@ -356,8 +356,8 @@ class ObservationEncoder[I: BatchInputs, B: nn.Module](nn.Module, abc.ABC):
     """ABC of a trunk's prompt-side strategy (``docs/plan.md``): the
     inputs-collation strategy, the prefix encode, and the trunk's
     unfreeze surface. Generic over its collated-inputs type ``I`` and
-    its trunk type ``B`` — the composition root (BijouModel) owns the
-    trunk network once and passes it into the compute methods, pairing
+    its trunk type ``B`` — the owning family class holds the trunk
+    network once and passes it into the compute methods, pairing
     trunk and encoder consistently by construction.
 
     The module carries exactly the PROMPT-side parameters (e.g. the
@@ -401,12 +401,12 @@ class ObservationEncoder[I: BatchInputs, B: nn.Module](nn.Module, abc.ABC):
         grad-enabled parameter to receive gradients each step."""
 
 
-# Action decoders are plain nn.Modules; the composition contract lives in
-# BijouModel's concrete union (exhaustive match dispatch — pyright-gated),
-# not an ABC: the decoders' signatures legitimately differ (the flow
-# decoder's forward is a velocity field with solver knobs; the ar_backbone
-# decoder runs against the backbone itself), and every consumer goes
-# through the root. Shared conventions: training objectives are
+# Action decoders are plain nn.Modules; each family class composes the
+# concrete decoder(s) it was built with, not an ABC: the decoders'
+# signatures legitimately differ (the flow decoder's forward is a
+# velocity field with solver knobs; the ar_backbone decoder runs against
+# the backbone itself), and every consumer goes through the family's
+# trait surface. Shared conventions: training objectives are
 # module-level functions beside each decoder (``flow_matching_loss``,
 # ``ar_backbone_loss``), and ``predict_chunk`` returns
 # RAW-unit chunks [B, chunk, action_dim] (per-sample stats applied inside).

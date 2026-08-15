@@ -15,10 +15,11 @@ What this suite pins:
    term reaches ZERO trunk parameters while touching the expert; the
    CE term reaches the trunk while touching zero expert parameters
    (disjoint parameter sets — λ is an LR-relative knob only);
-4. the joint checkpoint round-trip: molmo_flow section + the format-6
-   AR section in the metadata's joint_ce slot + expert weights →
-   from_checkpoint remounts decoder AND rider (no joint_ce weights
-   file — the rider owns nothing);
+4. the joint checkpoint round-trip: a legacy directory with the
+   molmo_flow section + the format-6 AR section in the joint_ce slot +
+   expert weights → ``convert_legacy`` + ``load_vla`` remount decoder
+   AND rider on the joint family (no joint_ce weights file — the rider
+   owns nothing);
 5. the fresh-section synthesizer (--expert-init fresh from ar-only
    sources): released shape + released serving/t-law constants +
    the ar section's geometry;
@@ -58,31 +59,35 @@ from test_molmoact2_ar import (
 )
 from test_train_args import _checkpoint, _parse
 
+from bijou.convert_legacy import CheckpointMetadata, convert
 from bijou.data import DatasetStats
 from bijou.fast.molmoact2 import MolmoAct2FastTokenizer
 from bijou.loading import (
     BackboneConfig,
     BackboneDepth,
-    CheckpointMetadata,
     MolmoFlowDecoderConfig,
     ar_backbone_config_to_dict,
     build_molmo_flow_decoder,
-    from_checkpoint,
+    load_vla,
     molmoact2_fresh_flow_section,
 )
-from bijou.model import BijouModel
 from bijou.modelling.codecs import MolmoAct2ActionCodec
-from bijou.modelling.decoders.ar_molmoact2 import MolmoAct2ARDecoder
-from bijou.modelling.decoders.ar_suffix import ar_backbone_losses
+from bijou.modelling.decoders.ar_suffix import (
+    ar_backbone_loss_sums,
+    ar_backbone_losses,
+)
 from bijou.modelling.decoders.flow import TimeConditioning
 from bijou.modelling.decoders.molmo_flow import (
     MolmoFlowDecoder,
     molmo_flow_loss,
+    molmo_flow_loss_sums,
 )
 from bijou.modelling.encoders.molmoact2 import MolmoAct2Encoder
-from bijou.modelling.interface import Collator, ObservationMemory
+from bijou.modelling.interface import Collator, ObservationMemory, SamplingMethod
 from bijou.modelling.molmo2.cache import Molmo2KVCache
 from bijou.modelling.molmo2.model import Molmo2Model, build_multimodal_mask, load_model
+from bijou.models.molmoact2_joint import JointObjective, MolmoAct2JointVLA
+from bijou.models.serving import FlowServing
 
 PROMPT_LEN = 9
 
@@ -162,10 +167,10 @@ def joint_model(
     *,
     insulate: bool,
     joint_ce_weight: float = 0.5,
-) -> BijouModel:
-    model = BijouModel(
-        backbone=trunk,
-        encoder=MolmoAct2Encoder(
+) -> MolmoAct2JointVLA:
+    return MolmoAct2JointVLA(
+        trunk,
+        MolmoAct2Encoder(
             str(tiny_checkpoint),
             setup_type="tabletop",
             control_mode="joint",
@@ -173,12 +178,14 @@ def joint_model(
             action_mode="both",
             narration=False,
         ),
-        decoder=build_flow_decoder(),
+        build_flow_decoder(),
+        build_decoder(tiny_checkpoint),
+        objective=JointObjective(
+            ce_weight=joint_ce_weight,
+            insulate_flow=insulate,
+        ),
+        serving=FlowServing(num_steps=4, method=SamplingMethod.EULER),
     )
-    model.joint_ce = build_decoder(tiny_checkpoint)
-    model.joint_ce_weight = joint_ce_weight
-    model.insulate_expert = insulate
-    return model
 
 
 def encode_memory_with_grad(trunk: Molmo2Model) -> ObservationMemory:
@@ -205,25 +212,53 @@ def encode_memory_with_grad(trunk: Molmo2Model) -> ObservationMemory:
     )
 
 
+def joint_terms_on(
+    model: MolmoAct2JointVLA,
+    memory: ObservationMemory,
+    sample: object,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    """The joint family's two loss terms in ITS forward's op order on an
+    injected memory (the family forward encodes internally, so the
+    memory-injection contracts compose its exact kernels): the flow
+    branch extracts its prompt-only KV FIRST, then the CE rider's
+    suffix forward appends to the same cache. Returns
+    (flow_sum, flow_count, ce_sum, ce_count)."""
+    flow_sum, flow_count = molmo_flow_loss_sums(
+        model.flow_decoder,
+        memory,
+        sample,  # type: ignore[arg-type]  # CollatedBatch[FakeInputs] — kernel-generic
+        insulate=model.objective.insulate_flow,
+    )
+    ce_sum, ce_count, ce_aux_sum, _ = ar_backbone_loss_sums(
+        model.backbone,
+        model.ar_decoder,
+        memory,
+        sample,  # type: ignore[arg-type]  # CollatedBatch[FakeInputs] — kernel-generic
+    )
+    assert ce_aux_sum is None  # rider constructed aux-None (format 6)
+    return flow_sum, flow_count, ce_sum, ce_count
+
+
 def test_decision5_ordering_and_lambda_composition(
     tiny_checkpoint: Path,
     trunk: Molmo2Model,
 ) -> None:
-    """The flow component of the joint loss is BITWISE the flow-only
-    loss (same seeded τ/ε draws, same prompt-only cache) even though
-    the CE rider's forward visibly appends suffix K/V to the shared
-    cache — the decision-5 ordering made observable. And total =
-    flow + λ·CE exactly."""
+    """The flow component of the joint composition is BITWISE the
+    flow-only loss (same seeded τ/ε draws, same prompt-only cache) even
+    though the CE rider's forward visibly appends suffix K/V to the
+    shared cache — the decision-5 ordering made observable through the
+    family's own kernels in its forward's op order. And total =
+    flow + λ·CE exactly. (End-to-end on real collation, the joint
+    ORACLE's cross-check pins the same fact: loss_action ≡ the flow
+    anchor bitwise.)"""
     model = joint_model(tiny_checkpoint, trunk, insulate=False)
     raw, sequences = action_rows()
     sample = batch(raw, sequences)
 
-    flow_decoder = model.decoder
-    assert isinstance(flow_decoder, MolmoFlowDecoder)
     with torch.no_grad():
         torch.manual_seed(23)
         flow_only = molmo_flow_loss(
-            flow_decoder,
+            model.flow_decoder,
             encode_memory_with_grad(trunk),
             sample,
         )
@@ -232,28 +267,34 @@ def test_decision5_ordering_and_lambda_composition(
         assert isinstance(cache, Molmo2KVCache)
         assert cache.seen_tokens == PROMPT_LEN
         torch.manual_seed(23)
-        total, flow_component, ce_action, ce_count = model.loss_components(
-            memory,
-            sample,
-        )
+        flow_sum, flow_count, ce_sum, ce_count = joint_terms_on(model, memory, sample)
         # The CE forward APPENDED (teacher-forced suffix K/V in the
         # cache) — and the flow term did not move: it extracted first.
         assert cache.seen_tokens > PROMPT_LEN
+        flow_component = flow_sum / flow_count
         assert torch.equal(flow_component, flow_only)
-        assert ce_action is not None and ce_count is not None
-        rider = model.joint_ce
-        assert rider is not None
-        torch.manual_seed(23)
-        reference_ce, reference_action, _, _ = ar_backbone_losses(
+        # The CE branch on the SHARED (post-extraction) cache is bitwise
+        # the CE branch on a fresh prefill — same-form (sum) comparison;
+        # the mean-form reference below pins the λ composition across
+        # forms at assert_close tolerance.
+        reference_ce_sum, reference_ce_count, _, _ = ar_backbone_loss_sums(
             trunk,
-            rider,
+            model.ar_decoder,
             encode_memory_with_grad(trunk),
             sample,
         )
-        assert torch.equal(ce_action, reference_action)
+        assert torch.equal(ce_sum, reference_ce_sum)
+        assert torch.equal(ce_count, reference_ce_count)
+        reference_ce, _, _, _ = ar_backbone_losses(
+            trunk,
+            model.ar_decoder,
+            encode_memory_with_grad(trunk),
+            sample,
+        )
+        total = flow_component + model.objective.ce_weight * (ce_sum / ce_count)
         torch.testing.assert_close(
             total,
-            flow_only + model.joint_ce_weight * reference_ce,
+            flow_only + model.objective.ce_weight * reference_ce,
         )
 
 
@@ -271,11 +312,10 @@ def test_ki_under_joint_reaches_disjoint_parameter_sets(
     model = joint_model(tiny_checkpoint, trunk, insulate=True)
     raw, sequences = action_rows()
     sample = batch(raw, sequences)
-    flow_decoder = model.decoder
-    assert isinstance(flow_decoder, MolmoFlowDecoder)
+    flow_decoder = model.flow_decoder
     trunk_parameters = [p for p in trunk.parameters() if p.requires_grad]
     expert_parameters = [p for p in flow_decoder.parameters() if p.requires_grad]
-    assert len(list(model.joint_ce.parameters())) == 0  # type: ignore[union-attr]  # set in joint_model
+    assert len(list(model.ar_decoder.parameters())) == 0  # the parameterless rider
 
     def zero_grads() -> None:
         for parameter in (*trunk_parameters, *expert_parameters):
@@ -299,11 +339,9 @@ def test_ki_under_joint_reaches_disjoint_parameter_sets(
 
     # CE term: trunk-only (the rider owns nothing).
     zero_grads()
-    rider = model.joint_ce
-    assert rider is not None
     ce, _, _, _ = ar_backbone_losses(
         trunk,
-        rider,
+        model.ar_decoder,
         encode_memory_with_grad(trunk),
         sample,
     )
@@ -311,10 +349,16 @@ def test_ki_under_joint_reaches_disjoint_parameter_sets(
     assert gradient_norms(trunk_parameters) > 0.0
     assert gradient_norms(expert_parameters) == 0.0
 
-    # The composed joint loss reaches both sets.
+    # The composed joint loss (the family forward's term composition)
+    # reaches both sets.
     zero_grads()
     torch.manual_seed(31)
-    total, _, _, _ = model.loss_components(encode_memory_with_grad(trunk), sample)
+    flow_sum, flow_count, ce_sum, ce_count = joint_terms_on(
+        model,
+        encode_memory_with_grad(trunk),
+        sample,
+    )
+    total = flow_sum / flow_count + model.objective.ce_weight * (ce_sum / ce_count)
     total.backward()
     assert gradient_norms(trunk_parameters) > 0.0
     assert gradient_norms(expert_parameters) > 0.0
@@ -352,10 +396,12 @@ def test_joint_checkpoint_roundtrip(
     tiny_checkpoint: Path,
     tmp_path: Path,
 ) -> None:
-    """A POSSIBLE joint checkpoint (molmo_flow section + the format-6
-    section in joint_ce + expert.safetensors, NO joint_ce weights
-    file) round-trips: from_checkpoint rebuilds the flow decoder AND
-    mounts the parameterless rider."""
+    """A POSSIBLE legacy joint checkpoint (molmo_flow section + the
+    format-6 section in joint_ce + expert.safetensors, NO joint_ce
+    weights file) converts and loads as the joint family: the converter
+    infers molmoact2_joint off the recorded objective, and
+    ``load_vla`` rebuilds the flow decoder BITWISE and mounts the
+    parameterless rider with the recorded payload."""
     from safetensors.torch import save_file
 
     directory = tmp_path / "joint"
@@ -375,6 +421,7 @@ def test_joint_checkpoint_roundtrip(
         train_args={
             "decoder": "molmo_flow",
             "objective": "joint",
+            "joint_ce_weight": 0.5,
             "decoder_hidden": 32,
             "decoder_heads": 2,
             "decoder_intermediate": 64,
@@ -391,13 +438,14 @@ def test_joint_checkpoint_roundtrip(
         step=0,
     )
     (directory / "bijou_config.json").write_text(json.dumps(metadata.to_json_dict()))
-    model, info = from_checkpoint(directory, device="cpu", dtype=torch.float32)
-    assert isinstance(model.decoder, MolmoFlowDecoder)
-    assert isinstance(model.joint_ce, MolmoAct2ARDecoder)
-    assert model.joint_ce.config == decoder_config()
-    assert len(list(model.joint_ce.parameters())) == 0
-    assert info.train_args.objective == "joint"
-    loaded_state = model.decoder.state_dict()
+    converted = tmp_path / "converted"
+    convert(directory, converted)
+    model = load_vla(converted, device="cpu", dtype=torch.float32)
+    assert isinstance(model, MolmoAct2JointVLA)
+    assert model.ar_decoder.config == decoder_config()
+    assert len(list(model.ar_decoder.parameters())) == 0
+    assert model.objective == JointObjective(ce_weight=0.5, insulate_flow=False)
+    loaded_state = model.flow_decoder.state_dict()
     for key, tensor in source.state_dict().items():
         assert torch.equal(loaded_state[key].cpu(), tensor)
 

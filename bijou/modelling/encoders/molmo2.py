@@ -319,8 +319,8 @@ class Molmo2Encoder(ObservationEncoder[Molmo2Inputs, Molmo2Model]):
     decoder continues (``retain_cache=True``; molmo_flow conditions on
     every layer of it).
 
-    The trunk is NOT owned here — BijouModel owns it once and passes it
-    into the compute methods; this module carries exactly the prompt-side
+    The trunk is NOT owned here — the family class owns it once and passes
+    it into the compute methods; this module carries exactly the prompt-side
     parameters: ``state_proj`` (the soft state token spliced just inside
     the user-turn close, ZERO-initialized so the prompt starts
     undisturbed), serialized as ``prompt.safetensors``.

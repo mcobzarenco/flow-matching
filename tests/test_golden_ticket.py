@@ -37,7 +37,7 @@ from bijou.eval.policies import (
     load_tickets,
     noise_for_item,
 )
-from bijou.model import SamplingMethod
+from bijou.modelling.interface import SamplingMethod
 
 # The committed bank (generated once by make_golden_tickets.py). Both
 # pins are frozen: FILE_SHA is the provenance every read quotes;

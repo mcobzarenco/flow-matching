@@ -11,6 +11,15 @@ files are never rewritten (content-identical by construction), so a
 conversion is cheap and, re-run against the same source, produces
 content-identical output (the idempotence gate).
 
+This module is the ONE home of the legacy ``bijou_config.json``
+LAYOUT: the frozen reader (:class:`CheckpointSections` /
+:func:`checkpoint_sections`) and the write-side envelope
+(:class:`CheckpointMetadata` — kept for the fixture builders and
+schema tests that fabricate the converter's inputs). The tagged
+SECTION dicts inside the envelope are NOT legacy knowledge — the VLA
+metadata carries them verbatim as component configs, and their
+schemas/parsers stay live in ``bijou.sections``.
+
 Family inference is the (prompt kind, decoder kind, objective) triple:
 
 - gemma prompt + flow decoder → ``gemma_flow``
@@ -40,22 +49,105 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from .checkpoint import VLAMetadata, validate_checkpoint, write_checkpoint
 from .data import DatasetStats
-from .loading import (
-    ARDecoderConfig,
-    CheckpointTrainArgs,
+from .loading import CheckpointTrainArgs
+from .modelling.decoders.ar_suffix import ARDecoderConfig
+from .sections import (
+    BackboneConfig,
     FlowDecoderSection,
     GemmaPromptConfig,
     Molmo2PromptConfig,
     MolmoAct2PromptConfig,
     MolmoFlowDecoderConfig,
-    checkpoint_sections,
+    parse_decoder_config,
+    parse_prompt_config,
 )
 from .vla import VLAFamily
+
+# The legacy bijou_config.json schema version. Format 3 sections the
+# metadata by role — backbone (the shared network), prompt (the
+# prompt-side strategy), decoder (the tagged head config). Formats 1/2
+# are refused here and everywhere else at HEAD (nothing on the
+# conversion inventory is older than 3; an older directory loads at an
+# older git tag first).
+CHECKPOINT_FORMAT = 3
+
+
+@dataclass(frozen=True, slots=True)
+class CheckpointMetadata:
+    """Write-side schema of the legacy ``bijou_config.json`` (format 3:
+    role-sectioned metadata — ``backbone``, ``prompt``, ``decoder``).
+    Nothing live writes this layout anymore; the fixture builders
+    (``bijou.testing``, the schema tests) fabricate it as the
+    converter's input, and :func:`convert` is its only reader.
+
+    ``train_args`` is the run's full CLI record as a JSON-ready dict.
+    """
+
+    backbone: BackboneConfig
+    prompt: GemmaPromptConfig | Molmo2PromptConfig | MolmoAct2PromptConfig
+    decoder: dict[str, Any]
+    normalization: DatasetStats
+    per_dataset_normalization: dict[str, DatasetStats]
+    train_args: dict[str, Any]
+    step: int
+    # The joint flow+CE rider's decoder schema; the rider owns no
+    # weights. None on every non-joint checkpoint — the key is then
+    # absent, so files round-trip byte-identically to the pre-field
+    # format.
+    joint_ce: dict[str, Any] | None = None
+
+    def to_json_dict(self) -> dict[str, Any]:
+        return {
+            "format": CHECKPOINT_FORMAT,
+            "backbone": self.backbone.to_dict(),
+            "prompt": self.prompt.to_dict(),
+            "decoder": self.decoder,
+            **({"joint_ce": self.joint_ce} if self.joint_ce is not None else {}),
+            "step": self.step,
+            "train_args": self.train_args,
+            "normalization": self.normalization.state_dict(),
+            "per_dataset_normalization": {
+                repo_id: stats.state_dict()
+                for repo_id, stats in sorted(
+                    self.per_dataset_normalization.items(),
+                )
+            },
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class CheckpointSections:
+    """A legacy checkpoint's role sections, parsed — the frozen
+    read-side view :func:`convert` consumes. Format 3 always records
+    all three sections."""
+
+    backbone: BackboneConfig
+    prompt: GemmaPromptConfig | Molmo2PromptConfig | MolmoAct2PromptConfig
+    decoder: FlowDecoderSection | ARDecoderConfig | MolmoFlowDecoderConfig
+
+
+def checkpoint_sections(meta: dict[str, Any]) -> CheckpointSections:
+    """Parse a format-3 ``bijou_config.json`` payload into sections.
+    Pure — no file or hub access. Formats 1/2 (whose current-semantics
+    synthesizers retired with the live legacy reader) are refused by
+    number."""
+    fmt = int(meta.get("format", 1))
+    if fmt < CHECKPOINT_FORMAT:
+        raise SystemExit(
+            f"legacy format {fmt} — only format {CHECKPOINT_FORMAT} "
+            "converts (see the module docstring for the escape hatch)",
+        )
+    return CheckpointSections(
+        backbone=BackboneConfig.from_dict(meta["backbone"]),
+        prompt=parse_prompt_config(meta["prompt"]),
+        decoder=parse_decoder_config(meta["decoder"]),
+    )
 
 
 def infer_family(
@@ -111,13 +203,13 @@ def convert(
         raise SystemExit(f"{source}: no bijou_config.json — not a legacy checkpoint")
     meta = json.loads(config_path.read_text())
     fmt = int(meta.get("format", 1))
-    if fmt < 3:
+    if fmt < CHECKPOINT_FORMAT:
         raise SystemExit(
-            f"{source}: legacy format {fmt} — only format 3 converts (see "
-            "the module docstring for the escape hatch)",
+            f"{source}: legacy format {fmt} — only format "
+            f"{CHECKPOINT_FORMAT} converts (see the module docstring for "
+            "the escape hatch)",
         )
     sections = checkpoint_sections(meta)
-    assert sections.prompt is not None and sections.decoder is not None  # format 3
     train_args = CheckpointTrainArgs.from_dict(meta["train_args"])
     family = infer_family(sections.prompt, sections.decoder, train_args.objective)
     stats = DatasetStats.from_state_dict(meta["normalization"])

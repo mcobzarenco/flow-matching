@@ -31,9 +31,8 @@ from test_flow_decoder import (
 )
 
 from bijou.eval.policies import tile_memory, tile_stats
-from bijou.model import SamplingMethod
 from bijou.modelling.decoders.flow import FlowDecoder, TimeConditioning
-from bijou.modelling.interface import NormStats, ObservationMemory
+from bijou.modelling.interface import NormStats, ObservationMemory, SamplingMethod
 
 DRAWS = 3
 

@@ -1,11 +1,14 @@
-"""Checkpoint-schema tests: format-3 sectioned configs and the format-2
-and format-1 read-side synthesizers (the legacy world convert_legacy
-reads until phase 6).
+"""Checkpoint-schema tests: the live section schemas/parsers
+(``bijou.sections`` — the tagged dicts the VLA metadata carries as
+component configs) and the frozen legacy reader/writer in
+``bijou.convert_legacy`` (format 3 only; the format-1/2 synthesizers
+retired with the live legacy read path).
 
 Offline by construction: the backbone architecture comes from
 ``Gemma4Config.e2b()`` (built in code, matching google/gemma-4-e2b-it), and the
 legacy fixture is a real pre-format-2 ``bijou_config.json`` (the adaRMS
-rig fine-tune's, per-dataset table trimmed).
+rig fine-tune's, per-dataset table trimmed) — kept as the source of
+recorded train-args spellings and a real recorded expert shape.
 
 The historical --init-from config guard
 (``ensure_matching_decoder_config``) retired with the family CLI: the
@@ -24,18 +27,17 @@ from pathlib import Path
 
 import pytest
 
+from bijou.convert_legacy import CheckpointMetadata, checkpoint_sections
 from bijou.data import DatasetStats
 from bijou.loading import (
     BackboneConfig,
     BackboneDepth,
-    CheckpointMetadata,
     CheckpointTrainArgs,
     FlowDecoderSection,
     GemmaPromptConfig,
     Molmo2PromptConfig,
-    checkpoint_sections,
+    default_expert_config,
     expert_config_from_architecture,
-    expert_config_from_train_args,
     flow_decoder_config_from_expert,
     parse_decoder_config,
     parse_prompt_config,
@@ -51,12 +53,24 @@ def legacy_meta() -> dict:
 
 
 def legacy_expert_config() -> FlowDecoderConfig:
+    """The expert config the legacy fixture's run used, rebuilt from its
+    recorded train args (the retired format-1 synthesizer's mapping,
+    inlined — test_legacy_fixture_reproduces_recorded_expert_config
+    pins it against the fixture's recorded expert_config)."""
     meta = legacy_meta()
-    return expert_config_from_train_args(
+    train_args = CheckpointTrainArgs.from_dict(meta["train_args"])
+    return default_expert_config(
         Gemma4Config.e2b(),
-        CheckpointTrainArgs.from_dict(meta["train_args"]),
         action_dim=len(meta["normalization"]["action"]["mean"]),
         state_dim=len(meta["normalization"]["observation.state"]["mean"]),
+        stream_counts=train_args.stream_counts,
+        hidden_size=train_args.decoder_hidden,
+        num_attention_heads=train_args.decoder_heads,
+        intermediate_size=train_args.decoder_intermediate,
+        cross_attention_heads=train_args.decoder_cross_heads,
+        chunk_size=train_args.chunk_size,
+        self_attention_mode=train_args.self_attention_mode,
+        time_conditioning=train_args.time_conditioning,
     )
 
 
@@ -76,10 +90,11 @@ def test_train_args_read_both_key_spellings() -> None:
     )
 
 
-def test_legacy_synthesizer_reproduces_recorded_expert_config() -> None:
-    """The synthesized config must equal the expert_config the format-1
-    checkpoint actually recorded (same normalization ensure_matching
-    applies: json round-trip stringifies enums)."""
+def test_legacy_fixture_reproduces_recorded_expert_config() -> None:
+    """The helper-rebuilt config must equal the expert_config the
+    format-1 fixture actually recorded — keeps ``legacy_expert_config``
+    (the shape source for the bridge tests below) honest against a real
+    recorded artifact (json round-trip stringifies enums)."""
     recorded = legacy_meta()["expert_config"]
     # Same back-compat normalization ensure_matching applies: fields
     # added to FlowDecoderConfig after format-1 checkpoints were written are
@@ -249,21 +264,20 @@ def test_metadata_writes_format3_and_reads_back() -> None:
     assert rebuilt == legacy_expert_config()
 
 
-def test_pre3_prompt_sections_are_refused() -> None:
-    """Schema-format-2 checkpoints carry pre-format-3 prompts (no
-    [generate|…], no soft state token) whose parameter set this code
-    no longer implements — parsing refuses them loudly (no back-compat,
-    2026-08-03). Schema format 1 has no prompt section at all: its
-    metadata still parses (sections None), and the model LOAD refuses
-    it instead."""
-    with pytest.raises(SystemExit, match="no back-compat"):
+def test_pre3_checkpoints_are_refused() -> None:
+    """The frozen reader parses format 3 ONLY: formats 1/2 (whose
+    current-semantics synthesizers retired with the live legacy read
+    path) are refused by number. The PROMPT-level pre-3 refusal (no
+    [generate|…], no soft state token — no back-compat, 2026-08-03)
+    stays pinned on the live parser: a format-2-era section without the
+    prompt-format field refuses loudly."""
+    with pytest.raises(SystemExit, match="only format 3"):
         checkpoint_sections(format2_meta())
-
-    from_format1 = checkpoint_sections(legacy_meta())
-    from_format3 = checkpoint_sections(format3_meta())
-    assert from_format1.backbone == from_format3.backbone
-    assert from_format1.prompt is None
-    assert from_format1.decoder is None
+    with pytest.raises(SystemExit, match="only format 3"):
+        checkpoint_sections(legacy_meta())
+    pre3_prompt = format2_meta()["encoder"] | {"state_dim": 6}
+    with pytest.raises(SystemExit, match="no back-compat"):
+        parse_prompt_config(pre3_prompt)
 
 
 def test_molmo2_prompt_config_round_trips() -> None:

@@ -209,7 +209,7 @@ class GemmaARDecoder(ARSuffixDecoder[Gemma4Model]):
         if cache is None:
             raise ValueError(
                 "ObservationMemory carries no prefix cache — encode with "
-                "retain_cache=True (BijouModel does this for ar_backbone)",
+                "retain_cache=True (suffix-decoder families do)",
             )
         if not isinstance(cache, KVCache):
             # The seam types the cache opaquely (trunk-private contract);
