@@ -1062,6 +1062,25 @@ rule with `EXDEV` fallback, self-containment check),
 validates → conversion is idempotent (re-convert = byte-identical
 directory); hard-link semantics tested (link when same-fs, loud copy
 fallback); `check.py`.
+VERDICT: PASS — `check.py` 851 green (13 new in
+`tests/test_vla_checkpoint.py`); real-artifact smoke: the phase-0
+gemma-flow and molmoact2-joint tiny oracle checkpoints both convert
+and validate (pristine trunk → hard-linked `backbone/` mirror,
+nlink=2; trained trunk → `backbone.safetensors` linked; joint family
+inferred from the recorded objective). Amendments at execution: the
+toolkit lives in **`bijou/checkpoint.py`** (its own module; loading.py
+keeps only the family registry when phase 5 lands — owner call);
+pristine trunks are SHARDED SNAPSHOT DIRECTORIES, so the pristine form
+is a hard-linked `backbone/` mirror of the whole snapshot (loadable as
+a local model dir, tokenizer/processor files included — true
+self-containment), not a single file; `components` records
+`{"config", "weights"}` per entry so parameterless decoders declare
+themselves explicitly instead of by file absence; component configs
+are carried VERBATIM as the legacy tagged section dicts (families
+parse them with the same section machinery — conversion cannot drift
+architecture); `convert_legacy` imports the LIVE legacy reader until
+phase 6 freezes a copy in; formats 1/2 are refused (nothing on the
+inventory is older than format 3).
 
 **Phase 4 — families + registry + the parity suite (dual world).**
 The six family classes composing the phase-1 building blocks verbatim
