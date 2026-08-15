@@ -2,7 +2,7 @@
 banked HF-forward anchors (port item 3, gate G2).
 
 Pre-reg posts/2026-08-10-prereg-molmoact2-firstclass-port.md: our
-``bijou.molmoact2.MolmoAct2Predictor`` (item-2 packing -> bijou.molmo2
+``bijou.molmoact2.MolmoAct2Predictor`` (item-2 packing -> bijou.modelling.molmo2
 trunk forward -> item-1 wiring/expert -> their output tail) runs the
 SAME 240 anchor rows the rig preflight banked from THEIR HF
 ``predict_action`` (same per-row noise: fresh cuda generator seeded

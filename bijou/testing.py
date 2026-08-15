@@ -20,8 +20,6 @@ from safetensors.torch import save_file
 from tokenizers import Tokenizer
 
 from .data import DatasetStats
-from .encoders.molmoact2 import MOLMOACT2_PROMPT_FORMAT
-from .encoders.molmoact2_processing import BOS_ID, PAD_ID
 from .loading import (
     BackboneConfig,
     BackboneDepth,
@@ -30,7 +28,9 @@ from .loading import (
     MolmoFlowDecoderConfig,
     build_molmo_flow_decoder,
 )
-from .molmo2.testing import tiny_config_json, write_tiny_text_checkpoint
+from .modelling.encoders.molmoact2 import MOLMOACT2_PROMPT_FORMAT
+from .modelling.encoders.molmoact2_processing import BOS_ID, PAD_ID
+from .modelling.molmo2.testing import tiny_config_json, write_tiny_text_checkpoint
 
 TINY_MOLMOACT2_BLOCK_BASE = 151_934  # the release's action_token_start_id
 TINY_MOLMOACT2_VOCAB = 154_048  # ≥ block end 153,982, multiple of 64

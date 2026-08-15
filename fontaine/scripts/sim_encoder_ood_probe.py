@@ -52,7 +52,7 @@ import numpy as np
 import torch
 
 from bijou.loading import from_checkpoint
-from bijou.molmo2.processor import process_image
+from bijou.modelling.molmo2.processor import process_image
 
 SIM_TICKS = (0, 300, 600)
 N_REAL_V2 = 300

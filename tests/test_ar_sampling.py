@@ -24,9 +24,10 @@ import pytest
 import torch
 from test_ar_backbone import BATCH, batch, build, encode_memory
 
-from bijou.decoders.ar_backbone import ARSampling, _sample_action_ids
 from bijou.eval.cli import parse_args
 from bijou.eval.policies import stable_noise, stable_sample_rng
+from bijou.modelling.decoders.ar_suffix import _sample_action_ids
+from bijou.modelling.interface import ARSampling
 
 
 def rngs(draw: int, *, seed: int = 0) -> tuple[np.random.Generator, ...]:

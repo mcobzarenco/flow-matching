@@ -35,8 +35,8 @@ from dataclasses import dataclass
 
 from torch import Tensor
 
-from ..aux_text import AuxGeneration
-from ..decoders.ar_backbone import ValueCandidate
+from ..modelling.aux_text import AuxGeneration
+from ..modelling.interface import ValueCandidate
 from .metrics import FrameScore
 from .policies import SubgoalRecord
 from .report import ReportSample

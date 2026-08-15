@@ -41,19 +41,15 @@ import pytest
 import torch
 from test_ar_backbone import BATCH, batch, build, encode_memory
 
-from bijou.decoders.ar_backbone import (
-    ActionCaptureStep,
-    ARBackboneDecoder,
-    ARSampling,
-)
 from bijou.eval.policies import (
     BijouPolicy,
     TokenRow,
     stable_sample_rng,
     token_rows_from_capture,
 )
-from bijou.gemma4.model import Gemma4Model
-from bijou.interface import ObservationMemory
+from bijou.modelling.decoders.ar_gemma import GemmaARDecoder
+from bijou.modelling.gemma4.model import Gemma4Model
+from bijou.modelling.interface import ActionCaptureStep, ARSampling, ObservationMemory
 from sim.rollout_sim_parallel import TrainingRowWriter
 from sim.rollout_sim_parallel import parse_args as rollout_parse_args
 
@@ -74,7 +70,7 @@ def unpack(row: TokenRow) -> torch.Tensor:
 
 def greedy_rows() -> tuple[
     Gemma4Model,
-    ARBackboneDecoder,
+    GemmaARDecoder,
     ObservationMemory,
     list[ActionCaptureStep],
     list[TokenRow],

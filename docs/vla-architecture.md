@@ -1034,6 +1034,17 @@ rewrites ONLY — no function bodies change (the deferred
 phase 7). Gate: `check.py` green; all five oracles bitwise via the
 OLD CLI; decode fixtures green. The commit message claims
 "motion-only" and the oracles prove it.
+VERDICT: PASS — all five anchors bitwise post-move (same numbers as
+phase 0), `check.py` 828 green. Two amendments discovered at
+execution: (1) `codecs.py` lives at `modelling/codecs.py`, not
+`modelling/decoders/codecs.py` — `interface.py` imports `ActionCodec`
+(collators carry codecs), so a decoders/ home would invert the DAG;
+(2) `loading.py` already owned the name `FlowDecoderConfig` for its
+checkpoint-schema record — schema records now carry the `Section`
+suffix (`FlowDecoderSection`; `MolmoFlowDecoderConfig` follows at its
+next touch), a transitional naming the new format retires in phases
+5–6. `AnyFloatArray` moved to `fast/tokenizer.py` (both layers need
+it; the artifact layer is the lower one).
 
 **Phase 2 — trait scaffolding (additive).** `vla.py`,
 `models/objectives.py`, `VLAFamily`; unit tests for the currencies and
@@ -1131,7 +1142,7 @@ at phase 5):
 | molmoact2 joint (KI, λ=1) | 13.6160 / 13.6621 — `loss_action` ≡ the flow anchors and `loss_aux` ≡ the ar anchors, bitwise |
 
 Fixtures: `outputs/tiny-gemma4`
-(`python -m bijou.gemma4.testing --output outputs/tiny-gemma4`; the
+(`python -m bijou.modelling.gemma4.testing --output outputs/tiny-gemma4`; the
 module path gains a `modelling.` segment at phase 1) and
 `outputs/tiny-molmoact2`
 (`PYTHONPATH=. uv run python probes/generate_tiny_molmoact2.py`).

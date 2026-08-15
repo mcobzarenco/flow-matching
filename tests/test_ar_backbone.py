@@ -1,4 +1,4 @@
-"""ARBackboneDecoder tests: the backbone's suffix role, pure CPU.
+"""GemmaARDecoder tests: the backbone's suffix role, pure CPU.
 
 Reuses the keystone fixture family (tests/test_backbone_continuation)
 with a 256-token vocabulary so the FAST block (fixture codec: 130 ids)
@@ -26,20 +26,20 @@ from test_aux_text import CharTokenizer
 from test_backbone_continuation import tiny_text_config
 from torch import Tensor
 
-from bijou.aux_text import SUFFIX_FORMAT, AuxField
-from bijou.decoders.ar_backbone import (
+from bijou.loading import ar_backbone_config_to_dict, parse_decoder_config
+from bijou.modelling.aux_text import SUFFIX_FORMAT, AuxField
+from bijou.modelling.codecs import ActionCodec, FastActionCodec
+from bijou.modelling.decoders.ar_gemma import GemmaARDecoder
+from bijou.modelling.decoders.ar_suffix import (
     IGNORE_INDEX,
-    ARBackboneConfig,
-    ARBackboneDecoder,
+    ARDecoderConfig,
     ar_backbone_loss,
 )
-from bijou.encoders.gemma4 import GemmaEncoder
-from bijou.fast.codec import ActionCodec, FastActionCodec
-from bijou.gemma4.config import Gemma4Config
-from bijou.gemma4.model import Gemma4Model
-from bijou.interface import CollatedBatch, NormStats, ObservationMemory
-from bijou.loading import ar_backbone_config_to_dict, parse_decoder_config
-from bijou.nn import AttentionBackend
+from bijou.modelling.encoders.gemma4 import GemmaEncoder
+from bijou.modelling.gemma4.config import Gemma4Config
+from bijou.modelling.gemma4.model import Gemma4Model
+from bijou.modelling.interface import CollatedBatch, NormStats, ObservationMemory
+from bijou.modelling.nn import AttentionBackend
 
 FIXTURE = Path(__file__).parent / "fixtures" / "tiny_fast_tokenizer"
 BATCH = 2
@@ -69,8 +69,8 @@ def gemma_config() -> Gemma4Config:
     )
 
 
-def decoder_config(loaded: FastActionCodec) -> ARBackboneConfig:
-    return ARBackboneConfig(
+def decoder_config(loaded: FastActionCodec) -> ARDecoderConfig:
+    return ARDecoderConfig(
         tokenizer=str(FIXTURE),
         vocab_total=loaded.vocab_total,
         block_base=VOCAB - loaded.vocab_total,  # tail placement, like E2B
@@ -81,13 +81,13 @@ def decoder_config(loaded: FastActionCodec) -> ARBackboneConfig:
     )
 
 
-def build() -> tuple[Gemma4Model, ARBackboneDecoder, FastActionCodec]:
+def build() -> tuple[Gemma4Model, GemmaARDecoder, FastActionCodec]:
     loaded = codec()
     torch.manual_seed(0)
     backbone = Gemma4Model(gemma_config(), attn_backend=AttentionBackend.EAGER)
     backbone.eval()
     backbone.requires_grad_(False)
-    decoder = ARBackboneDecoder(
+    decoder = GemmaARDecoder(
         decoder_config(loaded),
         gemma_config().text,
         loaded,
@@ -300,7 +300,7 @@ def test_truncated_backbone_is_rejected() -> None:
         num_kv_shared_layers=0,
     )
     with pytest.raises(ValueError, match="FULL backbone"):
-        ARBackboneDecoder(
+        GemmaARDecoder(
             decoder_config(loaded),
             truncated,
             loaded,

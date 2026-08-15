@@ -44,7 +44,9 @@ from typing import Any
 import numpy as np
 import torch
 
-from ..aux_text import (
+from ..data import EpisodeSplit, select_datasets
+from ..model import SamplingMethod
+from ..modelling.aux_text import (
     EVENT_NONE,
     HOLDING_VALUES,
     AuxField,
@@ -52,8 +54,6 @@ from ..aux_text import (
     label_values,
     parse_visibility,
 )
-from ..data import EpisodeSplit, select_datasets
-from ..model import SamplingMethod
 from .metrics import (
     DatasetSlice,
     FrameScore,

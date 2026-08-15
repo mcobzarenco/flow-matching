@@ -34,7 +34,6 @@ import torch
 from safetensors.torch import save_file
 
 from bijou.convert_molmoact2 import convert
-from bijou.decoders.molmo_flow import MolmoFlowConfig
 from bijou.loading import (
     MolmoAct2PromptConfig,
     MolmoFlowDecoderConfig,
@@ -42,6 +41,7 @@ from bijou.loading import (
     from_checkpoint,
     read_checkpoint_info,
 )
+from bijou.modelling.decoders.molmo_flow import MolmoFlowConfig
 
 _ACTION_DIM = 6
 _STATE_DIM = 6
@@ -225,10 +225,10 @@ def source_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
     """A tiny checkpoint in their exact layout: expert tensors + a REAL
     tiny trunk (text + vision, their key prefixes), so the step-5
     assembly path loads end-to-end with no hub access."""
-    from bijou.molmo2.config import Molmo2Config
-    from bijou.molmo2.model import Molmo2Model
-    from bijou.molmo2.text import Molmo2TextModel
-    from bijou.molmo2.vision import Molmo2VisionBackbone
+    from bijou.modelling.molmo2.config import Molmo2Config
+    from bijou.modelling.molmo2.model import Molmo2Model
+    from bijou.modelling.molmo2.text import Molmo2TextModel
+    from bijou.modelling.molmo2.vision import Molmo2VisionBackbone
 
     source = tmp_path_factory.mktemp("molmoact2-src") / "tiny-hf"
     source.mkdir()
@@ -389,8 +389,8 @@ def test_from_checkpoint_assembles_molmo_flow(
     built + configured off the sections, expert weights byte-equal the
     source, compat tensors injected, encoder carries the prompt facts,
     q01/q99 table on the decoder buffers."""
-    from bijou.decoders.molmo_flow import MolmoFlowDecoder
-    from bijou.encoders.molmoact2 import MolmoAct2Encoder
+    from bijou.modelling.decoders.molmo_flow import MolmoFlowDecoder
+    from bijou.modelling.encoders.molmoact2 import MolmoAct2Encoder
 
     out = _convert(source_dir, tmp_path / "converted", backbone_ref=str(source_dir))
     model, info = from_checkpoint(out)

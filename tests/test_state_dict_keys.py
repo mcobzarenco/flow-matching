@@ -13,19 +13,19 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from bijou.decoders.flow import (
-    ExpertConfig,
+from bijou.modelling.decoders.flow import (
     FlowDecoder,
+    FlowDecoderConfig,
     SelfAttentionMode,
     TimeConditioning,
 )
-from bijou.nn import RopeParameters, RopeType
+from bijou.modelling.nn import RopeParameters, RopeType
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def build(time_conditioning: TimeConditioning) -> FlowDecoder:
-    config = ExpertConfig(
+    config = FlowDecoderConfig(
         hidden_size=64,
         num_attention_heads=2,
         intermediate_size=128,

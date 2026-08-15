@@ -119,7 +119,7 @@ def main() -> None:
     from transformers import AutoConfig
     from transformers.cache_utils import DynamicCache
 
-    from bijou.molmo2.cache import Molmo2KVCache
+    from bijou.modelling.molmo2.cache import Molmo2KVCache
     from bijou.molmoact2 import (
         encoder_attention_mask,
         extract_kv_states,

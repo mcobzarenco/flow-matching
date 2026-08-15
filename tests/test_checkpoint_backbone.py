@@ -23,19 +23,19 @@ import torch
 from safetensors.torch import load_file, save_file
 from test_backbone_continuation import tiny_text_config
 
-from bijou.decoders.flow import (
-    ExpertConfig,
+from bijou.loading import BackboneDepth, checkpoint_sections, load_backbone_init
+from bijou.model import BijouModel
+from bijou.modelling.decoders.flow import (
     FlowDecoder,
+    FlowDecoderConfig,
     SelfAttentionMode,
     TimeConditioning,
 )
-from bijou.encoders.gemma4 import GemmaEncoder
-from bijou.gemma4.config import Gemma4Config
-from bijou.gemma4.loading import truncated_config
-from bijou.gemma4.model import Gemma4Model
-from bijou.loading import BackboneDepth, checkpoint_sections, load_backbone_init
-from bijou.model import BijouModel
-from bijou.nn import RopeParameters, RopeType
+from bijou.modelling.encoders.gemma4 import GemmaEncoder
+from bijou.modelling.gemma4.config import Gemma4Config
+from bijou.modelling.gemma4.loading import truncated_config
+from bijou.modelling.gemma4.model import Gemma4Model
+from bijou.modelling.nn import RopeParameters, RopeType
 from bijou.train import (
     Normalizer,
     Normalizers,
@@ -49,7 +49,7 @@ DIM = 6
 
 
 def tiny_decoder(hidden_size: int = 64) -> FlowDecoder:
-    config = ExpertConfig(
+    config = FlowDecoderConfig(
         hidden_size=hidden_size,
         num_attention_heads=2,
         intermediate_size=128,

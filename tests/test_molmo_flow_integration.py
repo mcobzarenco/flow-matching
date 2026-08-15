@@ -33,18 +33,18 @@ import pytest
 import torch
 from test_convert_molmoact2 import _ACTION_DIM, _HORIZON, _convert, source_dir
 
-from bijou.decoders.molmo_flow import MolmoFlowDecoder, molmo_flow_loss
 from bijou.eval.molmo_norm import MolmoNorm
 from bijou.eval.policies import BijouPolicy
-from bijou.interface import (
+from bijou.loading import from_checkpoint
+from bijou.model import BijouModel
+from bijou.modelling.decoders.molmo_flow import MolmoFlowDecoder, molmo_flow_loss
+from bijou.modelling.interface import (
     CameraFrame,
     CollatedBatch,
     NormStats,
     PromptInputs,
     SamplingMethod,
 )
-from bijou.loading import from_checkpoint
-from bijou.model import BijouModel
 
 assert source_dir is not None  # re-exported pytest fixture (module-scoped)
 
@@ -90,7 +90,7 @@ def _stub_ids(collator: Any) -> Any:
     collator (the tiny source ships no real tokenizer)."""
     from test_molmoact2_encoder import _StubTokenizer
 
-    from bijou.encoders.molmoact2_processing import (
+    from bijou.modelling.encoders.molmoact2_processing import (
         BOS_ID,
         IM_END_ID,
         IM_PATCH_ID,

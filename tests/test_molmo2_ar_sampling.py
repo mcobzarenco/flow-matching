@@ -46,20 +46,20 @@ from test_molmo2_ar import (
     tiny_inputs,
 )
 
-from bijou.aux_text import (
+from bijou.eval.policies import BijouPolicy, stable_sample_rng
+from bijou.model import BijouModel
+from bijou.modelling.aux_text import (
     AUX_TEMPLATE_VERSION,
     AuxDecodeConfig,
     AuxField,
     build_aux_runtime,
 )
-from bijou.decoders.ar_backbone import ARSampling
-from bijou.decoders.ar_molmo2 import Molmo2ARDecoder
-from bijou.eval.policies import BijouPolicy, stable_sample_rng
-from bijou.fast.codec import FastActionCodec
-from bijou.model import BijouModel
-from bijou.molmo2.cache import Molmo2KVCache
-from bijou.molmo2.model import Molmo2Model, load_model
-from bijou.molmo2.testing import write_tiny_text_checkpoint
+from bijou.modelling.codecs import FastActionCodec
+from bijou.modelling.decoders.ar_molmo2 import Molmo2ARDecoder
+from bijou.modelling.interface import ARSampling
+from bijou.modelling.molmo2.cache import Molmo2KVCache
+from bijou.modelling.molmo2.model import Molmo2Model, load_model
+from bijou.modelling.molmo2.testing import write_tiny_text_checkpoint
 
 
 @pytest.fixture(scope="module")
@@ -248,7 +248,7 @@ def test_bijou_policy_aux_fields_sees_the_molmo2_concrete(
     model: Molmo2Model,
 ) -> None:
     """Regression (2026-08-08): BijouPolicy.aux_fields gated on the
-    Gemma concrete (ARBackboneDecoder), so an aux-trained molmo2
+    Gemma concrete (GemmaARDecoder), so an aux-trained molmo2
     checkpoint reported NO trained fields and the eval's narrated pass
     — the sole producer of the report's accuracy-by-field table —
     silently never rode (the banked molmo2 40k panel is missing the

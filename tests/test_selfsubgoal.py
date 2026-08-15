@@ -38,15 +38,15 @@ import torch
 from test_collator import CHUNK, DIM, fake_inputs_collator, item
 
 from bijou.annotations import ConditionField
-from bijou.aux_text import AuxField, AuxGeneration
 from bijou.eval.cli import parse_args
 from bijou.eval.policies import (
     BijouPolicy,
     SelfSubgoalPass1Policy,
     SelfSubgoalPolicy,
 )
-from bijou.interface import BijouPrediction, Collator, PromptInputs
 from bijou.model import SamplingMethod
+from bijou.modelling.aux_text import AuxField, AuxGeneration
+from bijou.modelling.interface import BijouPrediction, Collator, PromptInputs
 
 STAGE1 = (
     Path(__file__).resolve().parents[1]

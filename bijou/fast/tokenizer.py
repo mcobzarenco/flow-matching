@@ -49,6 +49,10 @@ from tokenizers.trainers import BpeTrainer
 
 FloatArray = npt.NDArray[np.float64]
 IntArray = npt.NDArray[np.int64]
+# The tokenizer's arrays are float64 (DCT precision); inputs arriving
+# from torch items are float32 — accept any float and cast at the
+# boundary. Shared by the codec layer (bijou/modelling/codecs.py).
+type AnyFloatArray = npt.NDArray[np.floating]
 
 CONFIG_FILENAME = "fast_config.json"
 BPE_FILENAME = "bpe.json"

@@ -20,7 +20,7 @@ import torch
 from lerobot.datasets.language import EVENT_ONLY_STYLES, STYLE_REGISTRY
 
 from bijou.annotations import EVENT_STYLE
-from bijou.aux_text import (
+from bijou.modelling.aux_text import (
     AUX_TEMPLATE_VERSION,
     AuxDecodeConfig,
     AuxField,
@@ -295,7 +295,7 @@ def test_visibility_indices_follow_kind_order_and_dropout_cannot_move_them() -> 
     """Prompt order = (kind, short name): a wrist camera whose short
     name sorts FIRST still renders at the LAST index; camera_prompt_order
     ignores dropout by construction (it takes the raw map)."""
-    from bijou.aux_text import camera_prompt_order
+    from bijou.modelling.aux_text import camera_prompt_order
 
     kinds = {"a_wrist": "wrist", "z_top": "top"}
     assert camera_prompt_order(kinds, sorted(kinds)) == ["z_top", "a_wrist"]

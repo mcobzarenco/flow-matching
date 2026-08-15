@@ -40,19 +40,7 @@ from tokenizers import Tokenizer
 from tokenizers.models import WordLevel
 
 from bijou.data import DatasetStats
-from bijou.decoders.ar_backbone import (
-    IGNORE_INDEX,
-    MOLMOACT2_SUFFIX_FORMAT,
-    ActionCaptureStep,
-    ARBackboneConfig,
-    ARSampling,
-    suffix_targets,
-)
-from bijou.decoders.ar_molmoact2 import MolmoAct2ARDecoder
-from bijou.encoders.molmoact2 import MOLMOACT2_PROMPT_FORMAT, MolmoAct2Encoder
-from bijou.fast.codec import FastActionCodec
-from bijou.fast.molmoact2 import MolmoAct2ActionCodec, MolmoAct2FastTokenizer
-from bijou.interface import CollatedBatch, NormStats, ObservationMemory
+from bijou.fast.molmoact2 import MolmoAct2FastTokenizer
 from bijou.loading import (
     BackboneConfig,
     BackboneDepth,
@@ -66,11 +54,27 @@ from bijou.loading import (
     molmoact2_ar_config_from_flow_section,
     parse_decoder_config,
 )
-from bijou.molmo2.cache import Molmo2KVCache
-from bijou.molmo2.config import Molmo2Config
-from bijou.molmo2.model import Molmo2Model, build_multimodal_mask, load_model
-from bijou.molmo2.testing import tiny_config_json, write_tiny_text_checkpoint
-from bijou.molmo2.tokenizer import Molmo2TextTokenizer
+from bijou.modelling.codecs import FastActionCodec, MolmoAct2ActionCodec
+from bijou.modelling.decoders.ar_molmoact2 import MolmoAct2ARDecoder
+from bijou.modelling.decoders.ar_suffix import (
+    IGNORE_INDEX,
+    MOLMOACT2_SUFFIX_FORMAT,
+    ARDecoderConfig,
+    suffix_targets,
+)
+from bijou.modelling.encoders.molmoact2 import MOLMOACT2_PROMPT_FORMAT, MolmoAct2Encoder
+from bijou.modelling.interface import (
+    ActionCaptureStep,
+    ARSampling,
+    CollatedBatch,
+    NormStats,
+    ObservationMemory,
+)
+from bijou.modelling.molmo2.cache import Molmo2KVCache
+from bijou.modelling.molmo2.config import Molmo2Config
+from bijou.modelling.molmo2.model import Molmo2Model, build_multimodal_mask, load_model
+from bijou.modelling.molmo2.testing import tiny_config_json, write_tiny_text_checkpoint
+from bijou.modelling.molmo2.tokenizer import Molmo2TextTokenizer
 
 FAST_FIXTURE = Path(__file__).parent / "fixtures" / "molmoact2_fast_tokenizer"
 BATCH = 2
@@ -139,8 +143,8 @@ def text_config() -> Molmo2Config:
     return Molmo2Config.from_dict(molmoact2_config_json())
 
 
-def decoder_config() -> ARBackboneConfig:
-    return ARBackboneConfig(
+def decoder_config() -> ARDecoderConfig:
+    return ARDecoderConfig(
         tokenizer=str(FAST_FIXTURE),
         vocab_total=2048,
         block_base=BLOCK_BASE,

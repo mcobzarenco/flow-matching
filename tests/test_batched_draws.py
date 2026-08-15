@@ -30,10 +30,10 @@ from test_flow_decoder import (
     fabricate as fabricate_unpadded,
 )
 
-from bijou.decoders.flow import FlowDecoder, TimeConditioning
 from bijou.eval.policies import tile_memory, tile_stats
-from bijou.interface import NormStats, ObservationMemory
 from bijou.model import SamplingMethod
+from bijou.modelling.decoders.flow import FlowDecoder, TimeConditioning
+from bijou.modelling.interface import NormStats, ObservationMemory
 
 DRAWS = 3
 

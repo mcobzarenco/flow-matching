@@ -26,13 +26,12 @@ import numpy as np
 import pytest
 import torch
 
-from bijou.fast.codec import ActionCodec, FastActionCodec
 from bijou.fast.molmoact2 import (
-    MolmoAct2ActionCodec,
     MolmoAct2FastTokenizer,
     QuantileStats,
     unnormalize_action,
 )
+from bijou.modelling.codecs import ActionCodec, FastActionCodec, MolmoAct2ActionCodec
 
 FIXTURE = Path(__file__).parent / "fixtures" / "molmoact2_fast_tokenizer"
 HOLES = {3, 9, 12, 14, 19, 22, 27}

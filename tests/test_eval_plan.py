@@ -16,7 +16,6 @@ from typing import cast
 
 import pytest
 
-from bijou.aux_text import parse_visibility
 from bijou.data import DataSelection, StatsAttachedDataset
 from bijou.eval.plan import (
     PlanFrame,
@@ -26,6 +25,7 @@ from bijou.eval.plan import (
     resolve_plan,
     validate_plan,
 )
+from bijou.modelling.aux_text import parse_visibility
 
 NAN = math.nan
 

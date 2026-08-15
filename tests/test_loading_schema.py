@@ -17,14 +17,12 @@ from pathlib import Path
 import pytest
 
 from bijou.data import DatasetStats
-from bijou.decoders.flow import ExpertConfig, FlowDecoder
-from bijou.gemma4.config import Gemma4Config
 from bijou.loading import (
     BackboneConfig,
     BackboneDepth,
     CheckpointMetadata,
     CheckpointTrainArgs,
-    FlowDecoderConfig,
+    FlowDecoderSection,
     GemmaPromptConfig,
     Molmo2PromptConfig,
     checkpoint_sections,
@@ -34,6 +32,8 @@ from bijou.loading import (
     parse_decoder_config,
     parse_prompt_config,
 )
+from bijou.modelling.decoders.flow import FlowDecoder, FlowDecoderConfig
+from bijou.modelling.gemma4.config import Gemma4Config
 from bijou.train import ensure_matching_decoder_config
 
 FIXTURE = Path(__file__).parent / "fixtures" / "legacy_bijou_config.json"
@@ -43,7 +43,7 @@ def legacy_meta() -> dict:
     return json.loads(FIXTURE.read_text())
 
 
-def legacy_expert_config() -> ExpertConfig:
+def legacy_expert_config() -> FlowDecoderConfig:
     meta = legacy_meta()
     return expert_config_from_train_args(
         Gemma4Config.e2b(),
@@ -75,7 +75,7 @@ def test_legacy_synthesizer_reproduces_recorded_expert_config() -> None:
     applies: json round-trip stringifies enums)."""
     recorded = legacy_meta()["expert_config"]
     # Same back-compat normalization ensure_matching applies: fields
-    # added to ExpertConfig after format-1 checkpoints were written are
+    # added to FlowDecoderConfig after format-1 checkpoints were written are
     # absent from their serialized configs and default-filled on read.
     recorded.setdefault("target_time_embed", False)
     synthesized = json.loads(
@@ -233,7 +233,7 @@ def test_metadata_writes_format3_and_reads_back() -> None:
     sections = checkpoint_sections(meta)
     assert sections.backbone.depth is BackboneDepth.PREFIX
     assert isinstance(sections.prompt, GemmaPromptConfig)
-    assert isinstance(sections.decoder, FlowDecoderConfig)
+    assert isinstance(sections.decoder, FlowDecoderSection)
     rebuilt = expert_config_from_architecture(
         sections.prompt,
         sections.decoder,
@@ -275,7 +275,7 @@ def test_molmo2_prompt_config_round_trips() -> None:
     assert parsed == config
 
 
-def meta_decoder(config: ExpertConfig) -> FlowDecoder:
+def meta_decoder(config: FlowDecoderConfig) -> FlowDecoder:
     """An e2b-sized decoder on the meta device: no allocation, and the
     config guard only reads ``.config``."""
     return FlowDecoder(config, device="meta")

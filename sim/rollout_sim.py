@@ -35,8 +35,8 @@ import numpy as np
 import torch
 
 from bijou.data import DatasetStats
-from bijou.decoders.flow import SamplingMethod
 from bijou.eval.policies import BijouPolicy
+from bijou.modelling.decoders.flow import SamplingMethod
 from bijou.rollout import SO_MOTORS, observation_to_item
 from bijou.rollout_safety import camera_kinds_from_names
 

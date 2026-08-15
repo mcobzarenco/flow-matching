@@ -56,14 +56,10 @@ import numpy as np
 import torch
 from torch import Tensor
 
-from .decoders.ar_backbone import ActionCaptureStep, ARSampling
-from .decoders.ar_molmoact2 import MolmoAct2ARDecoder
-from .encoders.molmoact2 import MolmoAct2Encoder, MolmoAct2InputsCollator
 from .fast.molmoact2 import QuantileStats, normalize_state
-from .interface import CameraFrame, CollatedBatch, NormStats, PromptInputs
 from .loading import (
     MOLMOACT2_FAST_TOKENIZER_REF,
-    ARBackboneConfig,
+    ARDecoderConfig,
     CheckpointInfo,
     MolmoAct2PromptConfig,
     MolmoFlowDecoderConfig,
@@ -76,8 +72,18 @@ from .loading import (
     resolve_checkpoint_dir,
 )
 from .model import BijouModel
-from .molmo2.loading import load_config as load_molmo2_config
-from .molmo2.model import load_model as load_molmo2_model
+from .modelling.decoders.ar_molmoact2 import MolmoAct2ARDecoder
+from .modelling.encoders.molmoact2 import MolmoAct2Encoder, MolmoAct2InputsCollator
+from .modelling.interface import (
+    ActionCaptureStep,
+    ARSampling,
+    CameraFrame,
+    CollatedBatch,
+    NormStats,
+    PromptInputs,
+)
+from .modelling.molmo2.loading import load_config as load_molmo2_config
+from .modelling.molmo2.model import load_model as load_molmo2_model
 from .train_grpo import GRPOConfig, GRPOStats, grpo_objective_sums
 
 
@@ -168,7 +174,7 @@ class MolmoAct2DiscreteStack:
                 f"{checkpoint} is not a molmoact2-family checkpoint "
                 f"(prompt {type(prompt).__name__})",
             )
-        if isinstance(sections.decoder, ARBackboneConfig):
+        if isinstance(sections.decoder, ARDecoderConfig):
             # An ar-only descendant: its own recorded format-6 section.
             config = sections.decoder
         elif isinstance(sections.decoder, MolmoFlowDecoderConfig):

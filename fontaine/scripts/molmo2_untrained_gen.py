@@ -31,18 +31,18 @@ import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from bijou.aux_text import AuxField
 from bijou.data import EpisodeSplit, select_datasets
-from bijou.encoders.molmo2 import (
+from bijou.modelling.aux_text import AuxField
+from bijou.modelling.encoders.molmo2 import (
     IM_END_TEXT_ID,
     IM_START_TEXT_ID,
     PAD_ID,
     Molmo2InputsCollator,
 )
-from bijou.gemma4.loading import resolve_checkpoint_dir
-from bijou.interface import Collator
-from bijou.molmo2.model import load_model
-from bijou.molmo2.processor import IMAGE_TYPE_IDS
+from bijou.modelling.gemma4.loading import resolve_checkpoint_dir
+from bijou.modelling.interface import Collator
+from bijou.modelling.molmo2.model import load_model
+from bijou.modelling.molmo2.processor import IMAGE_TYPE_IDS
 
 FULL_REQUEST = (
     AuxField.SUBGOAL,

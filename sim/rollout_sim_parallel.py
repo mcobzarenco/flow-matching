@@ -671,9 +671,9 @@ def main() -> int:
     # under spawn and must not pay for (or touch) the policy stack there.
     import torch
 
-    from bijou.decoders.flow import SamplingMethod
     from bijou.eval.molmo_norm import MolmoNorm
     from bijou.eval.policies import BijouPolicy
+    from bijou.modelling.decoders.flow import SamplingMethod
 
     from .convmap import seam_convention_map
 
@@ -766,7 +766,7 @@ def main() -> int:
         )
         print(f"training rows -> {args.emit_training_rows}")
     elif args.emit_training_rows is not None:
-        from bijou.decoders.ar_backbone import ARSuffixDecoder
+        from bijou.modelling.decoders.ar_suffix import ARSuffixDecoder
 
         assert policy is not None  # parse_args refused --hold
         if not isinstance(policy.model.decoder, ARSuffixDecoder):

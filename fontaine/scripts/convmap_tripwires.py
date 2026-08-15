@@ -81,9 +81,9 @@ def first_action_deltas(
 ) -> np.ndarray:
     """[seeds, 6] |chunk[0] - state| in seam units — convmap-wrapped when
     ``seam_checkpoint`` is given, contract read otherwise."""
-    from bijou.decoders.flow import SamplingMethod
     from bijou.eval.molmo_norm import MolmoNorm
     from bijou.eval.policies import BijouPolicy
+    from bijou.modelling.decoders.flow import SamplingMethod
     from sim.rollout_sim import STATS_REPO_ID, sim_item
     from sim.so101_sim import SO101Sim
 

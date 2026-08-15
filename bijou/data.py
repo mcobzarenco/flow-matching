@@ -16,8 +16,8 @@ provably select and prepare data the same way:
   exact q01/q99) attached to every item (per-dataset normalization) with
   loud, bounded substitution of unfetchable samples.
 
-Batch types and the shared Collator live in ``bijou.interface``; the
-Gemma prompt strategy in ``bijou.encoders.gemma4``.
+Batch types and the shared Collator live in ``bijou.modelling.interface``; the
+Gemma prompt strategy in ``bijou.modelling.encoders.gemma4``.
 """
 
 from __future__ import annotations

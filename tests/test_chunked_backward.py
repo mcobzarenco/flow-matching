@@ -39,19 +39,24 @@ from test_flow_decoder import (
     fabricate,
 )
 
-from bijou.aux_text import assemble_suffix
-from bijou.decoders.ar_backbone import (
+from bijou.modelling.aux_text import assemble_suffix
+from bijou.modelling.decoders.ar_suffix import (
     ar_backbone_counts,
     ar_backbone_loss_sums,
     ar_backbone_losses,
 )
-from bijou.decoders.flow import (
+from bijou.modelling.decoders.flow import (
     TimeConditioning,
     flow_matching_loss,
     flow_matching_loss_sums,
 )
-from bijou.gemma4.cache import KVCache
-from bijou.interface import CollatedBatch, MemoryStream, NormStats, ObservationMemory
+from bijou.modelling.gemma4.cache import KVCache
+from bijou.modelling.interface import (
+    CollatedBatch,
+    MemoryStream,
+    NormStats,
+    ObservationMemory,
+)
 from bijou.train import ChunkedBatch, ChunkingCollator
 
 

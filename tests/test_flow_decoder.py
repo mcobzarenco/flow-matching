@@ -13,21 +13,21 @@ from __future__ import annotations
 
 import torch
 
-from bijou.decoders.blocks import SuffixBlock
-from bijou.decoders.flow import (
-    ExpertConfig,
+from bijou.modelling.decoders.blocks import SuffixBlock
+from bijou.modelling.decoders.flow import (
     FlowDecoder,
+    FlowDecoderConfig,
     SelfAttentionMode,
     TimeConditioning,
 )
-from bijou.interface import MemoryStream, ObservationMemory
-from bijou.nn import RopeParameters, RopeType
+from bijou.modelling.interface import MemoryStream, ObservationMemory
+from bijou.modelling.nn import RopeParameters, RopeType
 
 BATCH, PREFIX_LEN, CHUNK, ACTION_DIM, STATE_DIM, HIDDEN = 2, 5, 4, 6, 6, 32
 
 
-def tiny_config(time_conditioning: TimeConditioning) -> ExpertConfig:
-    return ExpertConfig(
+def tiny_config(time_conditioning: TimeConditioning) -> FlowDecoderConfig:
+    return FlowDecoderConfig(
         hidden_size=HIDDEN,
         num_attention_heads=2,
         intermediate_size=64,

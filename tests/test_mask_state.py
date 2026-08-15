@@ -18,7 +18,7 @@ import torch
 
 from bijou.data import DatasetStats
 from bijou.eval.policies import mask_state_items
-from bijou.interface import Collator, PromptInputs
+from bijou.modelling.interface import Collator, PromptInputs
 
 CHUNK, DIM = 4, 6
 

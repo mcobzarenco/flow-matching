@@ -21,8 +21,8 @@ import torch
 from test_flow_decoder import ACTION_DIM, CHUNK, build, fabricate
 from test_snapflow_distill import flow_batch, randomize
 
-from bijou.decoders.flow import FlowDecoder, TimeConditioning
-from bijou.interface import CollatedBatch, ObservationMemory
+from bijou.modelling.decoders.flow import FlowDecoder, TimeConditioning
+from bijou.modelling.interface import CollatedBatch, ObservationMemory
 
 
 def _decoder_memory_batch() -> tuple[

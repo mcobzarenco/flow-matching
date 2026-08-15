@@ -26,49 +26,46 @@ from huggingface_hub import snapshot_download
 from safetensors.torch import load_file
 from torch import Tensor
 
-from .aux_text import AuxDecodeConfig, build_aux_runtime
 from .data import DatasetStats
-from .decoders.ar_backbone import (
-    MOLMOACT2_SUFFIX_FORMAT,
-    ARBackboneConfig,
-    ARBackboneDecoder,
-)
-from .decoders.ar_molmo2 import Molmo2ARDecoder
-from .decoders.ar_molmoact2 import MolmoAct2ARDecoder
-from .decoders.flow import (
-    ExpertConfig,
+from .fast.molmoact2 import MolmoAct2FastTokenizer
+from .model import BijouModel
+from .modelling.aux_text import AuxDecodeConfig, build_aux_runtime
+from .modelling.codecs import FastActionCodec, MolmoAct2ActionCodec
+from .modelling.decoders.ar_gemma import GemmaARDecoder
+from .modelling.decoders.ar_molmo2 import Molmo2ARDecoder
+from .modelling.decoders.ar_molmoact2 import MolmoAct2ARDecoder
+from .modelling.decoders.ar_suffix import MOLMOACT2_SUFFIX_FORMAT, ARDecoderConfig
+from .modelling.decoders.flow import (
     FlowDecoder,
+    FlowDecoderConfig,
     SelfAttentionMode,
     TimeConditioning,
 )
-from .decoders.molmo_flow import (
+from .modelling.decoders.molmo_flow import (
     MolmoFlowConfig,
     MolmoFlowDecoder,
     MolmoFlowRuntime,
     TimeLaw,
     load_expert_state,
 )
-from .encoders.gemma4 import PROMPT_FORMAT, GemmaEncoder
-from .encoders.molmo2 import Molmo2Encoder
-from .encoders.molmoact2 import MolmoAct2Encoder
-from .fast.codec import FastActionCodec
-from .fast.molmoact2 import MolmoAct2ActionCodec, MolmoAct2FastTokenizer
-from .gemma4.config import Gemma4Config, LayerType
-from .gemma4.loading import (
+from .modelling.encoders.gemma4 import PROMPT_FORMAT, GemmaEncoder
+from .modelling.encoders.molmo2 import Molmo2Encoder
+from .modelling.encoders.molmoact2 import MolmoAct2Encoder
+from .modelling.gemma4.config import Gemma4Config, LayerType
+from .modelling.gemma4.loading import (
     load_config,
     load_model,
     resolve_checkpoint_dir,
     truncate_backbone_state,
 )
-from .gemma4.model import Gemma4Model
-from .interface import kv_stream_name
-from .model import BijouModel
-from .molmo2.config import Molmo2TextConfig
-from .molmo2.loading import load_config as load_molmo2_config
-from .molmo2.model import Molmo2Model
-from .molmo2.model import load_model as load_molmo2_model
-from .molmo2.tokenizer import Molmo2TextTokenizer, newline_carrier_ids
-from .nn import DEFAULT_ATTENTION_BACKEND, AttentionBackend, DeviceLike
+from .modelling.gemma4.model import Gemma4Model
+from .modelling.interface import kv_stream_name
+from .modelling.molmo2.config import Molmo2TextConfig
+from .modelling.molmo2.loading import load_config as load_molmo2_config
+from .modelling.molmo2.model import Molmo2Model
+from .modelling.molmo2.model import load_model as load_molmo2_model
+from .modelling.molmo2.tokenizer import Molmo2TextTokenizer, newline_carrier_ids
+from .modelling.nn import DEFAULT_ATTENTION_BACKEND, AttentionBackend, DeviceLike
 
 # bijou_config.json schema version. Format 3 sections the metadata by
 # role — backbone (the shared network), prompt (the prompt-side
@@ -457,7 +454,7 @@ class MolmoFlowDecoderConfig:
 
 
 @dataclass(frozen=True, slots=True)
-class FlowDecoderConfig:
+class FlowDecoderSection:
     """The flow-matching action decoder as recorded in a checkpoint.
 
     ``schedule`` references encoder stream NAMES, one per decoder layer
@@ -504,7 +501,7 @@ class FlowDecoderConfig:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> FlowDecoderConfig:
+    def from_dict(cls, data: dict[str, Any]) -> FlowDecoderSection:
         return cls(
             hidden_size=int(data["hidden_size"]),
             num_attention_heads=int(data["num_attention_heads"]),
@@ -537,7 +534,7 @@ def parse_prompt_config(
             return MolmoAct2PromptConfig.from_dict(data)
 
 
-def ar_backbone_config_to_dict(config: ARBackboneConfig) -> dict[str, Any]:
+def ar_backbone_config_to_dict(config: ARDecoderConfig) -> dict[str, Any]:
     return {
         "kind": DecoderKind.AR_BACKBONE.value,
         "tokenizer": config.tokenizer,
@@ -550,16 +547,16 @@ def ar_backbone_config_to_dict(config: ARBackboneConfig) -> dict[str, Any]:
     }
 
 
-def ar_backbone_config_from_dict(data: dict[str, Any]) -> ARBackboneConfig:
+def ar_backbone_config_from_dict(data: dict[str, Any]) -> ARDecoderConfig:
     aux = data.get("aux")  # absent in pre-aux checkpoints == null
-    return ARBackboneConfig(
+    return ARDecoderConfig(
         tokenizer=str(data["tokenizer"]),
         vocab_total=int(data["vocab_total"]),
         block_base=int(data["block_base"]),
         chunk_size=int(data["chunk_size"]),
         action_dim=int(data["action_dim"]),
         # Absent = legacy pre-opener checkpoint (format 1) — refused by
-        # ARBackboneConfig (formats < 5 have incompatible parameters).
+        # ARDecoderConfig (formats < 5 have incompatible parameters).
         suffix_format=int(data.get("suffix_format", 1)),
         aux=None if aux is None else AuxDecodeConfig.from_dict(aux),
     )
@@ -567,11 +564,11 @@ def ar_backbone_config_from_dict(data: dict[str, Any]) -> ARBackboneConfig:
 
 def parse_decoder_config(
     data: dict[str, Any],
-) -> FlowDecoderConfig | ARBackboneConfig | MolmoFlowDecoderConfig:
+) -> FlowDecoderSection | ARDecoderConfig | MolmoFlowDecoderConfig:
     kind = DecoderKind(data["kind"])
     match kind:
         case DecoderKind.FLOW:
-            return FlowDecoderConfig.from_dict(data)
+            return FlowDecoderSection.from_dict(data)
         case DecoderKind.AR_FAST:
             # Retired 2026-08-13: superseded by ar_backbone on quality,
             # parameter count and deployment (architecture.md §8.3).
@@ -589,7 +586,7 @@ def parse_decoder_config(
 def decoder_schema_dict(
     decoder: (
         FlowDecoder
-        | ARBackboneDecoder
+        | GemmaARDecoder
         | Molmo2ARDecoder
         | MolmoAct2ARDecoder
         | MolmoFlowDecoder
@@ -613,7 +610,7 @@ def decoder_schema_dict(
             return dict(decoder.checkpoint_schema)
         case FlowDecoder():
             return flow_decoder_config_from_expert(decoder.config).to_dict()
-        case ARBackboneDecoder() | Molmo2ARDecoder() | MolmoAct2ARDecoder():
+        case GemmaARDecoder() | Molmo2ARDecoder() | MolmoAct2ARDecoder():
             # The MolmoAct2 concrete records the SAME section shape —
             # suffix_format 6 + the released-tokenizer ref are the
             # discriminating fields; the trunk axis stays the PROMPT kind.
@@ -670,7 +667,7 @@ def default_expert_config(
     self_attention_rope_theta: float = 10_000.0,
     time_conditioning: TimeConditioning = TimeConditioning.ADDITIVE,
     target_time_embed: bool = False,
-) -> ExpertConfig:
+) -> FlowDecoderConfig:
     """Expert config with a blocks cross-attention schedule.
 
     ``stream_counts[i]`` expert layers attend the i-th global prefix layer,
@@ -690,7 +687,7 @@ def default_expert_config(
             for stream, count in zip(streams, stream_counts, strict=True)
         ),
     )
-    return ExpertConfig(
+    return FlowDecoderConfig(
         hidden_size=hidden_size,
         num_attention_heads=num_attention_heads,
         intermediate_size=intermediate_size,
@@ -713,7 +710,7 @@ def default_expert_config(
 
 def from_backbone(
     model_id_or_path: str | Path,
-    expert_config: ExpertConfig | None = None,
+    expert_config: FlowDecoderConfig | None = None,
     *,
     action_dim: int | None = None,
     state_dim: int | None = None,
@@ -1000,7 +997,7 @@ class CheckpointSections:
 
     backbone: BackboneConfig
     prompt: GemmaPromptConfig | Molmo2PromptConfig | MolmoAct2PromptConfig | None
-    decoder: FlowDecoderConfig | ARBackboneConfig | MolmoFlowDecoderConfig | None
+    decoder: FlowDecoderSection | ARDecoderConfig | MolmoFlowDecoderConfig | None
 
 
 def checkpoint_sections(meta: dict[str, Any]) -> CheckpointSections:
@@ -1038,7 +1035,7 @@ def expert_config_from_train_args(
     *,
     action_dim: int,
     state_dim: int,
-) -> ExpertConfig:
+) -> FlowDecoderConfig:
     """Rebuild the expert config a format-1 checkpoint's training run used
     from its recorded args — the legacy synthesizer's core (the serialized
     expert_config in old bijou_config.json stringifies enums and nested
@@ -1058,12 +1055,14 @@ def expert_config_from_train_args(
     )
 
 
-def flow_decoder_config_from_expert(expert_config: ExpertConfig) -> FlowDecoderConfig:
-    """ExpertConfig → the checkpoint-schema decoder config: schedule ints
+def flow_decoder_config_from_expert(
+    expert_config: FlowDecoderConfig,
+) -> FlowDecoderSection:
+    """FlowDecoderConfig → the checkpoint-schema decoder config: schedule ints
     become stream names; cross-attention head_dim/rope (encoder-declared
     geometry) drop out. Pure and total — the write-side half of the
     format-2 bridge."""
-    return FlowDecoderConfig(
+    return FlowDecoderSection(
         hidden_size=expert_config.hidden_size,
         num_attention_heads=expert_config.num_attention_heads,
         intermediate_size=expert_config.intermediate_size,
@@ -1087,9 +1086,9 @@ def flow_decoder_config_from_expert(expert_config: ExpertConfig) -> FlowDecoderC
 
 def expert_config_from_architecture(
     prompt: GemmaPromptConfig,
-    decoder: FlowDecoderConfig,
+    decoder: FlowDecoderSection,
     backbone_config: Gemma4Config,
-) -> ExpertConfig:
+) -> FlowDecoderConfig:
     """Compose the prompt + decoder configs back into the expert's
     construction config: schedule names resolve to backbone layer
     indices against the prompt section's K/V exports (``kv{i}``);
@@ -1109,7 +1108,7 @@ def expert_config_from_architecture(
             f"encoder export(s) {unused} are not consumed by the decoder "
             "schedule — remove them from the encoder config or schedule them",
         )
-    return ExpertConfig(
+    return FlowDecoderConfig(
         hidden_size=decoder.hidden_size,
         num_attention_heads=decoder.num_attention_heads,
         intermediate_size=decoder.intermediate_size,
@@ -1291,14 +1290,14 @@ def build_molmo_flow_decoder(
 
 # The released FAST action-tokenizer artifact — the discrete head's
 # codec. AR/joint checkpoints record their own ref
-# (ARBackboneConfig.tokenizer); RELEASE-class checkpoints predate the
+# (ARDecoderConfig.tokenizer); RELEASE-class checkpoints predate the
 # discrete read, so the AR read of one defaults to the canonical
 # artifact (the box snapshot pins d45593b4c8…).
 MOLMOACT2_FAST_TOKENIZER_REF = "allenai/MolmoAct2-FAST-Tokenizer"
 
 
 def build_molmoact2_ar_decoder(
-    config: ARBackboneConfig,
+    config: ARDecoderConfig,
     prompt: MolmoAct2PromptConfig,
     text_config: Molmo2TextConfig,
     backbone_ref: str,
@@ -1338,7 +1337,7 @@ def molmoact2_ar_config_from_flow_section(
     backbone_ref: str,
     *,
     fast_tokenizer: str = MOLMOACT2_FAST_TOKENIZER_REF,
-) -> ARBackboneConfig:
+) -> ARDecoderConfig:
     """The discrete (AR) read of a RELEASE-class checkpoint, whose
     decoder section is molmo_flow and which records no format-6
     section: geometry from the flow section — refusing non-identity
@@ -1365,7 +1364,7 @@ def molmoact2_ar_config_from_flow_section(
             f"{backbone_ref} tokenizer has no <action_0> — not a "
             "MolmoAct2 'both'-mode vocabulary",
         )
-    return ARBackboneConfig(
+    return ARDecoderConfig(
         tokenizer=fast_tokenizer,
         vocab_total=fast.block_vocab,
         block_base=int(block_base),
@@ -1377,7 +1376,7 @@ def molmoact2_ar_config_from_flow_section(
 
 
 def molmoact2_fresh_flow_section(
-    ar_config: ARBackboneConfig,
+    ar_config: ARDecoderConfig,
 ) -> MolmoFlowDecoderConfig:
     """The molmo_flow section for ``--expert-init fresh`` from an
     ar-only source (which carries no expert to inherit): the released
@@ -1509,7 +1508,7 @@ def from_checkpoint(
                 "--offload-ple parks Gemma's PLE token table; molmo2-family "
                 "trunks have no PLE — drop the flag",
             )
-        if isinstance(sections.decoder, ARBackboneConfig):
+        if isinstance(sections.decoder, ARDecoderConfig):
             # The discrete-head arm (retirement phase 2): format-6
             # ar_backbone section + molmoact2 prompt. Cheap refusals
             # BEFORE any trunk download/mount.
@@ -1625,7 +1624,7 @@ def from_checkpoint(
         return model, info
     checkpoint_dir = resolve_checkpoint_dir(info.backbone)
     if isinstance(sections.prompt, Molmo2PromptConfig):
-        if not isinstance(sections.decoder, ARBackboneConfig):
+        if not isinstance(sections.decoder, ARDecoderConfig):
             # Flow-on-molmo2 was the residual-conditioning arm — removed
             # 2026-08-13 (superseded by molmo_flow); its checkpoints are
             # already refused by the prompt section's residual_exports
@@ -1691,7 +1690,7 @@ def from_checkpoint(
             encoder=encoder,
             decoder=molmo2_decoder,
         )
-    elif isinstance(sections.decoder, ARBackboneConfig):
+    elif isinstance(sections.decoder, ARDecoderConfig):
         decoder_config = sections.decoder
         assert isinstance(sections.prompt, GemmaPromptConfig)  # molmo2 handled above
         backbone_config = load_config(checkpoint_dir)
@@ -1724,7 +1723,7 @@ def from_checkpoint(
             if decoder_config.aux is not None
             else None
         )
-        decoder = ARBackboneDecoder(
+        decoder = GemmaARDecoder(
             decoder_config,
             backbone_config.text,
             resolve_action_codec(decoder_config.tokenizer),

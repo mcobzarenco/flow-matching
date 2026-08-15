@@ -19,17 +19,17 @@ import torch
 from test_aux_text import CharTokenizer
 from test_molmo2_model import image_type_mask_of, tiny_ids, tiny_vision_inputs
 
-from bijou.aux_text import SUFFIX_FORMAT
-from bijou.decoders.ar_backbone import ARBackboneConfig, suffix_targets
-from bijou.decoders.ar_molmo2 import MOLMO2_GENERATION_OPENER, Molmo2ARDecoder
-from bijou.encoders.molmo2 import Molmo2Encoder, Molmo2Inputs
-from bijou.fast.codec import FastActionCodec
-from bijou.interface import CollatedBatch, NormStats, ObservationMemory
 from bijou.loading import decoder_schema_dict, parse_decoder_config
 from bijou.model import BijouModel
-from bijou.molmo2.config import Molmo2Config
-from bijou.molmo2.model import Molmo2Model, build_multimodal_mask, load_model
-from bijou.molmo2.testing import tiny_config_json, write_tiny_text_checkpoint
+from bijou.modelling.aux_text import SUFFIX_FORMAT
+from bijou.modelling.codecs import FastActionCodec
+from bijou.modelling.decoders.ar_molmo2 import MOLMO2_GENERATION_OPENER, Molmo2ARDecoder
+from bijou.modelling.decoders.ar_suffix import ARDecoderConfig, suffix_targets
+from bijou.modelling.encoders.molmo2 import Molmo2Encoder, Molmo2Inputs
+from bijou.modelling.interface import CollatedBatch, NormStats, ObservationMemory
+from bijou.modelling.molmo2.config import Molmo2Config
+from bijou.modelling.molmo2.model import Molmo2Model, build_multimodal_mask, load_model
+from bijou.modelling.molmo2.testing import tiny_config_json, write_tiny_text_checkpoint
 
 FIXTURE = Path(__file__).parent / "fixtures" / "tiny_fast_tokenizer"
 BATCH = 2
@@ -55,9 +55,9 @@ def text_config() -> Molmo2Config:
     return Molmo2Config.from_dict(tiny_config_json())
 
 
-def decoder_config(loaded: FastActionCodec) -> ARBackboneConfig:
+def decoder_config(loaded: FastActionCodec) -> ARDecoderConfig:
     text = text_config().text
-    return ARBackboneConfig(
+    return ARDecoderConfig(
         tokenizer=str(FIXTURE),
         vocab_total=loaded.vocab_total,
         block_base=text.fast_block_base,  # 512 + 8 = 520: the extension anchor

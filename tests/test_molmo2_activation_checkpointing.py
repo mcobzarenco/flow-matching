@@ -28,8 +28,8 @@ import torch.utils.checkpoint
 from test_molmo2_ar import text_config
 from torch.nn.attention import SDPBackend, sdpa_kernel
 
-from bijou.molmo2.cache import Molmo2KVCache
-from bijou.molmo2.text import Molmo2Transformer, _ambient_sdpa_backends
+from bijou.modelling.molmo2.cache import Molmo2KVCache
+from bijou.modelling.molmo2.text import Molmo2Transformer, _ambient_sdpa_backends
 
 
 class CheckpointSpy:

@@ -126,7 +126,7 @@ def cmd_embed(args: argparse.Namespace) -> None:
     from transformers import AutoProcessor
 
     from bijou.data import EpisodeSplit, select_datasets
-    from bijou.gemma4.loading import load_model
+    from bijou.modelling.gemma4.loading import load_model
 
     rows = load_panel_rows()
     n = len(rows["index"]) if args.limit is None else args.limit
@@ -579,8 +579,8 @@ def cmd_figures(args: argparse.Namespace) -> None:
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    from bijou.aux_text import subgoal_text
     from bijou.data import EpisodeSplit, select_datasets
+    from bijou.modelling.aux_text import subgoal_text
 
     # bijou.eval.report THEMES["dark"]: page/series/text tokens.
     page_bg = "#121417"

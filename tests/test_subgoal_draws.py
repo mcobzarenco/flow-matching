@@ -55,8 +55,6 @@ from test_ar_backbone_aux import build_with_aux
 from test_selfsubgoal import FakeBase, FakeModel, eval_collator, labeled_item
 from test_selfsubgoal import _parse as parse_cli
 
-from bijou.aux_text import AuxField, AuxGeneration
-from bijou.decoders.ar_backbone import ARSampling, ValueCandidate
 from bijou.eval.policies import (
     BijouPolicy,
     SelectedSubgoalPolicy,
@@ -72,7 +70,8 @@ from bijou.eval.subgoal_scoring import (
     self_certainty_pick,
     token_f1,
 )
-from bijou.interface import BijouPrediction
+from bijou.modelling.aux_text import AuxField, AuxGeneration
+from bijou.modelling.interface import ARSampling, BijouPrediction, ValueCandidate
 
 # ------------------------------------------------------------- scorers
 

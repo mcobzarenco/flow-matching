@@ -59,11 +59,11 @@ from lerobot.cameras.opencv import OpenCVCameraConfig
 from lerobot.robots.so_follower import SOFollower, SOFollowerRobotConfig
 
 from .annotations import ConditionField
-from .aux_text import AuxField, AuxGeneration
 from .data import DatasetStats
-from .decoders.molmo_flow import MolmoFlowDecoder
 from .eval.policies import BijouPolicy
 from .model import SamplingMethod
+from .modelling.aux_text import AuxField, AuxGeneration
+from .modelling.decoders.molmo_flow import MolmoFlowDecoder
 from .rollout_async import AsyncExecutor, AsyncPlanner, PredictFn, sustainable
 from .rollout_safety import (
     JointFrameTransform,

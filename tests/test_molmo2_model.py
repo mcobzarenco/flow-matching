@@ -19,9 +19,9 @@ from pathlib import Path
 import pytest
 import torch
 
-from bijou.molmo2.config import Molmo2Config
-from bijou.molmo2.model import Molmo2Model, build_multimodal_mask, load_model
-from bijou.molmo2.testing import tiny_config_json, write_tiny_text_checkpoint
+from bijou.modelling.molmo2.config import Molmo2Config
+from bijou.modelling.molmo2.model import Molmo2Model, build_multimodal_mask, load_model
+from bijou.modelling.molmo2.testing import tiny_config_json, write_tiny_text_checkpoint
 
 
 @pytest.fixture(scope="module")

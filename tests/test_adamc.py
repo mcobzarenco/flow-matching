@@ -35,10 +35,10 @@ import torch
 from test_molmo2_ar import build_decoder, build_encoder
 from torch import nn
 
-from bijou.decoders.ar_molmo2 import Molmo2ARDecoder
 from bijou.model import BijouModel
-from bijou.molmo2.model import load_model
-from bijou.molmo2.testing import write_tiny_text_checkpoint
+from bijou.modelling.decoders.ar_molmo2 import Molmo2ARDecoder
+from bijou.modelling.molmo2.model import load_model
+from bijou.modelling.molmo2.testing import write_tiny_text_checkpoint
 from bijou.train import (
     adamc_output_head_parameters,
     apply_adamc_weight_decay,

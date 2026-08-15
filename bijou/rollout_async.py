@@ -54,7 +54,7 @@ from typing import Any
 
 from torch import Tensor
 
-from .aux_text import AuxGeneration
+from .modelling.aux_text import AuxGeneration
 
 PredictFn = Callable[
     [dict[str, Any], int],

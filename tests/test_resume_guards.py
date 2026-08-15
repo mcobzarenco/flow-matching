@@ -22,8 +22,8 @@ import pytest
 import torch
 
 from bijou.data import DatasetStats
-from bijou.decoders.flow import SelfAttentionMode, TimeConditioning
 from bijou.loading import CheckpointInfo, CheckpointTrainArgs
+from bijou.modelling.decoders.flow import SelfAttentionMode, TimeConditioning
 from bijou.train import (
     TrainArgs,
     _build_parser,

@@ -26,8 +26,8 @@ from pathlib import Path
 import pytest
 
 from bijou.data import DatasetStats
-from bijou.decoders.flow import SelfAttentionMode, TimeConditioning
 from bijou.loading import CheckpointInfo, CheckpointTrainArgs
+from bijou.modelling.decoders.flow import SelfAttentionMode, TimeConditioning
 from bijou.train import (
     ARCH_DEFAULTS,
     ARCH_FLAGS,

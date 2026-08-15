@@ -28,16 +28,16 @@ import pytest
 import torch
 from torch.nn import functional as F
 
-from bijou.molmo2.config import Molmo2Config, Molmo2TextConfig
-from bijou.molmo2.loading import load_text_model, truncated_config
-from bijou.molmo2.testing import tiny_config_json, write_tiny_text_checkpoint
-from bijou.molmo2.text import (
+from bijou.modelling.molmo2.config import Molmo2Config, Molmo2TextConfig
+from bijou.modelling.molmo2.loading import load_text_model, truncated_config
+from bijou.modelling.molmo2.testing import tiny_config_json, write_tiny_text_checkpoint
+from bijou.modelling.molmo2.text import (
     DecoderLayer,
     Molmo2Embedding,
     Molmo2TextModel,
     Molmo2Transformer,
 )
-from bijou.nn import AttentionBackend
+from bijou.modelling.nn import AttentionBackend
 
 
 def tiny_text_config() -> Molmo2TextConfig:

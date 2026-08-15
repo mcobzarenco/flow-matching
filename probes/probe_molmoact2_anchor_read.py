@@ -30,7 +30,7 @@ import torch
 
 from bijou.data import EpisodeSplit, select_datasets
 from bijou.eval.policies import BijouPolicy
-from bijou.interface import SamplingMethod
+from bijou.modelling.interface import SamplingMethod
 
 BANK = Path.home() / "flow-matching/reports/analysis__molmoact2_rig_ft_step2000.npz"
 DATA = (

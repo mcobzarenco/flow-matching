@@ -36,13 +36,13 @@ import numpy as np
 import pytest
 import torch
 
-from bijou.decoders.ar_backbone import ActionCaptureStep
 from bijou.eval.policies import stable_sample_rng, token_rows_from_capture
 from bijou.grpo_replay import (
     MolmoAct2DiscreteStack,
     ReplayRow,
     molmoact2_grpo_loss,
 )
+from bijou.modelling.interface import ActionCaptureStep
 from bijou.testing import write_tiny_molmoact2_release
 from bijou.train_grpo import GRPOConfig, grpo_objective_sums
 

@@ -15,7 +15,7 @@ import pytest
 import torch
 from test_flow_decoder import BATCH, fabricate, tiny_config
 
-from bijou.decoders.flow import FlowDecoder, SamplingMethod, TimeConditioning
+from bijou.modelling.decoders.flow import FlowDecoder, SamplingMethod, TimeConditioning
 
 NUM_STEPS = 10
 

@@ -161,9 +161,9 @@ def main() -> None:
     parser.add_argument("--skip-corridor", action="store_true")
     args = parser.parse_args()
 
-    from bijou.gemma4.loading import resolve_checkpoint_dir
-    from bijou.molmo2.model import load_model as load_trunk
-    from bijou.molmo2.tokenizer import Molmo2TextTokenizer
+    from bijou.modelling.gemma4.loading import resolve_checkpoint_dir
+    from bijou.modelling.molmo2.model import load_model as load_trunk
+    from bijou.modelling.molmo2.tokenizer import Molmo2TextTokenizer
     from bijou.molmoact2.predictor import resolve_image_token_ids
 
     sys.path.insert(0, str(REPO_ROOT / "fontaine/scripts"))
