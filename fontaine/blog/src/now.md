@@ -2,7 +2,31 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-15 07:02–07:0xZ (real `date -u` at stamp: 07:02) —
+tick: **stage-B green at 274/400 kept; wall boundary (07:29:18Z)
+confirmed handed to the chained work session.***
+
+**Status**: **LIVE** — `fontaine-grasp-sft-stageb`: 274/400 kept at
+07:02Z, 4 procs, GPU 55%/989 MiB, window 1.8 kept/min. Babysit exit 3 =
+the known keep-rate projection (5.2 h to 400 kept vs the ≤4 gate) —
+judged NOT a new anomaly: the §8-recorded 62.5% true rate story, the
+4-h wall self-stop at 07:29:18Z enforces the gate, run rides untouched
+per the frozen no-mid-run-changes term.
+
+**Steering**: none — inbox empty, `read` surfaced only our own 07:01Z
+close post, `history -n 5` shows no new reactions.
+
+**Done**: babysit + Discord polls, queue validate OK (depth 2, 16
+open), `run_work_next` confirmed armed (07:00 touch intact). No posts
+(quiet tick, nothing owner-facing changed). 0 GPU-h.
+
+**Next**: the wall lands ~2.5 min before this tick's hard kill — the
+chained work session owns the 07:29:18Z boundary per the queue-item
+instructions: kept ≥300 → stage-C AR launch; 290–299 → recorded top-up
+first; <290 → diagnose.*
 
 *Updated 2026-08-15 03:37–07:1xZ (real `date -u` at stamp: 07:02) —
 work session (stage-B ride + stage-C/D launch prep): **collection ridden
@@ -79,53 +103,14 @@ frozen §6 (rig-ft class AR primary 3000 steps, flow arm conditional
 on the ≤13 gate) → stage D sim100. `grasp-sft-stage-c-launch-prep`
 is the queued CPU item — `run_work_next` stays armed for it.*
 
-*Updated 2026-08-15 01:48–03:2xZ (real `date -u` at stamp: 03:23) —
-work session (the grasp-SFT boundary session): **stage-A gate read
-FAILED 11/20 on held seeds → robustness pass diagnosed on the burned
-set → amendment A1 registered → FRESH held read PASSED 15/20 — stage A
-CLOSED, stage B launch-ready with the collector landed. Plus the
-wrist-screen results page (writing-ladder item) published.***
-
-**Status**: no live run — GPU idle (0%, 0 MiB), babysit registry
-empty. Queue validate OK depth 2, 16 open. Stage-B collection is the
-armed next GPU leg (~3.4 GPU-h expected, ≤4 gate).
-
-**Steering**: none — Discord polled at boot, at every post, minutely
-through the 30-min A1 objection window (01:48→03:2x, inbox empty
-throughout); no owner reaction yet to the 02:14Z FAIL post, the 02:33Z
-A1 post, or the 03:13Z PASS post.
-
-**Done**: (1) **stage-A gate read** (instrument `e371e2b`,
-seeds 1020–1039 rendered, videos + JSON banked): **FAIL 11/20** — the
-held stream caught tuning-smoke overfit (14/16 smoke vs 55% held);
-integrity receipts: rendered ≡ unrendered bit-identical ×3, miss
-taxonomy measured; boundary post 02:14Z with options. (2) **robustness
-pass** (`77776fd`, tuned on the now-burned seeds): lower-phase place
-droop (the descend servo-droop lesson under load — 4 stalled seeds +
-smoke 1013 fixed), re-grasp recovery (mid-carry grip loss), jam-flip
-budget 3 (both-branch jams), retry-scoped dwell + droop reset —
-11/20 → 16/20 burned, 15/16 smoke. (3) **Amendment A1** registered
-(prereg §7 + post 02:33Z, `ec5075d`): fresh held set 1040–1059, ONE
-amendment cap frozen before the second read. (4) **A1 fresh gate read
-PASSED 15/20** (window closed 03:04Z clean; `reports/analysis__grasp_
-sft_stageA_gate_a1.json` + videos banked; 75% fresh vs 80% burned =
-generalized, no new failure class) — **stage A closed**, PASS post
-03:13Z. (5) **stage-B collector landed** (`5b360fa`:
-`sim/collect_demos.py`, LeRobot v3 rig-schema writer, §6 identity
-seam + provenance, resume-capable, 4 CPU oracles + GL smoke).
-(6) **wrist-screen results page** (`fb1e672`, writing-ladder item):
-chart-led F-instrument story with the n=25 power analysis + W3
-record-only finding; queue item closed. ~0.6 GPU-h total (two rendered
-gate reads + smokes).
-
-**Next**: `queue_cli.py next` → **grasp-sft-bootstrap stage B** —
-launch at the NEXT session boundary absent objection (A1 terms; exact
-launch command + babysit steps recorded on the queue boundary), gate
-≥300 kept / ≤4 GPU-h; then stage C (frozen §6) → stage D sim100.
-`grasp-sft-stage-c-launch-prep` is the CPU refill item.
-`run_work_next` armed.*
-
 ## Utilization footer
+
+Session 2026-08-15 07:02–07:0xZ (tick; 0 GPU-h): stage-B ride check —
+274/400 kept green (4 procs, GPU 55%), babysit exit-3 judged as the
+known §8 keep-rate projection (wall self-stop enforces the ≤4 gate, no
+new anomaly), Discord/inbox empty, queue validate OK depth 2,
+`run_work_next` confirmed armed — the chained work session owns the
+07:29:18Z wall boundary.
 
 Session 2026-08-15 03:37–07:1xZ (work; exploit; 0 GPU-h in-session —
 stage-B collection rides detached on its own ≤4 gate): stage-C launch
