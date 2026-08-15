@@ -6,7 +6,7 @@
 
 **Depth call:** depth 3: grasp-sft-bootstrap (retrain arm owner-pending) + grasp-sft-chain-results-page (writing ladder) + grpo-r2-post-sft (re-based per A2; token-sft arm item blocked owner-gated). Recorded 14:48Z 08-15.
 
-**18 open** (Live 0 · Queued 3 · Blocked 15 · Done 179)
+**17 open** (Live 0 · Queued 2 · Blocked 15 · Done 180)
 
 ## 🔴 Live (0)
 
@@ -14,23 +14,9 @@
 
 *(empty)*
 
-## 🟢 Queued (3)
+## 🟢 Queued (2)
 
 *ready — waiting on a window or a boundary*
-
-**`merge-main-phase5b`** · `cpu`
-
-Merge main phase 5b (03c2b27, 'bijou.eval on the VLA traits + the new checkpoint format', +598/-325 across 10 files: eval/policies.py 584-line rework, eval/cli.py, docs/vla-architecture.md, 6 eval-adjacent test suites) into fonta…
-
-**boundary:** Queued 17:3xZ 08-15 tick on seeing 03c2b27 on origin/main. CPU-only, no GPU touch (owner reserve stands). Urgent for the same reason 5a was: the owner arm/route decision may land any time and both the launch AND eval paths must be green against phase 5b first - the probe protocol is the read for whichever arm launches.
-
-<details><summary>full record</summary>
-
-Merge main phase 5b (03c2b27, 'bijou.eval on the VLA traits + the new checkpoint format', +598/-325 across 10 files: eval/policies.py 584-line rework, eval/cli.py, docs/vla-architecture.md, 6 eval-adjacent test suites) into fontaine; re-run check.py; re-verify the EVAL seams our protocols depend on: (1) the step2000-probe eval command (grammar-masked greedy + the three-way band protocol) parses + loads both _vla conversions under the reworked policies.py; (2) --noise-ticket-map / ticket-mode provenance in eval survives the policies rework (rung-2 instrument, 14 oracles in test_ticket_map.py); (3) panel eval commands (--report path, predictions-npz provenance) still parse; (4) babysit/probe-clone augment-0 eval path unaffected; (5) confirm whether the parents[2]-&gt;parents[3] bank_processor_goldens fix landed upstream or the carry still stands. Retrain launch path itself was re-verified green post-5a (17:03Z post) - re-confirm both arms full-parse after this merge too since eval/cli churn can move shared arg surfaces.
-
-</details>
-
----
 
 **`grpo-r2-post-sft`** · `gpu-local`
 
@@ -272,9 +258,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (179)
+## ✅ Done (180)
 
 *closed — the full record stays in each fold*
+
+**`merge-main-phase5b`** · `cpu`
+
+Merge main phase 5b (03c2b27, 'bijou.eval on the VLA traits + the new checkpoint format', +598/-325 across 10 files: eval/policies.py 584-line rework, eval/cli.py, docs/vla-architecture.md, 6 eval-adjacent test suites) into fonta…
+
+**boundary:** Queued 17:3xZ 08-15 tick on seeing 03c2b27 on origin/main. CPU-only, no GPU touch (owner reserve stands). Urgent for the same reason 5a was: the owner arm/route decision may land any time and both the launch AND eval paths must be green against phase 5b first - the probe protocol is the read for whichever arm launches. || DONE 17:4xZ 08-15 work session: merged clean (no conflicts), check.py 924 green. Seams re-verified: (1) probe command parses + BOTH _vla conversions LOAD through the reworked BijouPolicy on CPU (chunk 30, per-dataset-stats fallback to the checkpoint table intact); legacy dirs refuse loudly with the convert_legacy pointer (re-probing the corrupt-table floor comparator must use step2000_vla); (2) ticket-map oracles 15/15 (suite grew with the upstream test ports), --noise-ticket-map/--noise-tickets parse; (3) panel forms all parse (ticket-bank-64, ticket-map, --report+--output-json) — upstream section-0 promise '--checkpoint CLI surface unchanged' holds; (4) augment-0 unaffected by construction (5b touches only bijou/eval/ + tests) + image-augment oracles 11/11 re-run green; (5) parents[2] fix STILL NOT upstream — our parents[3] carry survived the merge, carry stands. Both retrain arms full-parse green post-5b (family molmoact2_flow, flow-decoder-init inherit, frozen SS3 params exact); corrected wrist_roll +-157.2 verified baked in both corrected artifacts via new-format metadata; step2000_vla preserves the corrupt 35.5/94.4 bit-identically (the floor comparator, by design). Launch remains owner-gated (arm pick + route A/B/C + GPU release).
+
+<details><summary>full record</summary>
+
+Merge main phase 5b (03c2b27, 'bijou.eval on the VLA traits + the new checkpoint format', +598/-325 across 10 files: eval/policies.py 584-line rework, eval/cli.py, docs/vla-architecture.md, 6 eval-adjacent test suites) into fontaine; re-run check.py; re-verify the EVAL seams our protocols depend on: (1) the step2000-probe eval command (grammar-masked greedy + the three-way band protocol) parses + loads both _vla conversions under the reworked policies.py; (2) --noise-ticket-map / ticket-mode provenance in eval survives the policies rework (rung-2 instrument, 14 oracles in test_ticket_map.py); (3) panel eval commands (--report path, predictions-npz provenance) still parse; (4) babysit/probe-clone augment-0 eval path unaffected; (5) confirm whether the parents[2]-&gt;parents[3] bank_processor_goldens fix landed upstream or the carry still stands. Retrain launch path itself was re-verified green post-5a (17:03Z post) - re-confirm both arms full-parse after this merge too since eval/cli churn can move shared arg surfaces.
+
+</details>
+
+---
 
 **`merge-main-phase5a`** · `cpu`
 
