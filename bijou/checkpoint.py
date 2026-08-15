@@ -47,6 +47,7 @@ from safetensors.torch import save_file
 from torch import Tensor
 
 from .data import DatasetStats
+from .modelling.gemma4.loading import resolve_checkpoint_dir
 from .vla import VLAFamily
 
 SCHEMA_VERSION = 1
@@ -160,6 +161,24 @@ def read_metadata(checkpoint: Path) -> VLAMetadata:
             )
         raise SystemExit(f"{checkpoint} has no {METADATA_FILENAME}")
     return VLAMetadata.from_json_dict(json.loads(path.read_text()))
+
+
+def backbone_directory(checkpoint: Path, metadata: VLAMetadata) -> Path:
+    """The directory a checkpoint's trunk mounts from. Pristine trunk:
+    the checkpoint's own ``backbone/`` snapshot mirror (self-containment
+    — config, tokenizer/processor files and weight shards all local).
+    Trained trunk: the recorded ARTIFACT directory supplies the
+    architecture and tokenizer/processor files, and the checkpoint's
+    ``backbone.safetensors`` overwrites the mounted weights."""
+    if metadata.backbone_trained:
+        return resolve_checkpoint_dir(metadata.backbone_id)
+    mirror = checkpoint / "backbone"
+    if not mirror.is_dir():
+        raise SystemExit(
+            f"{checkpoint}: pristine backbone but no backbone/ snapshot "
+            "mirror — the directory is not self-contained",
+        )
+    return mirror
 
 
 def link_or_copy(source: Path, destination: Path) -> None:

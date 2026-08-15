@@ -1094,6 +1094,46 @@ bitwise equal, decode-anchor fixtures pass through the family,
 (`teacher_forced_block_logits`, value candidates, capture steps
 bit-equal). Gate: the parity suite, plus the old-path oracles still
 green, plus `check.py`.
+VERDICT: PASS — `check.py` 874 green (23 new in
+`tests/test_vla_parity.py`: 2-step losses vs the sum-form
+`BijouTrainStep` composition, `predict`/`predict_flow`/`predict_ar` +
+teacher-forced block logits vs the old `predict_chunk`/kernel paths,
+`param_groups` name→parameter-NAME sets + full state dicts,
+`checkpoint_components` round-trips through the toolkit — all bitwise;
+families covered: gemma_flow, gemma_ar, molmoact2_flow/ar/joint —
+molmo2_ar has no hermetic prompt/processor fixture, none exists in the
+old suite either; its construction shares `build_molmo2_ar_decoder`
+with the old path and its op bodies are the gemma_ar-tested free
+functions); all five old-CLI oracles bitwise post-landing, joint
+cross-oracle exact. Amendments at execution: (1) the phase is circular
+as written — families parse "with bijou.loading's parsers" while
+loading.py hosts the registry importing the families; the section
+schemas/parsers/builders moved DOWN into **`bijou/sections.py`**
+(loading.py re-exports them, import sites unchanged), so the DAG reads
+loading → models → sections → modelling. (2) `checkpoint_components()`
+declares WEIGHTED components only — the §5 sketch listed "prompt" on
+the joint family, but the toolkit maps every entry to
+`<name>.safetensors` while the converter records the parameterless
+MolmoAct2 encoder/rider as `weights: false` with no file (the
+all-parameterless molmoact2_ar declares `{}`, explicitly; the
+metadata, written by convert/train, remains where parameterless
+configs live). (3) `convert_legacy` gained the (molmoact2 prompt,
+format-6 ar_backbone section, objective ar) → molmoact2_ar arm:
+train-written `--objective ar` checkpoints record the format-6 section
+AS the decoder, a layout the plan's inference table missed (it only
+mapped the release-class molmo_flow-section read); expert weights
+beside a format-6 section are refused, mirroring the legacy loader.
+(4) Two support modules beyond §9's new-file list:
+`models/serving.py` (`FlowServing`/`ARServing` — the recorded
+operating points as typed payloads) and `models/ar_suffix_ops.py` (the
+suffix families' shared op bodies as free functions — three families
+compose them; the styleguide bans the base class that would otherwise
+tempt). (5) `output_head_parameters` mirrors the old adamc audit:
+audited AR families answer (Gemma: `fast_embed`, Molmo2: `fast_head`);
+families whose partition the old path refuses raise the same loud
+refusal. Family `from_checkpoint`'s single `dtype` mounts the
+backbone; decoders/prompt-side parameters stay fp32 (the historical
+`expert_dtype` default eval loads used).
 
 **Phase 5 — apps port + CLI reshape.** `train.py` (family/objective
 parsing, two-phase loop, LR reconciliation), `eval/`, `rollout`(+

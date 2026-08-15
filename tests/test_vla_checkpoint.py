@@ -269,7 +269,7 @@ def test_convert_gemma_flow(tmp_path: Path) -> None:
     validate_checkpoint(converted)
     # weight files are hard links to the source, never rewrites
     assert (converted / "flow_decoder.safetensors").samefile(
-        legacy / "expert.safetensors"
+        legacy / "expert.safetensors",
     )
     assert (converted / "prompt.safetensors").samefile(legacy / "prompt.safetensors")
     assert (converted / "optimizer.pt").exists()

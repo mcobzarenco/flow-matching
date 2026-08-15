@@ -18,6 +18,9 @@ Family inference is the (prompt kind, decoder kind, objective) triple:
 - molmo2 prompt + ar_backbone → ``molmo2_ar``
 - molmoact2 prompt + molmo_flow + objective flow/ar/joint →
   ``molmoact2_flow`` / ``molmoact2_ar`` / ``molmoact2_joint``
+- molmoact2 prompt + a format-6 ar_backbone decoder section (the
+  layout train-written ``--objective ar`` checkpoints record — the
+  discrete head IS the model) + objective ar → ``molmoact2_ar``
 
 Component configs are carried VERBATIM as the legacy tagged section
 dicts — families parse them with the same section machinery either
@@ -77,6 +80,17 @@ def infer_family(
                     return VLAFamily.MOLMOACT2_JOINT
                 case _:
                     raise SystemExit(f"unknown recorded objective {objective!r}")
+        case MolmoAct2PromptConfig(), ARDecoderConfig():
+            # Train-written discrete runs record the format-6 section AS
+            # the decoder (release-class ar reads keep the molmo_flow
+            # section, matched above).
+            if objective != "ar":
+                raise SystemExit(
+                    f"molmoact2 prompt + ar_backbone decoder records "
+                    f"objective {objective!r} — only 'ar' pairs with the "
+                    "discrete-head layout",
+                )
+            return VLAFamily.MOLMOACT2_AR
         case _:
             raise SystemExit(
                 f"no family for prompt {type(prompt).__name__} + decoder "
@@ -137,15 +151,25 @@ def convert(
             components["ar_decoder"] = {"config": decoder_dict, "weights": True}
             component_files["ar_decoder"] = source / "expert.safetensors"
         case VLAFamily.MOLMOACT2_AR:
-            # The discrete decoder owns zero parameters; the recorded
-            # flow SECTION is still the geometry record the ar config
-            # derives from (molmoact2_ar_config_from_flow_section).
+            # The discrete decoder owns zero parameters; a recorded flow
+            # SECTION is still the geometry record the ar config derives
+            # from (molmoact2_ar_config_from_flow_section), and a
+            # train-written format-6 section carries verbatim.
             components["prompt"] = {
                 "config": prompt_dict,
                 "weights": has_prompt_weights,
             }
             components["ar_decoder"] = {"config": decoder_dict, "weights": False}
             if has_expert_weights:
+                if isinstance(sections.decoder, ARDecoderConfig):
+                    # Mirrors the legacy loader's refusal: the discrete
+                    # head owns no parameters, so a format-6 checkpoint
+                    # with an expert file is format confusion.
+                    raise SystemExit(
+                        f"{source} is an ar-only molmoact2 checkpoint but "
+                        "carries expert.safetensors — the discrete head "
+                        "owns no parameters",
+                    )
                 # objective=ar runs may still carry inherited expert
                 # weights (stage-2 provenance); keep them as a flow
                 # component so nothing is dropped silently.

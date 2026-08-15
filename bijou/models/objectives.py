@@ -19,6 +19,7 @@ shared by more than one family.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass(frozen=True, slots=True)
@@ -75,3 +76,15 @@ class ARObjective:
                 "training aux fields at weight 0 is not 'no aux'; drop the "
                 "aux fields from the run instead",
             )
+
+
+def parse_ar_objective(data: dict[str, Any]) -> ARObjective:
+    """The AR families' payload from the metadata's tagged dict.
+    ``aux_loss_weight`` defaults to 1.0 when unrecorded (families
+    without a text surface have nothing for it to weight)."""
+    kind = data.get("kind")
+    if kind != "ar":
+        raise SystemExit(
+            f"objective kind {kind!r} is not the suffix-CE objective ('ar')",
+        )
+    return ARObjective(aux_loss_weight=float(data.get("aux_loss_weight", 1.0)))
