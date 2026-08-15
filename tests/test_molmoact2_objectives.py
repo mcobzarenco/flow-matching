@@ -614,7 +614,7 @@ def test_objective_cli_validations() -> None:
         ["--resume", "ckpt", "--backbone-text-lr", "1e-5"],
         molmoact2_source(
             family=VLAFamily.MOLMOACT2_JOINT,
-            objective_kind="joint",
+            objective={"kind": "joint", "ce_weight": 1.0, "insulate_flow": True},
         ),
     )
     assert resumed.family == "molmoact2_joint"

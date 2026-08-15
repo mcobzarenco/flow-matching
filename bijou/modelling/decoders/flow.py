@@ -865,12 +865,6 @@ def flow_matching_loss_sums(
     return squared.sum(), torch.tensor(squared.numel(), device=squared.device)
 
 
-# SnapFlow (arXiv:2604.05656) loss mix, frozen in
-# code: L = α·L_FM + (1−α)·λ·L_shortcut.
-SNAPFLOW_ALPHA = 0.5
-SNAPFLOW_LAMBDA = 0.1
-
-
 def _snapflow_squared_errors(
     decoder: FlowDecoder,
     memory: GemmaMemory,
@@ -931,19 +925,24 @@ def snapflow_distill_loss(
     decoder: FlowDecoder,
     memory: GemmaMemory,
     batch: CollatedBatch[Any],
+    *,
+    alpha: float,
+    shortcut_weight: float,
 ) -> Tensor:
-    """SnapFlow self-distillation objective (mean form):
-    ``SNAPFLOW_ALPHA·mean(fm) + (1−SNAPFLOW_ALPHA)·SNAPFLOW_LAMBDA·
-    mean(shortcut)``. Requires a φ_s-extended decoder (the s=0 forward
-    refuses otherwise). Same contract as :func:`flow_matching_loss`."""
+    """SnapFlow (arXiv:2604.05656) self-distillation objective (mean
+    form): ``alpha·mean(fm) + (1−alpha)·shortcut_weight·
+    mean(shortcut)`` — the mix knobs are the SnapflowObjective
+    payload's, threaded by the family. Requires a φ_s-extended decoder
+    (the s=0 forward refuses otherwise). Same contract as
+    :func:`flow_matching_loss`."""
     fm_squared, shortcut_squared = _snapflow_squared_errors(
         decoder,
         memory,
         batch,
     )
     return (
-        SNAPFLOW_ALPHA * fm_squared.mean()
-        + (1 - SNAPFLOW_ALPHA) * SNAPFLOW_LAMBDA * shortcut_squared.mean()
+        alpha * fm_squared.mean()
+        + (1 - alpha) * shortcut_weight * shortcut_squared.mean()
     )
 
 
@@ -951,6 +950,9 @@ def snapflow_distill_loss_sums(
     decoder: FlowDecoder,
     memory: GemmaMemory,
     batch: CollatedBatch[Any],
+    *,
+    alpha: float,
+    shortcut_weight: float,
 ) -> tuple[Tensor, Tensor]:
     """Sum-form SnapFlow objective for chunked backward: (weighted
     squared-error SUM with graph, element count). Both terms share one
@@ -964,8 +966,8 @@ def snapflow_distill_loss_sums(
         batch,
     )
     weighted_sum = (
-        SNAPFLOW_ALPHA * fm_squared.sum()
-        + (1 - SNAPFLOW_ALPHA) * SNAPFLOW_LAMBDA * shortcut_squared.sum()
+        alpha * fm_squared.sum()
+        + (1 - alpha) * shortcut_weight * shortcut_squared.sum()
     )
     return weighted_sum, torch.tensor(
         fm_squared.numel(),

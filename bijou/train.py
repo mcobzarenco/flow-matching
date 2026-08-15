@@ -119,8 +119,6 @@ from .modelling.decoders.ar_suffix import (
     ARDecoderConfig,
 )
 from .modelling.decoders.flow import (
-    SNAPFLOW_ALPHA,
-    SNAPFLOW_LAMBDA,
     SelfAttentionMode,
     TimeConditioning,
 )
@@ -298,12 +296,16 @@ class CheckpointResolution:
     family: VLAFamily
     backbone: str
     step: int
-    # The recorded objective's tagged-dict kind ("flow", "snapflow",
-    # "ar", "joint") — locked under --resume.
-    objective_kind: str
+    # The recorded objective's tagged dict (kind + payload knobs) —
+    # locked under --resume, which reconstructs the payload from it.
+    objective: dict[str, Any]
     train_args: CheckpointTrainArgs
     condition_fields: tuple[str, ...]
     generate_bracket: bool
+
+    @property
+    def objective_kind(self) -> str:
+        return str(self.objective.get("kind", "flow"))
 
 
 def resolve_checkpoint(checkpoint: Path) -> CheckpointResolution:
@@ -317,7 +319,7 @@ def resolve_checkpoint(checkpoint: Path) -> CheckpointResolution:
         family=metadata.family,
         backbone=metadata.backbone_id,
         step=metadata.step,
-        objective_kind=str(metadata.objective.get("kind", "flow")),
+        objective=dict(metadata.objective),
         train_args=CheckpointTrainArgs.from_dict(metadata.train_args),
         condition_fields=prompt.condition_fields,
         generate_bracket=prompt.generate_bracket,
@@ -375,9 +377,16 @@ class TrainArgs:
     target_time_embed: bool
     # Training objective variant: None = the family's standard
     # objective; "snapflow" = the self-distillation mix (gemma_flow
-    # only, α/λ frozen in bijou.modelling.decoders.flow). Recorded in
-    # the checkpoint's objective metadata; locked under --resume.
+    # only). Recorded in the checkpoint's objective metadata; locked
+    # under --resume.
     distill: str | None
+    # The snapflow mix's payload knobs (--snapflow-alpha /
+    # --snapflow-shortcut-weight): REQUIRED with --distill snapflow —
+    # no silent defaults, a run's mix is always declared (the
+    # historical runs used 0.5 / 0.1) — and refused without it; under
+    # --resume they reconstruct from the recorded objective payload.
+    snapflow_alpha: float | None
+    snapflow_shortcut_weight: float | None
     fast_tokenizer: str | None
     aux_fields: tuple[str, ...] | None
     aux_loss_weight: float
@@ -634,6 +643,27 @@ class TrainArgs:
             raise ValueError(
                 "--distill is gemma_flow-only (it distills the velocity field)",
             )
+        if self.distill == "snapflow":
+            if self.snapflow_alpha is None or self.snapflow_shortcut_weight is None:
+                raise ValueError(
+                    "--distill snapflow declares its mix explicitly: pass "
+                    "--snapflow-alpha AND --snapflow-shortcut-weight (the "
+                    "historical runs used 0.5 and 0.1) — there is no "
+                    "silent default",
+                )
+            # Value invariants live ONCE, on the payload — construct
+            # and discard so a bad mix dies at the parse boundary.
+            SnapflowObjective(
+                alpha=self.snapflow_alpha,
+                shortcut_weight=self.snapflow_shortcut_weight,
+            )
+        elif (
+            self.snapflow_alpha is not None or self.snapflow_shortcut_weight is not None
+        ):
+            raise ValueError(
+                "--snapflow-alpha/--snapflow-shortcut-weight parameterize "
+                "the snapflow mix — they require --distill snapflow",
+            )
         if self.family != "gemma_flow" and self.target_time_embed:
             raise ValueError(
                 "--target-time-embed is gemma_flow-only (φ_s conditions τ)",
@@ -801,6 +831,17 @@ class TrainArgs:
                     "locked under --resume; declare a new objective via "
                     "--init-from",
                 )
+            if resume and (
+                raw.snapflow_alpha is not None
+                or raw.snapflow_shortcut_weight is not None
+            ):
+                parser.error(
+                    "--snapflow-alpha/--snapflow-shortcut-weight are part "
+                    "of the recorded objective "
+                    f"(checkpoint records {checkpoint.objective_kind!r}) — "
+                    "locked under --resume; the recorded payload "
+                    "reconstructs them",
+                )
 
         # -- the molmoact2 pathway matrix (--objective under --init-from) --
         if raw.objective is not None and checkpoint is not None:
@@ -844,9 +885,21 @@ class TrainArgs:
 
         # -- the recorded objective under --resume --------------------------
         distill = raw.distill
+        snapflow_alpha = raw.snapflow_alpha
+        snapflow_shortcut_weight = raw.snapflow_shortcut_weight
         if resume:
             assert checkpoint is not None
-            distill = "snapflow" if checkpoint.objective_kind == "snapflow" else None
+            if checkpoint.objective_kind == "snapflow":
+                # The recorded payload reconstructs the mix (its flags
+                # were refused above) — train-written snapflow records
+                # always carry both knobs (objective_to_json).
+                distill = "snapflow"
+                snapflow_alpha = float(checkpoint.objective["alpha"])
+                snapflow_shortcut_weight = float(
+                    checkpoint.objective["shortcut_weight"],
+                )
+            else:
+                distill = None
 
         if distill == "snapflow" and not arch["target_time_embed"]:
             # φ_s is implied — but only where the structure is mutable
@@ -993,6 +1046,8 @@ class TrainArgs:
                 time_conditioning=arch["time_conditioning"],
                 target_time_embed=arch["target_time_embed"],
                 distill=distill,
+                snapflow_alpha=snapflow_alpha,
+                snapflow_shortcut_weight=snapflow_shortcut_weight,
                 fast_tokenizer=arch["fast_tokenizer"],
                 aux_fields=(
                     tuple(raw.aux_fields) if raw.aux_fields is not None else None
@@ -1073,9 +1128,11 @@ def build_objective(
     match args.family:
         case "gemma_flow":
             if args.distill == "snapflow":
+                assert args.snapflow_alpha is not None  # __post_init__ paired
+                assert args.snapflow_shortcut_weight is not None
                 return SnapflowObjective(
-                    alpha=SNAPFLOW_ALPHA,
-                    shortcut_weight=SNAPFLOW_LAMBDA,
+                    alpha=args.snapflow_alpha,
+                    shortcut_weight=args.snapflow_shortcut_weight,
                 )
             return FlowObjective()
         case "gemma_ar" | "molmo2_ar":
@@ -2811,9 +2868,28 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help="training objective variant: 'snapflow' = self-distillation "
         "toward 1-NFE decoding (L = α·L_FM + (1−α)·λ·L_shortcut with "
-        "stop-gradient two-step-Euler shortcut targets; α=0.5, λ=0.1 "
-        "frozen in code). gemma_flow only; enables --target-time-embed; "
-        "recorded in the checkpoint's objective and locked under --resume",
+        "stop-gradient two-step-Euler shortcut targets; α/λ are the "
+        "REQUIRED --snapflow-alpha/--snapflow-shortcut-weight flags). "
+        "gemma_flow only; enables --target-time-embed; recorded in the "
+        "checkpoint's objective and locked under --resume",
+    )
+    parser.add_argument(
+        "--snapflow-alpha",
+        type=float,
+        default=None,
+        help="the snapflow mix's FM share α ∈ (0, 1) — required with "
+        "--distill snapflow, refused without it; no silent default (the "
+        "historical runs used 0.5). Under --resume the recorded "
+        "objective payload reconstructs it — drop the flag",
+    )
+    parser.add_argument(
+        "--snapflow-shortcut-weight",
+        type=float,
+        default=None,
+        help="the snapflow mix's shortcut multiplier λ > 0 — required "
+        "with --distill snapflow, refused without it; no silent default "
+        "(the historical runs used 0.1). Under --resume the recorded "
+        "objective payload reconstructs it — drop the flag",
     )
     parser.add_argument(
         "--aux-fields",
@@ -4311,8 +4387,9 @@ def main() -> int:
     if args.distill is not None and is_main:
         print(
             f"distill: {args.distill} objective "
-            f"(α={SNAPFLOW_ALPHA}, λ={SNAPFLOW_LAMBDA}, stop-gradient "
-            "two-step-Euler shortcut targets, no EMA teacher)",
+            f"(α={args.snapflow_alpha:g}, λ={args.snapflow_shortcut_weight:g}, "
+            "stop-gradient two-step-Euler shortcut targets, no EMA "
+            "teacher)",
             flush=True,
         )
     n_trainable = sum(p.numel() for p in model.param_groups()["decoder"])

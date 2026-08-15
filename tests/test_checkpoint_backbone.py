@@ -153,6 +153,8 @@ def make_args(save_dir: Path) -> TrainArgs:
         time_conditioning="additive",
         target_time_embed=False,
         distill=None,
+        snapflow_alpha=None,
+        snapflow_shortcut_weight=None,
         fast_tokenizer=None,
         aux_fields=None,
         aux_loss_weight=0.5,

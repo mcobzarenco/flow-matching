@@ -6,9 +6,10 @@ load-bearing guarantees:
 - φ_s extension identity: a teacher checkpoint loaded into the
   φ_s-extended decoder is BIT-IDENTICAL on s=t forwards (zero-initialized
   φ_s output), and the extension adds exactly the φ_s keys.
-- The distill objective is the frozen mix α·L_FM + (1−α)·λ·L_shortcut
-  with stop-gradient two-step-Euler shortcut targets, and its sum form
-  reconstructs the mean form exactly.
+- The distill objective is the declared mix α·L_FM + (1−α)·λ·L_shortcut
+  (the SnapflowObjective payload's knobs, exercised here at the
+  historical run values α=0.5, λ=0.1) with stop-gradient two-step-Euler
+  shortcut targets, and its sum form reconstructs the mean form exactly.
 - 1-NFE sampling is exactly ``x̂ = ε − F(ε, s=0, t=1)``.
 - The --init-from config guard sanctions the extension direction only.
 """
@@ -31,8 +32,6 @@ from test_flow_decoder import (
 )
 
 from bijou.modelling.decoders.flow import (
-    SNAPFLOW_ALPHA,
-    SNAPFLOW_LAMBDA,
     FlowDecoder,
     SamplingMethod,
     TimeConditioning,
@@ -41,6 +40,11 @@ from bijou.modelling.decoders.flow import (
     snapflow_distill_loss_sums,
 )
 from bijou.modelling.interface import CollatedBatch, NormStats
+
+# The historical run mix (the module constants the payload replaced) —
+# these oracles pin the SAME numbers under the threaded knobs.
+ALPHA = 0.5
+SHORTCUT_WEIGHT = 0.1
 
 PHI_S_KEYS = {
     "target_time_in_proj.weight",
@@ -140,7 +144,7 @@ def test_phi_s_conditioning_goes_live_once_trained() -> None:
     assert not torch.allclose(standard, one_step, atol=1e-5)
 
 
-def test_snapflow_loss_is_the_frozen_mix() -> None:
+def test_snapflow_loss_is_the_declared_mix() -> None:
     """Mean form == α·mean(fm) + (1−α)·λ·mean(shortcut) with the SAME RNG
     draws, and the sum form reconstructs it exactly."""
     extended = build_extended()
@@ -149,7 +153,13 @@ def test_snapflow_loss_is_the_frozen_mix() -> None:
     sample = flow_batch()
 
     torch.manual_seed(11)
-    total = snapflow_distill_loss(extended, memory, sample)
+    total = snapflow_distill_loss(
+        extended,
+        memory,
+        sample,
+        alpha=ALPHA,
+        shortcut_weight=SHORTCUT_WEIGHT,
+    )
     torch.manual_seed(11)
     fm_squared, shortcut_squared = _snapflow_squared_errors(
         extended,
@@ -157,13 +167,19 @@ def test_snapflow_loss_is_the_frozen_mix() -> None:
         sample,
     )
     expected = (
-        SNAPFLOW_ALPHA * fm_squared.mean()
-        + (1 - SNAPFLOW_ALPHA) * SNAPFLOW_LAMBDA * shortcut_squared.mean()
+        ALPHA * fm_squared.mean()
+        + (1 - ALPHA) * SHORTCUT_WEIGHT * shortcut_squared.mean()
     )
     assert torch.allclose(total, expected, atol=0, rtol=0)
 
     torch.manual_seed(11)
-    loss_sum, count = snapflow_distill_loss_sums(extended, memory, sample)
+    loss_sum, count = snapflow_distill_loss_sums(
+        extended,
+        memory,
+        sample,
+        alpha=ALPHA,
+        shortcut_weight=SHORTCUT_WEIGHT,
+    )
     assert int(count) == sample.actions.numel()
     assert torch.allclose(loss_sum / count, total, atol=1e-6)
 
@@ -178,7 +194,13 @@ def test_snapflow_loss_closed_form_at_zero_field() -> None:
     sample = flow_batch()
 
     torch.manual_seed(23)
-    total = snapflow_distill_loss(extended, memory, sample)
+    total = snapflow_distill_loss(
+        extended,
+        memory,
+        sample,
+        alpha=ALPHA,
+        shortcut_weight=SHORTCUT_WEIGHT,
+    )
     torch.manual_seed(23)
     noise = torch.randn_like(sample.actions)
     _tau = (
@@ -186,7 +208,7 @@ def test_snapflow_loss_closed_form_at_zero_field() -> None:
         .sample((sample.actions.shape[0],))
         .to(sample.actions.device)
     )
-    expected = SNAPFLOW_ALPHA * (noise - sample.actions).pow(2).mean()
+    expected = ALPHA * (noise - sample.actions).pow(2).mean()
     assert torch.allclose(total, expected, atol=1e-6)
 
 
@@ -199,7 +221,13 @@ def test_snapflow_gradients_reach_phi_s() -> None:
     memory, _, _, _ = fabricate()
     sample = flow_batch()
     torch.manual_seed(5)
-    snapflow_distill_loss(extended, memory, sample).backward()
+    snapflow_distill_loss(
+        extended,
+        memory,
+        sample,
+        alpha=ALPHA,
+        shortcut_weight=SHORTCUT_WEIGHT,
+    ).backward()
     assert extended.target_time_out_proj is not None
     grad = extended.target_time_out_proj.weight.grad
     assert grad is not None and grad.abs().sum() > 0

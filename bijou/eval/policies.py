@@ -1344,22 +1344,17 @@ class BijouPolicy:
                 return means, None
             return [chunk.cpu() for chunk in stacked[0]], None
         if self.sde_noise_level is not None:
-            # SDE stochastic decode (Euler–Maruyama, the gemma flow
-            # family's trainable sampler — family-concrete): initial
-            # noise stays the stable keyed stream; per-step ε comes
-            # pre-drawn per item from its own keyed domain, so the
-            # batched decode stays batch-composition-invariant like
-            # every other stable stream. Draw identity rides the item's
-            # repo_id (the rollout drivers' draw-suffix convention), so
-            # the in-call draw index is always 0.
+            # SDE stochastic decode (the gemma flow family's concrete
+            # predict_flow_sde — Euler-only by construction; __init__
+            # refused any other --method): initial noise stays the
+            # stable keyed stream; per-step ε comes pre-drawn per item
+            # from its own keyed domain, so the batched decode stays
+            # batch-composition-invariant like every other stable
+            # stream. Draw identity rides the item's repo_id (the
+            # rollout drivers' draw-suffix convention), so the in-call
+            # draw index is always 0.
             model = self.gemma_flow
             assert model is not None  # __init__ guarded
-            memory = model.encoder.encode(
-                model.backbone,
-                batch.encoder_inputs,
-                with_grad=False,
-                retain_cache=False,
-            )
             shape = (batch.actions.shape[1], batch.actions.shape[2])
             sde_noise = self._flow_noise(items, indices, 1, shape).to(self.device)
             step_noise = torch.stack(
@@ -1377,16 +1372,14 @@ class BijouPolicy:
                 ],
                 dim=1,
             ).to(self.device)
-            sde_actions, _ = model.flow_decoder.predict_chunk(
-                memory,
+            prediction = model.predict_flow_sde(
                 batch,
-                noise=sde_noise,
+                noise_level=self.sde_noise_level,
                 num_steps=self.sample_steps,
-                method=self.method,
-                sde_noise_level=self.sde_noise_level,
-                sde_step_noise=step_noise,
+                noise=sde_noise,
+                step_noise=step_noise,
             )
-            return [chunk.cpu() for chunk in sde_actions], None
+            return [chunk.cpu() for chunk in prediction.actions], None
         if self.capture_token_rows:
             # Greedy decode WITH the capture surface: the trait block
             # decode is compute-identical to the plain AR path
@@ -1433,24 +1426,18 @@ class BijouPolicy:
             )
         if self.flow is not None:
             if self.target_time is not None:
-                # The φ_s shortcut read — a gemma-flow-concrete
-                # instrument (__init__ validated the extension).
+                # The φ_s shortcut read — the gemma flow family's
+                # concrete predict_flow widening (__init__ validated
+                # the extension).
                 model = self.gemma_flow
                 assert model is not None  # __init__ guarded
-                memory = model.encoder.encode(
-                    model.backbone,
-                    batch.encoder_inputs,
-                    with_grad=False,
-                    retain_cache=False,
-                )
-                actions, _ = model.flow_decoder.predict_chunk(
-                    memory,
+                actions = model.predict_flow(
                     batch,
-                    noise=noise,
                     num_steps=self.sample_steps,
                     method=self.method,
+                    noise=noise,
                     target_time=self.target_time,
-                )
+                ).actions
             else:
                 actions = self.flow.predict_flow(
                     batch,
