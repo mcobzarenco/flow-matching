@@ -3,7 +3,31 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-15 16:34–16:3xZ (real `date -u` at stamp: 16:35) —
+tick: **quiet hold — GPU owner-reserved and idle (0%), nothing to
+babysit, no launches.***
+
+**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
+OWNER** (13:35Z), untouched. No babysit entries, no training
+processes.
+
+**Steering**: none — Discord read + inbox empty at 16:35; history
+shows nothing new past our own 15:47 results-page post (last owner
+activity remains the recorded 🎉). All three owner decisions still
+pending: retrain arm pick (continue-from-2k vs from-base), route
+A/B/C (flow retrain / token arm / joint), GPU release.
+
+**Done**: Discord + history polls, GPU/process check, queue validate
+OK depth 2 (17 open, both queued items owner-gated), `run_work_next`
+confirmed disarmed (no CPU-executable items to chain into). No posts
+(nothing owner-facing changed). 0 GPU-h.
+
+**Next**: ticks hold until an owner decision lands — arm pick +
+route A/B/C unblock the retrain launch, GPU release unblocks any
+launch at all.*
 
 *Updated 2026-08-15 16:23–16:2xZ (real `date -u` at stamp: 16:24) —
 tick: **quiet hold — GPU owner-reserved and idle (0%), nothing to
@@ -51,39 +75,16 @@ confirmed disarmed (no CPU-executable items to chain into). No posts
 route A/B/C unblock the retrain launch, GPU release unblocks any
 launch at all.*
 
-*Updated 2026-08-15 16:01–16:0xZ (real `date -u` at stamp: 16:02) —
-tick: **quiet hold — GPU owner-reserved and idle (0%), nothing to
-babysit, no launches.***
-
-**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
-OWNER** (13:35Z), untouched. No babysit entries, no training
-processes.
-
-**Steering**: none — Discord read + inbox empty at 16:02; history
-shows nothing new past our own 15:47 results-page post (last owner
-activity remains the recorded 🎉). All three owner decisions still
-pending: retrain arm pick (continue-from-2k vs from-base), route
-A/B/C (flow retrain / token arm / joint), GPU release.
-
-**Done**: Discord + history polls, GPU/process check, queue validate
-OK depth 2 (17 open, both queued items owner-gated), `run_work_next`
-confirmed disarmed (no CPU-executable items to chain into). No posts
-(nothing owner-facing changed). 0 GPU-h.
-
-**Next**: ticks hold until an owner decision lands — arm pick +
-route A/B/C unblock the retrain launch, GPU release unblocks any
-launch at all.*
-
 ## Utilization footer
 
-Session 2026-08-15 16:23–16:2xZ (tick; 0 GPU-h): quiet hold — GPU
+Session 2026-08-15 16:34–16:3xZ (tick; 0 GPU-h): quiet hold — GPU
 owner-reserved and idle (0%), no launches, no training processes;
 Discord/inbox/history empty past our own 15:47 results-page post,
 all three owner decisions pending (arm pick, route A/B/C, GPU
 release); queue validate OK depth 2 (17 open, both items
 owner-gated), `run_work_next` disarmed.
 
-Session 2026-08-15 16:13–16:1xZ (tick; 0 GPU-h): quiet hold — GPU
+Session 2026-08-15 16:23–16:2xZ (tick; 0 GPU-h): quiet hold — GPU
 owner-reserved and idle (0%), no launches, no training processes;
 Discord/inbox/history empty past our own 15:47 results-page post,
 all three owner decisions pending (arm pick, route A/B/C, GPU
