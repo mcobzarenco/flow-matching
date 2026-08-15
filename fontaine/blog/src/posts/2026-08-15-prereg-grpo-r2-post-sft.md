@@ -148,3 +148,39 @@ carry over.
    holdout, never trained on).
 6. HEAD re-pin, objection window opened in-channel, owner go or
    window expiry before launch.
+
+## §7 Amendment A1 (pre-finalization, 2026-08-15 10:3xZ) — the head seam, and two owner decisions
+
+Registered mid-ride after the owner's in-channel review (09:49–10:14Z
+exchange); nothing here was launched, so this amends a DRAFT.
+
+**The seam (owner-caught).** As drafted, §2 is inconsistent: stage D
+measures the **flow head** (euler-10 through the converted action
+expert — the only module stage C trains), but the named serving stack
+(`MolmoAct2DiscreteStack`) trains the **AR/FAST token head**, whose
+weights stage-C SFT never touches (`--ft_vlm=false`). Token-GRPO from
+that base would start from the *released* model's discrete policy —
+not the competent base this pre-reg's §1 premise requires. The
+"byte-identical to the policy stage D measured" claim held for the
+checkpoint dir, not for the policy the loop would actually push on.
+
+**Owner decisions registered (2026-08-15, in-channel):**
+
+1. **Their trainer is retired for us** (10:07Z): no further runs on
+   molmoact2 `train_lerobot.py`; all training goes through
+   `bijou.train` / first-class objects. The stage-C AR run (killed
+   10:11Z at step 2040 on the owner's order, checkpoints 500–2000
+   retained) was the last their-stack run.
+2. **Direction for this pre-reg**: if token-GRPO is the tool, a
+   **token-SFT arm must precede it** — a `bijou.train` run (first-class
+   `ar` objective) over the same demo set, so the discrete head has
+   measured competence before RL pressure. That arm would need its own
+   pre-registration and its own sim eval; this R2 draft then re-bases
+   on *that* endpoint (or re-scopes to whichever head the owner picks).
+
+**Status.** The bootstrap's stage-D formalism is suspended pending the
+owner's re-steer after the step2000 probe (train-vs-unseen seeds, live
+at amendment time). §§1–6 above are retained verbatim as the registered
+record of the draft's reasoning; activation now requires BOTH a
+competent-base verdict on the head GRPO would train AND the owner's
+choice of route through decision 2.
