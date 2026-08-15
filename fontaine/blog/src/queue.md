@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-15T17:03:01Z
+**Updated:** 2026-08-15T17:29:51Z
 
 **Depth call:** depth 3: grasp-sft-bootstrap (retrain arm owner-pending) + grasp-sft-chain-results-page (writing ladder) + grpo-r2-post-sft (re-based per A2; token-sft arm item blocked owner-gated). Recorded 14:48Z 08-15.
 
-**17 open** (Live 0 · Queued 2 · Blocked 15 · Done 179)
+**18 open** (Live 0 · Queued 3 · Blocked 15 · Done 179)
 
 ## 🔴 Live (0)
 
@@ -14,9 +14,23 @@
 
 *(empty)*
 
-## 🟢 Queued (2)
+## 🟢 Queued (3)
 
 *ready — waiting on a window or a boundary*
+
+**`merge-main-phase5b`** · `cpu`
+
+Merge main phase 5b (03c2b27, 'bijou.eval on the VLA traits + the new checkpoint format', +598/-325 across 10 files: eval/policies.py 584-line rework, eval/cli.py, docs/vla-architecture.md, 6 eval-adjacent test suites) into fonta…
+
+**boundary:** Queued 17:3xZ 08-15 tick on seeing 03c2b27 on origin/main. CPU-only, no GPU touch (owner reserve stands). Urgent for the same reason 5a was: the owner arm/route decision may land any time and both the launch AND eval paths must be green against phase 5b first - the probe protocol is the read for whichever arm launches.
+
+<details><summary>full record</summary>
+
+Merge main phase 5b (03c2b27, 'bijou.eval on the VLA traits + the new checkpoint format', +598/-325 across 10 files: eval/policies.py 584-line rework, eval/cli.py, docs/vla-architecture.md, 6 eval-adjacent test suites) into fontaine; re-run check.py; re-verify the EVAL seams our protocols depend on: (1) the step2000-probe eval command (grammar-masked greedy + the three-way band protocol) parses + loads both _vla conversions under the reworked policies.py; (2) --noise-ticket-map / ticket-mode provenance in eval survives the policies rework (rung-2 instrument, 14 oracles in test_ticket_map.py); (3) panel eval commands (--report path, predictions-npz provenance) still parse; (4) babysit/probe-clone augment-0 eval path unaffected; (5) confirm whether the parents[2]-&gt;parents[3] bank_processor_goldens fix landed upstream or the carry still stands. Retrain launch path itself was re-verified green post-5a (17:03Z post) - re-confirm both arms full-parse after this merge too since eval/cli churn can move shared arg surfaces.
+
+</details>
+
+---
 
 **`grpo-r2-post-sft`** · `gpu-local`
 
