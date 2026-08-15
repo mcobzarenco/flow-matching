@@ -861,3 +861,60 @@ anchors = [
 [[run.gates]]
 kind = "gpu_hours_max"
 value = 4.0
+
+# PREPARED — grasp-SFT stage C (pre-reg §6 frozen; launchers
+# launch_local_molmoact2_grasp_sft_stagec_ar.sh + optional flow arm
+# launch_local_grasp_sft_stagec_flow_4k.sh, both refuse via
+# grasp_sft_stagec_preflight.py unless stage B banked >= 300 kept,
+# seeds >= 1000, state_units identity). Uncomment at launch, fill
+# started_utc. AR primary FIRST (frozen ladder); flow arm only if the
+# remaining <= 13 GPU-h pre-reg budget affords it after the primary
+# chain (~1.3 GPU-h at the ftrig4k measured 0.45-0.65 s/step @ B24).
+#
+# [[run]]
+# name = "grasp_sft_stageC_ar"
+# kind = "progress-log"
+# host = "local"
+# pgrep = "train_lerobot"
+# pgrep_min = 1
+# gpu_indices = [0]
+# gpu_mem_min_mib = 8000
+# log = "/home/ubuntu/logs/molmoact2_grasp_sft_stagec_ar.log"
+# progress_re = "step=[0-9]+/3000"
+# started_utc = "FILL-AT-LAUNCH"
+# gpu_hours_per_wall_hour = 1.0
+# boundary = "MolmoAct2 grasp-SFT stage-C AR primary on local H100 — rig-ft r1 recipe verbatim-class (receipt diff in the launcher header: mixture so101_grasp_sft, 3000 steps, run/save names; NOTHING else), AE-only 5e-5 gb64, save every 500 keep-all. rig-ft r1 measured ~2.7 GPU-h / 2000 steps => ~4.1 expected for 3000. Endpoint = final step -> stage D sim100 (frozen primary: >=20/100 GRPO GO / 5-19 one B/C iteration / <5 F-transfer)"
+# anchors = [
+#     "kill lines (rig-ft r1 class): NaN/inf action_flow_loss; sustained < 150 f/min across 3 consecutive ~30-min polls after step 100; vram alloc > 78 GiB; flow loss not below its step-50 value by step 1500",
+#     "first-poll (standing rule): util + f/min + vram + host free -g within ~15 min of launch; fix input starvation before letting it ride",
+#     "record-only: log lines every 20 steps (step=N/3000); train/action_flow_loss is the curve; rig-ft r1 reference: loss materially below warm-start by ~570 steps",
+#     "epoch math at launch rides the preflight print (~3000x64/frames epochs); every 500-step checkpoint retained as fallback per §6",
+#     "convention seam: mixture recomputes per-tag q01/q99 over the demo repo only; NO shim flag anywhere in the arg list (§6 item 4)",
+# ]
+# [[run.gates]]
+# kind = "gpu_hours_max"
+# value = 5.0
+# # 5.0 = §2 stage-C band ceiling; the chain-wide <= 13 pre-reg gate is
+# # judged at each boundary from the running total (A ~0.9 + B actual).
+#
+# [[run]]
+# name = "grasp_sft_stageC_flow"
+# kind = "train-jsonl"
+# host = "local"
+# pgrep = "fontaine_grasp_sft_stagec_flow_4k"
+# pgrep_min = 1
+# gpu_indices = [0]
+# gpu_mem_min_mib = 8000
+# jsonl = "/home/ubuntu/flow-matching/outputs/train/fontaine_grasp_sft_stagec_flow_4k/train_log.jsonl"
+# total_steps = 4000
+# probe_key = "eval_chunk_mae"
+# vram_key = "vram_alloc_peak_gib"
+# boundary = "grasp-SFT stage-C optional flow arm — ftrig4k recipe verbatim (receipt diff in the launcher header: ONLY --train-data swapped to the demo set + run name), init snapflow student @30k, 4k steps decoder LR 1e-5 B24; ~0.5-0.72 h expected at the ftrig4k measured 0.45-0.65 s/step. Read = stage D sim100, NOT an in-train gate"
+# anchors = [
+#     "E1 (ftrig4k class): banner must show 1 dataset (the demo set), dims 6/6, distill snapflow, phi_s present, strict init load (NO extension branch)",
+#     "E2: 0.45-0.65 s/step @ B24; K1: NaN, or probe > first-read+3.0 at 3 consecutive evals >= 1.5k => kill at next save boundary",
+#     "conditional arm: launched only inside the remaining <= 13 GPU-h chain budget after the AR primary lands (§6)",
+# ]
+# [[run.gates]]
+# kind = "gpu_hours_max"
+# value = 1.5
