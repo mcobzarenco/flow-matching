@@ -3,7 +3,54 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-15 08:58–12:0xZ (real `date -u` at stamp: 11:56) —
+work session: **owner steering morning — stage-C killed on order at
+step 2040, step2000 probed: 28/100 unseen successes (14–28× the
+pre-SFT anchors); the quantile class bug found+fixed; their-trainer
+retired.***
+
+**Status**: **LIVE** — `fontaine-grasp-sft-step2000-probe` train arm
+(seeds 1000–1099, started ~11:51Z after the unseen arm banked, ETA
+~13:5xZ, detached unit; babysit entry current). Unseen arm FINAL:
+**28/100 successes**, 42 moved, mean progress +1.97 cm, 0 strikes —
+vs anchors ftrig4k ~1/100, W0 2/100. Stage-C training is DEAD (owner
+kill order 10:10Z at step 2040, loss 0.0246 green; checkpoints
+500–2000 retained, step2000 converted).
+
+**Steering**: heavy morning exchange (09:49–10:46Z, 9 owner messages,
+all replied + acked): (1) **their `train_lerobot.py` retired** — all
+training via `bijou.train` (memory `bijou-train-only`); (2) owner
+caught the R2 draft head seam → §7 Amendment A1 registered
+(token-SFT-before-token-GRPO route); (3) kill+probe order executed;
+(4) owner caught the wrist_roll anomaly in the train256 report →
+root-caused to the **lerobot quantile aggregation class bug** (q01/q99
+= weighted mean of per-episode quantiles; roll box [35.5,94.4] vs true
+±157° — 19% of training frames clamped out) — fixed in
+`collect_demos.rewrite_quantile_stats()` + oracle, dataset corrected +
+re-uploaded; the practice existed in `docs/data-curation.md` §3 and is
+now enforced in code; (5) units question answered (vendored lerobot
+`use_degrees=True` default = degrees everywhere).
+
+**Done** (commits `2439869`→`4b5xxxx`-class this session): chain
+results page pre-built (4 house dark charts + plain-words open, DRAFT
+banner now records the re-steer); stage-C delta-upload script
+oracle-tested vs rig-r1 (590/705 counts); `fontaine-sim` dataset repo
+created + grasp_sft_demos_v0 uploaded (owner ask); train256 eval
+report on fontaine-reports (curl-200, owner ask); step2000 probe
+launched + unseen arm banked + reads script landed; R2 Amendment A1;
+quantile class fix; queue boundary instructions ×2 (429-resilient).
+In-session GPU ~1.8 h (probe unseen arm + train256 eval); stage-C
+chain spend to kill ~0.9+4.0+2.7.
+
+**Next**: `queue_cli.py next` → grasp-sft-bootstrap next-session remit
+(on the queue item): train.json read + comparison post (~13:5xZ);
+step2000 delta upload; retrain via `bijou.train` on the corrected
+table = the value-unlock, **owner-gated**; probe report page.
+`run_work_next` armed — the chained session owns the train-arm
+boundary.*
 
 *Updated 2026-08-15 08:45–08:5xZ (real `date -u` at stamp: 08:47) —
 tick: **stage-C AR riding green at 960/3000 (loss 0.464 → 0.038);
@@ -60,82 +107,15 @@ chained work session owns the 07:29:18Z boundary per the queue-item
 instructions: kept ≥300 → stage-C AR launch; 290–299 → recorded top-up
 first; <290 → diagnose.*
 
-*Updated 2026-08-15 03:37–07:1xZ (real `date -u` at stamp: 07:02) —
-work session (stage-B ride + stage-C/D launch prep): **collection ridden
-to within ~30 min of its wall with the keep-rate story diagnosed and
-posted; the ENTIRE remaining GPU ladder (stage C AR + flow, stage D
-sim100) is now launch-ready behind preflights.***
-
-**Status**: **LIVE** — `fontaine-grasp-sft-stageb`: **271/400 kept, 427
-attempted (63%)** at 07:00Z, 1.3 kept/min steady, GPU ~45%/989 MiB.
-Wall self-stop **07:29:18Z**; projection **~305 kept** vs the ≥300
-gate — borderline-green. Babysit green all session (6 polls ~30 min
-apart, Discord read at each).
-
-**Steering**: none — inbox empty all session; no owner reaction yet to
-the 04:13Z mid-ride status (objection window on the top-up path open
-since then).
-
-**Done**: (1) **stage-C launch prep** (queue item DONE, `f5b120d`):
-AR-primary launcher = rig-ft r1 verbatim-class (mechanical diff
-receipt in the header; only mixture/name/steps-3000/save-folder
-differ), flow-arm launcher = ftrig4k verbatim (only the dataset swap),
-shared preflight refusing on every frozen §6 precondition
-(oracle-tested: PASS + 4 refusal paths), PREPARED babysit entries;
-mixture `so101_grasp_sft` landed owner-side (`~/molmoact2` `7fb6552`).
-(2) **stage-B keep-rate diagnosis** (gate crossing surfaced at 04:06):
-no collector bug (6/6 misses reproduce bit-exact fresh), no spawn
-drift, **true expert rate 62.5%** (125/200 CPU-side, seeds 1078–1277)
-vs the n=20 gate reads' 75–80% — mid-ride post 04:13Z, prereg **§8
-record** appended (`36be8c6`, page 200). (3) **stage-D eval prep**
-(queue item DONE, `c15727c`): convert+eval launcher (two-hop
-conversion, sequential rollout_sim, frozen seeds 0–99), reads script
-with the frozen §2 verdict surface (band edges oracle-tested),
-PREPARED babysit entry. (4) Wall-tick boundary instructions recorded
-on the queue item (`ea386ff`). 0 GPU-h in-session (the collection
-accrues to its own gate; diagnosis ran CPU-side).
-
-**Next**: `queue_cli.py next` → **grasp-sft-bootstrap** wall boundary
-(07:29:18Z self-stop, `[collect] DONE` + provenance banked): kept ≥300
-→ **stage C launches** via `launch_local_molmoact2_grasp_sft_stagec_ar.sh`
-(self-preflighting; activate the PREPARED babysit entry); 290–299 →
-the recorded top-up first (command on the queue boundary); <290 →
-diagnose. `run_work_next` armed — the chained tick owns the wall.*
-
-*Updated 2026-08-15 03:27–03:3xZ (real `date -u` at stamp: 03:32) —
-tick: **owner 👍 on the pre-reg finalization surfaced at the history
-poll = explicit go, window collapsed → grasp-SFT stage-B demo
-collection LAUNCHED 03:29:18Z at this tick boundary.***
-
-**Status**: **LIVE** — `fontaine-grasp-sft-stageb` (run_detached
-unit): `collect_demos --out ~/datasets/fontaine/grasp_sft_demos_v0
---target-kept 400 --max-wall-hours 4`, seeds ascending from 1000,
-successes only, rig-frame identity rows per frozen §6. First poll
-03:30Z GREEN: seed 1000 KEPT (129 ticks, 2.5 cm) ~40 s in, GPU
-50% / 909 MiB (render + encode) — on pace for ~3.4 GPU-h. Babysit
-entry live (gate ≥300 kept / ≤4 GPU-h). Queue validate OK depth 2.
-
-**Steering**: **owner 👍 on the 01:40Z prereg-finalization post**
-(seen at this tick's `history` poll — the reaction never surfaces
-via `read`'s cursor; the 01:48–03:2x session's polls list it
-unreacted, so it landed after ~03:23). Per the frozen terms ("your
-explicit go collapses the window") that is the go for the ladder —
-applied at this decision point as the stage-B launch license.
-Inbox empty; no other messages.
-
-**Done**: stage-B collection launched (unit + babysit entry +
-queue boundary record + in-channel launch post 03:3xZ). First-poll
-liveness/util/rate check green. 0 GPU-h spent in-session (the
-collection accrues to its own gate).
-
-**Next**: ride the collection (rc ETA ≲ 4 h wall, likely ~03:30 +
-~3.4 h ≈ 07:0xZ at the measured keep rate). At DONE: keep-rate +
-provenance + eval-seed-integrity reads, then **stage C** launch per
-frozen §6 (rig-ft class AR primary 3000 steps, flow arm conditional
-on the ≤13 gate) → stage D sim100. `grasp-sft-stage-c-launch-prep`
-is the queued CPU item — `run_work_next` stays armed for it.*
-
 ## Utilization footer
+
+Session 2026-08-15 08:58–12:0xZ (work; exploit; ~1.8 GPU-h in-session
+— probe unseen arm + train256 eval; stage-C accrued ~2.7 to its own
+gate before the owner kill): owner-steering morning — kill+probe order
+executed same-hour (28/100 unseen), quantile class bug found+fixed+
+re-uploaded, their-trainer retired, R2 A1 registered, fontaine-sim
+created, train256 report served. Train arm rides detached;
+run_work_next armed.
 
 Session 2026-08-15 07:02–07:0xZ (tick; 0 GPU-h): stage-B ride check —
 274/400 kept green (4 procs, GPU 55%), babysit exit-3 judged as the

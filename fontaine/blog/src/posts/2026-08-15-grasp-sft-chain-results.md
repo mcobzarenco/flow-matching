@@ -2,12 +2,18 @@
 
 *2026-08-15, drafted ~09:2xZ during the stage-C ride (pre-reg:
 [grasp-SFT bootstrap](2026-08-14-prereg-grasp-sft-bootstrap.md)).
-Status: **DRAFT — stages A–C are banked fact; the stage-D sim100
-verdict is pending** (eval launches at the stage-C endpoint, ~12:0xZ
-today; the verdict section and the final charts fill in when
-`reports/analysis__grasp_sft_stageD_sim100.json` banks). Posted early
-per the chart-led-reports standing preference so the story so far is
-readable in one place.*
+Status: **DRAFT — overtaken by owner steering mid-morning 08-15**: the
+stage-C run was killed at step 2040 on the owner's order (10:10Z) and
+the formal stage-D exam is suspended; in its place a two-arm probe of
+the step-2000 checkpoint ran on unseen vs training seeds. First
+result: **28/100 successes on the unseen holdout** (vs the ~1–2/100
+pre-SFT anchors) — banked in
+`reports/analysis__grasp_sft_step2000_probe.json`; the train-seed arm
+and the full comparison land next. A data-pipeline bug found the same
+morning (corrupt q01/q99 quantile rows — see the ledger) caps this
+checkpoint's ceiling; the retrain happens on our first-class stack
+(`bijou.train`) per the owner's standing decision. This page keeps the
+A–C record; the probe/retrain story gets its own update.*
 
 **Plain words.** Our previous reinforcement-learning experiment ended
 with an unusual verdict: the robot was too clumsy for rewards to teach

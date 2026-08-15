@@ -875,10 +875,10 @@ started_utc = "2026-08-15T10:13:05Z"
 gpu_hours_per_wall_hour = 1.0
 boundary = "OWNER-ORDERED step2000 probe (10:10:20Z, overrides the frozen stage C->D ladder): euler-10 sequential, videos on, unit fontaine-grasp-sft-step2000-probe, arms unseen(0-99) then train(1000-1099), out outputs/sim/grasp_sft/step2000_probe/{unseen,train}.json. At each arm DONE: post success + progress numbers in-channel (owner asked for updates AS IT RUNS). Report = train-seed success (kept subset) vs unseen-seed success + anchors ftrig4k ~1/100, W0 2/100. ~2-2.5 GPU-h expected total"
 anchors = [
-    "first-poll done 10:13:39Z: seed 0 live, ~530 ms/replan, GPU 11.9 GiB/36% — sequential sim-bound, normal for rollout_sim",
-    "update cadence: in-channel post at arm-1 DONE (unseen.json banks) and arm-2 DONE (train.json); owner conversational thread live since 09:49Z",
-    "kill lines: unit inactive with no json banked; reset strikes > 0 (protocol violation); wall > 4 h",
-    "stage-D formalism is SUSPENDED pending owner re-steer (this probe replaces the 11:5xZ boundary; grpo-r2 draft amendment owed: their-trainer retirement + token-SFT-before-token-GRPO route)",
+    "ARM 1 BANKED 11:51Z: unseen 0-99 = 28/100 successes (42 moved, +1.97 cm mean, 0 strikes) vs anchors ftrig4k ~1 / W0 2 — posted 1538153322215899198; TRAIN ARM live since ~11:51Z (seeds 1000-1099, ETA ~13:5x)",
+    "at train.json DONE: grasp_sft_step2000_probe_reads.py (kept-subset split automatic) -> post train-vs-unseen comparison; then prune this entry",
+    "kill lines: unit inactive with no train.json; reset strikes > 0; wall > 4 h total",
+    "context: quantile class bug fixed same morning (stats.json corrected, fontaine-sim re-uploaded); step2000 stays trained-on-corrupt — retrain via bijou.train is owner-gated (memory bijou-train-only); step2000 delta upload NOT yet run (remit on the queue item)",
 ]
 [[run.gates]]
 kind = "gpu_hours_max"
