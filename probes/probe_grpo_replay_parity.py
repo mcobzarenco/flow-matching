@@ -73,7 +73,7 @@ WAVES = (
     ("v1", FONTAINE / "outputs/sim/grpo_phase2_a", "step_0004", "step_0003.pt"),
     ("v2", FONTAINE / "outputs/sim/grpo_phase2_b", "step_0006", "step_0005.pt"),
 )
-RELEASE_BIJOU = Path("converted/molmoact2_so100_101_release")
+RELEASE_BIJOU = Path("converted/vla_molmoact2_so100_101_release")
 FAST_SNAPSHOT = (
     Path.home()
     / ".cache/huggingface/hub/models--allenai--MolmoAct2-FAST-Tokenizer"
