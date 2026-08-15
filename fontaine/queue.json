@@ -1,7 +1,16 @@
 {
- "updated_utc": "2026-08-15T17:29:51Z",
+ "updated_utc": "2026-08-15T18:19:55Z",
  "depth_reason": "depth 3: grasp-sft-bootstrap (retrain arm owner-pending) + grasp-sft-chain-results-page (writing ladder) + grpo-r2-post-sft (re-based per A2; token-sft arm item blocked owner-gated). Recorded 14:48Z 08-15.",
  "items": [
+  {
+   "id": "merge-main-phase5c",
+   "class": "cpu",
+   "status": "queued",
+   "title": "Merge main phase 5c (f32ae89, 'rollout + GRPO + sim on the VLA traits (phase-5 laptop close)', +401/-203 across 16 files: bijou/rollout.py, bijou/modelling/gemma4/loading.py, sim/rollout_sim.py + rollout_sim_parallel.py + convmap.py, tests/test_grpo_loop.py, tests/test_molmo_flow_integration.py, probes/probe_molmoact2_anchor_read.py, and OUR fontaine/scripts (convmap_tripwires.py, er60k_events_report.py, sim_parallel_oracle.py) touched upstream) into fontaine; re-run check.py; re-verify the seams our protocols depend on: (1) GRPO loop suite green post-merge - route B (token arm) feeds token-GRPO and R2 A2 activation reads through the discrete head, so the GRPO seam is now decision-relevant; (2) sim rollout oracles: convmap tripwires + sim_parallel_oracle re-run green after the upstream edits to our own scripts (diff-audit what upstream changed in fontaine/scripts and reconcile); (3) probe_molmoact2_anchor_read.py churn - re-run the gradflow/anchor probe oracle (loss 27.8546 exact anchor from 17:03Z); (4) both retrain arms full-parse green post-5c (frozen section-3 exact); (5) parents[2]->parents[3] bank_processor_goldens fix - landed upstream this phase or carry still stands; (6) rollout_so101 doc + bijou/rollout.py rework - note any CLI-surface moves for the eventual rig rollout path.",
+   "prereg": null,
+   "owner_hold": false,
+   "boundary": "Queued 18:2xZ 08-15 tick on seeing f32ae89 on origin/main ('phase-5 laptop close' - final phase-5 drop). CPU-only, no GPU touch (owner reserve stands). Urgent same as 5a/5b: owner arm/route decision may land any time and launch + eval + GRPO paths must be green against the full phase-5 close first; upstream touched three of our own fontaine/scripts, so a diff-audit of those files is part of the merge."
+  },
   {
    "id": "ftrig-eval20-flipped-parallel",
    "class": "gpu-local",
@@ -1779,5 +1788,5 @@
    "boundary": "Queued 17:3xZ 08-15 tick on seeing 03c2b27 on origin/main. CPU-only, no GPU touch (owner reserve stands). Urgent for the same reason 5a was: the owner arm/route decision may land any time and both the launch AND eval paths must be green against phase 5b first - the probe protocol is the read for whichever arm launches. || DONE 17:4xZ 08-15 work session: merged clean (no conflicts), check.py 924 green. Seams re-verified: (1) probe command parses + BOTH _vla conversions LOAD through the reworked BijouPolicy on CPU (chunk 30, per-dataset-stats fallback to the checkpoint table intact); legacy dirs refuse loudly with the convert_legacy pointer (re-probing the corrupt-table floor comparator must use step2000_vla); (2) ticket-map oracles 15/15 (suite grew with the upstream test ports), --noise-ticket-map/--noise-tickets parse; (3) panel forms all parse (ticket-bank-64, ticket-map, --report+--output-json) \u2014 upstream section-0 promise '--checkpoint CLI surface unchanged' holds; (4) augment-0 unaffected by construction (5b touches only bijou/eval/ + tests) + image-augment oracles 11/11 re-run green; (5) parents[2] fix STILL NOT upstream \u2014 our parents[3] carry survived the merge, carry stands. Both retrain arms full-parse green post-5b (family molmoact2_flow, flow-decoder-init inherit, frozen SS3 params exact); corrected wrist_roll +-157.2 verified baked in both corrected artifacts via new-format metadata; step2000_vla preserves the corrupt 35.5/94.4 bit-identically (the floor comparator, by design). Launch remains owner-gated (arm pick + route A/B/C + GPU release)."
   }
  ],
- "updated": "2026-08-15T17:43:00Z"
+ "updated": "2026-08-15T18:19:55Z"
 }
