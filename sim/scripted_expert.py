@@ -232,6 +232,17 @@ class ExpertState:
     phase: str = "approach"
     ticks_in_phase: int = 0
     grasp_arm: np.ndarray | None = None
+    # Wrist-roll branch: the jaw axis is a line (mod pi), so roll and
+    # roll-pi pinch identically — but the gripper's overhang is NOT
+    # symmetric, and for hull yaws that demand roll near 0 the default
+    # branch lands the moving-jaw shell on the boat's deck and the arm
+    # jams pressing on it (measured 22-40 N, pads stuck ~10 cm up).
+    # The jam is detected PHYSICALLY (quiet arm, pads far from target)
+    # and the flip retried once — kinematic overlap at solved poses
+    # does not separate jamming from grazing branches (measured).
+    roll_flip: bool = False
+    flip_tried: bool = False
+    recover_arm: np.ndarray | None = None
     # Servo-droop compensation (descend): position servos settle a
     # few degrees short under gravity, leaving the pads ~2 cm off the
     # kinematic target — the measured pad error feeds back into the
@@ -294,6 +305,38 @@ class ScriptedExpert:
         self.state.phase = phase
         self.state.ticks_in_phase = 0
 
+    def _grasp_seed(self) -> np.ndarray:
+        seed = PICKUP_QPOS[:5].copy()
+        if self.state.roll_flip:
+            seed[4] -= np.pi  # the mod-pi flipped branch (clips in range)
+        return seed
+
+    def _jam_flip(self, sim: SO101Sim, err_m: float) -> bool:
+        """Deck-strike recovery (approach/descend): the arm has gone
+        QUIET far from its target — it is pressing on the boat's deck
+        (measured 22-40 N, pads stuck ~10 cm up), and a force-clamped
+        servo never pushes through. Flip the roll branch once and
+        restart the approach (fresh droop: the clamped integrator is
+        part of the jam state). Physical detection, not kinematic:
+        solved-pose overlap does not separate jamming branches from
+        grazing-but-fine ones (measured across the smoke seeds)."""
+        state = self.state
+        if state.flip_tried or state.ticks_in_phase <= 50 or err_m < 0.035:
+            return False
+        if float(np.abs(sim.data.qvel[self.planner.arm_dofs]).max()) > 0.05:
+            return False
+        state.flip_tried = True
+        state.roll_flip = not state.roll_flip
+        state.droop[:] = 0.0
+        state.trace.append("jam-flip")
+        # Retreat up-and-back BEFORE re-approaching: flipping the
+        # wrist 180 deg next to the hull flings the boat (measured
+        # 31 cm on the retry without the retreat).
+        state.recover_arm = self._arm_now(sim)
+        state.recover_arm[1] -= np.deg2rad(35.0)
+        self._enter("recover")
+        return True
+
     def action(self, sim: SO101Sim) -> np.ndarray:
         planner, state = self.planner, self.state
         state.ticks_in_phase += 1
@@ -305,15 +348,26 @@ class ScriptedExpert:
 
         pads_now = planner.grasp_point(self._arm_now(sim), JAW_OPEN_RAD)
 
+        if state.phase == "recover":
+            assert state.recover_arm is not None
+            if state.ticks_in_phase >= 25:
+                self._enter("approach")
+            return self._command(state.recover_arm, JAW_OPEN_RAD)
+
         if state.phase == "approach":
             hover = boat_pos + np.array([0.0, 0.0, self.CLEARANCE_Z])
-            arm, _ = planner.solve_grasp(hover, boat_yaw, PICKUP_QPOS[:5])
-            if float(np.linalg.norm(pads_now - hover)) < 0.03 or timeout:
+            hover_err = float(np.linalg.norm(pads_now - hover))
+            if self._jam_flip(sim, hover_err):
+                return self._command(self._arm_now(sim), JAW_OPEN_RAD)
+            arm, _ = planner.solve_grasp(hover, boat_yaw, self._grasp_seed())
+            if hover_err < 0.03 or timeout:
                 self._enter("descend")
             return self._command(arm, JAW_OPEN_RAD)
 
         if state.phase == "descend":
             grasp = np.array([boat_pos[0], boat_pos[1], self.GRASP_Z])
+            if self._jam_flip(sim, float(np.linalg.norm(pads_now - grasp))):
+                return self._command(self._arm_now(sim), JAW_OPEN_RAD)
             # Settle-measure-correct: the sysid'd shoulder saturates
             # its force limit before the kinematic pose is reached
             # (pads float ~2 cm high and ~1.5 cm short) — so once the
@@ -329,7 +383,7 @@ class ScriptedExpert:
             arm, _ = planner.solve_grasp(
                 grasp + state.droop,
                 boat_yaw,
-                PICKUP_QPOS[:5],
+                self._grasp_seed(),
             )
             xy_err = float(np.hypot(*(pads_now[:2] - grasp[:2])))
             aligned = xy_err < 0.008 and arm_speed < 0.08
