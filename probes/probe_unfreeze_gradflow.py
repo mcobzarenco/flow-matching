@@ -17,6 +17,10 @@ ASSERTED in main() — the asserts are the single source of truth for
 the anchors (numbers duplicated into prose rot: this file's own
 docstring and architecture.md §5 both carried stale values at the
 2026-08-05 re-run). Corpus/format changes re-baseline them loudly.
+Re-anchored 2026-08-15 on the family classes (GemmaFlowVLA /
+GemmaARVLA) when the old composition root retired: the family forward
+composes the same kernels in the same op order, and both anchors
+reproduced at the swap.
 
 AR differences from flow, asserted here: the AR decoder has NO zero-init
 output head (lm_head is normal-init), so backbone gradients flow from step 1
@@ -30,7 +34,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import override
+from typing import Any
 
 import torch
 import transformers
@@ -39,19 +43,22 @@ from bijou.data import EpisodeSplit, select_datasets
 from bijou.loading import (
     BackboneDepth,
     build_gemma_encoder,
+    build_gemma_flow_parts,
     default_expert_config,
-    from_backbone,
 )
-from bijou.model import BijouModel
 from bijou.modelling.aux_text import SUFFIX_FORMAT
 from bijou.modelling.codecs import FastActionCodec
 from bijou.modelling.decoders.ar_gemma import GemmaARDecoder
-from bijou.modelling.decoders.ar_suffix import ARDecoderConfig, ARSuffixDecoder
-from bijou.modelling.decoders.flow import FlowDecoder
-from bijou.modelling.encoders.gemma4 import GemmaEncoder, GemmaInputsCollator
+from bijou.modelling.decoders.ar_suffix import ARDecoderConfig
+from bijou.modelling.encoders.gemma4 import GemmaInputsCollator
 from bijou.modelling.gemma4.loading import load_config
 from bijou.modelling.gemma4.text import DecoderLayer
-from bijou.modelling.interface import CollatedBatch, Collator
+from bijou.modelling.interface import CollatedBatch, Collator, SamplingMethod
+from bijou.models.gemma_ar import GemmaARVLA
+from bijou.models.gemma_flow import GemmaFlowVLA
+from bijou.models.objectives import ARObjective, FlowObjective
+from bijou.models.serving import ARServing, FlowServing
+from bijou.vla import VLA
 
 TINY = "outputs/tiny-gemma4"
 # The oracle corpus (2026-08-05, PR #1): rig v2 at its standard mirror
@@ -62,11 +69,6 @@ FIXTURE_TOKENIZER = Path("tests/fixtures/tiny_fast_tokenizer")
 EXPORTS = (1, 3, 5)  # tiny backbone's global layers
 
 
-# The old-world (BijouModel) harness, inlined 2026-08-15: bijou.train now
-# drives the family classes, and this probe's anchors were recorded
-# through the BijouModel composition - it stays pinned to that path until
-# model.py retires (phase 6), at which point the probe re-anchors on a
-# family.
 @dataclass(frozen=True, slots=True)
 class ProbeArgs:
     """The slice of the historical train config this probe consumes."""
@@ -87,7 +89,7 @@ class ProbeArgs:
         return self.backbone_text_lr is not None or self.backbone_vision_lr is not None
 
 
-def probe_unfreeze(model: BijouModel, args: ProbeArgs) -> None:
+def probe_unfreeze(model: VLA[Any], args: ProbeArgs) -> None:
     """The historical unfreeze: flip requires_grad on the requested
     backbone subsets off the model's named groups."""
     groups = model.param_groups()
@@ -99,29 +101,13 @@ def probe_unfreeze(model: BijouModel, args: ProbeArgs) -> None:
             parameter.requires_grad_(True)
 
 
-class ProbeTrainStep(torch.nn.Module):
-    """The historical train step, reduced to what this probe runs
-    (single-batch mean-form losses; CPU, so the autocast context is
-    constructed disabled - byte-identical to the recorded anchors)."""
-
-    def __init__(self, model: BijouModel, *, backbone_trained: bool) -> None:
-        super().__init__()
-        self.model = model
-        self.backbone_trained = backbone_trained
-
-    @override
-    def forward(
-        self,
-        batch: CollatedBatch,
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor | None, torch.Tensor | None]:
-        inputs = batch.encoder_inputs
-        device_type = next(iter(inputs.tensors().values())).device.type
-        autocast_on = device_type == "cuda" and self.backbone_trained
-        with torch.autocast(device_type, torch.bfloat16, enabled=autocast_on):
-            memory = self.model.encode(inputs, with_grad=self.backbone_trained)
-            if isinstance(self.model.decoder, ARSuffixDecoder):
-                return self.model.loss_components(memory, batch)
-        return self.model.loss_components(memory, batch)
+def family_loss(model: VLA[Any], batch: CollatedBatch) -> torch.Tensor:
+    """One single-process forward through the family's own precision
+    policy: counts pass through un-reduced, the objective is the graph
+    scalar (family.forward decides live-trunk encode from requires_grad,
+    exactly the flags this probe just flipped)."""
+    counts = model.loss_counts(batch)
+    return model(batch, counts=counts).objective
 
 
 def make_args(
@@ -142,10 +128,11 @@ def make_args(
     )
 
 
-def build_flow(args: ProbeArgs) -> ProbeTrainStep:
+def build_flow(args: ProbeArgs) -> GemmaFlowVLA:
     torch.manual_seed(args.seed)
+    config = load_config(Path(TINY))
     expert_config = default_expert_config(
-        load_config(Path(TINY)),
+        config,
         action_dim=6,
         state_dim=6,
         stream_counts=args.stream_counts,
@@ -155,9 +142,11 @@ def build_flow(args: ProbeArgs) -> ProbeTrainStep:
         cross_attention_heads=args.decoder_cross_heads,
         chunk_size=args.chunk_size,
     )
-    model = from_backbone(
-        TINY,
+    backbone, encoder, decoder = build_gemma_flow_parts(
+        Path(TINY),
+        config,
         expert_config,
+        max_soft_tokens=args.max_soft_tokens,
         device="cpu",
         dtype=torch.float32 if args.backbone_trained else None,
         expert_dtype=torch.float32,
@@ -167,13 +156,19 @@ def build_flow(args: ProbeArgs) -> ProbeTrainStep:
     # W^T d = 0 - grads populate as zeros, so DDP participation is still
     # fine, and step 2 onward flows). The real unfreeze path warm-starts
     # from a trained checkpoint; simulate that here (seeded).
-    assert isinstance(model.decoder, FlowDecoder)
-    torch.nn.init.normal_(model.decoder.action_out_proj.weight, std=0.02)
+    torch.nn.init.normal_(decoder.action_out_proj.weight, std=0.02)
+    model = GemmaFlowVLA(
+        backbone,
+        encoder,
+        decoder,
+        objective=FlowObjective(),
+        serving=FlowServing(num_steps=5, method=SamplingMethod.HEUN),
+    )
     probe_unfreeze(model, args)
-    return ProbeTrainStep(model, backbone_trained=args.backbone_trained)
+    return model
 
 
-def build_ar_backbone(args: ProbeArgs) -> ProbeTrainStep:
+def build_ar_backbone(args: ProbeArgs) -> GemmaARVLA:
     torch.manual_seed(args.seed)
     backbone_config = load_config(Path(TINY))
     codec = FastActionCodec.load(FIXTURE_TOKENIZER)
@@ -205,9 +200,15 @@ def build_ar_backbone(args: ProbeArgs) -> ProbeTrainStep:
         dtype=torch.float32,
     )
     decoder.init_tables_from_backbone(backbone)
-    model = BijouModel(backbone=backbone, encoder=encoder, decoder=decoder)
+    model = GemmaARVLA(
+        backbone,
+        encoder,
+        decoder,
+        objective=ARObjective(aux_loss_weight=1.0),
+        serving=ARServing(),
+    )
     probe_unfreeze(model, args)
-    return ProbeTrainStep(model, backbone_trained=args.backbone_trained)
+    return model
 
 
 def grad_state(parameter: torch.Tensor) -> str:
@@ -222,9 +223,12 @@ def grad_state(parameter: torch.Tensor) -> str:
     return "nonzero"
 
 
-def check_text_partition(step: ProbeTrainStep, label: str) -> None:
-    """The shared text-only assertions (both decoders)."""
-    backbone = step.model.backbone
+def check_text_partition(model: GemmaFlowVLA | GemmaARVLA, label: str) -> None:
+    """The shared text-only assertions (both families)."""
+    backbone = model.backbone
+    # The tiny trunk is multimodal — both vision halves exist.
+    assert backbone.vision_tower is not None
+    assert backbone.embed_vision is not None
     text = backbone.language_model
     stop = max(EXPORTS)
     layers = list(text.layers)
@@ -254,7 +258,7 @@ def check_text_partition(step: ProbeTrainStep, label: str) -> None:
         ).grad
         is None,
     }
-    trainable = [(name, p) for name, p in step.named_parameters() if p.requires_grad]
+    trainable = [(name, p) for name, p in model.named_parameters() if p.requires_grad]
     bad = [(n, grad_state(p)) for n, p in trainable if grad_state(p) != "nonzero"]
     checks["ALL trainable have nonzero finite grads"] = not bad
     for name, passed in checks.items():
@@ -308,27 +312,27 @@ def main() -> None:
     items = [dataset[0], dataset[1000]]
 
     # --- flow, text-only unfreeze -------------------------------------------
-    step = build_flow(make_args(backbone_text_lr=1e-5, backbone_vision_lr=None))
+    model = build_flow(make_args(backbone_text_lr=1e-5, backbone_vision_lr=None))
     torch.manual_seed(0)
-    loss, _, _, _ = step(flow_batch(items))
+    loss = family_loss(model, flow_batch(items))
     loss.backward()
     print(f"FLAGS-ON ORACLE (flow, text-only, seed 0, 2 dev items): {loss.item():.4f}")
     print(
         "  expected 1.6948 (re-recorded 2026-08-05: rig-v2 oracle corpus) - MUST match exactly",
     )
     assert f"{loss.item():.4f}" == "1.6948", "flow flags-on oracle DRIFTED"
-    check_text_partition(step, "flow text-only")
+    check_text_partition(model, "flow text-only")
 
     # --- flow, text+vision unfreeze -------------------------------------------
-    step = build_flow(make_args(backbone_text_lr=1e-5, backbone_vision_lr=1e-5))
+    model = build_flow(make_args(backbone_text_lr=1e-5, backbone_vision_lr=1e-5))
     torch.manual_seed(0)
-    loss, _, _, _ = step(flow_batch(items))
+    loss = family_loss(model, flow_batch(items))
     loss.backward()
     print(f"FLAGS-ON ORACLE (flow, text+vision, seed 0): {loss.item():.4f}")
-    backbone = step.model.backbone
+    backbone = model.backbone
     assert backbone.vision_tower is not None
     tower = grad_state(backbone.vision_tower.patch_embedder.input_proj.weight)
-    trainable = [(n, p) for n, p in step.named_parameters() if p.requires_grad]
+    trainable = [(n, p) for n, p in model.named_parameters() if p.requires_grad]
     bad = [(n, grad_state(p)) for n, p in trainable if grad_state(p) != "nonzero"]
     print(f"  {'PASS' if tower == 'nonzero' else 'FAIL'}  tower input_proj")
     print(f"  {'PASS' if not bad else 'FAIL'}  ALL trainable have nonzero finite grads")
@@ -340,26 +344,24 @@ def main() -> None:
     # tag pre-decoder-simplify; its 4.8395 anchor retired with it.)
 
     # --- ar_backbone, text-only unfreeze (FULL depth: all layers train) ------
-    step = build_ar_backbone(
+    model = build_ar_backbone(
         make_args(
             backbone_text_lr=2.5e-5,
             backbone_vision_lr=None,
         ),
     )
     torch.manual_seed(0)
-    loss, _, _, _ = step(ar_batch(items, generate_bracket=True))
+    loss = family_loss(model, ar_batch(items, generate_bracket=True))
     loss.backward()
     print(f"FLAGS-ON ORACLE (ar_backbone, text-only, seed 0): {loss.item():.4f}")
     print(
         "  expected 27.8546 (re-recorded 2026-08-05: rig-v2 oracle corpus) - MUST match exactly",
     )
     assert f"{loss.item():.4f}" == "27.8546", "ar_backbone flags-on oracle DRIFTED"
-    backbone = step.model.backbone
+    backbone = model.backbone
     text = backbone.language_model
-    decoder = step.model.decoder
-    assert isinstance(decoder, GemmaARDecoder)
-    encoder = step.model.encoder
-    assert isinstance(encoder, GemmaEncoder)  # narrow the seam type
+    decoder = model.ar_decoder
+    encoder = model.encoder
     last = text.layers[len(text.layers) - 1]
     assert isinstance(last, DecoderLayer)
     checks = {
@@ -387,7 +389,7 @@ def main() -> None:
     }
     for name, passed in checks.items():
         print(f"  {'PASS' if passed else 'FAIL'}  {name}")
-    trainable = [(n, p) for n, p in step.named_parameters() if p.requires_grad]
+    trainable = [(n, p) for n, p in model.named_parameters() if p.requires_grad]
     bad = [(n, grad_state(p)) for n, p in trainable if grad_state(p) != "nonzero"]
     print(f"  {'PASS' if not bad else 'FAIL'}  ALL trainable have nonzero finite grads")
     if bad:

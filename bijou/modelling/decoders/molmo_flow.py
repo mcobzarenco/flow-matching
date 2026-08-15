@@ -1208,7 +1208,7 @@ def layer_kv_pairs(
     if cache is None:
         raise ValueError(
             "ObservationMemory carries no prefix cache — encode with "
-            "retain_cache=True (BijouModel does this for molmo_flow)",
+            "retain_cache=True (the molmoact2 families do)",
         )
     if not isinstance(cache, Molmo2KVCache):
         raise TypeError(
@@ -1262,7 +1262,8 @@ def molmo_flow_loss_sums(
     times: Tensor | None = None,
     noise: Tensor | None = None,
 ) -> tuple[Tensor, Tensor]:
-    """The batch-facing objective (BijouModel dispatches here): extract
+    """The batch-facing objective (the molmoact2 families compose it):
+    extract
     KV off the prefix cache (detached under ``insulate`` — their
     post-train KI), q01/q99-clamp-normalize the RAW batch actions with
     the DECODER'S table (decision 6: per-sample stats deliberately

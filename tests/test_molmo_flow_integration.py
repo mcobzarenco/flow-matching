@@ -1,22 +1,23 @@
-"""molmo_flow ↔ BijouModel integration oracles (§8.13 step 5, CPU tier).
+"""molmo_flow ↔ family integration oracles (§8.13 step 5, CPU tier).
 
 Runs the REAL composition end-to-end on the tiny converted checkpoint
 (the converter-test fixture, backbone ref = the source dir, no hub
-access): from_checkpoint assembly → MolmoAct2 collation → prefix encode
-(cache + conditioning mask) → loss / predict. Pinned:
+access): ``MolmoAct2FlowVLA.from_checkpoint`` assembly → MolmoAct2
+collation → prefix encode (cache + conditioning mask) → loss / predict.
+Pinned:
 
 - the KI gradient contract both ways (§8.13 decision 8): insulated ⇒
   flow-loss gradients into EVERY trunk parameter exactly zero (while
   the expert's trainable set all receive grads); uninsulated ⇒ nonzero
   trunk gradients THROUGH the cached K/V — and the open seam composes
   with activation checkpointing (the cache-shim machinery);
-- BijouModel.predict_chunk dispatch: molmo_flow defaults (recorded
-  steps, Euler), their output tail (n_action_steps × action_dim raw
-  units), noise determinism, target_time refused;
-- loss arms: mean == sum/count across loss_components /
-  loss_component_sums / loss_count_normalizers (the chunked-backward
-  contract), and per-sample batch stats are deliberately unused
-  (decision 6: perturbing them changes nothing);
+- the serving surface: ``predict`` runs the RECORDED operating point
+  (steps, Euler), ``predict_flow`` pins their output tail
+  (n_action_steps × action_dim raw units) and noise determinism;
+- the loss surface: the family objective == the kernel mean ==
+  sum/count under the family's counts (the chunked-backward contract),
+  and per-sample batch stats are deliberately unused (decision 6:
+  perturbing them changes nothing);
 - the eval seam (BijouPolicy, loading the CONVERTED VLA-format
   checkpoint through the family registry): the collator carries the
   checkpoint's merged q01/q99 STATE table (training's scheme — without
@@ -28,7 +29,6 @@ access): from_checkpoint assembly → MolmoAct2 collation → prefix encode
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 from typing import Any
 
@@ -36,94 +36,51 @@ import pytest
 import torch
 from test_convert_molmoact2 import _ACTION_DIM, _HORIZON, _convert, source_dir
 
-from bijou.checkpoint import VLAMetadata, read_metadata
+from bijou.checkpoint import VLAMetadata
 from bijou.data import DatasetStats
 from bijou.eval.molmo_norm import MolmoNorm
 from bijou.eval.policies import BijouPolicy
-from bijou.loading import from_checkpoint
-from bijou.model import BijouModel
 from bijou.modelling.aux_text import AuxField
-from bijou.modelling.decoders.molmo_flow import MolmoFlowDecoder, molmo_flow_loss
+from bijou.modelling.decoders.molmo_flow import molmo_flow_loss
 from bijou.modelling.interface import (
     CameraFrame,
     CollatedBatch,
     NormStats,
+    ObservationMemory,
     PromptInputs,
     SamplingMethod,
 )
+from bijou.models.molmoact2_flow import MolmoAct2FlowVLA
 from bijou.vla import VLAFamily
 
 assert source_dir is not None  # re-exported pytest fixture (module-scoped)
 
 
-def legacy_bridge(converted: Path, legacy: Path) -> Path:
-    """The converted (VLA-format) checkpoint re-expressed in the legacy
-    layout — the inverse of ``bijou.convert_legacy``, for THIS module's
-    old-world subject (BijouModel exercises the legacy reader until the
-    old world is deleted; the bridge dies with it — BijouPolicy now
-    loads the converted directory itself)."""
-    metadata = read_metadata(converted)
-    legacy.mkdir(parents=True)
-    (legacy / "bijou_config.json").write_text(
-        json.dumps(
-            {
-                "format": 3,
-                "backbone": {
-                    "id": metadata.backbone_id,
-                    "depth": metadata.backbone_depth,
-                },
-                "prompt": metadata.components["prompt"]["config"],
-                "decoder": metadata.components["flow_decoder"]["config"],
-                "step": metadata.step,
-                "train_args": metadata.train_args,
-                "normalization": metadata.stats.state_dict(),
-                "per_dataset_normalization": {},
-            },
-        ),
-    )
-    os.link(
-        converted / "flow_decoder.safetensors",
-        legacy / "expert.safetensors",
-    )
-    return legacy
-
-
 @pytest.fixture(scope="module")
-def tiny_worlds(
+def tiny_vla_checkpoint(
     source_dir: Path,
     tmp_path_factory: pytest.TempPathFactory,
-) -> tuple[Path, Path]:
-    """(converted VLA-format checkpoint, its legacy re-expression) —
-    one conversion serves the module's new-world (BijouPolicy) and
-    old-world (BijouModel) subjects."""
+) -> Path:
     root = tmp_path_factory.mktemp("molmo-flow-int")
-    converted = _convert(
+    return _convert(
         source_dir,
         root / "converted",
         backbone_ref=str(source_dir),
     )
-    return converted, legacy_bridge(converted, root / "legacy")
 
 
 @pytest.fixture(scope="module")
-def tiny_vla_checkpoint(tiny_worlds: tuple[Path, Path]) -> Path:
-    return tiny_worlds[0]
-
-
-@pytest.fixture(scope="module")
-def tiny_checkpoint(tiny_worlds: tuple[Path, Path]) -> Path:
-    return tiny_worlds[1]
-
-
-@pytest.fixture(scope="module")
-def tiny_model(tiny_checkpoint: Path) -> BijouModel:
-    model, _info = from_checkpoint(tiny_checkpoint)
+def tiny_model(tiny_vla_checkpoint: Path) -> MolmoAct2FlowVLA:
+    model = MolmoAct2FlowVLA.from_checkpoint(
+        tiny_vla_checkpoint,
+        device="cpu",
+        dtype=torch.float32,
+    )
     # The fixture expert is zero-init (adaLN-Zero: the field is exactly
     # 0 and upstream gradients are Wᵀδ = 0 — the gradient tests would
     # pass vacuously insulated and fail open). Perturb it into a
     # non-degenerate field, deterministically (the port tests' pattern).
-    decoder = model.decoder
-    assert isinstance(decoder, MolmoFlowDecoder)
+    decoder = model.flow_decoder
     generator = torch.Generator().manual_seed(42)
     with torch.no_grad():
         for block in decoder.iter_blocks():
@@ -160,11 +117,11 @@ def _stub_ids(collator: Any) -> Any:
     return collator
 
 
-def _stub_collator(model: BijouModel):  # noqa: ANN202 — encoder-specific collator
+def _stub_collator(model: MolmoAct2FlowVLA):  # noqa: ANN202 — encoder-specific collator
     return _stub_ids(model.encoder.inputs_collator())
 
 
-def _batch(model: BijouModel, batch_size: int = 2) -> CollatedBatch:
+def _batch(model: MolmoAct2FlowVLA, batch_size: int = 2) -> CollatedBatch:
     generator = torch.Generator().manual_seed(0)
     samples = []
     for index in range(batch_size):
@@ -205,7 +162,7 @@ def _batch(model: BijouModel, batch_size: int = 2) -> CollatedBatch:
     )
 
 
-def _trunk_grad_norm(model: BijouModel) -> float:
+def _trunk_grad_norm(model: MolmoAct2FlowVLA) -> float:
     total = 0.0
     for parameter in model.backbone.parameters():
         if parameter.grad is not None:
@@ -213,16 +170,30 @@ def _trunk_grad_norm(model: BijouModel) -> float:
     return total**0.5
 
 
-def _run_backward(model: BijouModel, *, insulate: bool) -> tuple[float, int]:
+def _encode(
+    model: MolmoAct2FlowVLA,
+    batch: CollatedBatch,
+    *,
+    with_grad: bool,
+) -> ObservationMemory:
+    """The family's own encode (molmo_flow conditions on the whole
+    cache, so it is always retained)."""
+    return model.encoder.encode(
+        model.backbone,
+        batch.encoder_inputs,
+        with_grad=with_grad,
+        retain_cache=True,
+    )
+
+
+def _run_backward(model: MolmoAct2FlowVLA, *, insulate: bool) -> tuple[float, int]:
     """One flow-loss backward with a LIVE trunk; returns (trunk grad
     norm, expert trainable params with grads)."""
-    model.insulate_expert = insulate
     model.backbone.requires_grad_(True)
     model.zero_grad(set_to_none=True)
     batch = _batch(model)
-    memory = model.encode(batch.encoder_inputs, with_grad=True)
-    decoder = model.decoder
-    assert isinstance(decoder, MolmoFlowDecoder)
+    memory = _encode(model, batch, with_grad=True)
+    decoder = model.flow_decoder
     loss = molmo_flow_loss(decoder, memory, batch, insulate=insulate)
     loss.backward()
     expert_grads = sum(
@@ -233,7 +204,7 @@ def _run_backward(model: BijouModel, *, insulate: bool) -> tuple[float, int]:
     return _trunk_grad_norm(model), expert_grads
 
 
-def test_insulation_gradient_contract(tiny_model: BijouModel) -> None:
+def test_insulation_gradient_contract(tiny_model: MolmoAct2FlowVLA) -> None:
     """decision 8, both ways: detached KV ⇒ trunk grads EXACTLY zero;
     open seam ⇒ nonzero trunk grads through the cached K/V. The expert
     trains under both."""
@@ -247,7 +218,7 @@ def test_insulation_gradient_contract(tiny_model: BijouModel) -> None:
 
 
 def test_open_seam_composes_with_activation_checkpointing(
-    tiny_model: BijouModel,
+    tiny_model: MolmoAct2FlowVLA,
 ) -> None:
     """Uninsulated gradients arrive at the trunk THROUGH the cache —
     the checkpointed-block shim must carry them (the machinery's whole
@@ -263,33 +234,42 @@ def test_open_seam_composes_with_activation_checkpointing(
     assert open_norm > 0.0
 
 
-def test_predict_chunk_dispatch_and_tail(tiny_model: BijouModel) -> None:
-    """BijouModel → molmo_flow predict: recorded-steps Euler default,
+def test_predict_dispatch_and_tail(tiny_model: MolmoAct2FlowVLA) -> None:
+    """Family → molmo_flow predict: ``predict`` runs the RECORDED
+    operating point (their serving semantics), ``predict_flow`` pins
     their tail (n_action_steps × action_dim, fp32 raw units inside the
-    quantile box), deterministic under a seed, φ_s knob refused, and
-    per-sample stats unused (decision 6)."""
+    quantile box), determinism under a seed, and per-sample stats
+    unused (decision 6). The φ_s knob and text generations are
+    unrepresentable on this surface — the old runtime refusals became
+    type-level facts."""
     batch = _batch(tiny_model)
-    first = tiny_model.predict_chunk(
+    served = tiny_model.predict(batch)
+    assert served.shape == (2, _HORIZON, _ACTION_DIM)
+    at_serving = tiny_model.predict_flow(
         batch,
+        num_steps=tiny_model.serving.num_steps,
+        method=tiny_model.serving.method,
         generator=torch.Generator().manual_seed(3),
     )
-    again = tiny_model.predict_chunk(
+    again = tiny_model.predict_flow(
         batch,
+        num_steps=tiny_model.serving.num_steps,
+        method=tiny_model.serving.method,
         generator=torch.Generator().manual_seed(3),
     )
-    other = tiny_model.predict_chunk(
+    other = tiny_model.predict_flow(
         batch,
+        num_steps=tiny_model.serving.num_steps,
+        method=tiny_model.serving.method,
         generator=torch.Generator().manual_seed(4),
     )
+    first = at_serving
     assert first.actions.shape == (2, _HORIZON, _ACTION_DIM)
     assert first.actions.dtype == torch.float32
-    assert first.generations is None
     # The clamp tail: predictions cannot leave the quantile box (±3).
     assert float(first.actions.abs().max()) <= 3.0
     assert torch.equal(first.actions, again.actions)
     assert not torch.equal(first.actions, other.actions)
-    with pytest.raises(ValueError, match="target_time"):
-        tiny_model.predict_chunk(batch, target_time=0.0)
     # Per-sample stats are decoder-ignored: perturbing them is inert.
     import dataclasses
 
@@ -303,39 +283,47 @@ def test_predict_chunk_dispatch_and_tail(tiny_model: BijouModel) -> None:
             q99=batch.action_stats.q99 + 5.0,
         ),
     )
-    same = tiny_model.predict_chunk(
+    same = tiny_model.predict_flow(
         perturbed,
+        num_steps=tiny_model.serving.num_steps,
+        method=tiny_model.serving.method,
         generator=torch.Generator().manual_seed(3),
     )
     assert torch.equal(first.actions, same.actions)
-    heun = tiny_model.predict_chunk(
+    heun = tiny_model.predict_flow(
         batch,
-        generator=torch.Generator().manual_seed(3),
-        method=SamplingMethod.HEUN,
         num_steps=2,
+        method=SamplingMethod.HEUN,
+        generator=torch.Generator().manual_seed(3),
     )
     assert heun.actions.shape == first.actions.shape
 
 
-def test_loss_arms_sum_form_contract(tiny_model: BijouModel) -> None:
-    """loss_components' mean == loss_component_sums / normalizer, and the
-    normalizer is B*T (the per-position valid-dim mean is the inner
-    reduction) — the chunked-backward exactness contract."""
+def test_loss_surface_sum_form_contract(tiny_model: MolmoAct2FlowVLA) -> None:
+    """The family objective == the kernel mean == sum/count under the
+    family's counts, and the count is B*T (the per-position valid-dim
+    mean is the inner reduction) — the chunked-backward exactness
+    contract on the trait surface."""
     batch = _batch(tiny_model)
-    memory = tiny_model.encode(batch.encoder_inputs, with_grad=False)
+    counts = tiny_model.loss_counts(batch)
+    assert set(counts) == {"action"}
+    assert int(counts["action"]) == 2 * _HORIZON
     torch.manual_seed(11)  # the loss draws t/ε from the ambient stream
-    total, action, aux_sum, _aux_count = tiny_model.loss_components(memory, batch)
+    report = tiny_model(batch, counts=counts)
+    memory = _encode(tiny_model, batch, with_grad=False)
     torch.manual_seed(11)
-    loss_sum, count, aux2, _ = tiny_model.loss_component_sums(memory, batch)
-    normalizer, aux_norm = tiny_model.loss_count_normalizers(batch)
-    assert aux_sum is None and aux2 is None and aux_norm is None
-    assert int(normalizer) == 2 * _HORIZON
-    assert int(count) == int(normalizer)
-    assert float(total) == pytest.approx(float(loss_sum / count), rel=1e-6)
-    assert float(action) == pytest.approx(float(total))
+    mean_form = molmo_flow_loss(tiny_model.flow_decoder, memory, batch)
+    action = report.components["action"]
+    objective = float(report.objective.detach())
+    assert int(action.count) == int(counts["action"])
+    assert objective == pytest.approx(
+        float(action.sum.detach() / action.count),
+        rel=1e-6,
+    )
+    assert objective == pytest.approx(float(mean_form), rel=1e-6)
 
 
-def test_chunk_length_mismatch_is_loud(tiny_model: BijouModel) -> None:
+def test_chunk_length_mismatch_is_loud(tiny_model: MolmoAct2FlowVLA) -> None:
     import dataclasses
 
     batch = _batch(tiny_model)
@@ -344,11 +332,9 @@ def test_chunk_length_mismatch_is_loud(tiny_model: BijouModel) -> None:
         actions=batch.actions[:, : _HORIZON - 1],
         action_is_pad=batch.action_is_pad[:, : _HORIZON - 1],
     )
-    memory = tiny_model.encode(wrong.encoder_inputs, with_grad=False)
-    decoder = tiny_model.decoder
-    assert isinstance(decoder, MolmoFlowDecoder)
+    memory = _encode(tiny_model, wrong, with_grad=False)
     with pytest.raises(ValueError, match="chunk length"):
-        molmo_flow_loss(decoder, memory, wrong)
+        molmo_flow_loss(tiny_model.flow_decoder, memory, wrong)
 
 
 @pytest.fixture(scope="module")
@@ -504,12 +490,15 @@ def test_offload_ple_narrows_on_family_before_load(tmp_path: Path) -> None:
         )
 
 
-def test_eval_policy_refuses_legacy_directory(tiny_checkpoint: Path) -> None:
+def test_eval_policy_refuses_legacy_directory(tmp_path: Path) -> None:
     """BijouPolicy reads the VLA format ONLY — a legacy
     bijou_config.json directory is refused at load with the converter
-    pointer, never silently read through the old path."""
+    pointer, never silently read through an old path."""
+    legacy = tmp_path / "legacy"
+    legacy.mkdir()
+    (legacy / "bijou_config.json").write_text("{}")
     with pytest.raises(SystemExit, match="convert_legacy"):
-        BijouPolicy(tiny_checkpoint, device=torch.device("cpu"), seed=7)
+        BijouPolicy(legacy, device=torch.device("cpu"), seed=7)
 
 
 def _offset_item(

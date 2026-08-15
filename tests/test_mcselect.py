@@ -475,8 +475,9 @@ def test_cli_mcselect_flag_matrix(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_fake_base_is_argparse_namespace_shaped() -> None:
-    """FakeBase.info must keep quacking like CheckpointInfo for the
-    condition-fields set the policy consumes (guards the fixture)."""
+    """FakeBase.info must keep quacking like the policy's info record
+    for the condition-fields set the policy consumes (guards the
+    fixture)."""
     model = ScriptedModel(SCRIPT, REF.clone())
     base = cast(BijouPolicy, FakeBase(cast(Any, model)))
     assert isinstance(base.info, argparse.Namespace)

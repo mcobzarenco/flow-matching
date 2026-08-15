@@ -3,10 +3,11 @@ new-format save round-trip through ``bijou.loading.load_vla``, the
 chunked-backward counts invariant at family level, and the φ_s
 strict-load tolerance.
 
-Reuses the parity suite's hermetic gemma fixtures (tiny trunk + legacy
-checkpoint + ``convert_legacy``): the converted directory is exactly
-the artifact class the new CLI trains from, and the family loaded from
-it is the model whose save/load round-trip must be lossless.
+Reuses the shared hermetic gemma fixtures (tiny trunk + legacy
+checkpoint + ``convert_legacy``, ``tests/vla_fixtures.py``): the
+converted directory is exactly the artifact class the new CLI trains
+from, and the family loaded from it is the model whose save/load
+round-trip must be lossless.
 """
 
 from __future__ import annotations
@@ -17,12 +18,8 @@ from typing import Any
 import pytest
 import torch
 from test_checkpoint_backbone import make_args
-from test_vla_parity import (
-    gemma_batch,
-    write_gemma_flow_legacy,
-    write_gemma_trunk,
-)
 from torch import nn
+from vla_fixtures import gemma_batch, write_gemma_flow_legacy, write_gemma_trunk
 
 from bijou.checkpoint import read_metadata, validate_checkpoint
 from bijou.convert_legacy import convert

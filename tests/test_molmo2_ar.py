@@ -20,7 +20,6 @@ from test_aux_text import CharTokenizer
 from test_molmo2_model import image_type_mask_of, tiny_ids, tiny_vision_inputs
 
 from bijou.loading import decoder_schema_dict, parse_decoder_config
-from bijou.model import BijouModel
 from bijou.modelling.aux_text import SUFFIX_FORMAT
 from bijou.modelling.codecs import FastActionCodec
 from bijou.modelling.decoders.ar_molmo2 import MOLMO2_GENERATION_OPENER, Molmo2ARDecoder
@@ -30,6 +29,9 @@ from bijou.modelling.interface import CollatedBatch, NormStats, ObservationMemor
 from bijou.modelling.molmo2.config import Molmo2Config
 from bijou.modelling.molmo2.model import Molmo2Model, build_multimodal_mask, load_model
 from bijou.modelling.molmo2.testing import tiny_config_json, write_tiny_text_checkpoint
+from bijou.models.molmo2_ar import Molmo2ARVLA
+from bijou.models.objectives import ARObjective
+from bijou.models.serving import ARServing
 
 FIXTURE = Path(__file__).parent / "fixtures" / "tiny_fast_tokenizer"
 BATCH = 2
@@ -338,12 +340,18 @@ def test_loss_targets_and_frozen_split(
     assert not bool((targets == pad_backbone).any())
 
     # The trainable set: decoder tables (already trainable) + the text
-    # group + prompt state_proj (train.py's unfreeze path).
-    bijou = BijouModel(backbone=model, encoder=encoder, decoder=decoder)
+    # group + prompt state_proj (train.py's unfreeze path) — exercised
+    # through the family's own forward (live-trunk encode + suffix CE).
+    vla = Molmo2ARVLA(
+        model,
+        encoder,
+        decoder,
+        objective=ARObjective(aux_loss_weight=1.0),
+        serving=ARServing(),
+    )
     for parameter in encoder.param_groups(model)["text"]:
         parameter.requires_grad_(True)
-    memory = bijou.encode(sample.encoder_inputs, with_grad=True)
-    loss = bijou.loss(memory, sample)
+    loss = vla(sample, counts=vla.loss_counts(sample)).objective
     assert torch.isfinite(loss)
     loss.backward()
 

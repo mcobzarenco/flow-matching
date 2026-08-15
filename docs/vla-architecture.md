@@ -1331,6 +1331,80 @@ and `test_vla_parity.py` (the anchors remain as the standing gate).
 Gate: `check.py`; grep gates — zero references to `BijouModel`,
 `BijouPrediction`, `ObservationEncoder`, decoder-kind strings; the
 five oracles green (new CLI).
+VERDICT: PASS — `check.py` 865 green (888 − the 23 retired parity
+tests); all five oracles bitwise through the NEW CLI at the recorded
+shapes (gemma flow 2.7903/1.9152; gemma ar 27.8306/27.767; molmoact2
+flow 1.3906/1.3305, ar 12.2254/12.3317, joint(KI, λ=1) 13.616/13.6621
+with the cross-oracle exact — loss_action ≡ 1.3906/1.3305, loss_aux ≡
+12.2254/12.3317); the converter tests green (the frozen reader works —
+`bijou.testing` still fabricates legacy layouts and converts them as
+the fixture-build step). Grep gates, exact commands, zero hits:
+`grep -rn "BijouModel" --include="*.py" bijou sim tests probes
+fontaine` (empty); `grep -rn "BijouPrediction" --include="*.py" bijou
+sim tests probes fontaine | grep -v "^bijou/modelling/"` (empty — the
+name survives only as the decoders' internal return currency, the
+planned phase-7c leftover); decoder-kind string parsing =
+`DecoderKind(` at `sections.parse_decoder_config` only (the converter
+imports it; the two `kind != "flow"` hits in `models/` parse the NEW
+metadata's objective/serving tags, a different vocabulary). Deleted:
+`bijou/model.py` (772 lines), `tests/test_vla_parity.py` (1098), and
+loading.py's legacy read path — `from_backbone`, `from_checkpoint`,
+`read_checkpoint_info`/`CheckpointInfo`, `backbone_snapshot`,
+`load_adapted_backbone`, `load_backbone_init`,
+`expert_config_from_train_args` (856 → 259 lines). Amendments at
+execution: (1) `CheckpointMetadata` (the legacy WRITE envelope) was
+NOT left unreferenced by 5a — `bijou.testing` and the schema/objective
+tests fabricate the converter's inputs with it — so it moved INTO
+`convert_legacy.py` beside `CHECKPOINT_FORMAT` and the frozen reader
+(`CheckpointSections` + `checkpoint_sections`, format-3 arm only: the
+format-1/2 synthesis arms died behind the pre-existing `fmt < 3`
+refusal, and the section fields dropped their format-1 None states) —
+the legacy `bijou_config.json` LAYOUT now lives in exactly one module,
+reader and writer both. (2) The section schemas/parsers/builders STAY
+in `sections.py`, by fan-in: the VLA metadata carries component
+configs VERBATIM as the same tagged dicts, so all six families,
+train's write side and the converter parse through them — live format
+knowledge, not legacy. (3) `CheckpointTrainArgs` also stays live in
+loading.py: `train.resolve_checkpoint` normalizes recorded train_args
+(both key-spelling eras) off NEW metadata. (4) Old-world tests were
+re-pointed to the family surface, not deleted: the molmo_flow
+integration suite runs on `MolmoAct2FlowVLA.from_checkpoint` (its
+legacy_bridge died; the φ_s-knob and generations refusal arms became
+type-level facts and their runtime asserts retired with them); the
+molmo2 AR loss/sampling tests construct `Molmo2ARVLA`; the objective
+suite's decision-5/KI contracts compose the family's exact kernels in
+its forward's op order (its memory-injection design cannot ride
+`forward`, which encodes internally; the end-to-end op order stays
+pinned by the joint oracle's cross-check), and its joint round-trip
+upgraded to converter + `load_vla`; the ar-only refusal tests moved to
+their new homes (stray-expert → the converter, action-mode/format-5 →
+the family load), with `write_ar_checkpoint` now recording
+`objective: ar` (what train-written discrete runs record — the
+converter's family-inference key); `test_loading_schema` re-pointed to
+the frozen reader and lost the format-1/2 synthesizer tests with their
+subject; the parity suite's hermetic gemma fixture builders moved
+verbatim to `tests/vla_fixtures.py` (test_train_vla consumes them).
+(5) Probes: `probe_unfreeze_gradflow` re-anchored on
+GemmaFlowVLA/GemmaARVLA — both flags-on anchors reproduced at the
+swap (1.6948 flow, 27.8546 ar_backbone; the family sum/count forward
+vs the old mean-form harness agrees at the asserted 4dp);
+`probe_molmoact2_ar_parity` re-pointed to
+`MolmoAct2DiscreteStack.load` and now needs a VLA-format conversion of
+the release checkpoint when it next runs (the
+`probe_grpo_replay_parity` convention). (6)
+`fontaine/scripts/sim_encoder_ood_probe.py` re-pointed mechanically to
+`load_vla` + `Molmo2ARVLA` narrowing (er-60k must be converted before
+its next run — phase-8 inventory);
+`fontaine/scripts/materialize_joint_ar_view.py` left untouched: a
+stdlib-only instrument over the RETIRED attach-era `joint_ce` +
+`joint_ce.safetensors` class, which no reader at HEAD loads — it
+prunes with phase 8's deletion-inventory pass. Deferred:
+`BijouPrediction` → phase 7(c) (decoders return raw products);
+`ObservationEncoder` ABC → phase 7(a) (unchanged plan); the
+styleguide's DAG paragraph and README layout table were re-grounded in
+the family world (as-of-now docs), architecture.md's §layout/§1/§6
+prose likewise — §8.13's dated ledger keeps its historical BijouModel
+mentions.
 
 **Phase 7 — seam dissolutions**, each sub-step its own commit, each
 oracle-gated: (a) encoder ABC removal; (b) per-trunk memory types —

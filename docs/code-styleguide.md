@@ -133,9 +133,11 @@ cited, and the doc-cited `probe_rollout_vram.py` is lost outright
 - **Polymorphism, in order of preference**: a `Protocol` when
   implementations only share a surface (`ActionCodec`); a closed union
   with exhaustive `match` at the composition root when the variants'
-  signatures legitimately differ (action decoders in `BijouModel`); an
-  `nn.Module + abc.ABC` trait only when implementations must BE
-  modules (parameters, module tree).
+  signatures legitimately differ (the decoder-module union in
+  `bijou.sections.decoder_schema_dict`, the objective payload unions
+  in `bijou/models/`); an `nn.Module + abc.ABC` trait only when
+  implementations must BE modules (parameters, module tree — the `VLA`
+  trait lattice).
 - Concretes override only abstract methods — needing to override a
   concrete one means the base's contract is wrong; fix the base.
   Stateful hierarchies are one level below the framework base; mixins
@@ -193,11 +195,13 @@ cited, and the doc-cited `probe_rollout_vram.py` is lost outright
   enforces the opposite and stays off. (Added 2026-07-30 after bijou.judge
   landed with absolute self-imports.)
 - **The import DAG is strict** and reviewed:
-  `train`/`eval`/`rollout`/`judge` → `loading` → `model` →
-  `encoders`/`decoders` → `interface` → `gemma4`/`molmo2`, importing downward
-  only; `data` sits beside `model` (loading imports both; `judge`
-  touches only `data`); `aux_text` and `annotations` are leaves beside
-  `gemma4`. `annotations` is the judge-annotation ARTIFACT contract
+  `train`/`eval`/`rollout`/`judge` → `loading` → `models/*` →
+  `vla`/`sections` → `modelling/*` (`…/encoders`/`…/decoders` →
+  `modelling/interface` → `modelling/gemma4`/`modelling/molmo2`) →
+  `fast`, importing downward only; `data` sits beside the model stack
+  (loading imports both; `judge` touches only `data`);
+  `modelling/aux_text` and `annotations` are leaves.
+  `annotations` is the judge-annotation ARTIFACT contract
   (verdict schema, sidecar record + I/O, camera-kind vocabulary, the
   lerobot "event" style registration): the judge WRITES artifacts and
   training READS them, so the shapes live below both —
@@ -208,20 +212,11 @@ cited, and the doc-cited `probe_rollout_vram.py` is lost outright
   (Added 2026-08-02: `data` needed typed sidecar parsing for
   instruction augmentation; groping the JSON untyped to dodge a DAG
   edge was the smell — moving the contract was the fix.)
-  (`loading` owns the checkpoint schema — both the write side,
-  `CheckpointMetadata`, and the read side, `CheckpointInfo`/
-  `checkpoint_sections` — because `train` and `eval` both sit above it.)
-  The Molmo2 lineage is a parallel spur with the same discipline:
-  `molmoact2` → `molmo2` → `nn`/`gemma4.loading`, importing downward
-  only — the MolmoAct2 port never reaches into `model`/`decoders`.
-  Above the spur, `encoders/molmoact2` and `convert_molmoact2` import
-  the port's LEAF surfaces only (`processing`, the id tables, the mask
-  builder — golden-pinned reference semantics that relocate when the
-  port folds, §8.13 step 8); `decoders/molmo_flow` imports nothing
-  from it — the architecture is an owned copy, byte-parity-pinned.
-  (Added 2026-08-11: the port landed with absolute self-imports — the
-  same class bijou.judge taught us on 2026-07-30 — normalized to
-  relative in the review sweep.)
+  (`checkpoint.py` owns the VLA checkpoint format — schema + IO
+  toolkit — because `train` and `eval` both sit above it; `sections.py`
+  owns the tagged section schemas/builders every reader shares; the
+  LEGACY `bijou_config.json` layout lives only in `convert_legacy.py`,
+  reader and writer both.)
 - Package CLIs live in `cli.py`, not `__main__.py` (spawn-based
   multiprocessing cannot unpickle objects defined in a package
   `__main__`).

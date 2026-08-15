@@ -101,20 +101,27 @@ Transient state (in-flight runs, machine inventory, the queue) lives
 in wandb, the HF hub, and `reports/` — not in docs.
 
 Package layout (strict downward-only imports):
-`train`/`eval`/`rollout`/`judge` → `loading` → `model` →
-`encoders`/`decoders` → `interface` → `gemma4`/`molmo2` (`data` beside `model`,
-imported by `loading`; `judge` touches only `data`; `aux_text` and
-`annotations` are leaves beside `gemma4` — `annotations` is the
-judge-annotation artifact CONTRACT, the shapes both the judge writer
-and the training readers share; production concerns — the prompt and
-its hash — stay in `judge`), with
-`interface.py` as the encoder×decoder seam
-and `model.py` the composition root: `BijouModel` owns the backbone
-ONCE and composes a prompt-side encoder strategy (which receives the
-backbone as an argument) with an action decoder — one network serves
-several roles (prefix encoder for the cross-attention decoders; prefix +
-suffix runner for the decoder-only path). The root also owns the
-objective dispatch (`BijouModel.loss` / `loss_components`) and the named
+`train`/`eval`/`rollout`/`judge` → `loading` → `models/*` →
+`vla`/`sections` → `modelling/*` (trunks, encoders, decoders,
+`modelling/interface.py` as the encoder×decoder seam) → `fast`
+(`data` sits beside the model stack, imported by `loading`; `judge`
+touches only `data`; `modelling/aux_text.py` and `annotations` are
+leaves — `annotations` is the judge-annotation artifact CONTRACT, the
+shapes both the judge writer and the training readers share;
+production concerns — the prompt and its hash — stay in `judge`;
+`checkpoint.py` owns the checkpoint format, `convert_legacy.py` the
+frozen legacy layout). `bijou/vla.py` is the model contract: the
+stateless `VLA` trait (collate, two-phase loss, predict at the
+recorded serving point, `param_groups`, checkpoint components) plus
+the capability sub-traits `ARVLA`/`FlowVLA`/`NarratingVLA`, and
+`bijou/models/` holds one concrete family class per real model
+(gemma_flow, gemma_ar, molmo2_ar, molmoact2_flow/ar/joint). A family
+owns its backbone ONCE and composes a prompt-side encoder strategy
+(which receives the backbone as an argument) with its action/text
+decoder(s) — one network serves several roles (prefix encoder for the
+cross-attention decoders; prefix + suffix runner for the decoder-only
+path) — plus its objective composition (a frozen constructor payload,
+never a mutable slot), its precision policy, and the named
 trainable-group routing (`param_groups`: decoder / backbone_text /
 backbone_vision).
 Naming: **backbone** is the one identifier for the pretrained trunk
@@ -346,10 +353,11 @@ keys carry no reliable wrist-vs-scene semantics — SmolVLA precedent);
 the kind TAG is the first reliable viewpoint signal.
 
 **What the decoders consume.** The cross-attention family reads the
-exported streams of an `ObservationMemory`; `ar_backbone` additionally
-retains the FULL prefix `KVCache` on the memory (`retain_cache=True`,
-set by `BijouModel.encode` from the decoder kind — the exported streams
-are zero-copy views into it) and extends it in place while decoding.
+exported streams of an `ObservationMemory`; the suffix decoders
+additionally retain the FULL prefix `KVCache` on the memory
+(`retain_cache=True`, a construction fact of each family's encode —
+the exported streams are zero-copy views into it) and extend it in
+place while decoding.
 
 **Vision geometry** (encoder-free E-series tower, 768 hidden, 16-px
 patches, 3×3 spatial pool): a 640×480 frame → resized 624×480 → 39×30
@@ -909,14 +917,14 @@ load under both spellings forever). All groups share the cosine shape
 scaled to their own peak. Backbone training uses fp32 master weights
 with a bf16 autocast prefix encode (bf16 updates vanish below bf16
 resolution at ~1e-5); the decoder stays fp32-with-TF32 outside the
-autocast region. One
-`BijouTrainStep` module owns prefix-encode + objective in BOTH regimes
-(`backbone_trained` selects no-grad native-dtype encode vs grad + autocast),
-so a single DDP wrapper (`static_graph`) hooks everything trained;
-single-process frozen math is byte-identical to the historical
-decoder-only wrap (oracle-exact), multi-rank frozen runs changed
-gradient bucketing composition at the 2026-08-01 refactor (declared
-re-baseline). See §8.1.
+autocast region. Each family's `forward` owns prefix-encode +
+objective in BOTH regimes (live-trunk detection off `requires_grad`
+selects no-grad native-dtype encode vs grad + autocast), so a single
+DDP wrapper (`static_graph`) around the family hooks everything
+trained; single-process frozen math is byte-identical to the
+historical decoder-only wrap (oracle-exact), multi-rank frozen runs
+changed gradient bucketing composition at the 2026-08-01 refactor
+(declared re-baseline). See §8.1.
 
 **Chunked backward (`--backward-chunks N`, default 1).** The memory
 fallback when a loader batch doesn't fit (E4B screen pre-reg
@@ -1177,16 +1185,20 @@ tick rate limiter (not a safety system); camera names are positional
 prompt slots; task string must match the recorded instruction. Deployment
 always fine-tunes on rig data first (zero-shot cross-rig transfer is the
 wall, §7) — so the operative metric for any change is fine-tuned-then-
-scored rig MAE, not zero-shot. All decoder kinds serve `predict_chunk`
-behind one policy interface, returning a `BijouPrediction` (`actions`,
-mirroring the batch's ground-truth field, + aux `generations`);
-ar_backbone picks its request set via `--generate [fields…]` on eval
-and rollout (§2.3: omitted = the `[generate|actions]` fast path;
+scored rig MAE, not zero-shot. Every family serves `predict(batch)` at
+its RECORDED operating point behind one policy interface (returning
+RAW-unit action chunks mirroring the batch's ground-truth field);
+knobbed inference rides the capability traits with per-trait
+prediction structs — `predict_flow` → `FlowPrediction(actions, noise)`,
+`predict_ar` → `ARPrediction(actions)`, `predict_narrated` →
+`NarratedPrediction(actions, generations)`.
+Narrating families pick their request set via `--generate [fields…]`
+on eval and rollout (§2.3: omitted = the `[generate|actions]` fast path;
 requested fields cost ~1 suffix forward per field plus its value
 tokens per replan; no suffix KV-cache reuse across replans yet — the
 known optimization if it deploys), and
 AR checkpoints need the deployment rig's exact q01/q99 quantiles (the
-tokenizer's fit normalization), which old-format stats tables don't
+tokenizer's fit normalization), which pre-quantile stats tables don't
 carry. Camera kinds at rollout derive from the operator's own
 `--camera` names via `rollout.camera_kinds_from_names`: a name inside
 the kind vocabulary IS its kind, anything else tags `unknown` with a
@@ -1640,7 +1652,7 @@ sharpest at the tower output, so adaptation is needed *downstream*).
 **Justification.** The in-dist-vs-cross-rig gap and the acuity probe both
 localize the bottleneck in the text stack's use of visual tokens, not the
 expert; π0/SmolVLA both train their trunks. **Numerics/plumbing.** fp32
-masters + bf16 autocast; `BijouTrainStep` + single DDP wrap
+masters + bf16 autocast; the family forward + single DDP wrap
 (static_graph); `backbone.safetensors` rides in the checkpoint; frozen
 path stays byte-identical (oracle exact).
 **Status/finding.** With the flow objective, text-lr 2e-5 from cont45k
@@ -1707,10 +1719,10 @@ no malformed generations by construction (each step masks to tokens
 whose BPE symbol-expansion fits the remaining budget; the mask
 originated in `ARFastDecoder`, whose fresh-cross-attention variant
 retired 2026-08-13 after ar_backbone superseded it — §2.2). Train:
-`--decoder ar_backbone --fast-tokenizer <artifact>`; eval/rollout work
-unchanged via `predict_chunk` (greedy — no Heun knobs); AR inference
-additionally needs quantile stats (rides the checkpoint's per-dataset
-table). Results in §7: ar_fast's frozen-trunk plateau ~8.0 at 10k
+`--family gemma_ar --fast-tokenizer <artifact>`; eval/rollout work
+unchanged via the family's `predict_ar` (greedy — no Heun knobs); AR
+inference additionally needs quantile stats (rides the checkpoint's
+per-dataset table). Results in §7: ar_fast's frozen-trunk plateau ~8.0 at 10k
 (≈ flow@40k quality); with the live trunk, the project's best
 Gemma-era lines (ar_fast 5.96, then ar_backbone 5.656).
 **Tokenizer:** owned DCT+BPE (`bijou/fast/`, arXiv:2501.09747), fit on
@@ -1867,8 +1879,9 @@ trunk. **The Molmo2 attachment arm is RETIRED (2026-08-13, tag
 (`--conditioning-streams`, `--seam-stop-grad`, the flow-side
 `--joint-ce` wiring) were removed — `molmo_flow` (§8.13) supersedes
 it as the flow-on-Molmo2 story, and its 10k checkpoint loads at the
-tag. The BijouModel `joint_ce` slot survives dormant as §8.13 step
-6's narration vehicle.
+tag. The CE-rider composition lives on today as `MolmoAct2JointVLA`'s
+parameterless `ar_decoder`; narration on Molmo trunks (§8.13 step 6)
+remains unbuilt.
 
 ### 8.12 Multi-turn action context (K interaction pairs)
 

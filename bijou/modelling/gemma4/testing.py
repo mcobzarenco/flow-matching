@@ -152,7 +152,7 @@ def write_tiny_checkpoint(
     """Write a loadable tiny random Gemma4 checkpoint to ``output_dir``.
 
     The directory works everywhere a real checkpoint does (``load_model``,
-    ``from_backbone``, ``AutoProcessor.from_pretrained``): tiny config.json,
+    the family builders, ``AutoProcessor.from_pretrained``): tiny config.json,
     random bf16 model.safetensors (keys/dtypes/layout as shipped by the real
     checkpoints, including the packed PLE tensors and no lm_head — tied), and
     the processor files copied from ``processor_source``.

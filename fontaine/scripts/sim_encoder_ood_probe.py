@@ -3,10 +3,12 @@ policy's own eyes (owner ask 01:11Z 08-12; rides the sim100 pre-reg,
 posts/2026-08-11-prereg-sim-policy-eval-100seeds.md).
 
 Embeds three frame groups per camera through the frozen er_60k vision
-trunk (the exact eval mount: ``from_checkpoint`` bf16 backbone,
-``max_crops=1``, features = the Molmo2VisionBackbone pooled+projected
-tokens the LM consumes; per-frame embedding = fp32 mean over the
-image's valid vision tokens, L2-normalized):
+trunk (the exact eval mount: ``load_vla`` bf16 backbone — the
+checkpoint must be a VLA-format directory (convert er_60k with
+``bijou.convert_legacy`` first), ``max_crops=1``, features = the
+Molmo2VisionBackbone pooled+projected tokens the LM consumes;
+per-frame embedding = fp32 mean over the image's valid vision tokens,
+L2-normalized):
 
   - SIM: the banked sim100 er60k-arm rollout videos
     (outputs/sim/eval100/er60k/rollout_seed*.mp4, top|wrist halves),
@@ -51,8 +53,10 @@ import av
 import numpy as np
 import torch
 
-from bijou.loading import from_checkpoint
+from bijou.checkpoint import read_metadata
+from bijou.loading import load_vla
 from bijou.modelling.molmo2.processor import process_image
+from bijou.models.molmo2_ar import Molmo2ARVLA
 
 SIM_TICKS = (0, 300, 600)
 N_REAL_V2 = 300
@@ -266,9 +270,12 @@ def rendered_reset_frames(
 
 def main() -> int:
     args = parse_args()
-    model, info = from_checkpoint(args.checkpoint, device="cuda")
+    checkpoint = Path(args.checkpoint)
+    metadata = read_metadata(checkpoint)
+    model = load_vla(checkpoint, device="cuda", dtype=torch.bfloat16)
+    assert isinstance(model, Molmo2ARVLA)  # er_60k is the molmo2_ar family
     vision = model.backbone.vision
-    del model.decoder  # inference on the vision trunk only
+    del model.ar_decoder  # inference on the vision trunk only
 
     groups: dict[str, dict[str, list[np.ndarray]]] = {}
     if args.render_resets is not None:
@@ -399,7 +406,7 @@ def main() -> int:
     payload = {
         "config": {
             "checkpoint": str(args.checkpoint),
-            "backbone": info.backbone,
+            "backbone": metadata.backbone_id,
             "feature": "Molmo2VisionBackbone pooled+projected tokens, "
             "fp32 mean over valid tokens, L2-normalized; max_crops=1; "
             "bf16 eval mount",

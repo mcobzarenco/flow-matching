@@ -167,8 +167,7 @@ class Molmo2ARDecoder(ARSuffixDecoder[Molmo2Model]):
         if cache is None:
             raise ValueError(
                 "ObservationMemory carries no prefix cache — encode with "
-                "retain_cache=True (BijouModel does this for AR suffix "
-                "decoders)",
+                "retain_cache=True (suffix-decoder families do)",
             )
         if not isinstance(cache, Molmo2KVCache):
             # The seam types the cache opaquely (trunk-private contract);

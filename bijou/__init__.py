@@ -1,42 +1,49 @@
-"""Bijou: a vision-language-action model built on a Gemma 4 backbone.
+"""Bijou: vision-language-action model families on Gemma-4 and Molmo2
+trunks.
 
 *Bijou* (French: jewel; idiomatically "small but elegant") — a nod to the
 Gemma lineage and to the model's on-device ambitions.
 
 Package layout:
 
-- ``bijou.modelling.gemma4`` — hackable pure-torch Gemma 4 E-series (E2B, E4B)
-  implementation, verified against the HF reference
-  (``python -m bijou.modelling.gemma4.verify_parity``).
-- ``bijou.modelling.encoders`` / ``bijou.modelling.decoders`` / ``bijou.model`` / ``bijou.loading``
-  — the VLA: a frozen, truncated backbone encodes the multimodal prefix once
-  per observation and exports its global-attention K/V streams as an
-  ObservationMemory; action decoders (the flow-matching expert, the AR FAST
-  baseline) cross-attend it.
+- ``bijou.modelling`` — the building blocks: hackable pure-torch trunks
+  (``gemma4``, ``molmo2`` — verified against the HF references),
+  per-trunk prompt-side encoders, action/text decoders, and the
+  collation/memory seam (``modelling.interface``).
+- ``bijou.vla`` — the trait lattice (``VLA`` and the ``ARVLA`` /
+  ``FlowVLA`` / ``NarratingVLA`` capabilities) that train/eval/rollout
+  program against.
+- ``bijou.models`` — one concrete family class per real model,
+  composing the building blocks with a typed objective payload.
+- ``bijou.loading`` — the family registry; ``bijou.checkpoint`` — the
+  self-contained checkpoint format it reads.
 
 Quick start::
 
-    from bijou import from_backbone
+    from pathlib import Path
 
-    model = from_backbone("google/gemma-4-e2b-it", action_dim=6, state_dim=6,
-                          device="cuda")
-    prefix = model.encode_observation(input_ids, pixel_values=..., image_position_ids=...)
-    actions = model.sample_actions(prefix, state)
+    import torch
+
+    from bijou.loading import load_vla
+
+    model = load_vla(Path("outputs/train/run/step_010000"),
+                     device="cuda", dtype=torch.bfloat16)
+    batch = model.collator()(items).to("cuda")
+    actions = model.predict(batch)  # the recorded serving operating point
 """
 
-from .loading import default_expert_config, from_backbone, prefix_global_layers
-from .model import BijouModel
+from .loading import load_vla
 from .modelling.decoders.flow import FlowDecoder, FlowDecoderConfig, SelfAttentionMode
 from .modelling.interface import MemoryStream, ObservationMemory
+from .vla import VLA, VLAFamily
 
 __all__ = [
-    "BijouModel",
+    "VLA",
     "FlowDecoder",
     "FlowDecoderConfig",
     "MemoryStream",
     "ObservationMemory",
     "SelfAttentionMode",
-    "default_expert_config",
-    "from_backbone",
-    "prefix_global_layers",
+    "VLAFamily",
+    "load_vla",
 ]

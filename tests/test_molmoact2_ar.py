@@ -39,18 +39,18 @@ import torch
 from tokenizers import Tokenizer
 from tokenizers.models import WordLevel
 
+from bijou.convert_legacy import CheckpointMetadata, convert
 from bijou.data import DatasetStats
 from bijou.fast.molmoact2 import MolmoAct2FastTokenizer
 from bijou.loading import (
     BackboneConfig,
     BackboneDepth,
-    CheckpointMetadata,
     MolmoAct2PromptConfig,
     MolmoFlowDecoderConfig,
     ar_backbone_config_to_dict,
     build_molmoact2_ar_decoder,
     decoder_schema_dict,
-    from_checkpoint,
+    load_vla,
     molmoact2_ar_config_from_flow_section,
     parse_decoder_config,
 )
@@ -75,6 +75,7 @@ from bijou.modelling.molmo2.config import Molmo2Config
 from bijou.modelling.molmo2.model import Molmo2Model, build_multimodal_mask, load_model
 from bijou.modelling.molmo2.testing import tiny_config_json, write_tiny_text_checkpoint
 from bijou.modelling.molmo2.tokenizer import Molmo2TextTokenizer
+from bijou.models.molmoact2_ar import MolmoAct2ARVLA
 
 FAST_FIXTURE = Path(__file__).parent / "fixtures" / "molmoact2_fast_tokenizer"
 BATCH = 2
@@ -555,10 +556,11 @@ def write_ar_checkpoint(
     action_mode: str = "both",
     suffix_format: int = MOLMOACT2_SUFFIX_FORMAT,
 ) -> Path:
-    """A POSSIBLE ar-only molmoact2 checkpoint dir: the format-3
-    metadata phase-3 training will write — no expert/prompt weight
-    files (both roles parameterless), no backbone.safetensors (frozen
-    trunk)."""
+    """A POSSIBLE ar-only LEGACY molmoact2 checkpoint dir: the format-3
+    metadata phase-3 training wrote (recorded objective 'ar', the
+    train-written discrete layout) — no expert/prompt weight files
+    (both roles parameterless), no backbone.safetensors (frozen
+    trunk). The converter's input."""
     directory.mkdir(parents=True, exist_ok=True)
     section = ar_backbone_config_to_dict(decoder_config())
     section["suffix_format"] = suffix_format
@@ -570,6 +572,7 @@ def write_ar_checkpoint(
         per_dataset_normalization={"marius/rig": tiny_stats()},
         train_args={
             "decoder": "ar_backbone",
+            "objective": "ar",
             "decoder_hidden": 64,
             "decoder_heads": 2,
             "decoder_intermediate": 128,
@@ -592,50 +595,54 @@ def write_ar_checkpoint(
     return directory
 
 
-def test_from_checkpoint_ar_roundtrip(
+def test_converted_ar_checkpoint_roundtrip(
     tiny_checkpoint: Path,
     tmp_path: Path,
 ) -> None:
     checkpoint = write_ar_checkpoint(tmp_path / "ar_only", tiny_checkpoint)
-    model, info = from_checkpoint(
-        checkpoint,
-        device="cpu",
-        dtype=torch.float32,
-    )
-    assert isinstance(model.decoder, MolmoAct2ARDecoder)
+    converted = tmp_path / "converted"
+    convert(checkpoint, converted)
+    model = load_vla(converted, device="cpu", dtype=torch.float32)
+    assert isinstance(model, MolmoAct2ARVLA)
     assert isinstance(model.encoder, MolmoAct2Encoder)
-    assert model.decoder.config == decoder_config()
-    assert model.decoder.opener_ids == ()
-    assert len(list(model.decoder.parameters())) == 0
-    assert info.backbone == str(tiny_checkpoint)
+    assert model.ar_decoder.config == decoder_config()
+    assert model.ar_decoder.opener_ids == ()
+    assert len(list(model.ar_decoder.parameters())) == 0
 
 
-def test_from_checkpoint_ar_refusals(
+def test_converted_ar_checkpoint_refusals(
     tiny_checkpoint: Path,
     tmp_path: Path,
 ) -> None:
-    # 'continuous' (the rig-ft class) refused by name, before any
-    # trunk mount.
+    # 'continuous' (the rig-ft class) refused by name at the family
+    # load — the shared builder's guard, before any weight touches.
     continuous = write_ar_checkpoint(
         tmp_path / "continuous",
         tiny_checkpoint,
         action_mode="continuous",
     )
+    converted_continuous = tmp_path / "continuous_vla"
+    convert(continuous, converted_continuous)
     with pytest.raises(SystemExit, match="never trained the discrete head"):
-        from_checkpoint(continuous, device="cpu", dtype=torch.float32)
-    # A stray expert file on a parameterless decoder = format confusion.
+        load_vla(converted_continuous, device="cpu", dtype=torch.float32)
+    # A stray expert file on a parameterless decoder = format confusion,
+    # refused at CONVERSION (mirrors the retired legacy loader's guard).
     stray = write_ar_checkpoint(tmp_path / "stray", tiny_checkpoint)
     (stray / "expert.safetensors").write_bytes(b"")
     with pytest.raises(SystemExit, match="owns no parameters"):
-        from_checkpoint(stray, device="cpu", dtype=torch.float32)
-    # A value-line (format-5) section under the molmoact2 prompt.
+        convert(stray, tmp_path / "stray_vla")
+    # A value-line (format-5) section under the molmoact2 prompt:
+    # conversion carries the section verbatim; the decoder constructor
+    # refuses it at the family load.
     mixed = write_ar_checkpoint(
         tmp_path / "mixed",
         tiny_checkpoint,
         suffix_format=5,
     )
+    converted_mixed = tmp_path / "mixed_vla"
+    convert(mixed, converted_mixed)
     with pytest.raises(SystemExit, match="format-5 ar_backbone section"):
-        from_checkpoint(mixed, device="cpu", dtype=torch.float32)
+        load_vla(converted_mixed, device="cpu", dtype=torch.float32)
 
 
 def release_flow_section(*, n_action_steps: int = T) -> MolmoFlowDecoderConfig:

@@ -177,7 +177,7 @@ def test_out_of_bank_route_aborts(tmp_path: Path) -> None:
 
 def test_policy_refuses_map_without_bank() -> None:
     # The guard fires before the checkpoint loads, so a bogus path
-    # never reaches from_checkpoint.
+    # never reaches the loader.
     with pytest.raises(SystemExit, match="requires --noise-tickets"):
         BijouPolicy(
             Path("nonexistent-checkpoint"),

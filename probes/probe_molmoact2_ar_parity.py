@@ -1,5 +1,5 @@
-"""Phase-2 acceptance gate: first-class MolmoAct2ARDecoder vs the
-reference discrete decodes (docs/molmoact2-retirement.md, phase-2
+"""Phase-2 acceptance gate: first-class MolmoAct2 discrete decode vs the
+reference decodes (docs/molmoact2-retirement.md, phase-2
 gates; fixture: tests/fixtures/molmoact2_discrete/decode_anchors.npz,
 generated from fontaine's predict_action_discrete at his 3cacc531-era
 worktree on this box's H100, bf16).
@@ -26,9 +26,15 @@ never a tolerance bump):
 If token IDS mismatch: suspect the sdpa pin (the reference ran the
 full dispatcher) and the trunk mount dtype FIRST.
 
+The subject loads through the family registry: ``--checkpoint`` must be
+a VLA-format directory (for the release checkpoint, a
+``bijou.convert_legacy`` conversion of it — the molmoact2_flow family's
+AR read derives the discrete decoder from the recorded molmo_flow
+section, ``MolmoAct2DiscreteStack.load``'s one path).
+
 Run on the box (GPU, ~2 min):
   PYTHONPATH=. uv run python probes/probe_molmoact2_ar_parity.py \\
-    --checkpoint converted/molmoact2_so100_101_release \\
+    --checkpoint converted/molmoact2_so100_101_release_vla \\
     --data ~/datasets/mcobzarenco/so101_pick_place_clean \\
            ~/datasets/mcobzarenco/so101_pick_place_v2
 """
@@ -36,27 +42,15 @@ Run on the box (GPU, ~2 min):
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
 
 import numpy as np
 import torch
 
 from bijou.data import EpisodeSplit, select_datasets
-from bijou.fast.molmoact2 import QuantileStats, normalize_state
-from bijou.loading import (
-    MOLMOACT2_FAST_TOKENIZER_REF,
-    MolmoAct2PromptConfig,
-    MolmoFlowDecoderConfig,
-    build_molmoact2_ar_decoder,
-    checkpoint_sections,
-    molmo_flow_state_table,
-    molmoact2_ar_config_from_flow_section,
-    read_checkpoint_info,
-    resolve_checkpoint_dir,
-)
-from bijou.model import BijouModel
-from bijou.modelling.encoders.molmoact2 import MolmoAct2Encoder
+from bijou.fast.molmoact2 import normalize_state
+from bijou.grpo_replay import MolmoAct2DiscreteStack
+from bijou.loading import MOLMOACT2_FAST_TOKENIZER_REF
 from bijou.modelling.interface import (
     ActionCaptureStep,
     CameraFrame,
@@ -64,8 +58,6 @@ from bijou.modelling.interface import (
     NormStats,
     PromptInputs,
 )
-from bijou.modelling.molmo2.loading import load_config as load_molmo2_config
-from bijou.modelling.molmo2.model import load_model as load_molmo2_model
 
 FIXTURE = Path("tests/fixtures/molmoact2_discrete/decode_anchors.npz")
 NUM_ROWS = 6
@@ -92,56 +84,17 @@ def main() -> int:
     byte_gates = args.trunk_dtype == "bfloat16"
 
     fixture = np.load(args.fixture, allow_pickle=False)
-    checkpoint = Path(args.checkpoint)
-    info = read_checkpoint_info(checkpoint)
-    sections = checkpoint_sections(
-        json.loads((checkpoint / "bijou_config.json").read_text()),
-    )
-    prompt = sections.prompt
-    flow = sections.decoder
-    assert isinstance(prompt, MolmoAct2PromptConfig), type(prompt)
-    assert isinstance(flow, MolmoFlowDecoderConfig), type(flow)
-
-    # --- the first-class stack (the release AR read) ---
-    trunk_dir = resolve_checkpoint_dir(info.backbone)
-    config = molmoact2_ar_config_from_flow_section(
-        flow,
-        prompt,
-        info.backbone,
-        fast_tokenizer=args.fast_tokenizer,
-    )
-    decoder = build_molmoact2_ar_decoder(
-        config,
-        prompt,
-        load_molmo2_config(trunk_dir).text,
-        info.backbone,
-    )
-    backbone = load_molmo2_model(
-        trunk_dir,
+    stack = MolmoAct2DiscreteStack.load(
+        Path(args.checkpoint),
         device="cuda",
         dtype=torch.bfloat16 if args.trunk_dtype == "bfloat16" else torch.float32,
+        fast_tokenizer=args.fast_tokenizer,
     )
-    encoder = MolmoAct2Encoder(
-        info.backbone,
-        setup_type=prompt.setup_type,
-        control_mode=prompt.control_mode,
-        num_state_tokens=prompt.num_state_tokens,
-        action_mode=prompt.action_mode,
-        narration=prompt.narration,
-    )
-    model = BijouModel(backbone=backbone, encoder=encoder, decoder=decoder)
-    model.eval()
+    config = stack.decoder.config
     print(
         f"stack: block_base={config.block_base} vocab_total="
         f"{config.vocab_total} chunk={config.chunk_size}x{config.action_dim}",
     )
-
-    state_q01, state_q99 = molmo_flow_state_table(info.normalization)
-    state_stats = QuantileStats(q01=state_q01, q99=state_q99)
-    assert info.normalization.action_q01 is not None
-    assert info.normalization.action_q99 is not None
-    action_q01 = torch.tensor(info.normalization.action_q01, dtype=torch.float32)
-    action_q99 = torch.tensor(info.normalization.action_q99, dtype=torch.float32)
 
     # --- the fixture's exact row selection ---
     selection = select_datasets(
@@ -178,7 +131,7 @@ def main() -> int:
         f"row identity drift: fixture {fixture_rows} vs selected {ours_rows}"
     )
 
-    collator = encoder.inputs_collator()
+    collator = stack.collator
     base = config.block_base
     failures: list[str] = []
     max_logprob_delta = 0.0
@@ -193,7 +146,7 @@ def main() -> int:
             )
             for key in sorted(k for k in item if k.startswith("observation.images."))
         )
-        normalized_state = normalize_state(item["observation.state"], state_stats)
+        normalized_state = normalize_state(item["observation.state"], stack.state_stats)
         inputs = collator(
             [
                 PromptInputs(
@@ -207,8 +160,8 @@ def main() -> int:
         stats = NormStats(
             mean=torch.zeros(1, config.action_dim),
             std=torch.ones(1, config.action_dim),
-            q01=action_q01[None],
-            q99=action_q99[None],
+            q01=stack.action_stats.q01[None].clone(),
+            q99=stack.action_stats.q99[None].clone(),
         )
         batch = CollatedBatch(
             encoder_inputs=inputs,
@@ -221,9 +174,8 @@ def main() -> int:
             suffix_tokens=None,
             suffix_is_aux=None,
         )
-        memory = model.encode(inputs, with_grad=False)
         capture: list[ActionCaptureStep] = []
-        prediction = model.ar_predict_greedy(memory, batch, action_capture=capture)
+        prediction = stack.vla.predict_ar(batch, capture=capture)
 
         bins = [int(step.chosen[0]) - base for step in capture if bool(step.active[0])]
         token_ids = np.array([[base - 2, *(base + b for b in bins), base - 1]])
@@ -261,12 +213,13 @@ def main() -> int:
             checks["logprobs<=1e-5"] = delta <= 1e-5
 
         # Ratio contract: teacher-forced re-forward of the decoded bins
-        # against a FRESH memory reproduces the capture logprobs
+        # against a FRESH prefill reproduces the capture logprobs
         # (unchanged policy ⇒ ratio 1). Same masked-softmax read.
-        replay_memory = model.encode(inputs, with_grad=False)
-        forced = model.ar_teacher_forced_block_logits(replay_memory, [bins])[0]
-        assert forced is not None
-        lengths = decoder.symbol_lengths.cpu()
+        forced = stack.vla.teacher_forced_block_logits(
+            batch,
+            torch.tensor([bins], dtype=torch.long),
+        )[0]
+        lengths = stack.decoder.symbol_lengths.cpu()
         remaining = config.chunk_size * config.action_dim
         replay_logprobs: list[float] = []
         for position, bin_id in enumerate(bins):

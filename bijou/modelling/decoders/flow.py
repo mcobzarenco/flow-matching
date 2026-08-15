@@ -792,9 +792,9 @@ def flow_matching_loss(
     the expert attends every position, so masked-out padding was still
     silently shaping predictions). Eval stays real-steps-only.
 
-    The flow objective as a module-level function (BijouModel.loss
-    dispatches here); training's single DDP wrapper hooks gradients at the
-    train-step level, so the decoder is always the raw module.
+    The flow objective as a module-level function (the flow families'
+    loss paths compose it); training's single DDP wrapper hooks gradients
+    at the family level, so the decoder is always the raw module.
 
     Shapes (batch fields in CollatedBatch's docstring):
       - memory.streams[name]: key/value each [B, kv_heads, P, head_dim]

@@ -23,12 +23,12 @@ import torch
 from safetensors.torch import save_file
 from tokenizers import Tokenizer
 
+from .convert_legacy import CheckpointMetadata
 from .convert_legacy import convert as convert_legacy_checkpoint
 from .data import DatasetStats
 from .loading import (
     BackboneConfig,
     BackboneDepth,
-    CheckpointMetadata,
     MolmoAct2PromptConfig,
     MolmoFlowDecoderConfig,
     build_molmo_flow_decoder,

@@ -5,9 +5,9 @@ role: ``backbone`` (which pretrained trunk, how deep), ``prompt`` (the
 prompt-side strategy) and one per action decoder. This module owns those
 records (parse/serialize) and the builders that turn a parsed section
 into the corresponding module, so every reader of a checkpoint — the
-legacy ``bijou.loading.from_checkpoint`` path and the family
-``from_checkpoint`` constructors in ``bijou.models`` — reconstructs
-architecture through the SAME machinery and cannot drift.
+family ``from_checkpoint`` constructors in ``bijou.models``, train's
+write side, and ``bijou.convert_legacy`` — reconstructs architecture
+through the SAME machinery and cannot drift.
 
 Import DAG: ``loading`` → ``models/*`` → this module → ``modelling/*``.
 Nothing here imports ``loading`` or ``models``.
@@ -294,8 +294,8 @@ class MolmoAct2PromptConfig:
 
     # The bracket/conditioning surfaces are bijou-prompt concepts; this
     # format has neither. Properties (not fields) so generic consumers
-    # (read_checkpoint_info, BijouPolicy) read them uniformly without
-    # the schema pretending they are configurable.
+    # (train's checkpoint resolution, BijouPolicy) read them uniformly
+    # without the schema pretending they are configurable.
     @property
     def condition_fields(self) -> tuple[str, ...]:
         return ()

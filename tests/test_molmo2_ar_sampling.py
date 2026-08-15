@@ -47,7 +47,6 @@ from test_molmo2_ar import (
 )
 
 from bijou.eval.policies import BijouPolicy, stable_sample_rng
-from bijou.model import BijouModel
 from bijou.modelling.aux_text import (
     AUX_TEMPLATE_VERSION,
     AuxDecodeConfig,
@@ -60,6 +59,9 @@ from bijou.modelling.interface import ARSampling
 from bijou.modelling.molmo2.cache import Molmo2KVCache
 from bijou.modelling.molmo2.model import Molmo2Model, load_model
 from bijou.modelling.molmo2.testing import write_tiny_text_checkpoint
+from bijou.models.molmo2_ar import Molmo2ARVLA
+from bijou.models.objectives import ARObjective
+from bijou.models.serving import ARServing
 
 
 @pytest.fixture(scope="module")
@@ -176,13 +178,18 @@ def test_ar_predict_sampled_dispatches_molmo2(
     tiny_checkpoint: Path,
 ) -> None:
     """The eval loop's per-draw call reaches the molmo2 trunk: the
-    model-level entry equals the decoder-level sampled decode."""
+    family-level entry equals the decoder-level sampled decode."""
     decoder, loaded = build_decoder(model)
     encoder = build_encoder(tiny_checkpoint)
-    bijou = BijouModel(backbone=model, encoder=encoder, decoder=decoder)
+    vla = Molmo2ARVLA(
+        model,
+        encoder,
+        decoder,
+        objective=ARObjective(aux_loss_weight=1.0),
+        serving=ARServing(),
+    )
     sample = batch(loaded, tiny_inputs())
-    via_model = bijou.ar_predict_sampled(
-        bijou.encode(sample.encoder_inputs, with_grad=False),
+    via_model = vla.predict_ar(
         sample,
         sampling=ARSampling(temperature=2.0, rngs=rngs(0)),
     )
