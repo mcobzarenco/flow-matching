@@ -1,7 +1,31 @@
 # Now
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-15 16:13–16:1xZ (real `date -u` at stamp: 16:14) —
+tick: **quiet hold — GPU owner-reserved and idle (0%), nothing to
+babysit, no launches.***
+
+**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
+OWNER** (13:35Z), untouched. No babysit entries, no training
+processes.
+
+**Steering**: none — Discord read + inbox empty at 16:13; history
+shows nothing new past our own 15:47 results-page post (last owner
+activity remains the recorded 🎉). All three owner decisions still
+pending: retrain arm pick (continue-from-2k vs from-base), route
+A/B/C (flow retrain / token arm / joint), GPU release.
+
+**Done**: Discord + history polls, GPU/process check, queue validate
+OK depth 2 (17 open, both queued items owner-gated), `run_work_next`
+confirmed disarmed (no CPU-executable items to chain into). No posts
+(nothing owner-facing changed). 0 GPU-h.
+
+**Next**: ticks hold until an owner decision lands — arm pick +
+route A/B/C unblock the retrain launch, GPU release unblocks any
+launch at all.*
 
 *Updated 2026-08-15 16:01–16:0xZ (real `date -u` at stamp: 16:02) —
 tick: **quiet hold — GPU owner-reserved and idle (0%), nothing to
@@ -49,46 +73,16 @@ confirmed disarmed (no CPU-executable items to chain into). No posts
 route A/B/C unblock the retrain launch, GPU release unblocks any
 launch at all.*
 
-*Updated 2026-08-15 15:42–15:5xZ (real `date -u` at stamp: 15:52) —
-work session (chained): **grasp-SFT chain results page FINALIZED +
-posted (`cf826de`) — the writing-ladder item closes; both remaining
-queued items are owner-gated.***
-
-**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
-OWNER** (13:35Z), untouched. No babysit entries, no training
-processes.
-
-**Steering**: none — Discord read + inbox empty at boot (15:42). All
-three owner decisions still pending: retrain arm pick
-(continue-from-2k vs from-base), route A/B/C (flow retrain / token arm
-/ joint), GPU release.
-
-**Done** (`cf826de`): the chain results page's stale forward pointers
-corrected — the stage-D section now records the suspension AND the R2
-Amendment A2 re-base (a flow-head sim100 no longer triggers the GRPO
-registration; the token arm's discrete-head unseen count does) — plus
-a new "Where this goes next" section carrying the three pending owner
-decisions with pre-reg links (`--image-augment` composition included).
-check.py 911 green ×2 (pre-edit + pre-commit); blog built + Space
-pushed, page + all 5 dark-mode charts curl-verified live; posted
-in-channel (1538212636477624320); queue item DONE, validate green
-depth 2 (17 open). 0 GPU-h.
-
-**Next**: `queue_cli.py next` → grasp-sft-bootstrap remains
-**owner-pending** (arm + route + GPU release); no CPU-executable
-items queued — `run_work_next` stays disarmed (nothing to chain
-into); ticks hold until an owner decision lands.*
-
 ## Utilization footer
 
-Session 2026-08-15 16:01–16:0xZ (tick; 0 GPU-h): quiet hold — GPU
+Session 2026-08-15 16:13–16:1xZ (tick; 0 GPU-h): quiet hold — GPU
 owner-reserved and idle (0%), no launches, no training processes;
 Discord/inbox/history empty past our own 15:47 results-page post,
 all three owner decisions pending (arm pick, route A/B/C, GPU
 release); queue validate OK depth 2 (17 open, both items
 owner-gated), `run_work_next` disarmed.
 
-Session 2026-08-15 15:51–15:5xZ (tick; 0 GPU-h): quiet hold — GPU
+Session 2026-08-15 16:01–16:0xZ (tick; 0 GPU-h): quiet hold — GPU
 owner-reserved and idle (0%), no launches, no training processes;
 Discord/inbox/history empty past our own 15:47 results-page post,
 all three owner decisions pending (arm pick, route A/B/C, GPU
