@@ -197,3 +197,37 @@ default absent steering.
   from 1000 **excluding nothing** — tuning seeds are legitimate demos
   (§6), and the gate stream stays disjoint from eval seeds 0–99 as
   always.
+
+## §8 Stage-B collection record (record-only, 2026-08-15)
+
+*(Appended mid-collection ~04:3xZ; no frozen parameter changes — this
+section records measured facts for the boundary decision and the
+results page.)*
+
+Collection launched 03:29:18Z (owner 👍 on the finalization = explicit
+go). Babysit surfaced a pace drop at ~04:06 (52 kept / 76 attempted,
+window rate ~1.1 kept/min); diagnosed in-session rather than letting
+the wall clock burn:
+
+- **Determinism receipt**: the 6 freshly re-run miss seeds
+  (1061–1074 band) reproduce the collector's rows *exactly* — same
+  tick counts, same final distances — in a clean process. No collector
+  state leak, no new failure class (jam / pinch-miss taxonomy
+  throughout).
+- **No spawn drift**: spawn x/y/yaw distributions are statistically
+  identical across the smoke (1000–1015), held (1040–1059) and
+  forward (1060–1099) bands.
+- **True expert rate: 62.5%** (125/200, seeds 1078–1277, unrendered
+  CPU re-runs, ~3 min wall, zero GPU contention). The gate reads'
+  75–80% was n=20 optimism — 15/20 has a CI of roughly [53%, 89%] —
+  and the 4/16 stretch at 1060–1075 was a bad run inside a ~62%
+  process, not a regime change. Lesson for future collections: when
+  the expert is deterministic and CPU-replayable, price the GPU
+  collection off a cheap large-n unrendered measurement, not the
+  n=20 gate read.
+- **Wall projection**: ~295 kept at the 4 h self-stop (07:29Z) —
+  borderline against the ≥ 300 gate. Per the frozen terms the run
+  rides untouched; if it lands just under, the anchor's priced path
+  is a **recorded top-up** (the collector is resume-capable; ~10 kept
+  ≈ ~10 min GPU) before stage C. Mid-ride status posted in-channel
+  04:13Z with the objection window open until the wall.
