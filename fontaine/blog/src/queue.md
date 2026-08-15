@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-15T21:16:00Z
+**Updated:** 2026-08-15T22:27:00Z
 
 **Depth call:** depth 2: grasp-sft-bootstrap (retrain arm owner-pending) + grpo-r2-post-sft (re-based per A2; token-sft arm item blocked owner-gated). merge-main-phase6 closed 19:4xZ 08-15.
 
-**17 open** (Live 0 · Queued 2 · Blocked 15 · Done 183)
+**17 open** (Live 0 · Queued 2 · Blocked 15 · Done 184)
 
 ## 🔴 Live (0)
 
@@ -258,9 +258,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (183)
+## ✅ Done (184)
 
 *closed — the full record stays in each fold*
+
+**`merge-main-phase7bce`** · `cpu`
+
+Merge main phases 7b/7c/7e + phase-7 VERDICT + probe_grpo_replay_parity + phase-5 box-gate close (c75814d 7b per-trunk memories GemmaMemory/Molmo2Memory + static caches; 234dae9 7c decoders return natural products, BijouPredictio…
+
+**boundary:** Queued narratively at the 22:15Z tick (run_work_next armed), executed by the 22:18Z chained work session. || DONE 22:2xZ 08-15: merged 9e786b7 CLEAN (no conflicts, 50 files +907/-608), check.py 903 green; 6-point seam verify all green: (1) gradflow oracles EXACT 1.6948 flow / 27.8546 ar_backbone; (2) both retrain arms full-parse verbatim (family checkpoint-inferred molmoact2_flow, --flow-decoder-init inherit) AND both conversions validate_checkpoint green (base_corrected_stats_v0_vla + stagec_ar_step2000_corrected_v1); (3) GRPO targeted suite 40/40 (grew 33-&gt;40 upstream: test_molmo_flow_integration 6-&gt;13), broader grpo/replay/rollout sweep 75/75; (4) straggler grep clean — all 7b/7c/7e deletions are moves/renames (ObservationMemory -&gt; per-trunk GemmaMemory/Molmo2Memory, tile_memory -&gt; eval/policies, ARSuffixDecoder re-typed on PrefixMemory; BijouPrediction + SNAPFLOW_ALPHA/LAMBDA gone with zero fontaine-side refs); (5) parents[3] carry stands; (6) augment oracles 11/11; snapflow_identity_oracle module-import smoke green post-7e.
+
+<details><summary>full record</summary>
+
+Merge main phases 7b/7c/7e + phase-7 VERDICT + probe_grpo_replay_parity + phase-5 box-gate close (c75814d 7b per-trunk memories GemmaMemory/Molmo2Memory + static caches; 234dae9 7c decoders return natural products, BijouPrediction deleted; a93c5d1 7e snapflow constants -&gt; payload, SDE/phi_s reads hoisted; 4ee456d VERDICT; d799192 parity probe RELEASE_BIJOU -&gt; VLA conversion; 1fb709a phase 5 box gate CLOSED, docs-only) into fontaine; re-run check.py + the standing 6-point seam checklist.
+
+</details>
+
+---
 
 **`merge-main-phase7`** · `cpu`
 
