@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-15T15:50:00Z
+**Updated:** 2026-08-15T16:47:19Z
 
 **Depth call:** depth 3: grasp-sft-bootstrap (retrain arm owner-pending) + grasp-sft-chain-results-page (writing ladder) + grpo-r2-post-sft (re-based per A2; token-sft arm item blocked owner-gated). Recorded 14:48Z 08-15.
 
-**17 open** (Live 0 · Queued 2 · Blocked 15 · Done 178)
+**18 open** (Live 0 · Queued 3 · Blocked 15 · Done 178)
 
 ## 🔴 Live (0)
 
@@ -14,9 +14,23 @@
 
 *(empty)*
 
-## 🟢 Queued (2)
+## 🟢 Queued (3)
 
 *ready — waiting on a window or a boundary*
+
+**`merge-main-phase5a`** · `cpu`
+
+Merge main phase 5a (a51b172, 'bijou.train on the family CLI + the VLA checkpoint format', +3115/-2046 across 20 files incl
+
+**boundary:** Queued 16:5xZ 08-15 tick on seeing a51b172 on origin/main (owner-pushed 16:34Z). CPU-only, no GPU touch (owner reserve stands). Urgent: the owner's arm/route decision may land any time and the launch path must be green against phase 5a first.
+
+<details><summary>full record</summary>
+
+Merge main phase 5a (a51b172, 'bijou.train on the family CLI + the VLA checkpoint format', +3115/-2046 across 20 files incl. train args, checkpoint_backbone, convert_molmoact2, test_train_vla) into fontaine; re-run check.py; re-verify the retrain-prep seams exactly as the 15:37Z 08-15 post did (read_checkpoint_info on both real conversions, convert_molmoact2 --norm-stats-from, bijou.train --objective/--backbone-text-lr/--init-from/--expert-init, --image-augment p=0 bitwise oracle, convert_legacy+validate_checkpoint smoke); confirm the pre-registered retrain launch commands still parse against the new family CLI (391-line test_train_args churn suggests arg surface moved). Also confirm whether the parents[2]-&gt;parents[3] bank_processor_goldens fix from bb0f036 landed upstream or still needs the cherry-pick note.
+
+</details>
+
+---
 
 **`grpo-r2-post-sft`** · `gpu-local`
 
