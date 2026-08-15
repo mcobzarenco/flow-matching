@@ -19,7 +19,33 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-15 21:31–21:3xZ (real `date -u` at stamp: 21:33) —
+tick: **quiet hold — no change since 21:21.***
+
+**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
+OWNER** (13:35Z), untouched. No babysit entries, no training
+processes.
+
+**Steering**: none new — Discord read + inbox empty at 21:32;
+history shows no new reactions (the phase-7 merge-post 👍 was
+recorded last tick). The three owner decisions remain pending:
+retrain arm pick (continue-from-2k vs from-base), route A/B/C, GPU
+release.
+
+**Done**: Discord + history polls, GPU/process check, queue
+validate OK depth 2 (17 open; both queued items —
+grasp-sft-bootstrap retrain and grpo-r2-post-sft — gpu-local and
+owner-gated), `run_work_next` confirmed disarmed. No posts. 0
+GPU-h.
+
+**Next**: ticks hold until an owner decision lands — arm pick +
+route A/B/C unblock the retrain launch (either arm is one command
+post-phase-7), GPU release unblocks any launch at all. GPU oracle
+re-runs (convmap tripwires + sim_parallel_oracle) attach to the
+next free-GPU boundary.*
 
 *Updated 2026-08-15 21:21–21:2xZ (real `date -u` at stamp: 21:22) —
 tick: **owner 👍 on the phase-7 merge post — merge acknowledged.***
@@ -81,37 +107,13 @@ encoder/decoder rework; launch still gated on owner arm pick + route
 A/B/C + GPU release. GPU oracle re-runs (convmap tripwires +
 sim_parallel_oracle) attach to the next free-GPU boundary.*
 
-*Updated 2026-08-15 21:03–21:0xZ (real `date -u` at stamp: 21:05) —
-tick: **phase-7 drop on main → merge item queued, work chain
-armed.***
-
-**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
-OWNER** (13:35Z), untouched. `git pull` surfaced origin/main
-393163f → a460258: **phases 7a+7d** (delete the ObservationEncoder
-ABC + extract `suffix_positions`/`continue_molmo2_suffix`,
-+191/−256 across 8 `bijou/modelling` files; none of our files in
-the diff).
-
-**Steering**: none new — Discord read + inbox empty at 21:04;
-history shows no new reactions. The three owner decisions remain
-pending: retrain arm pick (continue-from-2k vs from-base), route
-A/B/C, GPU release.
-
-**Done**: queued `merge-main-phase7` (cpu, seam checklist modeled
-on the phase-6 item: gradflow oracles exact, both arms full-parse,
-GRPO targeted suite, straggler grep, parents[3] carry,
-augment-0), queue validate OK depth 3 (18 open); **armed
-`run_work_next`** — the chained work session executes the merge
-under its 4-h budget instead of cramming it into this tick's cap.
-No posts (merge post follows the merge, per the 5a–6 pattern). 0
-GPU-h.
-
-**Next**: chained work session merges phases 7a+7d + re-verifies
-seams, then posts to Discord. Owner decisions still gate the
-retrain launch; GPU oracle re-runs still attach to the next
-free-GPU boundary.*
-
 ## Utilization footer
+
+Session 2026-08-15 21:31–21:3xZ (tick; 0 GPU-h): quiet hold — no
+change since 21:21; Discord read + inbox empty, no new reactions,
+GPU owner-reserved idle (0%) untouched, queue validate OK depth 2
+(17 open, both items gpu-local owner-gated), `run_work_next`
+disarmed; arm pick, route A/B/C, GPU release still pending.
 
 Session 2026-08-15 21:21–21:2xZ (tick; 0 GPU-h): owner 👍 on the
 21:15Z phase-7 merge post surfaced at the history poll — merge
@@ -120,15 +122,6 @@ inbox empty, GPU owner-reserved idle 0% untouched, queue validate
 OK depth 2 / 17 open with both items gpu-local owner-gated,
 `run_work_next` disarmed); arm pick, route A/B/C, GPU release still
 pending.
-
-Session 2026-08-15 21:07–21:1xZ (work; exploit; 0 GPU-h):
-merge-main-phase7 DONE — phases 7a+7d (a460258) merged into fontaine
-(f90f15b, one interface.py import conflict resolved), check.py 902
-green, 6-point seam verify all green (gradflow 1.6948/27.8546 exact,
-both retrain arms full-parse molmoact2_flow, GRPO 33/33, straggler
-grep clean, parents[3] stands, augment oracles 11/11); posted
-in-channel; queue depth 2 (17 open); GPU owner-reserved untouched;
-arm/route/GPU-release decisions still pending.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
