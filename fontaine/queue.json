@@ -1689,11 +1689,20 @@
    "owner_hold": false
   },
   {
-   "id": "wrist-screen-results-post",
+   "id": "grasp-sft-stage-b-collector",
    "class": "cpu",
    "status": "queued",
+   "prereg": "fontaine/blog/src/posts/2026-08-14-prereg-grasp-sft-bootstrap.md",
+   "title": "Grasp-SFT stage-B demo collector (CPU instrument, prereg \u00a72/\u00a76): scripted-expert rollouts on demo seeds ascending from 1000, rendered under the production visual config, SUCCESSES KEPT, obs (top/wrist/state) + executed action targets written in the molmoact2 train_lerobot.py training format with state_units provenance 'rig (identity \u2014 recomputed dataset table)' (\u00a76 item 4, no shim anywhere in B-D). Eval seeds 0-99 refused at the writer (the run_expert_episode guard rides through). Target 400 kept / gate >=300 within <=4 GPU-h; checkpointable (resume from the last banked seed) so the GPU leg can ride any window. Oracles: format round-trip vs a real training-set row, seed-refusal, success-only filter, action-vs-replay consistency on one episode. CPU-buildable NOW; the GPU collection leg is gated on the A1 fresh gate read (seeds 1040-1059) passing.",
+   "boundary": "Queued 02:4xZ 08-15 with amendment A1 (depth refill at the results-post close). Collection launches only after the A1 fresh held gate read passes >=14/20 and per its window terms; the writer instrument itself is the executable CPU slice any session can take.",
+   "owner_hold": false
+  },
+  {
+   "id": "wrist-screen-results-post",
+   "class": "cpu",
+   "status": "done",
    "title": "Wrist-transfer screen results page (blog, chart-led per the owner standing preference): the F-instrument story end-to-end \u2014 design, stage-0/1 receipts, the T1 control failure with the power analysis (n=25 control cannot resolve its own +0.16 point estimate while W3 shows +18/100 CI [+0.06,+0.29] at n=100), the record-only W3 engagement finding, and what a successor screen needs (competence floor first \u2014 the grasp-SFT line \u2014 and a control priced at n=100). Charts: paired per-seed delta strips per arm, gate table, the engagement-flip split. Links reports/analysis__wrist_screen_stage1.json; plain-words open per the papers rule if it lands as a Papers-adjacent page (it is a results post \u2014 Status/plain-words block up top either way).",
-   "boundary": "Queued 01:3xZ 08-15 at the F-instrument close (depth refill: the screen item closed same session). Not urgent; any writing-ladder session takes it. The Discord boundary post (01:34Z) is the canonical short record until this lands.",
+   "boundary": "Queued 01:3xZ 08-15 at the F-instrument close (depth refill: the screen item closed same session). Not urgent; any writing-ladder session takes it. The Discord boundary post (01:34Z) is the canonical short record until this lands. | DONE 02:4xZ 08-15 (fb1e672): posts/2026-08-15-wrist-screen-results.md \u2014 plain-words open, receipts, T1 gate table, power analysis (control \u00b10.28 at n=25 vs wrist effects ~2x smaller; successor rule: control at treatment n), W3 record-only engagement finding, successor needs. Charts delta_strips + engagement_split (house dark scheme) via fontaine/scripts/wrist_screen_close_charts.py (recompute-and-abort guard vs the banked analysis JSON).",
    "owner_hold": false,
    "prereg": null
   }
