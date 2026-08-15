@@ -42,11 +42,11 @@ from bijou.eval.molmo_norm import MolmoNorm
 from bijou.eval.policies import BijouPolicy
 from bijou.modelling.aux_text import AuxField
 from bijou.modelling.decoders.molmo_flow import molmo_flow_loss
+from bijou.modelling.encoders.molmo2 import Molmo2Memory
 from bijou.modelling.interface import (
     CameraFrame,
     CollatedBatch,
     NormStats,
-    ObservationMemory,
     PromptInputs,
     SamplingMethod,
 )
@@ -175,14 +175,13 @@ def _encode(
     batch: CollatedBatch,
     *,
     with_grad: bool,
-) -> ObservationMemory:
+) -> Molmo2Memory:
     """The family's own encode (molmo_flow conditions on the whole
-    cache, so it is always retained)."""
+    cache, which the memory always carries)."""
     return model.encoder.encode(
         model.backbone,
         batch.encoder_inputs,
         with_grad=with_grad,
-        retain_cache=True,
     )
 
 

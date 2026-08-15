@@ -46,6 +46,7 @@ from ..modelling.aux_text import AuxField, AuxGeneration, subgoal_text
 from ..modelling.decoders.ar_suffix import ARSuffixDecoder
 from ..modelling.decoders.flow import FlowDecoder
 from ..modelling.decoders.molmo_flow import MolmoFlowDecoder
+from ..modelling.encoders.gemma4 import GemmaMemory
 from ..modelling.gemma4.loading import to_device_with_ple_parked
 from ..modelling.interface import (
     ActionCaptureStep,
@@ -55,7 +56,6 @@ from ..modelling.interface import (
     InputsCollator,
     MemoryStream,
     NormStats,
-    ObservationMemory,
     SamplingMethod,
     ValueCandidate,
     mask_state_item,
@@ -387,14 +387,14 @@ def noise_for_item(
     return draw_noise(seed, index, draw, shape)
 
 
-def tile_memory(memory: ObservationMemory, draws: int) -> ObservationMemory:
+def tile_memory(memory: GemmaMemory, draws: int) -> GemmaMemory:
     """Draws-major tiling of an encoded observation for batched
     ensembling: every K/V stream and the padding mask repeat along the
     batch dim ([B, …] → [draws·B, …], whole-batch-major, so row
     d·B + i is (draw d, item i) — the collapse_draws layout). A KV
     cache cannot be tiled (AR-only surface) and must be absent."""
     if memory.cache is not None:
-        raise ValueError("cannot tile an ObservationMemory carrying a KV cache")
+        raise ValueError("cannot tile a GemmaMemory carrying a KV cache")
     return dataclasses.replace(
         memory,
         streams={
@@ -756,7 +756,7 @@ class BijouPolicy:
             vla,
             GemmaARVLA | Molmo2ARVLA | MolmoAct2ARVLA | MolmoAct2JointVLA,
         ):
-            self.ar_decoder: ARSuffixDecoder[Any] | None = vla.ar_decoder
+            self.ar_decoder: ARSuffixDecoder[Any, Any] | None = vla.ar_decoder
         else:
             self.ar_decoder = None
         if flow_decoder_dtype is not torch.float32:

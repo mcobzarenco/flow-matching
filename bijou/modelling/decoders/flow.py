@@ -52,11 +52,11 @@ from typing import Any, cast, override
 import torch
 from torch import Tensor, nn
 
+from ..encoders.gemma4 import GemmaMemory
 from ..interface import (
     BijouPrediction,
     CollatedBatch,
     MemoryStream,
-    ObservationMemory,
     SamplingMethod,
     kv_stream_name,
 )
@@ -398,7 +398,7 @@ class FlowDecoder(nn.Module):
     @override
     def forward(
         self,
-        memory: ObservationMemory,
+        memory: GemmaMemory,
         state: Tensor,
         noisy_actions: Tensor,
         time: Tensor,
@@ -490,7 +490,7 @@ class FlowDecoder(nn.Module):
             dtype,
         )
         self_attention_mask = self._self_attention_mask(batch, dtype, device)
-        cross_mask = cross_attention_mask(memory, dtype, device)
+        cross_mask = cross_attention_mask(memory.padding_mask, dtype, device)
 
         for layer, stream_name in zip(
             self.layers,
@@ -519,7 +519,7 @@ class FlowDecoder(nn.Module):
     @torch.no_grad()
     def sample_actions(
         self,
-        memory: ObservationMemory,
+        memory: GemmaMemory,
         state: Tensor,
         *,
         num_steps: int = 5,
@@ -595,7 +595,7 @@ class FlowDecoder(nn.Module):
     @torch.no_grad()
     def sample_actions_sde(
         self,
-        memory: ObservationMemory,
+        memory: GemmaMemory,
         state: Tensor,
         *,
         noise_level: float = 0.5,
@@ -701,7 +701,7 @@ class FlowDecoder(nn.Module):
     @torch.no_grad()
     def predict_chunk(
         self,
-        memory: ObservationMemory,
+        memory: GemmaMemory,
         batch: CollatedBatch[Any],
         *,
         generator: torch.Generator | None = None,
@@ -777,7 +777,7 @@ class FlowDecoder(nn.Module):
 
 def flow_matching_loss(
     decoder: FlowDecoder,
-    memory: ObservationMemory,
+    memory: GemmaMemory,
     batch: CollatedBatch[Any],
 ) -> Tensor:
     """``batch`` must already be device-resident; no transfers happen here.
@@ -824,7 +824,7 @@ def flow_matching_loss(
 
 def flow_matching_loss_sums(
     decoder: FlowDecoder,
-    memory: ObservationMemory,
+    memory: GemmaMemory,
     batch: CollatedBatch[Any],
 ) -> tuple[Tensor, Tensor]:
     """Sum-form objective for chunked backward: (squared-error SUM with
@@ -864,7 +864,7 @@ SNAPFLOW_LAMBDA = 0.1
 
 def _snapflow_squared_errors(
     decoder: FlowDecoder,
-    memory: ObservationMemory,
+    memory: GemmaMemory,
     batch: CollatedBatch[Any],
 ) -> tuple[Tensor, Tensor]:
     """Per-element squared errors of the two SnapFlow terms, each
@@ -920,7 +920,7 @@ def _snapflow_squared_errors(
 
 def snapflow_distill_loss(
     decoder: FlowDecoder,
-    memory: ObservationMemory,
+    memory: GemmaMemory,
     batch: CollatedBatch[Any],
 ) -> Tensor:
     """SnapFlow self-distillation objective (mean form):
@@ -940,7 +940,7 @@ def snapflow_distill_loss(
 
 def snapflow_distill_loss_sums(
     decoder: FlowDecoder,
-    memory: ObservationMemory,
+    memory: GemmaMemory,
     batch: CollatedBatch[Any],
 ) -> tuple[Tensor, Tensor]:
     """Sum-form SnapFlow objective for chunked backward: (weighted

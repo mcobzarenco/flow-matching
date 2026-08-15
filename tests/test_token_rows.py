@@ -46,8 +46,9 @@ from bijou.eval.policies import (
     token_rows_from_capture,
 )
 from bijou.modelling.decoders.ar_gemma import GemmaARDecoder
+from bijou.modelling.encoders.gemma4 import GemmaMemory
 from bijou.modelling.gemma4.model import Gemma4Model
-from bijou.modelling.interface import ActionCaptureStep, ARSampling, ObservationMemory
+from bijou.modelling.interface import ActionCaptureStep, ARSampling
 from sim.rollout_sim_parallel import TrainingRowWriter
 from sim.rollout_sim_parallel import parse_args as rollout_parse_args
 
@@ -69,7 +70,7 @@ def unpack(row: TokenRow) -> torch.Tensor:
 def greedy_rows() -> tuple[
     Gemma4Model,
     GemmaARDecoder,
-    ObservationMemory,
+    GemmaMemory,
     list[ActionCaptureStep],
     list[TokenRow],
 ]:

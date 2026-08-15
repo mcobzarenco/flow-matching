@@ -62,13 +62,13 @@ from bijou.modelling.decoders.ar_suffix import (
     ARDecoderConfig,
     suffix_targets,
 )
+from bijou.modelling.encoders.molmo2 import Molmo2Memory
 from bijou.modelling.encoders.molmoact2 import MOLMOACT2_PROMPT_FORMAT, MolmoAct2Encoder
 from bijou.modelling.interface import (
     ActionCaptureStep,
     ARSampling,
     CollatedBatch,
     NormStats,
-    ObservationMemory,
 )
 from bijou.modelling.molmo2.cache import Molmo2KVCache
 from bijou.modelling.molmo2.config import Molmo2Config
@@ -193,7 +193,7 @@ def encode_memory(
     model: Molmo2Model,
     *,
     padded: bool = False,
-) -> ObservationMemory:
+) -> Molmo2Memory:
     """A text-only prefill with a retained cache — the decoder is
     prompt-agnostic (it continues a Molmo2KVCache); the MolmoAct2
     PROMPT's own bytes are the encoder suite's contract, not this
@@ -221,11 +221,10 @@ def encode_memory(
             attention_mask=mask,
             cache=cache,
         )
-    return ObservationMemory(
-        streams={},
+    return Molmo2Memory(
+        cache=cache,
         length=9,
         padding_mask=real if padded else None,
-        cache=cache,
     )
 
 

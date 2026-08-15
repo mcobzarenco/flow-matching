@@ -21,6 +21,7 @@ from torch import Tensor, nn
 from ..modelling.aux_text import AuxField
 from ..modelling.decoders.ar_suffix import (
     ARSuffixDecoder,
+    PrefixMemory,
     ar_backbone_counts,
     ar_backbone_loss_sums,
 )
@@ -28,14 +29,13 @@ from ..modelling.interface import (
     ActionCaptureStep,
     ARSampling,
     CollatedBatch,
-    ObservationMemory,
     ValueCandidate,
 )
 from ..vla import ARPrediction, Loss, LossReport, NarratedPrediction
 
 
 def ar_loss_counts(
-    decoder: ARSuffixDecoder[Any],
+    decoder: ARSuffixDecoder[Any, Any],
     batch: CollatedBatch[Any],
 ) -> dict[str, Tensor]:
     """The suffix objective's per-component counts (data-only, no
@@ -49,10 +49,10 @@ def ar_loss_counts(
     return counts
 
 
-def ar_suffix_report[B: nn.Module](
+def ar_suffix_report[B: nn.Module, M: PrefixMemory](
     backbone: B,
-    decoder: ARSuffixDecoder[B],
-    memory: ObservationMemory,
+    decoder: ARSuffixDecoder[B, M],
+    memory: M,
     batch: CollatedBatch[Any],
     *,
     counts: dict[str, Tensor],
@@ -80,10 +80,10 @@ def ar_suffix_report[B: nn.Module](
     return LossReport(objective=objective, components=components)
 
 
-def ar_block_prediction[B: nn.Module](
+def ar_block_prediction[B: nn.Module, M: PrefixMemory](
     backbone: B,
-    decoder: ARSuffixDecoder[B],
-    memory: ObservationMemory,
+    decoder: ARSuffixDecoder[B, M],
+    memory: M,
     batch: CollatedBatch[Any],
     *,
     sampling: ARSampling | None,
@@ -101,10 +101,10 @@ def ar_block_prediction[B: nn.Module](
     return ARPrediction(actions=prediction.actions)
 
 
-def ar_block_logits[B: nn.Module](
+def ar_block_logits[B: nn.Module, M: PrefixMemory](
     backbone: B,
-    decoder: ARSuffixDecoder[B],
-    memory: ObservationMemory,
+    decoder: ARSuffixDecoder[B, M],
+    memory: M,
     action_ids: Tensor,
 ) -> Tensor:
     """Teacher-forced block logits for a rectangular id batch — the
@@ -122,10 +122,10 @@ def ar_block_logits[B: nn.Module](
     return torch.stack(logits)
 
 
-def narrated_prediction[B: nn.Module](
+def narrated_prediction[B: nn.Module, M: PrefixMemory](
     backbone: B,
-    decoder: ARSuffixDecoder[B],
-    memory: ObservationMemory,
+    decoder: ARSuffixDecoder[B, M],
+    memory: M,
     batch: CollatedBatch[Any],
     *,
     generate: tuple[AuxField, ...],
@@ -147,10 +147,10 @@ def narrated_prediction[B: nn.Module](
     )
 
 
-def value_candidates[B: nn.Module](
+def value_candidates[B: nn.Module, M: PrefixMemory](
     backbone: B,
-    decoder: ARSuffixDecoder[B],
-    memory: ObservationMemory,
+    decoder: ARSuffixDecoder[B, M],
+    memory: M,
     batch: CollatedBatch[Any],
     *,
     field: AuxField,

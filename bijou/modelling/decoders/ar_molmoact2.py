@@ -47,8 +47,8 @@ rebase error between them is silent everywhere except here):
 Continuation IS the shared Molmo2-stack half
 (:func:`~bijou.modelling.decoders.ar_molmo2.continue_molmo2_suffix`):
 all-layer continuation against the prefix
-:class:`~bijou.modelling.molmo2.cache.Molmo2KVCache` (built by
-``MolmoAct2Encoder.encode(retain_cache=True)``), text-typed suffix
+:class:`~bijou.modelling.molmo2.cache.Molmo2KVCache` (every
+``MolmoAct2Encoder.encode`` product carries it), text-typed suffix
 queries under shifted-causal masking, and the non-cuDNN sdpa pin
 (cheap insurance; if the decode-parity fixture gate ever disagrees,
 that pin and the mount dtype are the first suspects — the reference
@@ -62,7 +62,7 @@ from typing import override
 from torch import Tensor
 
 from ..codecs import ActionCodec
-from ..interface import ObservationMemory
+from ..encoders.molmo2 import Molmo2Memory
 from ..molmo2.config import Molmo2TextConfig
 from ..molmo2.model import Molmo2Model
 from ..molmo2.tokenizer import Molmo2TextTokenizer
@@ -79,7 +79,7 @@ _ACTION_TOKEN_ANCHORS: tuple[tuple[str, int], ...] = (
 )
 
 
-class MolmoAct2ARDecoder(ARSuffixDecoder[Molmo2Model]):
+class MolmoAct2ARDecoder(ARSuffixDecoder[Molmo2Model, Molmo2Memory]):
     """The MolmoAct2 trunk's suffix role (see the module docstring).
 
     ``text_config`` is the FULL decoder architecture — construction
@@ -162,7 +162,7 @@ class MolmoAct2ARDecoder(ARSuffixDecoder[Molmo2Model]):
     def _suffix_hidden(
         self,
         backbone: Molmo2Model,
-        memory: ObservationMemory,
+        memory: Molmo2Memory,
         tokens: Tensor,
         fed: int,
     ) -> Tensor:

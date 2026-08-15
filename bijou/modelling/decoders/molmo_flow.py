@@ -50,13 +50,12 @@ import torch
 import torch.nn.functional as F
 from torch import Tensor, nn
 
+from ..encoders.molmo2 import Molmo2Memory
 from ..interface import (
     BijouPrediction,
     CollatedBatch,
-    ObservationMemory,
     SamplingMethod,
 )
-from ..molmo2.cache import Molmo2KVCache
 
 
 def _modulate(x: Tensor, shift: Tensor, scale: Tensor) -> Tensor:
@@ -790,7 +789,7 @@ class MolmoFlowDecoder(nn.Module):
     @torch.no_grad()
     def predict_chunk(
         self,
-        memory: ObservationMemory,
+        memory: Molmo2Memory,
         batch: CollatedBatch[Any],
         *,
         generator: torch.Generator | None = None,
@@ -1187,36 +1186,26 @@ class MolmoFlowDecoder(nn.Module):
 
 
 def layer_kv_pairs(
-    memory: ObservationMemory,
+    memory: Molmo2Memory,
     *,
     num_blocks: int,
     detach: bool = False,
 ) -> list[tuple[Tensor, Tensor]]:
     """Per-layer conditioning pairs off the prefix cache in the memory —
     the trunk-specific extraction at the seam (the ``ar_molmo2``
-    precedent: this decoder consumes the Molmo2 cache directly; the
-    cache layout [B, kv_heads, S, head_dim] is OUR contract, so the
-    flatten needs no layout inference). ``detach`` is the knowledge-
-    insulation seam (§8.13 decision 8): detached pairs carry no graph,
-    so flow gradients into every trunk parameter are exactly zero.
+    precedent: this decoder consumes the Molmo2 cache directly — the
+    memory type carries it, statically; the cache layout
+    [B, kv_heads, S, head_dim] is OUR contract, so the flatten needs no
+    layout inference). ``detach`` is the knowledge-insulation seam
+    (§8.13 decision 8): detached pairs carry no graph, so flow
+    gradients into every trunk parameter are exactly zero.
 
     Shapes:
     - ``memory.cache`` layers: K/V [B, kv_heads, S, head_dim] each
     - returns: ``num_blocks`` pairs of [B, S, kv_heads * head_dim]
     """
-    cache = memory.cache
-    if cache is None:
-        raise ValueError(
-            "ObservationMemory carries no prefix cache — encode with "
-            "retain_cache=True (the molmoact2 families do)",
-        )
-    if not isinstance(cache, Molmo2KVCache):
-        raise TypeError(
-            f"molmo_flow conditions on the Molmo2 prefix cache; the memory "
-            f"carries {type(cache).__name__}",
-        )
     pairs: list[tuple[Tensor, Tensor]] = []
-    for layer_idx, layer in enumerate(cache.layers):
+    for layer_idx, layer in enumerate(memory.cache.layers):
         keys, values = layer.keys, layer.values
         if keys is None or values is None:
             raise ValueError(
@@ -1237,7 +1226,7 @@ def layer_kv_pairs(
     return pairs
 
 
-def conditioning_mask_of(memory: ObservationMemory) -> Tensor | None:
+def conditioning_mask_of(memory: Molmo2Memory) -> Tensor | None:
     """The expert's prompt mask: the encoder-computed conditioning mask
     (the ``action_mode`` flavor) when present, else the padding mask —
     None only for unpadded memories with no flavor (everything
@@ -1255,7 +1244,7 @@ def conditioning_mask_of(memory: ObservationMemory) -> Tensor | None:
 
 def molmo_flow_loss_sums(
     decoder: MolmoFlowDecoder,
-    memory: ObservationMemory,
+    memory: Molmo2Memory,
     batch: CollatedBatch[Any],
     *,
     insulate: bool = False,
@@ -1326,7 +1315,7 @@ def molmo_flow_loss_sums(
 
 def molmo_flow_loss(
     decoder: MolmoFlowDecoder,
-    memory: ObservationMemory,
+    memory: Molmo2Memory,
     batch: CollatedBatch[Any],
     *,
     insulate: bool = False,

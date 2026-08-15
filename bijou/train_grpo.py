@@ -40,8 +40,8 @@ from typing import Any
 import torch
 from torch import Tensor, nn
 
-from .modelling.decoders.ar_suffix import ARSuffixDecoder, suffix_targets
-from .modelling.interface import CollatedBatch, ObservationMemory
+from .modelling.decoders.ar_suffix import ARSuffixDecoder, PrefixMemory, suffix_targets
+from .modelling.interface import CollatedBatch
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -89,7 +89,7 @@ class GRPOStats:
 
 
 def grammar_masks_from_ids(
-    decoder: ARSuffixDecoder[Any],
+    decoder: ARSuffixDecoder[Any, Any],
     ids: Tensor,
 ) -> tuple[Tensor, Tensor]:
     """(grammar masks [B, T, vocab_total] bool, decision positions
@@ -128,10 +128,10 @@ def grammar_masks_from_ids(
     return allowed, decisions
 
 
-def sampled_token_logprobs[B: nn.Module](
+def sampled_token_logprobs[B: nn.Module, M: PrefixMemory](
     backbone: B,
-    decoder: ARSuffixDecoder[B],
-    memory: ObservationMemory,
+    decoder: ARSuffixDecoder[B, M],
+    memory: M,
     batch: CollatedBatch[Any],
     *,
     temperature: float,
@@ -290,10 +290,10 @@ def grpo_objective_sums(
     return objective_sum, count, stats
 
 
-def grpo_loss[B: nn.Module](
+def grpo_loss[B: nn.Module, M: PrefixMemory](
     backbone: B,
-    decoder: ARSuffixDecoder[B],
-    memory: ObservationMemory,
+    decoder: ARSuffixDecoder[B, M],
+    memory: M,
     batch: CollatedBatch[Any],
     *,
     old_logprobs: Tensor,

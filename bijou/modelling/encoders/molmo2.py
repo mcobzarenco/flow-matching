@@ -47,7 +47,6 @@ from torch import Tensor, nn
 from ..gemma4.loading import resolve_checkpoint_dir
 from ..interface import (
     InputsCollator,
-    ObservationMemory,
     PromptInputs,
 )
 from ..molmo2.cache import Molmo2KVCache
@@ -65,6 +64,41 @@ from ..molmo2.processor import (
 )
 
 MOLMO2_PROMPT_FORMAT = 1
+
+
+@dataclass(frozen=True, slots=True)
+class Molmo2Memory:
+    """A Molmo2 trunk's encoded prefix — the value crossing the
+    Molmo2-side encoders' seam to the Molmo2-trunk decoders. The typed
+    prefix :class:`~bijou.modelling.molmo2.cache.Molmo2KVCache` IS the
+    product (this trunk's encoders export no streams): suffix decoders
+    continue it, molmo_flow conditions on every layer of it.
+
+    ``padding_mask`` is the True-means-real mask for padded batches
+    (per-sample real lengths — decoder query position bases — derive
+    from it); ``length`` is the (padded) prefix width and the position
+    base only for unpadded batches.
+
+    ``conditioning_mask`` is the decoder-conditioning mask over the
+    PROMPT (True = a cross-attending decoder may attend) — distinct
+    from ``padding_mask`` (real tokens: the positions/attention source,
+    which must keep counting EOS). Carries the molmoact2 formats'
+    ``action_mode`` flavor (EOS/span-strip under 'both', load-bearing
+    for converted expert weights); None = padding semantics apply.
+
+    Shapes: padding_mask / conditioning_mask [B, P] or None."""
+
+    cache: Molmo2KVCache
+    length: int
+    padding_mask: Tensor | None
+    conditioning_mask: Tensor | None = None
+
+    @property
+    def batch_size(self) -> int:
+        keys = self.cache.layers[0].keys
+        assert keys is not None  # every encode fills the prefix layers
+        return keys.shape[0]
+
 
 # ChatML text-side ids (pinned; verified against the loaded tokenizer).
 BOS_ID = 151_645  # <|im_end|> — the shipped bos convention
@@ -314,10 +348,10 @@ class Molmo2Encoder(nn.Module):
     the encoder convention — :mod:`bijou.modelling.interface`'s module
     docstring).
 
-    AR-first: the encoder exports NO
-    memory streams — its whole product is the prefix KV cache the suffix
-    decoder continues (``retain_cache=True``; molmo_flow conditions on
-    every layer of it).
+    AR-first: the encoder exports NO memory streams — its whole product
+    is the prefix KV cache the suffix decoder continues (molmo_flow
+    conditions on every layer of it), so :class:`Molmo2Memory` always
+    carries it.
 
     The trunk is NOT owned here — the family class owns it once and passes
     it into the compute methods; this module carries exactly the prompt-side
@@ -372,13 +406,12 @@ class Molmo2Encoder(nn.Module):
         inputs: Molmo2Inputs,
         *,
         with_grad: bool,
-        retain_cache: bool = False,
-    ) -> ObservationMemory:
+    ) -> Molmo2Memory:
         """Run the full multimodal prefix (vision inject + state splice +
-        causal-OR-image-block mask) and retain the prefix KV cache when
-        asked. The final-norm output is discarded — the cache is the
-        product; ``with_grad=True`` leaves autograd on so suffix
-        gradients flow back into the trunk."""
+        causal-OR-image-block mask), filling the prefix KV cache. The
+        final-norm output is discarded — the cache is the product;
+        ``with_grad=True`` leaves autograd on so suffix gradients flow
+        back into the trunk."""
         padding_mask = inputs.attention_mask if inputs.has_padding else None
         with torch.no_grad() if not with_grad else contextlib.nullcontext():
             embeds = backbone.build_input_embeddings(
@@ -403,22 +436,17 @@ class Molmo2Encoder(nn.Module):
                 dtype=embeds.dtype,
                 device=embeds.device,
             )
-            cache = (
-                Molmo2KVCache(len(backbone.text.transformer.blocks))
-                if retain_cache
-                else None
-            )
+            cache = Molmo2KVCache(len(backbone.text.transformer.blocks))
             backbone.text.transformer(
                 inputs_embeds=embeds,
                 position_ids=position_ids,
                 attention_mask=mask,
                 cache=cache,
             )
-        return ObservationMemory(
-            streams={},
+        return Molmo2Memory(
+            cache=cache,
             length=inputs.input_ids.shape[1],
             padding_mask=padding_mask,
-            cache=cache,
         )
 
     def param_groups(self, backbone: Molmo2Model) -> dict[str, list[nn.Parameter]]:

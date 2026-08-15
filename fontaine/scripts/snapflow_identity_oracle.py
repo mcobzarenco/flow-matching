@@ -32,8 +32,9 @@ from bijou.loading import (
     parse_prompt_config,
 )
 from bijou.modelling.decoders.flow import FlowDecoder
+from bijou.modelling.encoders.gemma4 import GemmaMemory
 from bijou.modelling.gemma4.loading import load_config, resolve_checkpoint_dir
-from bijou.modelling.interface import MemoryStream, ObservationMemory
+from bijou.modelling.interface import MemoryStream
 
 PHI_S_KEYS = {
     "target_time_in_proj.weight",
@@ -109,7 +110,7 @@ def main() -> None:
         )
         for name in sorted(set(teacher.schedule_names))
     }
-    memory = ObservationMemory(streams=streams, length=prefix, padding_mask=None)
+    memory = GemmaMemory(streams=streams, length=prefix, padding_mask=None)
     robot_state = torch.randn(batch, config.state_dim, generator=generator)
     actions = torch.randn(
         batch,

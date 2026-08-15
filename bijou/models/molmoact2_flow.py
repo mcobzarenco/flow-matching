@@ -204,7 +204,6 @@ class MolmoAct2FlowVLA(FlowVLA[MolmoAct2Inputs]):
                 self.backbone,
                 inputs,
                 with_grad=live,
-                retain_cache=True,
             )
         loss_sum, count = molmo_flow_loss_sums(self.flow_decoder, memory, batch)
         world = dist.get_world_size() if dist.is_initialized() else 1
@@ -237,7 +236,6 @@ class MolmoAct2FlowVLA(FlowVLA[MolmoAct2Inputs]):
             self.backbone,
             batch.encoder_inputs,
             with_grad=False,
-            retain_cache=True,
         )
         prediction = self.flow_decoder.predict_chunk(
             memory,

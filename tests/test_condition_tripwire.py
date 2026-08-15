@@ -22,12 +22,13 @@ from test_flow_decoder import ACTION_DIM, CHUNK, build, fabricate
 from test_snapflow_distill import flow_batch, randomize
 
 from bijou.modelling.decoders.flow import FlowDecoder, TimeConditioning
-from bijou.modelling.interface import CollatedBatch, ObservationMemory
+from bijou.modelling.encoders.gemma4 import GemmaMemory
+from bijou.modelling.interface import CollatedBatch
 
 
 def _decoder_memory_batch() -> tuple[
     FlowDecoder,
-    ObservationMemory,
+    GemmaMemory,
     CollatedBatch[Any],
 ]:
     decoder = build(TimeConditioning.ADARMS)

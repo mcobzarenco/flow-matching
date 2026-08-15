@@ -1,7 +1,7 @@
 """Shared decoder building blocks: the Gemma-style sandwich layer.
 
 Both action decoders (flow matching, AR FAST) are stacks of the same
-block — cross-attention over one ObservationMemory stream, self-attention
+block — cross-attention over one exported memory stream, self-attention
 over the suffix, gated-GLU MLP, sandwich RMSNorms — differing only in the
 suffix content, masks, and heads. The modules here take their parameters
 individually and know nothing about either decoder's config type;
@@ -19,7 +19,7 @@ from typing import override
 import torch
 from torch import Tensor, nn
 
-from ..interface import MemoryStream, ObservationMemory
+from ..interface import MemoryStream
 from ..nn import (
     DEFAULT_ATTENTION_BACKEND,
     AttentionBackend,
@@ -34,7 +34,7 @@ from ..nn import (
 
 class MemoryCrossAttention(nn.Module):
     """Queries in backbone global-attention geometry over an exported
-    ObservationMemory stream."""
+    memory stream."""
 
     def __init__(
         self,
@@ -436,16 +436,17 @@ class SuffixBlock(nn.Module):
 
 
 def cross_attention_mask(
-    memory: ObservationMemory,
+    padding_mask: Tensor | None,
     dtype: torch.dtype,
     device: torch.device,
 ) -> MaskSpec:
-    """Padding-only cross-attention mask: [B, 1, 1, P] (every suffix query
-    sees the same real memory columns), or an empty spec when the memory
-    is unpadded."""
-    if memory.padding_mask is None:
+    """Padding-only cross-attention mask from a memory's True-means-real
+    padding mask [B, P]: [B, 1, 1, P] (every suffix query sees the same
+    real memory columns), or an empty spec when the memory is unpadded
+    (``padding_mask`` None)."""
+    if padding_mask is None:
         return MaskSpec()
-    real = memory.padding_mask.to(device=device, dtype=torch.bool)
+    real = padding_mask.to(device=device, dtype=torch.bool)
     min_value = torch.finfo(dtype).min
     tensor = torch.where(
         real[:, None, None, :],

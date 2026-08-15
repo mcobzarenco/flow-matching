@@ -35,10 +35,10 @@ from bijou.modelling.decoders.ar_suffix import (
     ARDecoderConfig,
     ar_backbone_loss,
 )
-from bijou.modelling.encoders.gemma4 import GemmaEncoder
+from bijou.modelling.encoders.gemma4 import GemmaEncoder, GemmaMemory
 from bijou.modelling.gemma4.config import Gemma4Config
 from bijou.modelling.gemma4.model import Gemma4Model
-from bijou.modelling.interface import CollatedBatch, NormStats, ObservationMemory
+from bijou.modelling.interface import CollatedBatch, NormStats
 from bijou.modelling.nn import AttentionBackend
 
 FIXTURE = Path(__file__).parent / "fixtures" / "tiny_fast_tokenizer"
@@ -98,7 +98,7 @@ def build() -> tuple[Gemma4Model, GemmaARDecoder, FastActionCodec]:
     return backbone, decoder, loaded
 
 
-def encode_memory(backbone: Gemma4Model) -> ObservationMemory:
+def encode_memory(backbone: Gemma4Model) -> GemmaMemory:
     """A real prefill through the real encoder path: LEFT-padded prompt
     ids (kept below the FAST block), retained cache."""
     config = backbone.config
@@ -281,7 +281,7 @@ def test_generate_on_auxless_checkpoint_is_rejected() -> None:
 def test_missing_cache_fails_loudly() -> None:
     backbone, decoder, loaded = build()
     memory = encode_memory(backbone)
-    without_cache = ObservationMemory(
+    without_cache = GemmaMemory(
         streams=memory.streams,
         length=memory.length,
         padding_mask=memory.padding_mask,
