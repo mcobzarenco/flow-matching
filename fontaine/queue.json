@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-15T07:34:22Z",
+ "updated_utc": "2026-08-15T07:47:19Z",
  "depth_reason": "depth 2: wrist-transfer-screen-run (stage 0 executing, then stage 1 on the released GPU) + grasp-sft-bootstrap (stage A CPU-executable; GPU stages after screen + finalization). Recorded 22:3xZ 08-14.",
  "items": [
   {
@@ -1732,6 +1732,15 @@
    "boundary": "Queued 01:3xZ 08-15 at the F-instrument close (depth refill: the screen item closed same session). Not urgent; any writing-ladder session takes it. The Discord boundary post (01:34Z) is the canonical short record until this lands. | DONE 02:4xZ 08-15 (fb1e672): posts/2026-08-15-wrist-screen-results.md — plain-words open, receipts, T1 gate table, power analysis (control ±0.28 at n=25 vs wrist effects ~2x smaller; successor rule: control at treatment n), W3 record-only engagement finding, successor needs. Charts delta_strips + engagement_split (house dark scheme) via fontaine/scripts/wrist_screen_close_charts.py (recompute-and-abort guard vs the banked analysis JSON).",
    "owner_hold": false,
    "prereg": null
+  },
+  {
+   "id": "grpo-r2-post-sft",
+   "class": "gpu-local",
+   "status": "queued",
+   "prereg": "fontaine/blog/src/posts/2026-08-15-prereg-grpo-r2-post-sft.md",
+   "title": "GRPO R2 on the grasp-SFT policy (DRAFT pre-reg posted 08-15): fresh Decision-11 run on the first-class stack (bijou/grpo_replay.py over the CONVERTED stage-C endpoint — the exact bijou dir stage D evaluates), reward v2 trained-on / v1 held-out, 8x8 groups T=1.0, full R1 tripwire set inherited, proposed lr 1e-6 (3e-7 fallback) kl_beta 1.0, 10 steps ~10 GPU-h gate <=12. PRIMARY: paired sim100 vs the banked stage-D base count; wave-0 calibration read on group success-variance (predicted >=60% mixed at p>=0.2). CONDITIONAL: activates ONLY on stage-D GRPO_GO (>=20/100).",
+   "boundary": "DRAFT posted 07:5xZ 08-15 (queue-refill slice of the stage-C ride session; stage C launched 07:29:55Z same session). ACTIVATION RULE: stage-D verdict owns this item — GRPO_GO (>=20/100) -> finalization per prereg SS6 (base count + checkpoint receipt + lr decision + setback wire call + HEAD re-pin + objection window) THEN launch; ITERATE_BC_ONCE (5-19) -> the bootstrap's iterate arm consumes the GPU slot first, this item waits; F_TRANSFER (<5) -> PARK this item (visual/renderer lane becomes binding per bootstrap SS4). Fresh budget — the bootstrap <=13 gate does NOT carry over.",
+   "owner_hold": false
   }
  ],
  "updated": "2026-08-14T23:41:50Z"
