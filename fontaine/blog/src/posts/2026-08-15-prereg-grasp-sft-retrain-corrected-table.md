@@ -66,13 +66,16 @@ CPU-only):
 ```
 uv run python -m bijou.train \
   --train-data ~/datasets/fontaine/grasp_sft_demos_v0 \
-  --init-from  ~/checkpoints/converted/molmoact2_base_corrected_stats_v0 \
-  --objective  flow            # molmo_flow expert pathway, trunk frozen \
-  --expert-init inherit        # warm AE = stage-C's warm-start analogue \
+  --init-from  ~/checkpoints/converted/molmoact2_base_corrected_stats_v0_vla \
+  --objective  flow                # molmo_flow expert pathway, trunk frozen \
+  --flow-decoder-init inherit      # warm AE = stage-C's warm-start analogue \
   --steps 2000 --decoder-lr 5e-5 --batch-size 64 \
   --save-every 500 \
   --save-dir ~/checkpoints/finetune/fontaine_grasp_sft_bijou_corrected
 ```
+
+*(Command amended 17:0xZ for main phase 5a — see §8; parameters
+unchanged.)*
 
 Matched to the stage-C recipe class where the stacks correspond:
 AE-only (backbone frozen — no `--backbone-text-lr`), LR 5e-5, gb64,
@@ -118,3 +121,40 @@ expected, gate ≤ 7**. Wall-clock ~4–5 h detached.
 landed; the launch command is frozen above. On go: pre-reg flips to
 FINAL (any owner edits recorded as amendments), launch at the next
 free-GPU boundary, in-channel launch post.
+
+## §8 Amendment — main phase 5a re-verify (2026-08-15 17:0xZ)
+
+Phase 5a (`a51b172`, "bijou.train on the family CLI + the VLA
+checkpoint format") landed on main after this draft and moved two
+things the frozen command touched. Merged into fontaine (`351c56e`,
+check.py 922 green) and re-verified end-to-end, CPU-only:
+
+1. **Flag rename:** `--expert-init` is gone; its successor is
+   `--flow-decoder-init` (`inherit` = default = the same warm-AE
+   semantics this pre-reg froze; `fresh` = adaLN-Zero init). §3
+   amended verbatim, parameters unchanged.
+2. **Checkpoint-format break:** the new `--init-from` refuses the
+   existing conversions as legacy (`bijou_config.json`). Both were
+   migrated with `bijou.convert_legacy` (hard-link metadata
+   re-expression, weights bit-identical by construction) and
+   `validate_checkpoint` passes:
+   `molmoact2_base_corrected_stats_v0_vla` and
+   `molmoact2_grasp_sft_stagec_ar_step2000_vla`. Corrected wrist_roll
+   rows (±157.2) verified baked through the new-format reader.
+3. **Continue-from-2k arm made real** (the Q1-reply option): fresh
+   `bijou.convert_molmoact2 --source
+   ~/checkpoints/molmoact2-grasp-sft-stagec-ar-step2000-hf
+   --norm-stats-from ~/checkpoints/norm_stats_grasp_sft_v0_corrected`
+   → `~/checkpoints/converted/molmoact2_grasp_sft_stagec_ar_step2000_corrected_v1`
+   (new format directly; trained expert sha `b778bbf2…` ≠ base
+   `7a2d4dea…`; corrected table baked with a recorded `stats_note`).
+   If the owner picks this arm, the §3 command swaps only the
+   `--init-from` path to this artifact.
+4. **Both arms full-parse green** against the new family CLI
+   (family checkpoint-inferred as `molmoact2_flow`, `--objective
+   flow` pathway); the `--image-augment p=0` bitwise oracle and the
+   re-anchored gradflow probe (loss oracle 27.8546 exact) both pass
+   post-merge.
+
+Launch remains owner-gated (arm pick + route + GPU release), exactly
+as §7 states.

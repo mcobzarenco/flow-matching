@@ -5,7 +5,45 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-15 16:50–17:1xZ (real `date -u` at stamp: 17:03) —
+work session: **merge-main-phase5a executed — phase 5a merged, two
+launch-path breaks found + fixed, both retrain arms re-verified
+launch-ready.***
+
+**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
+OWNER** (13:35Z), untouched all session (CPU-only work).
+
+**Steering**: none new — Discord read + inbox empty at boot (16:50);
+the three owner decisions stay pending (arm pick, route A/B/C, GPU
+release).
+
+**Done**: **merge-main-phase5a** (`351c56e` merge, check.py 922
+green; one conflict — upstream inlined the gradflow probe's harness,
+our obsolete `TrainArgs.image_augment` line dropped in favor of
+theirs). Seam findings, all fixed CPU-side: (1) `--expert-init`
+renamed `--flow-decoder-init` (inherit = default = same warm-AE
+semantics) — pre-reg §3 amended, §8 amendment section added; (2)
+**format break**: new `--init-from` refuses legacy
+`bijou_config.json` conversions — both migrated via `convert_legacy`
+(hard links, validate green): `molmoact2_base_corrected_stats_v0_vla`
++ `molmoact2_grasp_sft_stagec_ar_step2000_vla`; (3) continue-from-2k
+arm made REAL — fresh convert of step2000-hf with the corrected table
+→ `molmoact2_grasp_sft_stagec_ar_step2000_corrected_v1` (trained
+expert `b778bbf2…`, wrist_roll ±157.2 baked + stats_note); (4) both
+arms full-parse green vs the family CLI; (5) image-augment p=0
+bitwise oracle 11/11 + gradflow probe loss oracle 27.8546 exact
+post-merge; (6) `parents[2]` fixture bug still on main — our
+`parents[3]` carry stands. Result post id 1538231709517090876. Queue:
+merge-main-phase5a → done (depth 2, 17 open). 0 GPU-h.
+
+**Next**: `queue_cli.py next` → grasp-sft-bootstrap (gpu-local,
+owner-gated). Everything owner-gated: arm pick + route A/B/C unblock
+the retrain launch (either arm is now one command), GPU release
+unblocks any launch at all. `run_work_next` stays disarmed — no
+CPU-executable items remain.*
 
 *Updated 2026-08-15 16:45–16:5xZ (real `date -u` at stamp: 16:47) —
 tick: **two changes after four quiet holds — owner 👍 on the merge
@@ -62,30 +100,15 @@ confirmed disarmed (no CPU-executable items to chain into). No posts
 route A/B/C unblock the retrain launch, GPU release unblocks any
 launch at all.*
 
-*Updated 2026-08-15 16:23–16:2xZ (real `date -u` at stamp: 16:24) —
-tick: **quiet hold — GPU owner-reserved and idle (0%), nothing to
-babysit, no launches.***
-
-**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
-OWNER** (13:35Z), untouched. No babysit entries, no training
-processes.
-
-**Steering**: none — Discord read + inbox empty at 16:24; history
-shows nothing new past our own 15:47 results-page post (last owner
-activity remains the recorded 🎉). All three owner decisions still
-pending: retrain arm pick (continue-from-2k vs from-base), route
-A/B/C (flow retrain / token arm / joint), GPU release.
-
-**Done**: Discord + history polls, GPU/process check, queue validate
-OK depth 2 (17 open, both queued items owner-gated), `run_work_next`
-confirmed disarmed (no CPU-executable items to chain into). No posts
-(nothing owner-facing changed). 0 GPU-h.
-
-**Next**: ticks hold until an owner decision lands — arm pick +
-route A/B/C unblock the retrain launch, GPU release unblocks any
-launch at all.*
-
 ## Utilization footer
+
+Session 2026-08-15 16:50–17:1xZ (work, exploit; 0 GPU-h, CPU-only):
+merge-main-phase5a — phase 5a merged (`351c56e`, 922 green), two
+launch-path breaks fixed (`--expert-init`→`--flow-decoder-init`
+rename; checkpoint-format break → both conversions migrated via
+convert_legacy), continue-from-2k arm built real
+(step2000_corrected_v1), both retrain arms full-parse green; pre-reg
+§3+§8 amended; GPU owner-reserved and untouched.
 
 Session 2026-08-15 16:45–16:5xZ (tick; 0 GPU-h): owner 👍 on the
 15:37Z merge post recorded as steering (agreement, decisions still

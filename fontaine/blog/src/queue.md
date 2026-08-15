@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-15T16:47:19Z
+**Updated:** 2026-08-15T17:03:01Z
 
 **Depth call:** depth 3: grasp-sft-bootstrap (retrain arm owner-pending) + grasp-sft-chain-results-page (writing ladder) + grpo-r2-post-sft (re-based per A2; token-sft arm item blocked owner-gated). Recorded 14:48Z 08-15.
 
-**18 open** (Live 0 · Queued 3 · Blocked 15 · Done 178)
+**17 open** (Live 0 · Queued 2 · Blocked 15 · Done 179)
 
 ## 🔴 Live (0)
 
@@ -14,23 +14,9 @@
 
 *(empty)*
 
-## 🟢 Queued (3)
+## 🟢 Queued (2)
 
 *ready — waiting on a window or a boundary*
-
-**`merge-main-phase5a`** · `cpu`
-
-Merge main phase 5a (a51b172, 'bijou.train on the family CLI + the VLA checkpoint format', +3115/-2046 across 20 files incl
-
-**boundary:** Queued 16:5xZ 08-15 tick on seeing a51b172 on origin/main (owner-pushed 16:34Z). CPU-only, no GPU touch (owner reserve stands). Urgent: the owner's arm/route decision may land any time and the launch path must be green against phase 5a first.
-
-<details><summary>full record</summary>
-
-Merge main phase 5a (a51b172, 'bijou.train on the family CLI + the VLA checkpoint format', +3115/-2046 across 20 files incl. train args, checkpoint_backbone, convert_molmoact2, test_train_vla) into fontaine; re-run check.py; re-verify the retrain-prep seams exactly as the 15:37Z 08-15 post did (read_checkpoint_info on both real conversions, convert_molmoact2 --norm-stats-from, bijou.train --objective/--backbone-text-lr/--init-from/--expert-init, --image-augment p=0 bitwise oracle, convert_legacy+validate_checkpoint smoke); confirm the pre-registered retrain launch commands still parse against the new family CLI (391-line test_train_args churn suggests arg surface moved). Also confirm whether the parents[2]-&gt;parents[3] bank_processor_goldens fix from bb0f036 landed upstream or still needs the cherry-pick note.
-
-</details>
-
----
 
 **`grpo-r2-post-sft`** · `gpu-local`
 
@@ -272,9 +258,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (178)
+## ✅ Done (179)
 
 *closed — the full record stays in each fold*
+
+**`merge-main-phase5a`** · `cpu`
+
+Merge main phase 5a (a51b172, 'bijou.train on the family CLI + the VLA checkpoint format', +3115/-2046 across 20 files incl
+
+**boundary:** Queued 16:5xZ 08-15 tick on seeing a51b172 on origin/main (owner-pushed 16:34Z). CPU-only, no GPU touch (owner reserve stands). Urgent: the owner's arm/route decision may land any time and the launch path must be green against phase 5a first. || DONE 17:1xZ 08-15 (work session 16:50): merged 351c56e, check.py 922 green; conflict = probe_unfreeze_gradflow (upstream inlined ProbeArgs, our TrainArgs image_augment line obsolete -&gt; theirs); SEAM FINDINGS: (1) --expert-init RENAMED --flow-decoder-init (inherit=default=same semantics); (2) FORMAT BREAK - new --init-from refuses legacy bijou_config.json conversions -&gt; both migrated via convert_legacy (hard links, validate green): molmoact2_base_corrected_stats_v0_vla + molmoact2_grasp_sft_stagec_ar_step2000_vla; (3) continue-from-2k arm made REAL: fresh convert_molmoact2 step2000-hf --norm-stats-from corrected -&gt; molmoact2_grasp_sft_stagec_ar_step2000_corrected_v1 (new format, trained expert b778bbf2, corrected rows + stats_note baked); (4) BOTH retrain arms full-parse green vs the family CLI (family inferred molmoact2_flow); (5) image-augment p=0 bitwise oracle 11 passed + gradflow probe anchors exact (27.8546) post-merge; (6) parents[2]-&gt;[3] fix NOT upstream (main still parents[2]) - our carry stands, cherry-pick note remains. Pre-reg SS3 amended (--flow-decoder-init + _vla path) + SS8 amendment section. Launch stays owner-gated (arm pick + route + GPU release).
+
+<details><summary>full record</summary>
+
+Merge main phase 5a (a51b172, 'bijou.train on the family CLI + the VLA checkpoint format', +3115/-2046 across 20 files incl. train args, checkpoint_backbone, convert_molmoact2, test_train_vla) into fontaine; re-run check.py; re-verify the retrain-prep seams exactly as the 15:37Z 08-15 post did (read_checkpoint_info on both real conversions, convert_molmoact2 --norm-stats-from, bijou.train --objective/--backbone-text-lr/--init-from/--expert-init, --image-augment p=0 bitwise oracle, convert_legacy+validate_checkpoint smoke); confirm the pre-registered retrain launch commands still parse against the new family CLI (391-line test_train_args churn suggests arg surface moved). Also confirm whether the parents[2]-&gt;parents[3] bank_processor_goldens fix from bb0f036 landed upstream or still needs the cherry-pick note.
+
+</details>
+
+---
 
 **`wrist-screen-results-post`** · `cpu`
 
