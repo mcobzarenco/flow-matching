@@ -16,7 +16,6 @@ load-bearing guarantees:
 from __future__ import annotations
 
 import dataclasses
-import json
 from typing import Any
 
 import pytest
@@ -238,35 +237,26 @@ def test_config_roundtrip_and_backcompat() -> None:
     assert not FlowDecoderSection.from_dict(legacy).target_time_embed
 
 
-def test_init_from_guard_sanctions_extension_direction_only(
-    tmp_path: Any,
-    capsys: Any,
-) -> None:
+def test_phi_s_schema_directions() -> None:
+    """The φ_s extension's schema facts behind the sanctioned warm
+    start: a pre-field section parses unextended, and extended vs
+    unextended sections differ ONLY in the extension key — the property
+    the train path's exactly-φ_s-keys load tolerance leans on (the CLI
+    direction rules live in tests/test_train_args.py:
+    test_snapflow_implies_phi_s_where_mutable /
+    test_resume_refuses_distill; the strict-load key tolerance in
+    tests/test_train_vla.py)."""
     from bijou.loading import decoder_schema_dict
-    from bijou.train import ensure_matching_decoder_config
 
     teacher_dict = decoder_schema_dict(build(TimeConditioning.ADARMS))
     extended_dict = decoder_schema_dict(build_extended())
-
-    # Extension over a pre-field teacher checkpoint (no key at all).
+    differing = {
+        key
+        for key in set(teacher_dict) | set(extended_dict)
+        if teacher_dict.get(key) != extended_dict.get(key)
+    }
+    assert differing == {"target_time_embed"}
     saved = {k: v for k, v in teacher_dict.items() if k != "target_time_embed"}
-    (tmp_path / "bijou_config.json").write_text(json.dumps({"decoder": saved}))
-    returned = ensure_matching_decoder_config(build_extended(), tmp_path)
-    assert not returned.get("target_time_embed", False)
-    assert "target-time extension" in capsys.readouterr().out
+    from bijou.loading import FlowDecoderSection
 
-    # Reverse direction (dropping trained φ_s) is a hard error.
-    (tmp_path / "bijou_config.json").write_text(
-        json.dumps({"decoder": extended_dict}),
-    )
-    with pytest.raises(SystemExit, match="mismatch"):
-        ensure_matching_decoder_config(build(TimeConditioning.ADARMS), tmp_path)
-
-    # Any OTHER diff alongside the extension still fails loud.
-    mismatched = dict(saved)
-    mismatched["chunk_size"] = saved["chunk_size"] + 1
-    (tmp_path / "bijou_config.json").write_text(
-        json.dumps({"decoder": mismatched}),
-    )
-    with pytest.raises(SystemExit, match="mismatch"):
-        ensure_matching_decoder_config(build_extended(), tmp_path)
+    assert not FlowDecoderSection.from_dict(saved).target_time_embed

@@ -1,44 +1,54 @@
-"""Train Bijou (flow-matching action expert) on a LeRobot v3 dataset.
+"""Train a Bijou VLA family on a LeRobot v3 dataset.
 
-The frozen truncated backbone encodes the observation per batch
-(no grad); the expert is optimized with the π0/SmolVLA flow-matching recipe:
-τ ~ Beta(1.5, 1) (scaled into (0, 1)), x_τ = τ·ε + (1−τ)·actions, MSE against
-the velocity target ε − actions, over the full chunk — episode-boundary
-chunks carry repeat-last-action targets (hold still after task completion)
-rather than masked padding. Actions and state are MEAN_STD-normalized
-**per dataset** (each sample uses its own dataset's stats, the π0/SmolVLA
-convention): 59–95% of the
-aggregate action variance across the community collections is between-dataset
-rig offsets that images cannot see, and normalizing them away is what makes
-the state→action identity learnable (measured: aggregate normalization left
-the trained model behind the state-copy baseline). Checkpoints store the
-per-dataset stats table plus a count-weighted aggregate as a fallback for
-rigs without stats; inference must unnormalize with the deployment rig's
-stats.
+A run trains ONE model family (``--family``, §5 of
+docs/architecture.md): the family class owns assembly, precision
+policy and loss composition; this module owns data, optimizer policy,
+the DDP-correct two-phase loop, and checkpoints. Fresh runs declare
+the family; under ``--init-from``/``--resume`` it is checkpoint-
+inferred (the flag is refused, like every architecture flag).
 
-The prompt is the instruction sandwich discussed in the design:
-``[instruction][cam_1]...[cam_N][instruction]`` inside a user chat turn,
-giving instruction-conditioned image KV and image-conditioned instruction KV
-under causal attention.
+The two-phase loop (the DDP contract): per step,
+``counts = model.loss_counts(batch)`` (data-only) → all-reduce →
+``report = model(batch, counts=counts)`` → ``report.objective``
+backward. The objective is the per-rank scalar whose DDP mean is the
+global objective, exact under uneven per-rank counts; chunked backward
+(``--backward-chunks``) forwards micro-slices against the SAME summed
+counts, so the accumulated gradient equals the unchunked one up to fp
+reduction order.
+
+Actions and state are MEAN_STD-normalized **per dataset** (each sample
+uses its own dataset's stats, the π0/SmolVLA convention): 59–95% of the
+aggregate action variance across the community collections is
+between-dataset rig offsets that images cannot see, and normalizing
+them away is what makes the state→action identity learnable (measured:
+aggregate normalization left the trained model behind the state-copy
+baseline). Checkpoints store the per-dataset stats table plus a
+count-weighted aggregate as a fallback for rigs without stats;
+inference must unnormalize with the deployment rig's stats.
 
 Training data is selected with ``--train-data`` via the shared selection
 pipeline in ``bijou.data`` (also used by ``bijou.eval``): collection roots
 and dataset dirs, loud drops for incompatible/corrupt datasets, per-dataset
 stats attachment, chat-templated prompt collation.
 
+Checkpoints are written in the VLA format (``bijou/checkpoint.py``):
+``metadata.json`` + per-component safetensors + the always-present
+backbone (trained snapshot, or a hard-linked pristine mirror).
+
 Usage::
 
-    uv run python -m bijou.train \
+    uv run python -m bijou.train --family gemma_flow \
         --train-data ~/datasets/mcobzarenco/community_dataset_v2_v3 \
         --device cuda --steps 5000
 
-    # Multi-GPU: one full replica + optimizer per GPU (DDP over the expert
-    # only; the frozen backbone is never synced). --batch-size and
-    # --num-workers are PER RANK; logged loss and eval MAE are all-reduced
-    # across ranks (the eval set is sharded); logging/checkpoints happen on
-    # rank 0. Without torchrun the script runs exactly as before.
+    # Multi-GPU: one full replica + optimizer per GPU (DDP). --batch-size
+    # and --num-workers are PER RANK; logged loss and eval MAE are
+    # all-reduced across ranks (the eval set is sharded);
+    # logging/checkpoints happen on rank 0. Without torchrun the script
+    # runs exactly as before.
     MALLOC_ARENA_MAX=2 MALLOC_MMAP_THRESHOLD_=131072 \
     uv run torchrun --standalone --nproc-per-node=4 -m bijou.train \
+        --family gemma_flow \
         --train-data ~/datasets/mcobzarenco/community_dataset_v2_v3 \
         --device cuda --steps 20000
 """
@@ -60,15 +70,15 @@ from contextlib import nullcontext
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, TextIO, override
+from typing import Any, TextIO
 
 import matplotlib
 import matplotlib.pyplot as plt
 import torch
 import transformers
 import wandb
-from safetensors.torch import load_file, save_file
-from torch import Tensor
+from safetensors.torch import load_file
+from torch import Tensor, nn
 from torch.distributed.optim import ZeroRedundancyOptimizer
 
 from .annotations import ConditionField
@@ -77,6 +87,8 @@ from .async_save import (
     capture_optimizer_state,
     copy_to_cpu,
 )
+from .checkpoint import VLAMetadata, backbone_directory, read_metadata
+from .checkpoint import write_checkpoint as write_vla_checkpoint
 from .data import (
     DatasetStats,
     EpisodeSplit,
@@ -87,36 +99,9 @@ from .data import (
     worker_init,
 )
 from .fast.molmoact2 import MolmoAct2FastTokenizer
-from .loading import (
-    BackboneConfig,
-    BackboneDepth,
-    CheckpointInfo,
-    CheckpointMetadata,
-    GemmaPromptConfig,
-    Molmo2PromptConfig,
-    MolmoAct2PromptConfig,
-    MolmoFlowDecoderConfig,
-    ar_backbone_config_from_dict,
-    backbone_snapshot,
-    build_gemma_encoder,
-    build_molmo_flow_decoder,
-    build_molmoact2_ar_decoder,
-    checkpoint_sections,
-    decoder_schema_dict,
-    default_expert_config,
-    from_backbone,
-    load_adapted_backbone,
-    load_backbone_init,
-    molmo_flow_state_table,
-    molmoact2_ar_config_from_flow_section,
-    molmoact2_fresh_flow_section,
-    read_checkpoint_info,
-    resolve_action_codec,
-)
-from .model import BijouModel
+from .loading import CheckpointTrainArgs, molmo_flow_state_table
 from .modelling.aux_text import (
     AUX_TEMPLATE_VERSION,
-    SUFFIX_FORMAT,
     AuxDecodeConfig,
     AuxField,
     AuxGeneration,
@@ -128,20 +113,19 @@ from .modelling.codecs import ActionCodec, MolmoAct2ActionCodec
 from .modelling.decoders.ar_gemma import GemmaARDecoder
 from .modelling.decoders.ar_molmo2 import Molmo2ARDecoder
 from .modelling.decoders.ar_molmoact2 import MolmoAct2ARDecoder
-from .modelling.decoders.ar_suffix import ARDecoderConfig, ARSuffixDecoder
+from .modelling.decoders.ar_suffix import (
+    MOLMOACT2_SUFFIX_FORMAT,
+    SUFFIX_FORMAT,
+    ARDecoderConfig,
+)
 from .modelling.decoders.flow import (
     SNAPFLOW_ALPHA,
     SNAPFLOW_LAMBDA,
-    FlowDecoder,
     SelfAttentionMode,
     TimeConditioning,
 )
-from .modelling.decoders.molmo_flow import (
-    MolmoFlowDecoder,
-    load_expert_state,
-    molmo_flow_loss_sums,
-)
-from .modelling.encoders.gemma4 import PROMPT_FORMAT, GemmaEncoder, GemmaInputsCollator
+from .modelling.decoders.molmo_flow import load_expert_state
+from .modelling.encoders.gemma4 import PROMPT_FORMAT, GemmaInputsCollator
 from .modelling.encoders.molmo2 import (
     MOLMO2_PROMPT_FORMAT,
     Molmo2Encoder,
@@ -150,24 +134,85 @@ from .modelling.encoders.molmo2 import (
 from .modelling.encoders.molmoact2 import MolmoAct2Encoder, MolmoAct2InputsCollator
 from .modelling.gemma4.config import Gemma4Config
 from .modelling.gemma4.loading import load_config, resolve_checkpoint_dir
-from .modelling.gemma4.model import Gemma4Model
 from .modelling.interface import (
     BatchInputs,
     CollatedBatch,
     Collator,
-    ObservationMemory,
+    SamplingMethod,
 )
+from .modelling.molmo2.config import Molmo2TextConfig
 from .modelling.molmo2.loading import load_config as load_molmo2_config
 from .modelling.molmo2.model import Molmo2Model
 from .modelling.molmo2.model import load_model as load_molmo2_model
 from .modelling.molmo2.tokenizer import Molmo2TextTokenizer, newline_carrier_ids
+from .models.gemma_ar import GemmaARVLA
+from .models.gemma_flow import GemmaFlowVLA
+from .models.molmo2_ar import Molmo2ARVLA
+from .models.molmoact2_ar import MolmoAct2ARVLA
+from .models.molmoact2_flow import MolmoAct2FlowVLA, molmoact2_prompt_of
+from .models.molmoact2_joint import JointObjective, MolmoAct2JointVLA
+from .models.objectives import ARObjective, FlowObjective, SnapflowObjective
+from .models.serving import ARServing, FlowServing
+from .sections import (
+    BACKBONE_UNSAVED_KEYS,
+    BackboneDepth,
+    FlowDecoderSection,
+    GemmaPromptConfig,
+    Molmo2PromptConfig,
+    MolmoAct2PromptConfig,
+    MolmoFlowDecoderConfig,
+    build_gemma_encoder,
+    build_gemma_flow_parts,
+    build_molmo_flow_decoder,
+    build_molmoact2_ar_decoder,
+    decoder_schema_dict,
+    default_expert_config,
+    expert_config_from_architecture,
+    load_backbone_state,
+    molmoact2_ar_config_from_flow_section,
+    molmoact2_fresh_flow_section,
+    parse_decoder_config,
+    parse_prompt_config,
+    resolve_action_codec,
+)
+from .vla import (
+    ARVLA,
+    VLA,
+    FlowVLA,
+    NarratingVLA,
+    VLAFamily,
+)
 
 DEFAULT_BACKBONE = "google/gemma-4-e2b-it"
+
+#: The closed union of trainable family classes — what main() builds
+#: and the load/save helpers consume (attribute access needs the
+#: concrete union; generic consumers take VLA[Any]).
+type TrainableVLA = (
+    GemmaFlowVLA
+    | GemmaARVLA
+    | Molmo2ARVLA
+    | MolmoAct2FlowVLA
+    | MolmoAct2ARVLA
+    | MolmoAct2JointVLA
+)
 # Rows in the wandb probe tables (each costs camera images + a
 # matplotlib figure per eval — TWICE for aux runs, the fast-path table
 # and the all-fields table): a spot check, deliberately small — 32 rows
 # of figures were a measured ~34s/eval rank-0 straggler (2026-08-03).
 EVAL_TABLE_ROWS = 12
+
+#: Families whose action decoder is the trunk-suffix role (they consume
+#: --fast-tokenizer and may train aux value lines).
+AR_SUFFIX_FAMILIES = (VLAFamily.GEMMA_AR.value, VLAFamily.MOLMO2_AR.value)
+#: Families riding the MolmoAct2 prompt format — inherit-only (they
+#: train from a converted checkpoint; --objective selects the pathway
+#: under --init-from).
+MOLMOACT2_FAMILIES = (
+    VLAFamily.MOLMOACT2_FLOW.value,
+    VLAFamily.MOLMOACT2_AR.value,
+    VLAFamily.MOLMOACT2_JOINT.value,
+)
 
 
 class ArchSection(StrEnum):
@@ -178,21 +223,23 @@ class ArchSection(StrEnum):
     PROMPT = "prompt"
     DECODER = "decoder"
     # Zero-init structure additions whose extended model IS the source
-    # checkpoint until trained (φ_s, the joint-CE rider tables): legal
-    # to declare on --init-from, refused on --resume (the optimizer
-    # param groups would not match).
+    # checkpoint until trained (φ_s), plus the molmoact2 objective
+    # selector: legal to declare on --init-from, refused on --resume
+    # (the optimizer param groups / recorded objective would not match).
     EXTENSION = "extension"
 
 
-#: The checkpoint-inferred architecture flags: TrainArgs field ->
-#: (CLI flag, section). Under --resume ALL of these are refused as
-#: flags and resolve from the checkpoint; under --init-from, BACKBONE/
-#: PROMPT flags are refused (inherited sections), DECODER flags are
-#: legal only when --decoder itself is passed (the section-replacement
-#: declarator — the stage-2 path), EXTENSION flags stay legal.
-#: This is the WRITE-side encoding of "what rebuilds the model"; the
-#: read side is loading.CheckpointTrainArgs — tests/test_train_args.py
-#: pins the two to each other.
+#: The checkpoint-inferred architecture flags: raw-namespace attribute ->
+#: (CLI flag, section). Under --resume ALL of these are refused as flags
+#: and resolve from the checkpoint; under --init-from, BACKBONE/PROMPT/
+#: DECODER flags are refused (inherited sections — a fresh decoder on an
+#: inherited trunk is --backbone-init-from + --family), EXTENSION flags
+#: stay legal. ``--family`` itself is handled beside this table: required
+#: on fresh runs, refused whenever a checkpoint is given (metadata is the
+#: source). Every entry except ``objective`` is a TrainArgs field; the
+#: read side is the checkpoint metadata (family, objective) plus
+#: loading.CheckpointTrainArgs (the recorded train_args) —
+#: tests/test_train_args.py pins the encodings to each other.
 ARCH_FLAGS: dict[str, tuple[str, ArchSection]] = {
     "backbone": ("--backbone", ArchSection.BACKBONE),
     "max_soft_tokens": ("--max-soft-tokens", ArchSection.PROMPT),
@@ -201,7 +248,6 @@ ARCH_FLAGS: dict[str, tuple[str, ArchSection]] = {
         "--prompt-generate-bracket",
         ArchSection.PROMPT,
     ),
-    "decoder": ("--decoder", ArchSection.DECODER),
     "decoder_hidden": ("--decoder-hidden", ArchSection.DECODER),
     "decoder_heads": ("--decoder-heads", ArchSection.DECODER),
     "decoder_intermediate": ("--decoder-intermediate", ArchSection.DECODER),
@@ -212,22 +258,22 @@ ARCH_FLAGS: dict[str, tuple[str, ArchSection]] = {
     "time_conditioning": ("--time-conditioning", ArchSection.DECODER),
     "fast_tokenizer": ("--fast-tokenizer", ArchSection.DECODER),
     "target_time_embed": ("--target-time-embed", ArchSection.EXTENSION),
-    # The molmoact2 objective matrix: EXTENSION so --init-from may
-    # pick any pathway of a
-    # 'both'-mode source (the transition matrix), while --resume stays
-    # locked to the recorded objective (the standard resume refusal).
+    # The molmoact2 pathway selector: EXTENSION so --init-from may pick
+    # any pathway of a source checkpoint (the transition matrix), while
+    # --resume stays locked to the recorded family.
     "objective": ("--objective", ArchSection.EXTENSION),
 }
 
 #: Fresh-run values for the ARCH_FLAGS sentinels (argparse defaults
 #: moved here so "omitted" is distinguishable from "passed the
-#: default" — the refusal rule needs explicitness).
+#: default" — the refusal rule needs explicitness). ``objective`` has
+#: no fresh-run value: the flag is an --init-from pathway selector and
+#: is refused on fresh runs.
 ARCH_DEFAULTS: dict[str, Any] = {
     "backbone": DEFAULT_BACKBONE,
     "max_soft_tokens": 140,
     "max_crops": 1,
     "prompt_generate_bracket": False,
-    "decoder": "flow",
     "decoder_hidden": 768,
     "decoder_heads": 6,
     "decoder_intermediate": 3072,
@@ -238,8 +284,44 @@ ARCH_DEFAULTS: dict[str, Any] = {
     "time_conditioning": TimeConditioning.ADDITIVE.value,
     "fast_tokenizer": None,
     "target_time_embed": False,
-    "objective": "flow",
+    "objective": None,
 }
+
+
+@dataclass(frozen=True, slots=True)
+class CheckpointResolution:
+    """The read-side facts TrainArgs resolution needs from a --resume/
+    --init-from checkpoint — parsed off the VLA metadata by
+    :func:`resolve_checkpoint` (I/O stays at the CLI edge; tests
+    fabricate this directly)."""
+
+    family: VLAFamily
+    backbone: str
+    step: int
+    # The recorded objective's tagged-dict kind ("flow", "snapflow",
+    # "ar", "joint") — locked under --resume.
+    objective_kind: str
+    train_args: CheckpointTrainArgs
+    condition_fields: tuple[str, ...]
+    generate_bracket: bool
+
+
+def resolve_checkpoint(checkpoint: Path) -> CheckpointResolution:
+    """Read a VLA checkpoint's metadata into the resolution facts —
+    metadata only, no weights touched. Converted legacy checkpoints
+    carry their historical train_args key spellings;
+    :class:`~bijou.loading.CheckpointTrainArgs` normalizes both."""
+    metadata = read_metadata(checkpoint)
+    prompt = parse_prompt_config(dict(metadata.components["prompt"]["config"]))
+    return CheckpointResolution(
+        family=metadata.family,
+        backbone=metadata.backbone_id,
+        step=metadata.step,
+        objective_kind=str(metadata.objective.get("kind", "flow")),
+        train_args=CheckpointTrainArgs.from_dict(metadata.train_args),
+        condition_fields=prompt.condition_fields,
+        generate_bracket=prompt.generate_bracket,
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -250,6 +332,11 @@ class TrainArgs:
     camera_counts: tuple[int, ...] | None
     holdout_episodes: float
     split_seed: int
+    # The model family this run trains (VLAFamily value). Fresh runs
+    # declare it; under --init-from/--resume it is checkpoint-inferred
+    # (metadata.family, transformed by --objective under --init-from
+    # for the molmoact2 pathway matrix).
+    family: str
     backbone: str
     save_dir: Path
     init_from: Path | None
@@ -261,11 +348,12 @@ class TrainArgs:
     # explicit reproduction-only escape hatch.
     allow_same_seed_resume: bool
     # Stage-2: inherit ONLY the (frozen or re-trained) backbone + prompt
-    # state_proj from a checkpoint; the decoder builds fresh — decoder
-    # family/config deliberately unconstrained by the source checkpoint.
+    # state_proj from a checkpoint; the decoder builds fresh under this
+    # run's --family — deliberately unconstrained by the source.
     backbone_init_from: Path | None
-    # Render [generate|actions] in prompts for non-AR decoders (implied
-    # and always-on for ar_backbone): stage-2 trunk consistency.
+    # Render [generate|actions] in prompts for non-AR families (implied
+    # and always-on for the AR-suffix families): stage-2 trunk
+    # consistency.
     prompt_generate_bracket: bool
     instruction: str | None
     cameras: tuple[str, ...] | None
@@ -273,21 +361,23 @@ class TrainArgs:
     max_soft_tokens: int
     max_crops: int
     stream_counts: tuple[int, ...]
-    # Knowledge insulation on the molmo_flow KV seam (§8.13):
-    # detach the extracted per-layer K/V before the expert. Run
-    # property; molmo_flow only.
-    insulate_expert: bool
+    # Knowledge insulation on the molmo_flow KV seam: detach the
+    # extracted per-layer K/V before the flow decoder. Part of the
+    # joint objective payload; on molmoact2_flow it is legal only with
+    # a frozen trunk (where it is a numerical no-op, kept for
+    # provenance).
+    insulate_flow: bool
     self_attention_mode: str
     time_conditioning: str
     # SnapFlow φ_s target-time embedding on the flow decoder (implied by
     # --distill snapflow; loadable over an unextended checkpoint — the
     # sanctioned additive warm start).
     target_time_embed: bool
-    # Training objective variant: None = the decoder's standard
-    # objective; "snapflow" = the self-distillation loss mix (flow only,
-    # α/λ frozen in bijou.modelling.decoders.flow).
+    # Training objective variant: None = the family's standard
+    # objective; "snapflow" = the self-distillation mix (gemma_flow
+    # only, α/λ frozen in bijou.modelling.decoders.flow). Recorded in
+    # the checkpoint's objective metadata; locked under --resume.
     distill: str | None
-    decoder: str
     fast_tokenizer: str | None
     aux_fields: tuple[str, ...] | None
     aux_loss_weight: float
@@ -317,7 +407,7 @@ class TrainArgs:
     # unchunked path). Memory fallback only: sample composition,
     # effective batch and the LR schedule are invariant, and the
     # per-step gradient equals the unchunked one up to fp reduction
-    # order (sum-form losses over full-batch normalizers).
+    # order (each slice forwards against the SAME summed counts).
     backward_chunks: int
     # Shard optimizer state across DDP ranks (ZeRO stage 1,
     # ZeroRedundancyOptimizer). Update semantics are exact — each
@@ -374,34 +464,26 @@ class TrainArgs:
     # (unlike every field above) so checkpoints predating the flag
     # replay their train_args cleanly.
     sync_save: bool = False
-    # The molmoact2 objective matrix (molmo_flow-family only):
-    # 'flow' = the expert pathway
-    # (the historical implicit value — defaulted so recorded train_args
-    # predating the field replay cleanly), 'ar' = the trunk's discrete
-    # head (MolmoAct2ARDecoder — zero decoder parameters, trains via
-    # --backbone-text-lr), 'joint' = both, L_flow + λ·L_CE with the
-    # KV-before-CE ordering (flow extracts prompt-only KV BEFORE the
-    # CE suffix appends to the cache).
-    objective: str = "flow"
     # λ of the joint objective — a run hyperparameter like the LRs
-    # (re-passable on --resume; recorded for provenance, never
-    # checkpoint-inferred). 1.0 = the KI no-tuning default.
+    # (re-passable on --resume; recorded for provenance and in the
+    # objective payload). 1.0 = the KI no-tuning default.
     joint_ce_weight: float = 1.0
-    # The flow expert's weight source under --init-from (molmoact2
-    # flow/joint): 'inherit' = the source checkpoint's expert;
+    # The flow decoder's weight source under --init-from (molmoact2
+    # flow/joint): 'inherit' = the source checkpoint's flow decoder;
     # 'fresh' = released-shape adaLN-Zero init (the stage-2 recipe —
-    # REQUIRED from ar-only sources, which carry no expert); any other
-    # value = a checkpoint dir whose expert.safetensors loads under a
-    # config-equality guard (the two-source init).
-    expert_init: str = "inherit"
+    # REQUIRED from ar-only sources, which carry no flow decoder); any
+    # other value = a VLA checkpoint dir whose flow_decoder.safetensors
+    # loads under a config-equality guard (the two-source init).
+    flow_decoder_init: str = "inherit"
     # "adamw" (default) or "adamc" — AdamC (arXiv 2506.02285) is AdamW
     # with a time-varying decay coefficient on the hidden ("normalized")
     # layers: λ̂_t = λ·γ_t/γ_max, written into the corrected param
     # groups' weight_decay before every step so the stock (fused) AdamW
-    # kernel applies it bit-exactly. Output-head parameters keep
-    # standard AdamW decay per the paper's Algorithm 1; 1-D parameters
-    # stay undecayed as everywhere else. Defaulted (like sync_save) so
-    # checkpoints predating the flag replay their train_args cleanly.
+    # kernel applies it bit-exactly. Output-head parameters
+    # (``VLA.output_head_parameters``) keep standard AdamW decay per the
+    # paper's Algorithm 1; 1-D parameters stay undecayed as everywhere
+    # else. Defaulted (like sync_save) so checkpoints predating the flag
+    # replay their train_args cleanly.
     optimizer: str = "adamw"
     # Raw --dataset-repeat PATTERN=COUNT specs (bijou.data.parse_repeat_specs
     # parses at use): replicate matching datasets in the concatenated train
@@ -428,6 +510,11 @@ class TrainArgs:
         # checkpoint replay). parse_repeat_specs raises ValueError with
         # the offending spec — exactly this method's contract.
         parse_repeat_specs(self.dataset_repeat)
+        families = {f.value for f in VLAFamily}
+        if self.family not in families:
+            raise ValueError(
+                f"unknown family {self.family!r} — one of {sorted(families)}",
+            )
         if self.rewarmup_steps > 0 and self.resume is None:
             raise ValueError(
                 "--rewarmup-steps anchors at the resume step — it requires "
@@ -448,7 +535,7 @@ class TrainArgs:
         if self.eval_samples is not None and self.eval_samples < 1:
             raise ValueError("--eval-samples must be >= 1")
         if self.decoder_lr <= 0:
-            raise ValueError("--decoder-lr must be > 0 (the decoder always trains)")
+            raise ValueError("--decoder-lr must be > 0")
         for name, value in (
             ("--backbone-text-lr", self.backbone_text_lr),
             ("--backbone-vision-lr", self.backbone_vision_lr),
@@ -458,64 +545,54 @@ class TrainArgs:
                     f"{name} {value} is not a usable learning rate — omit "
                     "the flag entirely to keep that component frozen",
                 )
-        if self.decoder not in ("flow", "ar_backbone", "molmo_flow"):
-            # The CLI's choices= already refuses these; direct
-            # construction gets the same single encoding (ar_fast
-            # retired 2026-08-13, tag pre-decoder-simplify).
+        if self.family in AR_SUFFIX_FAMILIES and self.fast_tokenizer is None:
             raise ValueError(
-                f"unknown decoder kind {self.decoder!r} — one of flow, "
-                "ar_backbone, molmo_flow (ar_fast was retired; load its "
-                "checkpoints from git history at pre-decoder-simplify)",
+                f"--family {self.family} requires --fast-tokenizer (the "
+                "suffix decoder's action codec)",
             )
-        if self.decoder == "ar_backbone" and self.fast_tokenizer is None:
-            raise ValueError("--decoder ar_backbone requires --fast-tokenizer")
-        if self.decoder in ("flow", "molmo_flow") and self.fast_tokenizer is not None:
+        if self.family not in AR_SUFFIX_FAMILIES and self.fast_tokenizer is not None:
             raise ValueError(
-                "--fast-tokenizer is only consumed by the AR decoders",
-            )
-        if self.objective not in ("flow", "ar", "joint"):
-            raise ValueError(
-                f"unknown objective {self.objective!r} — one of flow, ar, "
-                "joint (the molmoact2 objective matrix)",
-            )
-        if self.objective != "flow" and self.decoder != "molmo_flow":
-            raise ValueError(
-                "--objective selects among the molmoact2 family's trained "
-                "pathways; other families pick ONE decoder with --decoder "
-                "(there is no second pathway to select)",
-            )
-        if self.objective in ("ar", "joint") and self.backbone_text_lr is None:
-            raise ValueError(
-                f"--objective {self.objective} trains the trunk's own "
-                "action rows (the discrete head has ZERO decoder "
-                "parameters) — --backbone-text-lr is required",
+                "--fast-tokenizer is only consumed by the AR-suffix "
+                "families (gemma_ar, molmo2_ar) — the molmoact2 discrete "
+                "pathway records its released codec in the checkpoint",
             )
         if self.joint_ce_weight <= 0:
             raise ValueError(
                 f"--joint-ce-weight {self.joint_ce_weight} must be > 0 "
-                "(λ = 0 is spelled --objective flow)",
+                "(λ = 0 is the flow pathway: --objective flow)",
             )
-        if self.joint_ce_weight != 1.0 and self.objective != "joint":
+        if self.joint_ce_weight != 1.0 and self.family != "molmoact2_joint":
             raise ValueError(
                 "--joint-ce-weight scales the joint objective's CE term — "
-                "it requires --objective joint",
+                "it requires the molmoact2_joint family (--objective joint)",
             )
-        if self.expert_init != "inherit" and self.objective == "ar":
+        if self.flow_decoder_init != "inherit" and self.family not in (
+            "molmoact2_flow",
+            "molmoact2_joint",
+        ):
             raise ValueError(
-                "--expert-init selects the flow expert's weight source; "
-                "--objective ar builds no expert — drop the flag",
+                "--flow-decoder-init selects the molmoact2 flow decoder's "
+                f"weight source; family {self.family} builds no such "
+                "decoder — drop the flag",
             )
-        if self.decoder == "molmo_flow":
-            # Inherit-only (§8.13 step 5): the decoder is never declared
-            # fresh — it resolves from an --init-from/--resume checkpoint
-            # (a converted MolmoAct2 artifact or a molmo_flow-trained
-            # descendant). From-scratch molmo_flow on bijou prompts is
-            # the step-7 experiment, deliberately unwired.
+        if (
+            self.family in ("molmoact2_ar", "molmoact2_joint")
+            and self.backbone_text_lr is None
+        ):
+            raise ValueError(
+                f"family {self.family} trains the trunk's own action rows "
+                "(the discrete decoder has ZERO parameters) — "
+                "--backbone-text-lr is required",
+            )
+        if self.family in MOLMOACT2_FAMILIES:
+            # Inherit-only: the molmoact2 compositions rebuild from a
+            # converted checkpoint's sections; from-scratch molmoact2 on
+            # bijou prompts is a deliberate non-goal.
             if self.init_from is None and self.resume is None:
                 raise ValueError(
-                    "molmo_flow trains from a checkpoint only (--init-from "
-                    "a converted MolmoAct2 checkpoint, or --resume); "
-                    "from-scratch molmo_flow is §8.13 step 7",
+                    f"family {self.family} trains from a checkpoint only "
+                    "(--init-from a converted MolmoAct2 checkpoint, or "
+                    "--resume)",
                 )
             if self.condition_fields is not None:
                 raise ValueError(
@@ -525,37 +602,42 @@ class TrainArgs:
             # Deliberately NOT refused: --camera-kind-dropout (inert —
             # this format never renders kinds) and --instruction-augment
             # (task text renders; judge rewrites are format-compatible).
-            if self.objective == "ar" and self.insulate_expert:
+            if self.family == "molmoact2_ar" and self.insulate_flow:
                 raise ValueError(
-                    "--insulate-expert is the flow KV seam; --objective ar "
-                    "builds no expert to insulate",
+                    "--insulate-flow is the flow KV seam; molmoact2_ar "
+                    "builds no flow decoder to insulate",
                 )
             if (
-                self.objective == "flow"
+                self.family == "molmoact2_flow"
                 and self.backbone_trained
-                and self.insulate_expert
+                and self.insulate_flow
             ):
                 raise ValueError(
-                    "--insulate-expert with an unfrozen trunk trains the "
-                    "trunk on NOTHING under --objective flow (insulated "
-                    "flow is its only objective) — --objective joint gives "
-                    "the trunk the CE rider, or freeze the trunk / open "
-                    "the seam",
+                    "--insulate-flow with an unfrozen trunk trains the "
+                    "trunk on NOTHING under the flow objective (insulated "
+                    "flow is its only term) — --objective joint gives the "
+                    "trunk the CE rider, or freeze the trunk / open the "
+                    "seam",
                 )
-        elif self.insulate_expert:
+        elif self.insulate_flow:
             raise ValueError(
-                "--insulate-expert is the molmo_flow KV seam; other "
-                "decoders have no insulable conditioning seam (the flow "
+                "--insulate-flow is the molmo_flow KV seam; other families "
+                "have no insulable conditioning seam (the gemma flow "
                 "decoder trains against a frozen trunk)",
             )
-        if self.decoder != "flow" and self.time_conditioning != "additive":
+        if self.family != "gemma_flow" and self.time_conditioning != "additive":
             raise ValueError(
-                "--time-conditioning is flow-only (AR decoders have no τ)",
+                "--time-conditioning is gemma_flow-only (other families "
+                "have no τ-conditioned decoder to configure)",
             )
-        if self.decoder != "flow" and self.distill is not None:
-            raise ValueError("--distill is flow-only (it distills the velocity field)")
-        if self.decoder != "flow" and self.target_time_embed:
-            raise ValueError("--target-time-embed is flow-only (φ_s conditions τ)")
+        if self.family != "gemma_flow" and self.distill is not None:
+            raise ValueError(
+                "--distill is gemma_flow-only (it distills the velocity field)",
+            )
+        if self.family != "gemma_flow" and self.target_time_embed:
+            raise ValueError(
+                "--target-time-embed is gemma_flow-only (φ_s conditions τ)",
+            )
         if self.distill == "snapflow" and not self.target_time_embed:
             raise ValueError(
                 "--distill snapflow needs the φ_s extension "
@@ -563,9 +645,9 @@ class TrainArgs:
                 "--init-from runs; a resumed checkpoint without φ_s cannot "
                 "grow it (extend via --init-from --target-time-embed)",
             )
-        if self.aux_fields is not None and self.decoder != "ar_backbone":
+        if self.aux_fields is not None and self.family not in AR_SUFFIX_FAMILIES:
             raise ValueError(
-                "--aux-fields is ar_backbone-only (aux rides its suffix)",
+                "--aux-fields rides the AR-suffix families only (gemma_ar, molmo2_ar)",
             )
         if self.aux_fields is not None and len(self.aux_fields) == 0:
             raise ValueError(
@@ -624,22 +706,23 @@ class TrainArgs:
         raw: argparse.Namespace,
         parser: argparse.ArgumentParser,
         *,
-        checkpoint: CheckpointInfo | None,
+        checkpoint: CheckpointResolution | None,
     ) -> TrainArgs:
         """Parse the RAW namespace (arch flags carry None sentinels, so
         explicitness is visible) into a validated TrainArgs.
 
         Owns everything that needs the namespace or the checkpoint:
-        the checkpoint-inferred-flag refusals (ARCH_FLAGS), resolution
-        (sentinel -> ARCH_DEFAULTS on fresh runs, -> the checkpoint's
-        recorded architecture under --resume/--init-from), and the
-        "flag X requires flag Y" explicitness checks. Value invariants
-        of the resolved config live once, in __post_init__ — raised
-        ValueErrors are translated to parser.error here, so the CLI
-        keeps its usage-line UX while direct construction gets the
-        same message. ``checkpoint`` is the parsed metadata of
-        --resume/--init-from (read by the caller: I/O stays at the
-        CLI edge, like from_json wrapping from_dict)."""
+        the family requirement/refusal, the checkpoint-inferred-flag
+        refusals (ARCH_FLAGS), resolution (sentinel -> ARCH_DEFAULTS on
+        fresh runs, -> the checkpoint's recorded architecture under
+        --resume/--init-from, with --objective transforming the
+        molmoact2 family under --init-from), and the "flag X requires
+        flag Y" explicitness checks. Value invariants of the resolved
+        config live once, in __post_init__ — raised ValueErrors are
+        translated to parser.error here, so the CLI keeps its
+        usage-line UX while direct construction gets the same message.
+        ``checkpoint`` is the parsed metadata of --resume/--init-from
+        (read by the caller: I/O stays at the CLI edge)."""
         if raw.init_from is not None and raw.resume is not None:
             parser.error("--init-from and --resume are mutually exclusive")
         if raw.backbone_init_from is not None and (
@@ -652,14 +735,44 @@ class TrainArgs:
         resume = raw.resume is not None
         assert (checkpoint is None) == (raw.init_from is None and not resume)
 
+        # -- family resolution ---------------------------------------------
+        if checkpoint is None:
+            if raw.family is None:
+                parser.error(
+                    "--family is required for fresh runs (one of "
+                    f"{', '.join(f.value for f in VLAFamily)}); under "
+                    "--init-from/--resume it is checkpoint-inferred — "
+                    "drop the flag there",
+                )
+            if raw.objective is not None:
+                parser.error(
+                    "--objective selects among a molmoact2 checkpoint's "
+                    "trained pathways under --init-from — fresh runs "
+                    "declare --family instead",
+                )
+            family = str(raw.family)
+        else:
+            if raw.family is not None:
+                parser.error(
+                    "--family is checkpoint-inferred under --init-from/"
+                    f"--resume (checkpoint records "
+                    f"{checkpoint.family.value!r}) — drop the flag"
+                    + (
+                        "; --objective selects among a molmoact2 checkpoint's pathways"
+                        if not resume
+                        else ""
+                    ),
+                )
+            family = checkpoint.family.value
+
         # -- checkpoint-inferred flag refusals ----------------------------
-        replacing_decoder = raw.decoder is not None and checkpoint is not None
         if checkpoint is not None:
             recorded = dataclasses.asdict(checkpoint.train_args)
             recorded["backbone"] = checkpoint.backbone
+            recorded["objective"] = checkpoint.objective_kind
             recorded["prompt_generate_bracket"] = (
                 checkpoint.generate_bracket
-                or checkpoint.train_args.decoder == "ar_backbone"
+                or checkpoint.family.value in AR_SUFFIX_FAMILIES
             )
             for field, (flag, section) in ARCH_FLAGS.items():
                 if getattr(raw, field) is None:
@@ -672,26 +785,38 @@ class TrainArgs:
                         f"(checkpoint records {field}={shown!r}) — drop the "
                         "flag; --resume rebuilds the recorded architecture",
                     )
-                if section in (ArchSection.BACKBONE, ArchSection.PROMPT):
+                if section is not ArchSection.EXTENSION:
                     parser.error(
                         f"{flag} is inherited from the --init-from checkpoint "
-                        f"(it records {field}={shown!r}) — drop the flag; "
-                        "only the decoder section is replaceable (--decoder)",
+                        f"(it records {field}={shown!r}) — drop the flag; a "
+                        "fresh decoder on an inherited trunk is "
+                        "--backbone-init-from + --family (the stage-2 path)",
                     )
-                if section is ArchSection.DECODER and not replacing_decoder:
-                    parser.error(
-                        f"{flag} is inherited from the --init-from checkpoint "
-                        f"(it records {field}={shown!r}) — drop the flag, or "
-                        "pass --decoder to declare a fresh decoder section "
-                        "(the stage-2 path)",
-                    )
-                # EXTENSION flags (φ_s) stay legal on --init-from:
-                # zero-init additions, the sanctioned warm-start
-                # extensions.
+                # EXTENSION flags (φ_s, --objective) stay legal on
+                # --init-from: zero-init additions and the pathway matrix.
+            if raw.distill is not None and resume:
+                parser.error(
+                    "--distill is part of the recorded objective "
+                    f"(checkpoint records {checkpoint.objective_kind!r}) — "
+                    "locked under --resume; declare a new objective via "
+                    "--init-from",
+                )
+
+        # -- the molmoact2 pathway matrix (--objective under --init-from) --
+        if raw.objective is not None and checkpoint is not None:
+            if checkpoint.family.value not in MOLMOACT2_FAMILIES:
+                parser.error(
+                    "--objective selects among the molmoact2 family's "
+                    f"trained pathways; {checkpoint.family.value} has a "
+                    "single objective",
+                )
+            family = f"molmoact2_{raw.objective}"
 
         # -- resolution ----------------------------------------------------
         arch: dict[str, Any] = {}
-        for field, (_flag, section) in ARCH_FLAGS.items():
+        for field in ARCH_FLAGS:
+            if field == "objective":
+                continue  # folded into the family above
             explicit = getattr(raw, field)
             if explicit is not None:
                 arch[field] = explicit
@@ -699,26 +824,17 @@ class TrainArgs:
             if checkpoint is None:
                 arch[field] = ARCH_DEFAULTS[field]
                 continue
-            # A replaced decoder section resolves fresh (its EXTENSION
-            # riders too — they are decoder-adjacent structure); every
-            # inherited section resolves from the checkpoint.
-            if replacing_decoder and section in (
-                ArchSection.DECODER,
-                ArchSection.EXTENSION,
-            ):
-                arch[field] = ARCH_DEFAULTS[field]
-                continue
             match field:
                 case "backbone":
                     arch[field] = checkpoint.backbone
                 case "prompt_generate_bracket":
-                    # ar_backbone sources rendered the bracket implicitly
+                    # AR-suffix sources rendered the bracket implicitly
                     # (the flag itself is refused there) — inheriting the
                     # recorded False would silently drop it from stage-2
                     # prompts, the exact drift this rule exists to stop.
                     arch[field] = (
                         checkpoint.generate_bracket
-                        or checkpoint.train_args.decoder == "ar_backbone"
+                        or checkpoint.family.value in AR_SUFFIX_FAMILIES
                     )
                 case "self_attention_mode" | "time_conditioning":
                     arch[field] = getattr(checkpoint.train_args, field).value
@@ -726,22 +842,25 @@ class TrainArgs:
                     arch[field] = getattr(checkpoint.train_args, field)
         arch["stream_counts"] = tuple(arch["stream_counts"])
 
-        if raw.distill == "snapflow" and not arch["target_time_embed"]:
+        # -- the recorded objective under --resume --------------------------
+        distill = raw.distill
+        if resume:
+            assert checkpoint is not None
+            distill = "snapflow" if checkpoint.objective_kind == "snapflow" else None
+
+        if distill == "snapflow" and not arch["target_time_embed"]:
             # φ_s is implied — but only where the structure is mutable
             # (fresh decoders); a resumed checkpoint cannot grow it.
-            if resume:
-                parser.error(
-                    "--distill snapflow on a checkpoint without φ_s — the "
-                    "resumed optimizer would not match an extended model; "
-                    "extend via --init-from --target-time-embed first",
-                )
             arch["target_time_embed"] = True
 
-        # -- explicitness checks needing the resolved decoder --------------
-        if arch["decoder"] == "ar_backbone":
-            # The backbone IS the architecture: decoder shape flags and
-            # the cross-attention schedule describe models this run
-            # doesn't build.
+        # -- explicitness checks needing the resolved family ---------------
+        if family in AR_SUFFIX_FAMILIES or family in MOLMOACT2_FAMILIES:
+            # The backbone IS the architecture on the suffix families;
+            # the molmoact2 families rebuild theirs from the source
+            # checkpoint's sections either way: decoder shape flags and
+            # the cross-attention schedule describe models these runs
+            # don't build. (Under --init-from/--resume the ARCH loop
+            # already refused them; this covers fresh AR-suffix runs.)
             for flag, attribute in (
                 ("--decoder-hidden", "decoder_hidden"),
                 ("--decoder-heads", "decoder_heads"),
@@ -751,18 +870,27 @@ class TrainArgs:
             ):
                 if getattr(raw, attribute) is not None:
                     parser.error(
-                        f"{flag} sizes the flow decoder; ar_backbone "
-                        "IS the backbone — drop the flag",
+                        f"{flag} sizes the gemma flow decoder; family "
+                        f"{family} has no such decoder — drop the flag",
                     )
-            if raw.prompt_generate_bracket is not None:
-                parser.error(
-                    "--prompt-generate-bracket is implied (always on) for "
-                    "ar_backbone — drop the flag so runs have one spelling",
-                )
-            # Value-side consistency: the implied bracket IS the
-            # architecture (resolution above already infers True from
-            # ar_backbone sources; fresh ar_backbone runs render it
-            # implicitly downstream either way).
+        if family in AR_SUFFIX_FAMILIES and raw.prompt_generate_bracket is not None:
+            parser.error(
+                "--prompt-generate-bracket is implied (always on) for the "
+                "AR-suffix families — drop the flag so runs have one "
+                "spelling",
+            )
+        if family == "molmoact2_ar" and raw.decoder_lr is not None:
+            # LR-vs-offer reconciliation, the parse-time half: the
+            # family's 'decoder' param group is structurally EMPTY
+            # (parameterless decoder + prompt side), so an explicit LR
+            # for it contradicts the offer. main() re-checks the built
+            # model's actual offer for the backbone groups.
+            parser.error(
+                "--decoder-lr given, but the 'decoder' param group "
+                "receives no gradients under molmoact2_ar's objective "
+                "(the discrete decoder and prompt side own zero "
+                "parameters — the trunk trains via --backbone-text-lr)",
+            )
 
         # -- "flag X requires flag Y" + conditional defaults ---------------
         if raw.aux_dropout is not None and raw.aux_fields is None:
@@ -801,23 +929,22 @@ class TrainArgs:
             else (0.5 if subgoal_conditioned else 0.0)
         )
 
-        # -- the molmoact2 objective matrix (phase 3) ----------------------
-        objective = arch["objective"]
-        if raw.joint_ce_weight is not None and objective != "joint":
+        if raw.joint_ce_weight is not None and family != "molmoact2_joint":
             parser.error(
                 "--joint-ce-weight scales the joint objective's CE term — "
-                f"this run resolves --objective {objective}",
+                f"this run resolves family {family}",
             )
-        if raw.expert_init is not None:
+        if raw.flow_decoder_init is not None:
             if resume:
                 parser.error(
-                    "--expert-init is an --init-from concern — a resumed "
-                    "run's expert weights come from the resume checkpoint",
+                    "--flow-decoder-init is an --init-from concern — a "
+                    "resumed run's flow decoder weights come from the "
+                    "resume checkpoint",
                 )
             if raw.init_from is None:
                 parser.error(
-                    "--expert-init selects the expert's weight source when "
-                    "warm-starting — it requires --init-from",
+                    "--flow-decoder-init selects the flow decoder's weight "
+                    "source when warm-starting — it requires --init-from",
                 )
 
         if raw.backbone_vision_lr is not None and raw.backbone_text_lr is None:
@@ -839,6 +966,7 @@ class TrainArgs:
                 camera_counts=(tuple(raw.camera_counts) if raw.camera_counts else None),
                 holdout_episodes=raw.holdout_episodes,
                 split_seed=raw.split_seed,
+                family=family,
                 backbone=arch["backbone"],
                 save_dir=raw.save_dir,
                 init_from=raw.init_from,
@@ -852,19 +980,19 @@ class TrainArgs:
                 max_soft_tokens=arch["max_soft_tokens"],
                 max_crops=arch["max_crops"],
                 stream_counts=arch["stream_counts"],
-                insulate_expert=raw.insulate_expert,
-                objective=objective,
+                insulate_flow=raw.insulate_flow,
                 joint_ce_weight=(
                     raw.joint_ce_weight if raw.joint_ce_weight is not None else 1.0
                 ),
-                expert_init=(
-                    raw.expert_init if raw.expert_init is not None else "inherit"
+                flow_decoder_init=(
+                    raw.flow_decoder_init
+                    if raw.flow_decoder_init is not None
+                    else "inherit"
                 ),
                 self_attention_mode=arch["self_attention_mode"],
                 time_conditioning=arch["time_conditioning"],
                 target_time_embed=arch["target_time_embed"],
-                distill=raw.distill,
-                decoder=arch["decoder"],
+                distill=distill,
                 fast_tokenizer=arch["fast_tokenizer"],
                 aux_fields=(
                     tuple(raw.aux_fields) if raw.aux_fields is not None else None
@@ -896,7 +1024,7 @@ class TrainArgs:
                 chunk_grad_allreduce=raw.chunk_grad_allreduce,
                 activation_checkpointing=raw.activation_checkpointing,
                 steps=raw.steps,
-                decoder_lr=raw.decoder_lr,
+                decoder_lr=(raw.decoder_lr if raw.decoder_lr is not None else 1e-4),
                 backbone_text_lr=raw.backbone_text_lr,
                 backbone_vision_lr=raw.backbone_vision_lr,
                 warmup_steps=raw.warmup_steps,
@@ -919,6 +1047,90 @@ class TrainArgs:
             )
         except ValueError as error:
             parser.error(str(error))
+
+
+def train_args_record(args: TrainArgs) -> dict[str, Any]:
+    """The verbatim provenance dict checkpoint metadata records: asdict
+    with JSON-ready leaves (Paths stringify — including inside tuples;
+    tuples become lists, the JSON round-trip form)."""
+
+    def jsonable(value: Any) -> Any:
+        if isinstance(value, Path):
+            return str(value)
+        if isinstance(value, tuple):
+            return [jsonable(item) for item in value]
+        return value
+
+    return {key: jsonable(value) for key, value in dataclasses.asdict(args).items()}
+
+
+def build_objective(
+    args: TrainArgs,
+) -> FlowObjective | SnapflowObjective | ARObjective | JointObjective:
+    """The family's objective payload from the resolved run flags — the
+    constructor value that selects what receives gradients (D3/D4).
+    Recorded verbatim in the checkpoint metadata."""
+    match args.family:
+        case "gemma_flow":
+            if args.distill == "snapflow":
+                return SnapflowObjective(
+                    alpha=SNAPFLOW_ALPHA,
+                    shortcut_weight=SNAPFLOW_LAMBDA,
+                )
+            return FlowObjective()
+        case "gemma_ar" | "molmo2_ar":
+            return ARObjective(aux_loss_weight=args.aux_loss_weight)
+        case "molmoact2_flow":
+            return FlowObjective()
+        case "molmoact2_ar":
+            # The format-6 emission has no aux fields; the weight is the
+            # payload's inert unit value (parse_ar_objective's default).
+            return ARObjective(aux_loss_weight=1.0)
+        case "molmoact2_joint":
+            return JointObjective(
+                ce_weight=args.joint_ce_weight,
+                insulate_flow=args.insulate_flow,
+            )
+        case _:
+            raise AssertionError(f"unhandled family {args.family!r}")
+
+
+def objective_to_json(
+    objective: FlowObjective | SnapflowObjective | ARObjective | JointObjective,
+) -> dict[str, Any]:
+    """The objective payload as the metadata's tagged dict (the write
+    side of the families' ``parse_*_objective`` readers)."""
+    match objective:
+        case FlowObjective():
+            return {"kind": "flow"}
+        case SnapflowObjective():
+            return {
+                "kind": "snapflow",
+                "alpha": objective.alpha,
+                "shortcut_weight": objective.shortcut_weight,
+            }
+        case ARObjective():
+            return {"kind": "ar", "aux_loss_weight": objective.aux_loss_weight}
+        case JointObjective():
+            return {
+                "kind": "joint",
+                "ce_weight": objective.ce_weight,
+                "insulate_flow": objective.insulate_flow,
+            }
+
+
+def serving_to_json(serving: FlowServing | ARServing) -> dict[str, Any]:
+    """The serving operating point as the metadata's tagged dict (the
+    write side of ``FlowServing.from_dict``/``ARServing.from_dict``)."""
+    match serving:
+        case FlowServing():
+            return {
+                "kind": "flow",
+                "num_steps": serving.num_steps,
+                "method": serving.method.value,
+            }
+        case ARServing():
+            return {"kind": "ar"}
 
 
 class DevicePrefetcher[I: BatchInputs]:
@@ -1137,15 +1349,49 @@ class BackboneParameterCounts:
     vision: int
 
 
-def unfreeze_backbone(model: BijouModel, args: TrainArgs) -> BackboneParameterCounts:
+def reconcile_lr_offer(
+    offer: dict[str, list[torch.nn.Parameter]],
+    *,
+    family: str,
+    backbone_text_lr: float | None,
+    backbone_vision_lr: float | None,
+) -> list[str]:
+    """LR flags vs the model's structural offer, both directions (D4):
+    an LR flag for an EMPTY offered group is a contradiction and dies
+    loudly; an offered non-empty group without its LR flag freezes —
+    returned as the notes the caller prints (omit-to-freeze is the
+    opt-in convention, but the freeze is never silent)."""
+    notes: list[str] = []
+    for flag, lr, group in (
+        ("--backbone-text-lr", backbone_text_lr, "backbone_text"),
+        ("--backbone-vision-lr", backbone_vision_lr, "backbone_vision"),
+    ):
+        params = offer[group]
+        if lr is not None and len(params) == 0:
+            raise SystemExit(
+                f"{flag} given, but {group!r} receives no gradients under "
+                f"{family}'s objective — drop the flag",
+            )
+        if lr is None and len(params) > 0:
+            count = sum(p.numel() for p in params)
+            notes.append(
+                f"param group {group!r} ({count / 1e6:.1f}M params) offered "
+                f"by {family} but {flag} not given: FROZEN",
+            )
+    return notes
+
+
+def unfreeze_backbone(model: VLA[Any], args: TrainArgs) -> BackboneParameterCounts:
     """Flip ``requires_grad`` on the requested backbone subsets; everything
-    else stays frozen (``load_model`` freezes the whole backbone).
+    else stays frozen (the trunk loaders freeze the whole backbone).
+    Empty-group contradictions are the reconciliation's job
+    (:func:`reconcile_lr_offer` runs first).
 
     Freezing by ``requires_grad`` alone is sufficient for efficiency too:
     token embeddings, PLE tables and (when frozen) the vision tower feed
     the decoder grad-free inputs, so autograd never builds their graphs —
     no activation cost, no backward — without any code-path changes
-    inside gemma4.
+    inside the trunks.
     """
     groups = model.param_groups()
     text = 0
@@ -1155,12 +1401,6 @@ def unfreeze_backbone(model: BijouModel, args: TrainArgs) -> BackboneParameterCo
             parameter.requires_grad_(True)
             text += parameter.numel()
     if args.backbone_vision_lr is not None:
-        if not groups["backbone_vision"]:
-            raise SystemExit(
-                f"--backbone-vision-lr {args.backbone_vision_lr} but the "
-                f"backbone ({args.backbone}) has no vision tower — drop the "
-                "flag or use a multimodal backbone",
-            )
         for parameter in groups["backbone_vision"]:
             parameter.requires_grad_(True)
             vision += parameter.numel()
@@ -1180,45 +1420,8 @@ def decay_split(
     return decayed, undecayed
 
 
-def adamc_output_head_parameters(
-    model: BijouModel[Any, Any],
-) -> list[torch.nn.Parameter]:
-    """The trainable output-layer parameters for --optimizer adamc.
-
-    AdamC (2506.02285, Algorithm 1) applies the corrected decay to
-    "normalized" layers only — in a transformer, every hidden matrix —
-    while the OUTPUT layer keeps standard AdamW decay. The audited
-    decoders:
-
-    - ``Molmo2ARDecoder``: ``fast_head`` (fresh untied logit rows; the
-      shipped trunk ``lm_head`` and ``wte`` are frozen and never reach
-      the optimizer). ``fast_embed`` is an untied input table and stays
-      on the corrected side with the other hidden matrices.
-    - ``GemmaARDecoder`` (Gemma trunk): ``fast_embed.weight`` — the
-      table doubles as the block-logits head (``hidden @ fast_embed.Tᵀ``),
-      a TIED embedding/head pair. One parameter object, one group,
-      standard decay; the group-disjointness assert at construction
-      keeps any future tied pair from being decayed twice.
-
-    Any other decoder (flow) aborts loudly: its output layer
-    has not been audited for the corrected/standard split. Likewise, if
-    a trunk's tied ``lm_head``/embedding is ever unfrozen it must be
-    added here (today every trunk head is frozen by design)."""
-    decoder = model.decoder
-    if isinstance(decoder, Molmo2ARDecoder):
-        return list(decoder.fast_head.parameters())
-    if isinstance(decoder, GemmaARDecoder):
-        return list(decoder.fast_embed.parameters())
-    raise SystemExit(
-        f"--optimizer adamc: the output-head partition is not audited "
-        f"for {type(decoder).__name__} — extend "
-        "adamc_output_head_parameters with its logits/output parameters "
-        "before training this decoder with adamc",
-    )
-
-
 def build_optimizer_param_groups(
-    model: BijouModel[Any, Any],
+    model: VLA[Any],
     *,
     optimizer_name: str,
     decoder_lr: float,
@@ -1241,11 +1444,12 @@ def build_optimizer_param_groups(
     decay) plus a decayed/undecayed split per unfrozen backbone subset.
 
     adamc: the decoder group splits by role — hidden matrices →
-    corrected decay, output head (adamc_output_head_parameters) →
-    standard decay, 1-D (norm scales, biases) → no decay. Backbone
-    hidden matrices are exactly the paper's "normalized" layers (the
-    trunk head/embeddings are frozen out of the groups by design), so
-    the existing decayed split takes the corrected flag.
+    corrected decay, output head (``VLA.output_head_parameters``) →
+    standard decay, 1-D (norm scales, biases) → no decay. Families
+    whose partition is unaudited refuse adamc loudly from that method.
+    Backbone hidden matrices are exactly the paper's "normalized"
+    layers (the trunk head/embeddings are frozen out of the groups by
+    design), so the existing decayed split takes the corrected flag.
 
     Both modes end with the shared/tied-parameter guard: a parameter
     object appearing in two groups would be stepped and decayed twice
@@ -1257,7 +1461,7 @@ def build_optimizer_param_groups(
     cli_groups: list[tuple[str, float, float]] = []
     adamc_corrected: list[bool] = []
     if optimizer_name == "adamc":
-        head_ids = {id(p) for p in adamc_output_head_parameters(model) if p.dim() >= 2}
+        head_ids = {id(p) for p in model.output_head_parameters() if p.dim() >= 2}
         decayed, undecayed = decay_split(named_groups["decoder"])
         hidden = [p for p in decayed if id(p) not in head_ids]
         heads = [p for p in decayed if id(p) in head_ids]
@@ -1266,7 +1470,7 @@ def build_optimizer_param_groups(
                 "--optimizer adamc: an output-head parameter is not in "
                 "the decoder param group — the corrected/standard "
                 "partition would misroute it (audit "
-                "adamc_output_head_parameters vs model.param_groups)",
+                "output_head_parameters vs model.param_groups)",
             )
         param_groups.append({"params": hidden, "lr": decoder_lr})
         cli_groups.append(("decoder (corrected decay)", decoder_lr, weight_decay))
@@ -1289,7 +1493,7 @@ def build_optimizer_param_groups(
     ):
         if group_lr is None:
             continue
-        assert named_groups[group_name]  # unfreeze_backbone validated
+        assert named_groups[group_name]  # reconcile_lr_offer validated
         decayed, undecayed = decay_split(named_groups[group_name])
         param_groups.append({"params": decayed, "lr": group_lr})
         cli_groups.append((f"{group_name} (decayed)", group_lr, weight_decay))
@@ -1360,171 +1564,27 @@ def apply_adamc_weight_decay(
         )
 
 
-class BijouTrainStep[I: BatchInputs](torch.nn.Module):
-    """One training forward — prefix encode + decoder objective — as a
-    single module, so ONE DDP wrapper hooks gradients of everything a run
-    trains (frozen-backbone runs simply carry no trainable backbone parameters).
-
-    ``backbone_trained`` selects the prefix-encode regime:
-    - False (frozen): no-grad encode at the backbone's native dtype —
-      byte-identical math to every frozen run and to the CPU loss oracle
-      (the autocast context is constructed disabled: a no-op).
-    - True (live): grad-transparent encode under bf16 autocast on CUDA,
-      over fp32 master weights (direct bf16 updates vanish below bf16
-      resolution at backbone-scale learning rates).
-
-    The decoder runs OUTSIDE the autocast region either way, fp32 with
-    TF32 matmuls; it already casts the (possibly autocast-bf16) K/V
-    streams to its own dtype.
-    """
-
-    def __init__(
-        self,
-        model: BijouModel[I, Any],
-        *,
-        backbone_trained: bool,
-    ) -> None:
-        super().__init__()
-        self.model = model
-        self.backbone_trained = backbone_trained
-
-    @override
-    def forward(
-        self,
-        batch: CollatedBatch[I],
-        normalizers: (
-            tuple[Tensor, Tensor | None] | tuple[Tensor, Tensor, Tensor | None] | None
-        ) = None,
-    ) -> tuple[Tensor, Tensor, Tensor | None, Tensor | None]:
-        """Batch (shapes in CollatedBatch's docstring) -> (total loss with
-        graph, detached action component, detached aux CE sum | None,
-        aux position count | None). Single-component objectives return
-        (loss, loss.detach(), None, None).
-
-        ``normalizers`` switches to chunked-backward sum form: ``batch``
-        is one chunk, the tuple is the FULL step's (action count, aux
-        count | None) summed over all chunks, and the return is (this
-        chunk's normalized loss share with graph, detached action loss
-        SUM, detached aux CE sum | None, aux position count | None) —
-        the shares sum over chunks to exactly the unchunked total (up
-        to fp reduction order), so backwarding each share accumulates
-        the unchunked gradient.
-
-        The joint arm (``model.joint_ce`` set — the molmoact2 objective
-        matrix) uses THREE normalizers (flow position count, CE action
-        count, CE aux count | None) and returns the CE branch's action
-        CE in the aux slots (the pinned CE-health read); the action
-        slot carries the flow component."""
-        inputs = batch.encoder_inputs
-        # Any batch tensor names the device; the inputs protocol has no
-        # per-field surface (trunk-generic).
-        device_type = next(iter(inputs.tensors().values())).device.type
-        autocast_on = device_type == "cuda" and self.backbone_trained
-        with torch.autocast(device_type, torch.bfloat16, enabled=autocast_on):
-            memory = self.model.encode(inputs, with_grad=self.backbone_trained)
-            if isinstance(self.model.decoder, ARSuffixDecoder):
-                # ar_backbone's "decoder" IS the backbone: its suffix
-                # forward belongs in the same regime as the prefix —
-                # live runs (fp32 masters) run it under bf16 autocast,
-                # matching frozen-run numerics and HALVING every
-                # loss-side tensor incl. the [B, S, 262k] logits (fp32
-                # suffix forwards OOM'd the first full-recipe run at
-                # B11); the CE itself upcasts to fp32 inside the loss.
-                # Frozen runs construct this context disabled — a no-op,
-                # byte-identical to the historical path (oracle-exact).
-                if normalizers is None:
-                    return self.model.loss_components(memory, batch)
-                assert len(normalizers) == 2  # AR runs: (action, aux)
-                return self._chunk_share(memory, batch, normalizers)
-        # Cross-attention decoders are fp32-by-design OUTSIDE autocast.
-        if self.model.joint_ce is not None:
-            # KV-before-CE ordering (the joint invariant): the
-            # flow branch extracts its PROMPT-ONLY KV pairs first — the
-            # CE rider's suffix forward APPENDS to the same cache, and
-            # the expert must never condition on teacher-forced action
-            # tokens. The CE branch then re-enters the autocast regime
-            # (its [B, S, 154k] logits want bf16 on live trunks) — its
-            # sums leave the region as tensors and compose with the
-            # fp32 flow sums below.
-            decoder = self.model.decoder
-            assert isinstance(decoder, MolmoFlowDecoder)
-            flow_sums = molmo_flow_loss_sums(
-                decoder,
-                memory,
-                batch,
-                insulate=self.model.insulate_expert,
+def summed_loss_counts(
+    model: VLA[Any],
+    chunks: Sequence[CollatedBatch[Any]],
+) -> dict[str, Tensor]:
+    """The full step's per-component counts, summed over the chunk
+    micro-batches BEFORE any forward (data-only): each chunk's forward
+    then divides by the SAME global normalizers, so the objective
+    addends sum to the full-batch objective — the chunked-backward
+    exactness contract (``VLA.forward``'s docstring)."""
+    per_chunk = [model.loss_counts(chunk) for chunk in chunks]
+    keys = list(per_chunk[0])
+    for counts in per_chunk[1:]:
+        if list(counts) != keys:
+            raise SystemExit(
+                f"loss_counts key set moved across chunks ({keys} vs "
+                f"{list(counts)}) — component keys are run-constant by "
+                "contract",
             )
-            with torch.autocast(device_type, torch.bfloat16, enabled=autocast_on):
-                ce_sums = self.model.joint_ce_loss_sums(memory, batch)
-            if normalizers is not None:
-                assert len(normalizers) == 3  # joint runs: 3 normalizers
-                return self._joint_share(flow_sums, ce_sums, normalizers)
-            return self._joint_share(flow_sums, ce_sums, None)
-        if normalizers is None:
-            return self.model.loss_components(memory, batch)
-        assert len(normalizers) == 2  # non-joint runs: (action, aux)
-        return self._chunk_share(memory, batch, normalizers)
-
-    def _joint_share(
-        self,
-        flow_sums: tuple[Tensor, Tensor],
-        ce_sums: tuple[Tensor, Tensor, Tensor | None, Tensor | None],
-        normalizers: tuple[Tensor, Tensor, Tensor | None] | None,
-    ) -> tuple[Tensor, Tensor, Tensor | None, Tensor | None]:
-        """The joint arm's composition (the pre-decoder-simplify
-        ``_joint_share`` reinstated for molmo_flow + the parameterless
-        rider): fp32 flow sums + the CE branch's sums, over this
-        batch's own counts (unchunked) or the full-step normalizers
-        (chunked) — ONE composition for both modes, so chunked and
-        unchunked joint numerics agree up to fp reduction order. CE
-        weight λ = --joint-ce-weight (default 1.0 — under knowledge
-        insulation the two objectives reach disjoint parameter sets,
-        so λ is an LR-relative knob, not a tuned constant); the
-        molmoact2 rider has no aux fields."""
-        flow_sum, flow_count = flow_sums
-        ce_action_sum, ce_action_count, ce_aux_sum, _ = ce_sums
-        assert ce_aux_sum is None  # rider constructed aux-None
-        if normalizers is None:
-            flow_norm, ce_action_norm = flow_count, ce_action_count
-        else:
-            flow_norm, ce_action_norm, _ = normalizers
-        loss = flow_sum / flow_norm + self.model.joint_ce_weight * (
-            ce_action_sum / ce_action_norm
-        )
-        return (
-            loss,
-            (
-                (flow_sum / flow_norm).detach()
-                if normalizers is None
-                else flow_sum.detach()
-            ),
-            ce_action_sum.detach(),
-            ce_action_count,
-        )
-
-    def _chunk_share(
-        self,
-        memory: ObservationMemory,
-        batch: CollatedBatch[I],
-        normalizers: tuple[Tensor, Tensor | None],
-    ) -> tuple[Tensor, Tensor, Tensor | None, Tensor | None]:
-        action_norm, aux_norm = normalizers
-        action_sum, _, aux_sum, aux_count = self.model.loss_component_sums(
-            memory,
-            batch,
-        )
-        loss = action_sum / action_norm
-        if aux_sum is not None:
-            decoder = self.model.decoder
-            assert isinstance(decoder, ARSuffixDecoder)
-            assert aux_norm is not None
-            loss = loss + decoder.aux_loss_weight * (aux_sum / aux_norm.clamp(min=1))
-        return (
-            loss,
-            action_sum.detach(),
-            None if aux_sum is None else aux_sum.detach(),
-            aux_count,
-        )
+    return {
+        key: torch.stack([counts[key] for counts in per_chunk]).sum() for key in keys
+    }
 
 
 def _chunk_plot(
@@ -1686,30 +1746,62 @@ def holding_accuracy(
     return correct / labeled
 
 
+def probe_prediction(
+    model: VLA[Any],
+    batch: CollatedBatch[Any],
+    *,
+    generator: torch.Generator,
+    flow_probe_method: SamplingMethod | None,
+    noise: Tensor | None = None,
+) -> tuple[Tensor, Tensor | None]:
+    """The probe's (actions, noise | None) through the capability
+    traits: flow families integrate 10 steps at the family's recorded
+    serving METHOD (eval is a measurement — integration error well
+    below model error; 0.018 vs 0.05 mean deviation at the 5-step
+    deployment default), AR families decode greedily. The joint family
+    is both — the flow read is its deployment path and wins."""
+    if isinstance(model, FlowVLA):
+        assert flow_probe_method is not None  # supplied for every flow family
+        prediction = model.predict_flow(
+            batch,
+            num_steps=10,
+            method=flow_probe_method,
+            noise=noise,
+            generator=generator,
+        )
+        return prediction.actions, prediction.noise
+    assert isinstance(model, ARVLA)  # every family carries one of the two
+    return model.predict_ar(batch).actions, None
+
+
 @torch.no_grad()
-def validate[I: BatchInputs](
-    model: BijouModel[I, Any],
-    probe: ProbeSet[I],
+def validate(
+    model: VLA[Any],
+    probe: ProbeSet[Any],
     device: torch.device,
     seed: int,
     *,
     distributed: bool = False,
     wandb_run: Any = None,
-    collator: Collator[I] | None = None,
+    collator: Collator[Any] | None = None,
     action_names: list[str] | None = None,
     step: int = 0,
     table_key: str = "eval/samples",
+    aux_fields: tuple[AuxField, ...] = (),
+    flow_probe_method: SamplingMethod | None = None,
 ) -> float:
     """Sampled-chunk MAE in raw action units over this rank's shard of the
     probe set; with ``distributed`` the sums all-reduce to the global value
     (collective — every rank must call this at the same step). Batches
     arrive CPU-resident and visit the device one at a time, and the
-    observation memory is re-encoded per eval, so probe size costs host RAM, not GPU memory.
-    The valid-element-weighted aggregation is exactly bijou.eval's
-    chunk_mae. Normalization is per dataset (each sample's own stats,
-    matching training). With a wandb run and a probe carrying rich items,
-    also logs a table under ``table_key``: camera images, task, state,
-    per-joint predicted-vs-truth plots."""
+    observation memory is re-encoded per eval, so probe size costs host
+    RAM, not GPU memory. The valid-element-weighted aggregation is exactly
+    bijou.eval's chunk_mae. Normalization is per dataset (each sample's
+    own stats, matching training). With a wandb run and a probe carrying
+    rich items, also logs a table under ``table_key``: camera images,
+    task, state, per-joint predicted-vs-truth plots. ``aux_fields`` are
+    the run's TRAINED aux fields — non-empty only for a
+    :class:`~bijou.vla.NarratingVLA` (the narrated side-channel table)."""
     totals = torch.zeros(2, device=device)  # [abs-error sum, valid elements]
     rich_rows: list[RichRow] = []
     slice_totals = torch.zeros(len(OUTCOME_BUCKETS), 2, device=device)
@@ -1719,20 +1811,16 @@ def validate[I: BatchInputs](
     generator = torch.Generator(device=device).manual_seed(seed)
     for cpu_batch in probe.batches:
         batch = cpu_batch.to(device)
-        # Decoder-agnostic: flow integrates Heun-10 (eval is a measurement —
-        # integration error well below model error; 0.018 vs 0.05 mean
-        # deviation at the Heun-5 deployment default), AR decodes greedily
-        # and ignores the solver knobs. Raw units either way.
-        # ar_backbone scores the ACT fast path here (comparable across
+        # The probe scores the deployment surface through the traits:
+        # AR-suffix probes run the ACT fast path here (comparable across
         # aux-on / aux-off arms); the rich table below is the FREE-mode
-        # surface for aux-capable checkpoints.
-        prediction = model.predict_chunk(
+        # surface for narrating checkpoints.
+        sampled, sampled_noise = probe_prediction(
+            model,
             batch,
             generator=generator,
-            num_steps=10,
-            generate=(),
+            flow_probe_method=flow_probe_method,
         )
-        sampled = prediction.actions
         truth = batch.actions.float()
         valid = ~batch.action_is_pad
         error = (sampled - truth).abs()
@@ -1764,9 +1852,7 @@ def validate[I: BatchInputs](
                     valid=valid[i].cpu(),
                     state=batch.state[i].cpu(),
                     noise=(
-                        prediction.noise[i].cpu()
-                        if prediction.noise is not None
-                        else None
+                        sampled_noise[i].cpu() if sampled_noise is not None else None
                     ),
                 ),
             )
@@ -1795,7 +1881,7 @@ def validate[I: BatchInputs](
             )
 
     if wandb_run is not None and probe.rich_items and collator is not None:
-        # Two tables over the same rich rows (rank-0-only, no
+        # Two surfaces over the same rich rows (rank-0-only, no
         # collectives, bounded to EVAL_TABLE_ROWS):
         #   {table_key} — chunk columns straight off the scalar pass
         #     (fast path: prompt says [generate|actions], the suffix
@@ -1807,31 +1893,17 @@ def validate[I: BatchInputs](
         #     next to the fast-path chunk, deliberately mixed
         #     conditions, labeled here so nobody rediscovers it as a
         #     bug (owner-requested pairing, 2026-08-03).
-        #   {table_key}_all_fields — the all-fields decode's OWN rows:
-        #     generations vs labels plus the chunk that followed the
-        #     model's self-generated context (never compared to the
-        #     scalar).
-        decoder = model.decoder
         generations: list[AuxGeneration] | None = None
         rich_actions: Tensor | None = None
-        aux_fields: tuple[AuxField, ...] = ()
-        if isinstance(decoder, ARSuffixDecoder) and decoder.config.aux is not None:
-            aux_fields = decoder.config.aux.fields
+        if isinstance(model, NarratingVLA) and len(aux_fields) > 0:
             table_collator = dataclasses.replace(
                 collator,
                 generate_override=aux_fields,
             )
             rich_batch = table_collator(probe.rich_items).to(device)
-            rich_memory = model.encode(rich_batch.encoder_inputs, with_grad=False)
-            rich_prediction = decoder.predict_chunk(
-                model.backbone,
-                rich_memory,
-                rich_batch,
-                generate=aux_fields,
-            )
-            generations = rich_prediction.generations
-            assert generations is not None  # ar_backbone always generates
-            rich_actions = rich_prediction.actions.cpu()
+            narrated = model.predict_narrated(rich_batch, generate=aux_fields)
+            generations = narrated.generations
+            rich_actions = narrated.actions.cpu()
 
         # Cameras vary per sample across mixed datasets: generic positional
         # columns, padded with None where a sample has fewer cameras.
@@ -1946,20 +2018,20 @@ def validate[I: BatchInputs](
                     for row in (rich_rows[i].noise for i, _ in flipped)
                     if row is not None
                 ]
-                override_prediction = model.predict_chunk(
+                override_actions, _ = probe_prediction(
+                    model,
                     override_batch,
                     generator=generator,
+                    flow_probe_method=flow_probe_method,
                     noise=(
                         torch.stack(flipped_noise).to(device)
                         if len(flipped_noise) == len(flipped)
                         else None
                     ),
-                    num_steps=10,
-                    generate=(),
                 )
                 deltas = [
                     float(
-                        (override_prediction.actions[j].cpu() - rich_rows[i].sampled)
+                        (override_actions[j].cpu() - rich_rows[i].sampled)
                         .abs()[rich_rows[i].valid]
                         .mean(),
                     )
@@ -2020,124 +2092,126 @@ def aggregate_stats(normalizers: Normalizers) -> DatasetStats:
     )
 
 
-def link_or_copy(source: Path, destination: Path) -> None:
-    """Hardlink ``source`` at ``destination``, falling back to a plain copy
-    across filesystems. Used for inherited (frozen) backbone snapshots:
-    byte-identical content, so ten checkpoints of a frozen-backbone run cost
-    one file's disk."""
-    destination.unlink(missing_ok=True)
-    try:
-        os.link(source, destination)
-    except OSError:
-        shutil.copyfile(source, destination)
-
-
 @dataclass(frozen=True, slots=True)
 class CheckpointTensors:
     """The model-side CPU snapshot of one checkpoint — everything the
     writer needs that came off the device. Captured on the main thread at
     the save boundary (the copies are the boundary's values); consumed by
     ``write_checkpoint`` on either the main thread (sync path) or the
-    async saver's background thread."""
+    async saver's background thread.
 
-    expert: dict[str, Tensor]
-    prompt: dict[str, Tensor]
-    joint_ce: dict[str, Tensor] | None
-    # Trained backbones: the bf16 snapshot dict. Inherited-frozen ones:
-    # the source file to link/copy instead (see save_checkpoint's
-    # invariant note).
-    backbone: dict[str, Tensor] | None
-    backbone_source: Path | None
+    ``components`` are the family's ``checkpoint_components()`` state
+    dicts; ``backbone`` is the toolkit's backbone argument — a bf16
+    snapshot dict when this run trains the trunk, the inherited
+    ``backbone.safetensors`` FILE when a frozen run inherited an adapted
+    trunk, or the pristine snapshot DIRECTORY to hard-link-mirror."""
+
+    components: dict[str, dict[str, Tensor]]
+    backbone: dict[str, Tensor] | Path
+
+
+def trained_backbone_snapshot(backbone: nn.Module) -> dict[str, Tensor]:
+    """The trained-trunk state for ``backbone.safetensors``: parameters
+    cast bf16 (the fp32 masters' precision beyond bf16 lives only in
+    optimizer.pt), buffers at native dtype (RoPE inv_freq tables are fp32
+    by design — bf16 would corrupt them). The copy+cast happens
+    HOST-side: a device-side cast would transiently allocate ~4.3 GB of
+    VRAM, an OOM at the ~79 GB/80 GB occupancy measured for the
+    live-backbone DDP config (A100, batch 32)."""
+    parameter_names = {name for name, _ in backbone.named_parameters()}
+    return {
+        name: (
+            tensor.detach().cpu().to(torch.bfloat16)
+            if name in parameter_names
+            else tensor.detach().cpu()
+        ).contiguous()
+        for name, tensor in backbone.state_dict().items()
+        if name not in BACKBONE_UNSAVED_KEYS
+    }
 
 
 def capture_checkpoint_tensors(
-    model: BijouModel,
+    model: VLA[Any],
+    backbone: nn.Module,
     *,
     args: TrainArgs,
     adapted_backbone_source: Path | None,
+    pristine_trunk_dir: Path,
 ) -> CheckpointTensors:
     """Device->CPU copies of every tensor the checkpoint serializes.
     ``copy=True`` even for CPU runs: the snapshot must not alias live
-    parameters the next optimizer step mutates."""
-
-    def snapshot(module: torch.nn.Module) -> dict[str, Tensor]:
-        return {
-            name: tensor.detach().to("cpu", copy=True).contiguous()
-            for name, tensor in module.state_dict().items()
+    parameters the next optimizer step mutates. The backbone form
+    follows the D9 invariant: trained this run → bf16 snapshot dict;
+    inherited adapted (frozen) → the source file to link; pristine →
+    the mounted trunk directory to mirror."""
+    components = {
+        name: {
+            key: tensor.detach().to("cpu", copy=True).contiguous()
+            for key, tensor in module.state_dict().items()
         }
-
-    return CheckpointTensors(
-        expert=snapshot(model.decoder),
-        prompt=snapshot(model.encoder),
-        joint_ce=snapshot(model.joint_ce) if model.joint_ce is not None else None,
-        # backbone_snapshot already lands host-side (the device-side cast
-        # would transiently cost ~4.3 GB VRAM — see its docstring).
-        backbone=backbone_snapshot(model) if args.backbone_trained else None,
-        backbone_source=(
-            adapted_backbone_source if not args.backbone_trained else None
-        ),
-    )
+        for name, module in model.checkpoint_components().items()
+    }
+    backbone_form: dict[str, Tensor] | Path
+    if args.backbone_trained:
+        backbone_form = trained_backbone_snapshot(backbone)
+    elif adapted_backbone_source is not None:
+        if not adapted_backbone_source.is_file():
+            raise FileNotFoundError(
+                f"inherited adapted-backbone source {adapted_backbone_source} "
+                "disappeared — every checkpoint of this run must carry it",
+            )
+        backbone_form = adapted_backbone_source
+    else:
+        backbone_form = pristine_trunk_dir
+    return CheckpointTensors(components=components, backbone=backbone_form)
 
 
 def write_checkpoint(
     checkpoint_dir: Path,
     *,
+    metadata: VLAMetadata,
     tensors: CheckpointTensors,
-    metadata_json: str,
     train_state_payload: dict[str, Any],
 ) -> Path:
-    """Serialize one checkpoint ATOMICALLY: everything lands in a
-    sibling ``.tmp`` directory first and a single ``os.rename`` publishes
-    it — a crash mid-write leaves every earlier checkpoint intact and no
-    half-written ``step_*`` directory a resume/eval could mistake for a
-    real one (the ``.tmp`` debris is evidence, clobbered by the next
-    attempt). Pure CPU+disk — safe on the async saver's background
-    thread."""
-    staging_dir = checkpoint_dir.with_name(checkpoint_dir.name + ".tmp")
-    if staging_dir.exists():
-        shutil.rmtree(staging_dir)
-    staging_dir.mkdir(parents=True)
-    if tensors.expert:
-        save_file(tensors.expert, str(staging_dir / "expert.safetensors"))
-    # else: a parameterless decoder (molmoact2 --objective ar — the
-    # discrete head is trunk-native rows). No file, deliberately: the
-    # loader REFUSES an ar-only checkpoint carrying expert.safetensors
-    # (format confusion), and an empty file is not a checkpoint section.
-    # Prompt-side parameters (state_proj) — always present at prompt
-    # format 3.
-    save_file(tensors.prompt, str(staging_dir / "prompt.safetensors"))
-    if tensors.joint_ce:
-        # A PARAMETERIZED rider's tables (none exists today: the
-        # molmoact2 rider is trunk-native — its section
-        # rides the metadata's joint_ce slot with no weights file).
-        save_file(tensors.joint_ce, str(staging_dir / "joint_ce.safetensors"))
-    if tensors.backbone is not None:
-        # Adapted backbones ride along; from_checkpoint/--init-from detect the
-        # file by presence. Frozen-pristine runs write exactly the
-        # historical layout.
-        save_file(tensors.backbone, str(staging_dir / "backbone.safetensors"))
-    elif tensors.backbone_source is not None:
-        link_or_copy(
-            tensors.backbone_source,
-            staging_dir / "backbone.safetensors",
-        )
-    # Adam moments etc. (~2x expert params); --init-from ignores this
-    # file. NB --resume is a lossless continuation only in the
-    # frozen-backbone regime: a live backbone's fp32 masters round-trip
-    # through the bf16 snapshot above, discarding sub-bf16-resolution
-    # updates at every resume boundary (loud warning at resume load).
-    torch.save(train_state_payload, staging_dir / "optimizer.pt")
-    (staging_dir / "bijou_config.json").write_text(metadata_json)
+    """Serialize one checkpoint through the VLA toolkit
+    (:func:`bijou.checkpoint.write_checkpoint`): everything lands in a
+    sibling ``.tmp`` directory first, is validated for self-containment,
+    and a single rename publishes it — a crash mid-write leaves every
+    earlier checkpoint intact and no half-written ``step_*`` directory a
+    resume/eval could mistake for a real one (the ``.tmp`` debris is
+    evidence, clobbered by the next attempt). Pure CPU+disk — safe on
+    the async saver's background thread. Re-saving the same step
+    (a resume re-hitting a boundary after a crash) replaces the old
+    directory wholesale."""
     if checkpoint_dir.exists():
-        # Re-saving the same step (same-boundary resume): replace the old
-        # directory wholesale rather than overwriting into it.
+        print(
+            f"replacing existing {checkpoint_dir} (same-boundary re-save)",
+            flush=True,
+        )
         shutil.rmtree(checkpoint_dir)
-    staging_dir.rename(checkpoint_dir)
+    # The toolkit links an EXISTING optimizer file into the staging dir;
+    # serialize the payload beside the target first, then drop the
+    # original once the link is placed (the inode survives in the
+    # checkpoint).
+    optimizer_scratch = checkpoint_dir.parent / (checkpoint_dir.name + ".optimizer.pt")
+    checkpoint_dir.parent.mkdir(parents=True, exist_ok=True)
+    torch.save(train_state_payload, optimizer_scratch)
+    try:
+        write_vla_checkpoint(
+            checkpoint_dir,
+            metadata=metadata,
+            components=tensors.components,
+            backbone=tensors.backbone,
+            optimizer=optimizer_scratch,
+        )
+    finally:
+        optimizer_scratch.unlink(missing_ok=True)
     return checkpoint_dir
 
 
 def save_checkpoint(
-    model: BijouModel,
+    model: TrainableVLA,
+    backbone: nn.Module,
     *,
     args: TrainArgs,
     normalizers: Normalizers,
@@ -2146,20 +2220,18 @@ def save_checkpoint(
     scheduler: torch.optim.lr_scheduler.LRScheduler,
     step: int,
     adapted_backbone_source: Path | None,
+    pristine_trunk_dir: Path,
 ) -> Path:
     """Write one self-contained checkpoint directory (the synchronous
     entry: capture + write inline; the async path drives the same capture
     and writer from bijou.async_save).
 
-    Invariant: ``backbone.safetensors`` is present iff the model's backbone
-    differs from pristine ``HF(args.backbone)`` — either because this run
-    trains it (snapshot the live fp32 masters) or because it was INHERITED
-    from an adapted checkpoint via --init-from/--resume with the unfreeze
-    flags off (``adapted_backbone_source``; the backbone is then frozen and
-    byte-identical to that file, so it is linked/copied rather than
-    re-serialized). Conditioning only on ``args.backbone_trained`` paired a
-    decoder fine-tuned against adapted features with the pristine backbone on
-    load — silently."""
+    Invariant (D9): the backbone is ALWAYS materialized —
+    ``backbone.safetensors`` when the trunk state differs from pristine
+    (trained this run, or inherited from an adapted checkpoint with the
+    unfreeze flags off — ``adapted_backbone_source``), else a
+    hard-linked ``backbone/`` mirror of the pristine snapshot;
+    ``metadata.backbone.trained`` records the fact explicitly."""
     train_state = TrainState(
         optimizer=optimizer.state_dict(),
         scheduler=scheduler.state_dict(),
@@ -2167,45 +2239,57 @@ def save_checkpoint(
     )
     return write_checkpoint(
         args.save_dir / f"step_{step:06d}",
-        tensors=capture_checkpoint_tensors(
-            model,
-            args=args,
-            adapted_backbone_source=adapted_backbone_source,
-        ),
-        metadata_json=build_checkpoint_metadata(
+        metadata=build_vla_metadata(
             model,
             args=args,
             normalizers=normalizers,
             per_dataset_stats=per_dataset_stats,
             step=step,
+            adapted_backbone_source=adapted_backbone_source,
+        ),
+        tensors=capture_checkpoint_tensors(
+            model,
+            backbone,
+            args=args,
+            adapted_backbone_source=adapted_backbone_source,
+            pristine_trunk_dir=pristine_trunk_dir,
         ),
         train_state_payload=train_state.to_payload(),
     )
 
 
-def build_checkpoint_metadata(
-    model: BijouModel,
+def build_vla_metadata(
+    model: TrainableVLA,
     *,
     args: TrainArgs,
     normalizers: Normalizers,
     per_dataset_stats: dict[str, DatasetStats],
     step: int,
-) -> str:
-    """The ``bijou_config.json`` text. Cheap and pure — runs at capture
-    time so the async writer holds no model references."""
-    encoder = model.encoder
-    prompt_config: GemmaPromptConfig | Molmo2PromptConfig | MolmoAct2PromptConfig
-    if isinstance(encoder, GemmaEncoder):
-        prompt_config = GemmaPromptConfig(
+    adapted_backbone_source: Path | None,
+) -> VLAMetadata:
+    """The checkpoint's ``metadata.json`` record. Cheap and pure — runs
+    at capture time so the async writer holds no model references.
+
+    Component records (name → config + weights flag) come from the
+    concrete family: WEIGHTED components mirror
+    ``checkpoint_components()`` exactly (the toolkit cross-checks);
+    parameterless components (the molmoact2 prompt side and discrete
+    rider) record their configs with ``weights: false`` — the metadata
+    is where parameterless configs live."""
+    components: dict[str, dict[str, Any]]
+    depth = BackboneDepth.FULL
+    if isinstance(model, GemmaFlowVLA | GemmaARVLA):
+        encoder = model.encoder
+        prompt_dict = GemmaPromptConfig(
             exports=encoder.exports,
             max_soft_tokens=args.max_soft_tokens,
             format=PROMPT_FORMAT,
             state_dim=encoder.state_dim,
             condition_fields=tuple(args.condition_fields or ()),
             generate_bracket=(
-                args.decoder == "ar_backbone" or args.prompt_generate_bracket
+                args.family in AR_SUFFIX_FAMILIES or args.prompt_generate_bracket
             ),
-        )
+        ).to_dict()
         # Structural fact of the built model: a truncated backbone has
         # its KV-shared region cut away (truncated_config), a full one
         # keeps it — no plumbing to drift.
@@ -2216,58 +2300,99 @@ def build_checkpoint_metadata(
             if backbone_config.text.num_kv_shared_layers > 0
             else BackboneDepth.PREFIX
         )
-    elif isinstance(encoder, Molmo2Encoder):
-        prompt_config = Molmo2PromptConfig(
+        if isinstance(model, GemmaFlowVLA):
+            components = {
+                "prompt": {"config": prompt_dict, "weights": True},
+                "flow_decoder": {
+                    "config": decoder_schema_dict(model.flow_decoder),
+                    "weights": True,
+                },
+            }
+        else:
+            components = {
+                "prompt": {"config": prompt_dict, "weights": True},
+                "ar_decoder": {
+                    "config": decoder_schema_dict(model.ar_decoder),
+                    "weights": True,
+                },
+            }
+    elif isinstance(model, Molmo2ARVLA):
+        encoder = model.encoder
+        prompt_dict = Molmo2PromptConfig(
             max_crops=encoder.max_crops,
             format=MOLMO2_PROMPT_FORMAT,
             state_dim=encoder.state_dim,
             condition_fields=tuple(args.condition_fields or ()),
-            generate_bracket=(
-                args.decoder == "ar_backbone" or args.prompt_generate_bracket
-            ),
-        )
-        # The Molmo2 AR trunk is always mounted full-depth (36 layers —
-        # the suffix reads the shipped head).
-        depth = BackboneDepth.FULL
-    elif isinstance(encoder, MolmoAct2Encoder):
+            generate_bracket=True,  # the AR-suffix families always render it
+        ).to_dict()
+        components = {
+            "prompt": {"config": prompt_dict, "weights": True},
+            "ar_decoder": {
+                "config": decoder_schema_dict(model.ar_decoder),
+                "weights": True,
+            },
+        }
+    else:
+        encoder = model.encoder
         if encoder.prompt_schema is None:
             raise ValueError(
                 "MolmoAct2Encoder has no stashed prompt schema — was the "
-                "model built outside the molmo_flow train path?",
+                "model built outside the train path?",
             )
-        prompt_config = MolmoAct2PromptConfig.from_dict(encoder.prompt_schema)
-        depth = BackboneDepth.FULL
-    else:
-        raise TypeError(
-            f"save_checkpoint has no prompt-config writer for {type(encoder).__name__}",
+        components = {
+            # The encoder owns zero parameters; its config rides the
+            # metadata, never a file.
+            "prompt": {"config": dict(encoder.prompt_schema), "weights": False},
+        }
+        if isinstance(model, MolmoAct2FlowVLA | MolmoAct2JointVLA):
+            components["flow_decoder"] = {
+                "config": decoder_schema_dict(model.flow_decoder),
+                "weights": True,
+            }
+        if isinstance(model, MolmoAct2ARVLA | MolmoAct2JointVLA):
+            components["ar_decoder"] = {
+                "config": decoder_schema_dict(model.ar_decoder),
+                "weights": False,
+            }
+    weighted = {name for name, record in components.items() if record["weights"]}
+    declared = set(model.checkpoint_components())
+    if weighted != declared:
+        raise SystemExit(
+            f"metadata weighted components {sorted(weighted)} != the "
+            f"family's checkpoint_components() {sorted(declared)} — the "
+            "write side drifted from the family's declaration",
         )
+
     normalization = aggregate_stats(normalizers)
-    if isinstance(model.decoder, MolmoFlowDecoder):
-        # The load-bearing tables (§8.13's merged scheme) ride the normalization
-        # row: the run aggregate honestly carries no quantiles
-        # (aggregate_stats), but molmo_flow NORMALIZED with the source
-        # checkpoint's merged tables — the written row must carry the
-        # tables in use or the descendant checkpoint loses its clamp.
-        runtime = model.decoder.runtime
+    if isinstance(model, MolmoAct2FlowVLA | MolmoAct2JointVLA):
+        # The load-bearing tables (the merged scheme) ride the
+        # normalization row: the run aggregate honestly carries no
+        # quantiles (aggregate_stats), but molmo_flow NORMALIZED with the
+        # source checkpoint's merged tables — the written row must carry
+        # the tables in use or the descendant checkpoint loses its clamp.
+        flow_decoder = model.flow_decoder
+        runtime = flow_decoder.runtime
         assert runtime is not None  # configure() ran at build
+        encoder = model.encoder
         assert isinstance(encoder, MolmoAct2Encoder)
         assert encoder.state_table is not None
         normalization = dataclasses.replace(
             normalization,
             action_q01=tuple(
-                model.decoder.action_q01[: runtime.action_dim].tolist(),
+                flow_decoder.action_q01[: runtime.action_dim].tolist(),
             ),
             action_q99=tuple(
-                model.decoder.action_q99[: runtime.action_dim].tolist(),
+                flow_decoder.action_q99[: runtime.action_dim].tolist(),
             ),
             state_q01=encoder.state_table[0],
             state_q99=encoder.state_table[1],
         )
-    elif isinstance(model.decoder, MolmoAct2ARDecoder):
-        # --objective ar: no flow decoder to read tables off — the
+    elif isinstance(model, MolmoAct2ARVLA):
+        # The ar family has no flow decoder to read tables off — the
         # collator tokenized under the encoder-stashed merged tables;
         # the written row carries THE tables in use (same invariant as
         # the flow branch, different source of truth).
+        encoder = model.encoder
         assert isinstance(encoder, MolmoAct2Encoder)
         assert encoder.state_table is not None
         assert encoder.action_table is not None
@@ -2278,117 +2403,30 @@ def build_checkpoint_metadata(
             state_q01=encoder.state_table[0],
             state_q99=encoder.state_table[1],
         )
-    metadata = CheckpointMetadata(
-        backbone=BackboneConfig(
-            id=args.backbone,
-            depth=depth,
-        ),
-        prompt=prompt_config,
-        decoder=decoder_schema_dict(model.decoder),
-        joint_ce=(
-            decoder_schema_dict(model.joint_ce) if model.joint_ce is not None else None
-        ),
-        normalization=normalization,
-        per_dataset_normalization=per_dataset_stats,
-        train_args={
-            k: str(v) if isinstance(v, Path) else v
-            for k, v in dataclasses.asdict(args).items()
-        },
+
+    artifacts: dict[str, str] = {}
+    if args.fast_tokenizer is not None:
+        artifacts["fast_tokenizer"] = args.fast_tokenizer
+
+    spec = model.spec
+    assert spec.family.value == args.family  # construction routed correctly
+    return VLAMetadata(
+        family=spec.family,
+        chunk_size=spec.chunk_size,
+        action_dim=spec.action_dim,
+        backbone_id=args.backbone,
+        backbone_depth=depth.value,
+        backbone_trained=(args.backbone_trained or adapted_backbone_source is not None),
+        objective=objective_to_json(build_objective(args)),
+        serving=serving_to_json(model.serving),
+        components=components,
+        artifacts=artifacts,
+        stats=normalization,
+        per_dataset_stats=per_dataset_stats,
+        train_args=train_args_record(args),
         step=step,
+        stats_note=None,
     )
-    return json.dumps(metadata.to_json_dict(), indent=2, default=str)
-
-
-def ensure_matching_decoder_config(
-    decoder: (
-        FlowDecoder
-        | GemmaARDecoder
-        | Molmo2ARDecoder
-        | MolmoAct2ARDecoder
-        | MolmoFlowDecoder
-    ),
-    checkpoint: Path,
-) -> dict[str, Any]:
-    """Loud, early failure when a checkpoint's decoder differs from the
-    CLI's (strict state-dict loading would also fail, but with worse
-    diagnostics — and silently NOT fail for same-shape config differences
-    like the cross-attention schedule). Handles both checkpoint formats:
-    format 2 compares decoder schema dicts; format 1 predates AR decoders
-    and compares the historical serialized expert_config. Returns the
-    checkpoint's saved decoder config dict (the weight loader keys its
-    format-migration tolerance off it)."""
-    meta = json.loads((checkpoint / "bijou_config.json").read_text())
-    if "decoder" in meta:
-        saved = meta["decoder"]
-        current = decoder_schema_dict(decoder)
-        if isinstance(decoder, FlowDecoder):
-            # Back-compat: checkpoints predating the φ_s field carry no
-            # key; absent means unextended.
-            saved.setdefault("target_time_embed", False)
-    elif isinstance(decoder, FlowDecoder):
-        saved = meta["expert_config"]
-        # Back-compat: fields added to FlowDecoderConfig after a checkpoint was
-        # written are absent from its serialized config; fill their defaults
-        # so an unchanged run still matches. A pre-adaRMS checkpoint is
-        # additive.
-        saved.setdefault("time_conditioning", TimeConditioning.ADDITIVE.value)
-        saved.setdefault("target_time_embed", False)
-        current = json.loads(
-            json.dumps(dataclasses.asdict(decoder.config), default=str),
-        )
-    else:
-        raise SystemExit(
-            f"{checkpoint} is a format-1 checkpoint (flow-only era); it "
-            "cannot initialize a non-flow decoder",
-        )
-    if current != saved:
-        # Aux is a data-side format dial: a difference confined to it
-        # is the sanctioned warm-start pattern (enable aux on an
-        # aux-less format-5 base — same parameter set) — note, not an
-        # error. suffix_format differences are hard errors: pre-5
-        # parameter sets no longer exist.
-        # φ_s target-time extension (SnapFlow distill warm start): a CLI
-        # True over a saved False is sanctioned — the embedding is purely
-        # additive and zero-initialized, so step 0 IS the checkpoint; the
-        # weight loader tolerates exactly the fresh φ_s keys (keyed off
-        # the returned saved config). The reverse direction would DROP
-        # trained parameters and stays a hard error.
-        extension = ("target_time_embed",)
-        current_ext = {k: v for k, v in current.items() if k not in extension}
-        saved_ext = {k: v for k, v in saved.items() if k not in extension}
-        if (
-            current_ext == saved_ext
-            and current.get("target_time_embed")
-            and not saved.get("target_time_embed")
-        ):
-            print(
-                f"note: φ_s target-time extension over {checkpoint} "
-                "(saved decoder has no target-time embedding) — the new "
-                "parameters initialize fresh with zero-initialized output "
-                "(step-0 model ≡ checkpoint), sanctioned distill warm "
-                "start, proceeding",
-                flush=True,
-            )
-            return saved
-        data_side = ("aux",)
-        current_core = {k: v for k, v in current.items() if k not in data_side}
-        saved_core = {k: v for k, v in saved.items() if k not in data_side}
-        if current_core == saved_core:
-            differing = [key for key in data_side if current.get(key) != saved.get(key)]
-            print(
-                f"note: data-side decoder config differs from {checkpoint} "
-                f"({', '.join(f'{k}: {saved.get(k)} -> {current.get(k)}' for k in differing)}) "
-                "— sanctioned warm-start pattern, proceeding with the "
-                "CLI's format",
-                flush=True,
-            )
-            return saved
-        raise SystemExit(
-            f"decoder config mismatch vs {checkpoint}:\n"
-            f"  checkpoint: {json.dumps(saved, sort_keys=True)}\n"
-            f"  cli:        {json.dumps(current, sort_keys=True)}",
-        )
-    return saved
 
 
 def lr_lambda(step: int, args: TrainArgs, resume_step: int = 0) -> float:
@@ -2417,20 +2455,22 @@ def check_resume_seed(resume: Path, seed: int, *, allow_same_seed: bool) -> str:
     already trained on. Returns the line to log; raises SystemExit on a
     same-seed resume unless --allow-same-seed-resume (reproduction of a
     historical run) was passed explicitly."""
-    config_path = resume / "bijou_config.json"
+    metadata_path = resume / "metadata.json"
     try:
-        recorded = json.loads(config_path.read_text())
+        recorded = json.loads(metadata_path.read_text())
     except FileNotFoundError:
         raise SystemExit(
-            f"{config_path} missing — not a checkpoint directory",
+            f"{metadata_path} missing — not a checkpoint directory "
+            "(legacy bijou_config.json directories convert via "
+            "bijou.convert_legacy)",
         ) from None
     checkpoint_seed = recorded.get("train_args", {}).get("seed")
     if checkpoint_seed is None:
         return (
-            "WARNING: resume seed check skipped — checkpoint predates "
-            "train_args seed recording; the fresh-seed-on-resume "
-            "convention cannot be verified, make sure --seed differs "
-            "from the original run's"
+            "WARNING: resume seed check skipped — checkpoint records no "
+            "train_args seed (converted artifacts predate it); the "
+            "fresh-seed-on-resume convention cannot be verified, make "
+            "sure --seed differs from the original run's"
         )
     if int(checkpoint_seed) != seed:
         return (
@@ -2556,15 +2596,25 @@ def length_bucket_keys(
 
 def _build_parser() -> argparse.ArgumentParser:
     """The train CLI's flag surface. Checkpoint-inferred architecture
-    flags (ARCH_FLAGS) carry ``None`` sentinel defaults so
-    ``TrainArgs.from_namespace`` can tell "omitted" from "passed the
-    default" — fresh-run values live in ARCH_DEFAULTS."""
+    flags (ARCH_FLAGS, plus --family itself) carry ``None`` sentinel
+    defaults so ``TrainArgs.from_namespace`` can tell "omitted" from
+    "passed the default" — fresh-run values live in ARCH_DEFAULTS."""
     parser = argparse.ArgumentParser(
         prog="python -m bijou.train",
-        description="Train the Bijou action expert on LeRobot v3 datasets "
+        description="Train a Bijou VLA family on LeRobot v3 datasets "
         "(dataset directories and/or collection roots). Runs on a single "
         "GPU by default and data-parallel under torchrun; checkpoints "
         "carry everything bijou.eval and bijou.rollout need.",
+    )
+    parser.add_argument(
+        "--family",
+        choices=[f.value for f in VLAFamily],
+        default=None,
+        help="the model family this run trains (required for fresh runs; "
+        "checkpoint-inferred under --init-from/--resume — drop the flag "
+        "there). The molmoact2_* families are inherit-only: they train "
+        "from a converted checkpoint via --init-from, where --objective "
+        "selects the pathway",
     )
     parser.add_argument(
         "--train-data",
@@ -2681,33 +2731,32 @@ def _build_parser() -> argparse.ArgumentParser:
         type=int,
         nargs="*",
         default=None,
-        help="decoder cross-attention layers per backbone KV stream, "
-        "shallow to deep (0 skips a stream); fresh-run default 4 4 7, "
-        "checkpoint-inferred under --resume/--init-from",
+        help="gemma_flow: decoder cross-attention layers per backbone KV "
+        "stream, shallow to deep (0 skips a stream); fresh-run default "
+        "4 4 7, checkpoint-inferred under --resume/--init-from",
     )
     parser.add_argument(
-        "--insulate-expert",
+        "--insulate-flow",
         action="store_true",
-        help="knowledge insulation on the molmo_flow KV seam (§8.13 "
-        "their post-train recipe): the extracted per-layer K/V "
-        "detach before the expert, so flow gradients into every trunk "
-        "parameter are exactly zero. molmo_flow only (--objective flow "
-        "with a frozen trunk, or joint — the RL-then-refine recipe); "
-        "irrelevant (and refused) elsewhere",
+        help="knowledge insulation on the molmo_flow KV seam (their "
+        "post-train recipe): the extracted per-layer K/V detach before "
+        "the flow decoder, so flow gradients into every trunk parameter "
+        "are exactly zero. molmoact2 families only (flow with a frozen "
+        "trunk, or joint — the RL-then-refine recipe); irrelevant (and "
+        "refused) elsewhere",
     )
     parser.add_argument(
         "--objective",
         choices=["flow", "ar", "joint"],
         default=None,
-        help="the molmoact2 family's pathway selector "
-        "(the molmoact2 family's pathway matrix; other families pick ONE "
-        "decoder with --decoder): flow = the molmo_flow expert (the "
-        "historical default), ar = the trunk's discrete head (zero "
-        "decoder parameters — requires --backbone-text-lr), joint = "
-        "both, L_flow + λ·L_CE. Checkpoint-inferred under --resume; "
-        "freely selectable under --init-from (the transition matrix — "
-        "ar-only sources carry no expert, so flow/joint from them need "
-        "--expert-init fresh)",
+        help="the molmoact2 pathway selector under --init-from (the "
+        "transition matrix): flow = the molmo_flow decoder "
+        "(molmoact2_flow), ar = the trunk's discrete head (molmoact2_ar "
+        "— zero decoder parameters, requires --backbone-text-lr), "
+        "joint = both (molmoact2_joint, L_flow + λ·L_CE). Omitted, the "
+        "source checkpoint's family carries over; refused under "
+        "--resume (the recorded family is locked) and on fresh runs "
+        "(declare --family)",
     )
     parser.add_argument(
         "--joint-ce-weight",
@@ -2715,46 +2764,46 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help="λ of the joint objective (L_flow + λ·L_CE); default 1.0 — "
         "the KI no-tuning value. A run hyperparameter like the LRs "
-        "(re-passable on --resume); requires --objective joint; must be "
-        "> 0 (λ = 0 is spelled --objective flow)",
+        "(re-passable on --resume); requires the molmoact2_joint family; "
+        "must be > 0 (λ = 0 is spelled --objective flow)",
     )
     parser.add_argument(
-        "--expert-init",
+        "--flow-decoder-init",
         default=None,
-        help="the flow expert's weight source under --init-from "
+        help="the flow decoder's weight source under --init-from "
         "(molmoact2 flow/joint): 'inherit' (default) = the source "
-        "checkpoint's expert; 'fresh' = released-shape adaLN-Zero init "
-        "(REQUIRED from ar-only sources — the stage-2 recipe); any "
-        "other value = a checkpoint dir whose expert.safetensors loads "
-        "under a config-equality guard (the two-source init — note the "
-        "borrowed expert's outputs live in ITS training table's "
-        "normalized space)",
+        "checkpoint's flow decoder; 'fresh' = released-shape adaLN-Zero "
+        "init (REQUIRED from ar-only sources — the stage-2 recipe); any "
+        "other value = a VLA checkpoint dir whose "
+        "flow_decoder.safetensors loads under a config-equality guard "
+        "(the two-source init — note the borrowed decoder's outputs "
+        "live in ITS training table's normalized space)",
     )
     parser.add_argument(
         "--self-attention-mode",
         choices=["causal_actions", "bidirectional"],
         default=None,
-        help="decoder self-attention over the action chunk (fresh-run "
-        "default causal_actions, checkpoint-inferred under "
+        help="gemma_flow decoder self-attention over the action chunk "
+        "(fresh-run default causal_actions, checkpoint-inferred under "
         "--resume/--init-from)",
     )
     parser.add_argument(
         "--time-conditioning",
         choices=[m.value for m in TimeConditioning],
         default=None,
-        help="how flow time τ conditions the flow decoder: 'additive' (π0-style "
-        "input add, the default) or 'adarms' (DiT-style per-layer scale/"
-        "gate, identity at init). adarms changes the architecture — a fresh "
-        "decoder only (cannot --init-from an additive checkpoint)",
+        help="how flow time τ conditions the gemma_flow decoder: 'additive' "
+        "(π0-style input add, the default) or 'adarms' (DiT-style per-layer "
+        "scale/gate, identity at init). adarms changes the architecture — a "
+        "fresh decoder only (cannot --init-from an additive checkpoint)",
     )
     parser.add_argument(
         "--target-time-embed",
         action="store_true",
         default=None,
-        help="extend the flow decoder with the SnapFlow φ_s target-time "
-        "embedding (zero-initialized output: inert until trained; may "
-        "--init-from an unextended checkpoint — step 0 is then exactly "
-        "that checkpoint). Implied by --distill snapflow",
+        help="extend the gemma_flow decoder with the SnapFlow φ_s "
+        "target-time embedding (zero-initialized output: inert until "
+        "trained; may --init-from an unextended checkpoint — step 0 is "
+        "then exactly that checkpoint). Implied by --distill snapflow",
     )
     parser.add_argument(
         "--distill",
@@ -2763,30 +2812,19 @@ def _build_parser() -> argparse.ArgumentParser:
         help="training objective variant: 'snapflow' = self-distillation "
         "toward 1-NFE decoding (L = α·L_FM + (1−α)·λ·L_shortcut with "
         "stop-gradient two-step-Euler shortcut targets; α=0.5, λ=0.1 "
-        "frozen in code). Flow "
-        "decoder only; enables --target-time-embed",
-    )
-    parser.add_argument(
-        "--decoder",
-        choices=["flow", "ar_backbone"],
-        default=None,
-        help="action decoder: 'flow' (velocity field, the fresh-run "
-        "default) or 'ar_backbone' (FAST tokens decoded by the FULL "
-        "backbone itself — the decoder-only path; trains a ~11M "
-        "vocabulary patch, usually with --backbone-text-lr; requires "
-        "--fast-tokenizer). The --decoder-* shape flags size flow only. "
-        "molmo_flow is inherit-only (--init-from/--resume a converted "
-        "checkpoint); ar_fast retired at tag pre-decoder-simplify",
+        "frozen in code). gemma_flow only; enables --target-time-embed; "
+        "recorded in the checkpoint's objective and locked under --resume",
     )
     parser.add_argument(
         "--aux-fields",
         nargs="*",
         choices=[f.value for f in AuxField],
         default=None,
-        help="train aux text generation from judge annotations (ar_backbone "
-        "only): fields rendered before BOA in template order; datasets "
-        "whose annotation stamp is absent/stale train as unjudged, loudly. "
-        "Omit to train actions only (the historical objective)",
+        help="train aux text generation from judge annotations (AR-suffix "
+        "families only): fields rendered before BOA in template order; "
+        "datasets whose annotation stamp is absent/stale train as "
+        "unjudged, loudly. Omit to train actions only (the historical "
+        "objective)",
     )
     parser.add_argument(
         "--aux-loss-weight",
@@ -2889,33 +2927,33 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--fast-tokenizer",
         default=None,
-        help="FAST tokenizer artifact: a local directory or "
-        "<user>/<repo>/<subfolder> on the hub (e.g. "
+        help="FAST tokenizer artifact for the AR-suffix families: a local "
+        "directory or <user>/<repo>/<subfolder> on the hub (e.g. "
         "mcobzarenco/bijou-checkpoints/fast_tokenizer_v1)",
     )
     parser.add_argument(
         "--decoder-hidden",
         type=int,
         default=None,
-        help="decoder hidden size (fresh-run default 768)",
+        help="gemma_flow decoder hidden size (fresh-run default 768)",
     )
     parser.add_argument(
         "--decoder-heads",
         type=int,
         default=None,
-        help="decoder self-attention heads (fresh-run default 6)",
+        help="gemma_flow decoder self-attention heads (fresh-run default 6)",
     )
     parser.add_argument(
         "--decoder-intermediate",
         type=int,
         default=None,
-        help="decoder MLP intermediate size (fresh-run default 3072)",
+        help="gemma_flow decoder MLP intermediate size (fresh-run default 3072)",
     )
     parser.add_argument(
         "--decoder-cross-heads",
         type=int,
         default=None,
-        help="decoder cross-attention heads (fresh-run default 4)",
+        help="gemma_flow decoder cross-attention heads (fresh-run default 4)",
     )
     parser.add_argument(
         "--chunk-size",
@@ -2993,10 +3031,12 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--decoder-lr",
         type=float,
-        default=1e-4,
-        help="peak learning rate of the action decoder (cosine decay to "
-        "10%% after warmup); every component-lr below shares this "
-        "schedule shape, scaled to its own peak",
+        default=None,
+        help="peak learning rate of the 'decoder' param group (cosine "
+        "decay to 10%% after warmup; default 1e-4); every component-lr "
+        "below shares this schedule shape, scaled to its own peak. "
+        "Explicitly passing it for a family whose decoder group is "
+        "structurally empty (molmoact2_ar) is an error",
     )
     parser.add_argument(
         "--backbone-text-lr",
@@ -3005,9 +3045,9 @@ def _build_parser() -> argparse.ArgumentParser:
         help="peak learning rate for the backbone TEXT stack (decoder "
         "layers up to the deepest exported stream, PLE projections, "
         "multimodal projector); OMIT to keep the backbone frozen (the "
-        "historical behavior). Token embeddings and PLE tables always "
-        "stay frozen. A live backbone loads fp32 with bf16-autocast "
-        "forwards; suggest 1e-5",
+        "historical behavior — the freeze is printed, never silent). "
+        "Token embeddings and PLE tables always stay frozen. A live "
+        "backbone loads fp32 with bf16-autocast forwards; suggest 1e-5",
     )
     parser.add_argument(
         "--backbone-vision-lr",
@@ -3044,7 +3084,8 @@ def _build_parser() -> argparse.ArgumentParser:
         default="adamw",
         help="adamc = AdamW with corrected weight decay (arXiv "
         "2506.02285): hidden matrices decay at λ·γt/γmax (the group's "
-        "weight_decay tracks the LR schedule), output heads keep "
+        "weight_decay tracks the LR schedule), output heads "
+        "(VLA.output_head_parameters — audited per family) keep "
         "standard decay, 1-D parameters stay undecayed; adamw is the "
         "unchanged default",
     )
@@ -3096,17 +3137,19 @@ def _build_parser() -> argparse.ArgumentParser:
         "--init-from",
         type=Path,
         default=None,
-        help="warm start: expert weights from this checkpoint directory, "
-        "fresh optimizer and step count (use a new --save-dir)",
+        help="warm start: model weights from this VLA checkpoint "
+        "directory, fresh optimizer and step count (use a new "
+        "--save-dir). The family is checkpoint-inferred; --objective "
+        "selects a molmoact2 pathway",
     )
     parser.add_argument(
         "--resume",
         type=Path,
         default=None,
         help="full resume: weights + optimizer/scheduler/step from this "
-        "checkpoint directory (--steps counts total, including resumed); "
-        "demands a --seed the checkpoint was not trained with (see "
-        "--allow-same-seed-resume)",
+        "VLA checkpoint directory (--steps counts total, including "
+        "resumed); demands a --seed the checkpoint was not trained with "
+        "(see --allow-same-seed-resume)",
     )
     parser.add_argument(
         "--allow-same-seed-resume",
@@ -3121,21 +3164,21 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help="stage-2 warm start: load ONLY backbone.safetensors + "
         "prompt.safetensors from this checkpoint (any decoder family), "
-        "build the decoder fresh — e.g. a new flow expert reading an "
-        "AR-pretrained trunk. Unlike --init-from, the source's decoder "
-        "config is ignored",
+        "build the decoder fresh under this run's --family — e.g. a new "
+        "flow decoder reading an AR-pretrained trunk. Unlike --init-from, "
+        "the source's decoder config is ignored",
     )
     parser.add_argument(
         "--prompt-generate-bracket",
         action="store_true",
         default=None,
-        help="render [generate|actions] in prompts for non-AR decoders "
+        help="render [generate|actions] in prompts for non-AR families "
         "(stage-2 trunk consistency: an AR-pretrained trunk shaped its "
-        "conditioning/state positions WITH the bracket). ar_backbone "
-        "always renders it — passing this there is an error, not a "
-        "no-op. Checkpoint-inferred under --resume/--init-from (an "
-        "ar_backbone source infers True — its prompts carried the "
-        "bracket implicitly)",
+        "conditioning/state positions WITH the bracket). The AR-suffix "
+        "families always render it — passing this there is an error, not "
+        "a no-op. Checkpoint-inferred under --resume/--init-from (an "
+        "AR-suffix source infers True — its prompts carried the bracket "
+        "implicitly)",
     )
     parser.add_argument(
         "--device",
@@ -3181,7 +3224,7 @@ def parse_args() -> TrainArgs:
     raw = parser.parse_args()
     checkpoint_path = raw.resume if raw.resume is not None else raw.init_from
     checkpoint = (
-        read_checkpoint_info(checkpoint_path) if checkpoint_path is not None else None
+        resolve_checkpoint(checkpoint_path) if checkpoint_path is not None else None
     )
     return TrainArgs.from_namespace(raw, parser, checkpoint=checkpoint)
 
@@ -3207,7 +3250,7 @@ def main() -> int:
     os.environ["LEROBOT_VIDEO_DECODER_CACHE_SIZE"] = str(args.video_decoder_cache)
 
     # TF32 for fp32 matmuls (torch's default is full-IEEE "highest"): the
-    # expert trains in fp32, and true fp32 matmul leaves ~5-7x of H100
+    # flow decoders train in fp32, and true fp32 matmul leaves ~5-7x of H100
     # throughput on the table. TF32's per-op 10-bit mantissa is far above
     # bf16 and standard for training; the bf16 backbone is unaffected.
     torch.set_float32_matmul_precision("high")
@@ -3277,120 +3320,140 @@ def main() -> int:
     # so the shuffled partition stays coordinated.
     torch.manual_seed(args.seed + rank)
 
-    checkpoint_dir = resolve_checkpoint_dir(args.backbone)
-    # Trunk dispatch: the backbone family is a structural fact of the
-    # checkpoint (its own config.json), not a CLI axis.
+    # -- source checkpoint + trunk directory ------------------------------
+    # Under --init-from/--resume the trunk mounts from the checkpoint's
+    # own materialization (self-containment: the pristine backbone/
+    # mirror, or the recorded artifact for trained trunks); fresh runs
+    # resolve --backbone.
+    source = args.init_from if args.init_from is not None else args.resume
+    source_metadata: VLAMetadata | None = None
+    if source is not None:
+        source_metadata = read_metadata(source)
+        checkpoint_dir = backbone_directory(source, source_metadata)
+    else:
+        checkpoint_dir = resolve_checkpoint_dir(args.backbone)
+    # Trunk cross-check: the family DECLARES the trunk lineage; the
+    # artifact's own config.json must agree.
     backbone_model_type = json.loads(
         (checkpoint_dir / "config.json").read_text(),
     ).get("model_type", "")
-    molmo2_trunk = backbone_model_type == "molmo2"
-    if backbone_model_type == "molmoact2" and args.decoder != "molmo_flow":
+    molmo2_trunk = backbone_model_type in ("molmo2", "molmoact2")
+    if args.family.startswith("gemma") and molmo2_trunk:
+        raise SystemExit(
+            f"--family {args.family} rides a Gemma trunk but {args.backbone} "
+            f"is a {backbone_model_type} artifact",
+        )
+    if args.family == "molmo2_ar" and backbone_model_type != "molmo2":
+        raise SystemExit(
+            f"--family molmo2_ar rides a Molmo2 trunk but {args.backbone} "
+            f"records model_type {backbone_model_type!r}",
+        )
+    if backbone_model_type == "molmoact2" and args.family not in MOLMOACT2_FAMILIES:
         raise SystemExit(
             f"{args.backbone} is a MolmoAct2 artifact — it hosts the "
-            "molmo_flow decoder only (inherit it: --init-from a converted "
-            "checkpoint with no --decoder flag; §8.13)",
+            "molmoact2 families only (inherit them: --init-from a "
+            "converted checkpoint)",
         )
+
     # The molmoact2 compositions rebuild from the source checkpoint's
-    # sections (inherit-only, §8.13 step 5) — read them once, early.
-    # The objective matrix derives per-objective
-    # sections here: the flow section for flow/joint (synthesized under
-    # --expert-init fresh from ar-only sources), the format-6 AR
-    # section for ar/joint (derived from a flow-section source's
-    # geometry + trunk tokenizer on first transition).
-    molmo_flow_info: CheckpointInfo | None = None
-    molmo_flow_prompt: MolmoAct2PromptConfig | None = None
+    # component sections (inherit-only) — read them once, early. The
+    # pathway matrix derives per-family sections here: the flow section
+    # for flow/joint (synthesized under --flow-decoder-init fresh from
+    # ar-only sources), the format-6 AR section for ar/joint (derived
+    # from a flow-section source's geometry + trunk tokenizer on first
+    # transition).
+    molmoact2_prompt: MolmoAct2PromptConfig | None = None
     molmo_flow_section: MolmoFlowDecoderConfig | None = None
     molmoact2_ar_section: ARDecoderConfig | None = None
-    molmoact2_source_decoder_kind: str | None = None
-    if args.decoder == "molmo_flow":
-        source = args.init_from if args.init_from is not None else args.resume
-        assert source is not None  # TrainArgs.__post_init__ guard
-        molmo_flow_info = read_checkpoint_info(source)
-        source_meta = json.loads((source / "bijou_config.json").read_text())
-        source_sections = checkpoint_sections(source_meta)
-        if not isinstance(source_sections.prompt, MolmoAct2PromptConfig):
-            raise SystemExit(
-                f"{source} is not a molmoact2-family checkpoint (prompt "
-                f"{type(source_sections.prompt).__name__}) — convert the "
-                "MolmoAct2 artifact first (bijou.convert_molmoact2)",
-            )
-        molmo_flow_prompt = source_sections.prompt
-        source_joint_section = source_meta.get("joint_ce")
-        if isinstance(source_sections.decoder, MolmoFlowDecoderConfig):
-            molmoact2_source_decoder_kind = "molmo_flow"
-            molmo_flow_section = source_sections.decoder
-            if args.objective in ("ar", "joint"):
-                # The rider/head section: a joint source already records
-                # it; a flow/release source derives it once (geometry
-                # from the flow section, block_base from the trunk
-                # tokenizer's own <action_0>).
-                molmoact2_ar_section = (
-                    ar_backbone_config_from_dict(source_joint_section)
-                    if source_joint_section is not None
-                    else molmoact2_ar_config_from_flow_section(
-                        molmo_flow_section,
-                        molmo_flow_prompt,
-                        str(checkpoint_dir),
-                    )
+    source_has_flow_weights = False
+    if args.family in MOLMOACT2_FAMILIES:
+        assert source is not None and source_metadata is not None  # inherit-only
+        molmoact2_prompt = molmoact2_prompt_of(source_metadata)
+        flow_record = source_metadata.components.get("flow_decoder")
+        if flow_record is not None:
+            parsed_flow = parse_decoder_config(dict(flow_record["config"]))
+            if not isinstance(parsed_flow, MolmoFlowDecoderConfig):
+                raise SystemExit(
+                    f"{source} records a {type(parsed_flow).__name__} as "
+                    "flow_decoder — the molmoact2 flow pathway carries the "
+                    "molmo_flow section",
                 )
-        elif isinstance(source_sections.decoder, ARDecoderConfig):
-            # An ar-only source (this plan's stage-1 product): carries
-            # the format-6 section and NO expert.
-            molmoact2_source_decoder_kind = "ar_backbone"
-            molmoact2_ar_section = source_sections.decoder
-            if args.objective in ("flow", "joint"):
-                if args.expert_init == "inherit":
+            molmo_flow_section = parsed_flow
+            source_has_flow_weights = bool(flow_record["weights"])
+        ar_record = source_metadata.components.get("ar_decoder")
+        if ar_record is not None:
+            parsed_ar = parse_decoder_config(dict(ar_record["config"]))
+            if not isinstance(parsed_ar, ARDecoderConfig):
+                raise SystemExit(
+                    f"{source} records a {type(parsed_ar).__name__} as "
+                    "ar_decoder — expected a format-6 ar_backbone section",
+                )
+            if parsed_ar.suffix_format != MOLMOACT2_SUFFIX_FORMAT:
+                raise SystemExit(
+                    f"{source} records a format-{parsed_ar.suffix_format} "
+                    "ar_decoder under the molmoact2 prompt — this prompt "
+                    f"family's emission is format {MOLMOACT2_SUFFIX_FORMAT}",
+                )
+            molmoact2_ar_section = parsed_ar
+        if args.family in ("molmoact2_ar", "molmoact2_joint") and (
+            molmoact2_ar_section is None
+        ):
+            # A flow/release source records no format-6 section: derive
+            # it once (geometry from the flow section, block ids from
+            # the trunk tokenizer's own <action_0>).
+            if molmo_flow_section is None:
+                raise SystemExit(
+                    f"{source} records neither a flow_decoder nor an "
+                    "ar_decoder section — not a molmoact2 checkpoint "
+                    "this run can rebuild from",
+                )
+            molmoact2_ar_section = molmoact2_ar_config_from_flow_section(
+                molmo_flow_section,
+                molmoact2_prompt,
+                str(checkpoint_dir),
+            )
+        if args.family in ("molmoact2_flow", "molmoact2_joint"):
+            if molmo_flow_section is None or not source_has_flow_weights:
+                # An ar-only source carries no flow decoder to inherit.
+                if args.flow_decoder_init == "inherit":
                     raise SystemExit(
-                        f"--objective {args.objective} from the ar-only "
-                        f"checkpoint {source} — it carries no expert to "
-                        "inherit; pass --expert-init fresh (released-shape "
-                        "init) or --expert-init <checkpoint> (borrow one)",
+                        f"--objective {'flow' if args.family == 'molmoact2_flow' else 'joint'} "
+                        f"from the ar-only checkpoint {source} — it carries "
+                        "no flow decoder to inherit; pass "
+                        "--flow-decoder-init fresh (released-shape init) or "
+                        "--flow-decoder-init <checkpoint> (borrow one)",
                     )
-                if args.expert_init == "fresh":
+                if args.flow_decoder_init == "fresh":
+                    assert molmoact2_ar_section is not None
                     molmo_flow_section = molmoact2_fresh_flow_section(
                         molmoact2_ar_section,
                     )
-                # A <ref> expert-init resolves its section (and weights)
-                # in the init block below — the built decoder must equal
-                # the ref's recorded shape, so the section IS the ref's.
-        else:
-            raise SystemExit(
-                f"{source} records a "
-                f"{type(source_sections.decoder).__name__} under the "
-                "molmoact2 prompt — this family carries molmo_flow or a "
-                "format-6 ar_backbone section",
-            )
-        if args.objective == "joint" and molmoact2_source_decoder_kind == (
-            "molmo_flow"
-        ):
-            assert molmoact2_ar_section is not None
-        if args.expert_init not in ("inherit", "fresh") and args.objective != "ar":
-            # The two-source init: the expert section comes from the REF
-            # checkpoint (config-equality is the load-time guard); read
-            # it now so the decoder builds the right shape.
-            ref_sections = checkpoint_sections(
-                json.loads(
-                    (Path(args.expert_init) / "bijou_config.json").read_text(),
-                ),
-            )
-            if not isinstance(ref_sections.decoder, MolmoFlowDecoderConfig):
-                raise SystemExit(
-                    f"--expert-init {args.expert_init} is not a "
-                    "molmo_flow-carrying checkpoint (decoder "
-                    f"{type(ref_sections.decoder).__name__}) — nothing to "
-                    "borrow",
-                )
-            if (
-                molmo_flow_section is not None
-                and ref_sections.decoder != molmo_flow_section
-            ):
-                raise SystemExit(
-                    f"--expert-init {args.expert_init}: the ref's "
-                    "molmo_flow section differs from the source "
-                    "checkpoint's — borrowed weights must match the shape "
-                    "being built exactly (config-equality guard)",
-                )
-            molmo_flow_section = ref_sections.decoder
+            if args.flow_decoder_init not in ("inherit", "fresh"):
+                # The two-source init: the flow section comes from the
+                # REF checkpoint (config-equality is the guard); read it
+                # now so the decoder builds the right shape.
+                ref_metadata = read_metadata(Path(args.flow_decoder_init))
+                ref_record = ref_metadata.components.get("flow_decoder")
+                if ref_record is None or not ref_record["weights"]:
+                    raise SystemExit(
+                        f"--flow-decoder-init {args.flow_decoder_init} is "
+                        "not a molmo_flow-carrying checkpoint — nothing to "
+                        "borrow",
+                    )
+                ref_section = parse_decoder_config(dict(ref_record["config"]))
+                assert isinstance(ref_section, MolmoFlowDecoderConfig)
+                if (
+                    molmo_flow_section is not None
+                    and source_has_flow_weights
+                    and ref_section != molmo_flow_section
+                ):
+                    raise SystemExit(
+                        f"--flow-decoder-init {args.flow_decoder_init}: the "
+                        "ref's molmo_flow section differs from the source "
+                        "checkpoint's — borrowed weights must match the "
+                        "shape being built exactly (config-equality guard)",
+                    )
+                molmo_flow_section = ref_section
 
     # -- datasets --------------------------------------------------------
     selection = select_datasets(
@@ -3470,13 +3533,14 @@ def main() -> int:
         if args.fast_tokenizer is not None
         else None
     )
-    # The molmoact2 ar/joint objectives tokenize CE targets through the
+    # The molmoact2 ar/joint pathways tokenize CE targets through the
     # released codec under the ONE merged table (their shared-table
-    # convention, and molmo_flow's decision-6 clamp table — same row,
-    # one source of truth).
+    # convention, and molmo_flow's clamp table — same row, one source of
+    # truth). The decoder itself resolves the codec at build; the
+    # COLLATOR needs the same tables to tokenize targets.
     molmoact2_action_table: tuple[Tensor, Tensor] | None = None
-    if args.decoder == "molmo_flow" and args.objective in ("ar", "joint"):
-        assert molmoact2_ar_section is not None and molmo_flow_info is not None
+    if args.family in ("molmoact2_ar", "molmoact2_joint"):
+        assert molmoact2_ar_section is not None and source_metadata is not None
         assert action_codec is None  # --fast-tokenizer refused for the family
         action_codec = MolmoAct2ActionCodec(
             MolmoAct2FastTokenizer.load(
@@ -3491,7 +3555,7 @@ def main() -> int:
             # the released tokenizer itself produces.
             allow_quantization_holes=True,
         )
-        source_normalization = molmo_flow_info.normalization
+        source_normalization = source_metadata.stats
         if (
             source_normalization.action_q01 is None
             or source_normalization.action_q99 is None
@@ -3499,7 +3563,7 @@ def main() -> int:
             raise SystemExit(
                 "the source checkpoint's normalization row carries no "
                 "action q01/q99 — the discrete head tokenizes under the "
-                "merged table (§8.13); this table predates it",
+                "merged table; this table predates it",
             )
         molmoact2_action_table = (
             torch.tensor(source_normalization.action_q01, dtype=torch.float32),
@@ -3508,7 +3572,7 @@ def main() -> int:
     aux_decode_config: AuxDecodeConfig | None = None
     aux_spec: AuxSpec | None = None
     if args.aux_fields is not None:
-        assert action_codec is not None  # parse_args guard (ar_backbone-only)
+        assert action_codec is not None  # parse guard (AR-suffix-only)
         if not selection.annotated_repos:
             raise SystemExit(
                 "--aux-fields but NO selected dataset carries a materialized "
@@ -3560,15 +3624,15 @@ def main() -> int:
                 flush=True,
             )
     inputs_collator: Any
-    if args.decoder == "molmo_flow":
-        assert molmo_flow_prompt is not None and molmo_flow_info is not None
+    if args.family in MOLMOACT2_FAMILIES:
+        assert molmoact2_prompt is not None
         inputs_collator = MolmoAct2InputsCollator(
             str(checkpoint_dir),
-            setup_type=molmo_flow_prompt.setup_type,
-            control_mode=molmo_flow_prompt.control_mode,
-            num_state_tokens=molmo_flow_prompt.num_state_tokens,
-            action_mode=molmo_flow_prompt.action_mode,
-            narration=molmo_flow_prompt.narration,
+            setup_type=molmoact2_prompt.setup_type,
+            control_mode=molmoact2_prompt.control_mode,
+            num_state_tokens=molmoact2_prompt.num_state_tokens,
+            action_mode=molmoact2_prompt.action_mode,
+            narration=molmoact2_prompt.narration,
         )
     elif molmo2_trunk:
         inputs_collator = Molmo2InputsCollator(str(checkpoint_dir), args.max_crops)
@@ -3578,9 +3642,9 @@ def main() -> int:
             args.max_soft_tokens,
         )
     state_table: tuple[Tensor, Tensor] | None = None
-    if args.decoder == "molmo_flow":
-        assert molmo_flow_info is not None
-        state_table = molmo_flow_state_table(molmo_flow_info.normalization)
+    if args.family in MOLMOACT2_FAMILIES:
+        assert source_metadata is not None
+        state_table = molmo_flow_state_table(source_metadata.stats)
     collator = Collator(
         inputs=inputs_collator,
         instruction=args.instruction,
@@ -3588,7 +3652,9 @@ def main() -> int:
         max_cameras=args.max_cameras,
         action_codec=action_codec,
         aux=aux_spec,
-        generate_bracket=args.decoder == "ar_backbone" or args.prompt_generate_bracket,
+        generate_bracket=(
+            args.family in AR_SUFFIX_FAMILIES or args.prompt_generate_bracket
+        ),
         generate_override=None,
         camera_kind_dropout=args.camera_kind_dropout,
         instruction_augment=args.instruction_augment,
@@ -3651,7 +3717,7 @@ def main() -> int:
         # actions]) so the scalar chunk_mae is comparable across
         # aux-on/off arms; the samples table re-collates its rich rows
         # with generate_override = the trained fields (validate).
-        generate_override=(() if args.decoder == "ar_backbone" else None),
+        generate_override=(() if args.family in AR_SUFFIX_FAMILIES else None),
         camera_kind_dropout=0.0,
         instruction_augment=0.0,
         # dropout-0 conditioning = TRUE-label conditioning for the
@@ -3745,18 +3811,22 @@ def main() -> int:
     # -- model -----------------------------------------------------------
     # A live backbone needs fp32 master weights (bf16 updates at backbone
     # learning rates vanish below bf16 resolution); its forwards run
-    # under bf16 autocast in BijouTrainStep. Frozen runs keep the
-    # checkpoint dtype (bf16) exactly as before the unfreeze flags.
+    # under bf16 autocast inside the family's forward. Frozen runs keep
+    # the mount convention (checkpoint dtype for Gemma, bf16 for Molmo2)
+    # exactly as before the unfreeze flags.
     backbone_dtype = torch.float32 if args.backbone_trained else None
-    model: BijouModel[Any, Any]
-    if args.decoder == "molmo_flow":
-        # The molmoact2 compositions (§8.13 step 5 + the phase-3
-        # objective matrix): full multimodal trunk (the MolmoAct2
-        # artifact recorded as this run's --backbone), their-format
-        # encoder, and the objective's decoder(s) rebuilt from the
-        # derived sections — flow weights land in the init block below.
-        assert molmo_flow_prompt is not None and molmo_flow_info is not None
-        geometry = (
+    objective = build_objective(args)
+    model: TrainableVLA
+    backbone_module: nn.Module
+    serving: FlowServing | ARServing
+    # The recorded serving operating point: inherited verbatim from the
+    # source checkpoint when its kind survives the pathway transition,
+    # else the family's derivation rule (written explicitly either way —
+    # no silent defaults, D6).
+    phi_s_extension = False
+    if args.family in MOLMOACT2_FAMILIES:
+        assert molmoact2_prompt is not None and source_metadata is not None
+        geometry: MolmoFlowDecoderConfig | ARDecoderConfig | None = (
             molmo_flow_section
             if molmo_flow_section is not None
             else molmoact2_ar_section
@@ -3773,10 +3843,10 @@ def main() -> int:
                 f"data action dim {action_dim} != the checkpoint's "
                 f"{geometry_dim} — wrong rig/corpus for this artifact",
             )
-        if state_dim != molmo_flow_prompt.state_dim:
+        if state_dim != molmoact2_prompt.state_dim:
             raise SystemExit(
                 f"data state dim {state_dim} != the checkpoint's "
-                f"{molmo_flow_prompt.state_dim}",
+                f"{molmoact2_prompt.state_dim}",
             )
         if args.chunk_size != geometry_horizon:
             raise SystemExit(
@@ -3784,44 +3854,53 @@ def main() -> int:
                 f"{geometry_horizon} (checkpoint-inferred "
                 "under --init-from/--resume — drop any explicit flag)",
             )
-        molmo_flow_backbone = load_molmo2_model(
+        molmoact2_backbone = load_molmo2_model(
             checkpoint_dir,
             device=device,
             dtype=(backbone_dtype if backbone_dtype is not None else torch.bfloat16),
         )
-        molmo_flow_encoder = MolmoAct2Encoder(
+        molmoact2_encoder = MolmoAct2Encoder(
             str(checkpoint_dir),
-            setup_type=molmo_flow_prompt.setup_type,
-            control_mode=molmo_flow_prompt.control_mode,
-            num_state_tokens=molmo_flow_prompt.num_state_tokens,
-            action_mode=molmo_flow_prompt.action_mode,
-            narration=molmo_flow_prompt.narration,
+            setup_type=molmoact2_prompt.setup_type,
+            control_mode=molmoact2_prompt.control_mode,
+            num_state_tokens=molmoact2_prompt.num_state_tokens,
+            action_mode=molmoact2_prompt.action_mode,
+            narration=molmoact2_prompt.narration,
         )
-        molmo_flow_encoder.prompt_schema = molmo_flow_prompt.to_dict()
+        molmoact2_encoder.prompt_schema = molmoact2_prompt.to_dict()
         assert state_table is not None  # built with the collator
-        molmo_flow_encoder.state_table = (
+        molmoact2_encoder.state_table = (
             tuple(state_table[0].tolist()),
             tuple(state_table[1].tolist()),
         )
         if molmoact2_action_table is not None:
             # The ar-run save side reads the action table off the
             # encoder stash (flow/joint read the decoder's own tables).
-            molmo_flow_encoder.action_table = (
+            molmoact2_encoder.action_table = (
                 tuple(molmoact2_action_table[0].tolist()),
                 tuple(molmoact2_action_table[1].tolist()),
             )
         molmo2_text_config = load_molmo2_config(checkpoint_dir).text
-        if args.objective == "ar":
+        if args.family == "molmoact2_ar":
             assert molmoact2_ar_section is not None
-            model = BijouModel(
-                backbone=molmo_flow_backbone,
-                encoder=molmo_flow_encoder,
-                decoder=build_molmoact2_ar_decoder(
-                    molmoact2_ar_section,
-                    molmo_flow_prompt,
-                    molmo2_text_config,
-                    str(checkpoint_dir),
-                ),
+            assert isinstance(objective, ARObjective)
+            serving = (
+                ARServing.from_dict(source_metadata.serving)
+                if source_metadata.serving.get("kind") == "ar"
+                else ARServing()
+            )
+            ar_decoder = build_molmoact2_ar_component_from_section(
+                molmoact2_ar_section,
+                molmoact2_prompt,
+                molmo2_text_config,
+                checkpoint_dir,
+            )
+            model = MolmoAct2ARVLA(
+                molmoact2_backbone,
+                molmoact2_encoder,
+                ar_decoder,
+                objective=objective,
+                serving=serving,
             )
             schedule_desc = (
                 f"molmoact2 discrete head (format-6 suffix; block "
@@ -3831,72 +3910,155 @@ def main() -> int:
             )
         else:
             assert molmo_flow_section is not None
-            model = BijouModel(
-                backbone=molmo_flow_backbone,
-                encoder=molmo_flow_encoder,
-                decoder=build_molmo_flow_decoder(
-                    molmo_flow_section,
-                    molmo_flow_info.normalization,
-                    device=device,
-                    dtype=torch.float32,
-                ),
+            serving = (
+                FlowServing.from_dict(source_metadata.serving)
+                if source_metadata.serving.get("kind") == "flow"
+                else FlowServing(
+                    num_steps=molmo_flow_section.num_flow_steps,
+                    method=SamplingMethod.EULER,
+                )
             )
+            flow_decoder = build_molmo_flow_decoder(
+                molmo_flow_section,
+                source_metadata.stats,
+                device=device,
+                dtype=torch.float32,
+            )
+            if args.family == "molmoact2_flow":
+                assert isinstance(objective, FlowObjective)
+                model = MolmoAct2FlowVLA(
+                    molmoact2_backbone,
+                    molmoact2_encoder,
+                    flow_decoder,
+                    objective=objective,
+                    serving=serving,
+                )
+            else:
+                assert molmoact2_ar_section is not None
+                assert isinstance(objective, JointObjective)
+                model = MolmoAct2JointVLA(
+                    molmoact2_backbone,
+                    molmoact2_encoder,
+                    flow_decoder,
+                    build_molmoact2_ar_component_from_section(
+                        molmoact2_ar_section,
+                        molmoact2_prompt,
+                        molmo2_text_config,
+                        checkpoint_dir,
+                    ),
+                    objective=objective,
+                    serving=serving,
+                )
             schedule_desc = (
                 f"molmo_flow {molmo_flow_section.num_layers}-layer KV "
                 f"conditioning (seam "
-                f"{'INSULATED (KI)' if args.insulate_expert else 'open'}; "
+                f"{'INSULATED (KI)' if args.insulate_flow else 'open'}; "
                 f"t-law {molmo_flow_section.time_offset} + "
                 f"{molmo_flow_section.time_scale}*Beta("
                 f"{molmo_flow_section.beta_alpha}, "
                 f"{molmo_flow_section.beta_beta}))"
             )
-            if args.objective == "joint":
-                assert molmoact2_ar_section is not None
-                model.joint_ce = build_molmoact2_ar_decoder(
-                    molmoact2_ar_section,
-                    molmo_flow_prompt,
-                    molmo2_text_config,
-                    str(checkpoint_dir),
-                )
-                model.joint_ce_weight = args.joint_ce_weight
+            if args.family == "molmoact2_joint":
                 schedule_desc += (
                     f" + joint CE rider (λ={args.joint_ce_weight:g}, "
                     "flow KV extracted before the CE append)"
                 )
-        model.insulate_expert = args.insulate_expert
-    elif args.decoder == "flow":
-        if molmo2_trunk:
-            raise SystemExit(
-                "flow on a Molmo2 trunk is the molmo_flow decoder (§8.13: "
-                "--init-from a converted MolmoAct2 checkpoint); the "
-                "residual-conditioned FlowDecoder attachment was removed "
-                "at tag 'pre-decoder-simplify'",
+        backbone_module = molmoact2_backbone
+    elif args.family == "gemma_flow":
+        assert isinstance(objective, FlowObjective | SnapflowObjective)
+        backbone_config = load_config(checkpoint_dir)
+        if source_metadata is not None:
+            # The recorded sections are the architecture (the CLI's
+            # shape flags were refused above); φ_s may extend the
+            # recorded section — the sanctioned zero-init warm start.
+            prompt = parse_prompt_config(
+                dict(source_metadata.components["prompt"]["config"]),
             )
-        expert_config = default_expert_config(
-            load_config(checkpoint_dir),
-            action_dim=action_dim,
-            state_dim=state_dim,
-            stream_counts=args.stream_counts,
-            hidden_size=args.decoder_hidden,
-            num_attention_heads=args.decoder_heads,
-            intermediate_size=args.decoder_intermediate,
-            cross_attention_heads=args.decoder_cross_heads,
-            chunk_size=args.chunk_size,
-            self_attention_mode=SelfAttentionMode(args.self_attention_mode),
-            time_conditioning=TimeConditioning(args.time_conditioning),
-            target_time_embed=args.target_time_embed,
-        )
-        model = from_backbone(
+            if not isinstance(prompt, GemmaPromptConfig):
+                raise SystemExit(
+                    f"{source} records a {type(prompt).__name__} prompt — "
+                    "gemma_flow rides the gemma4 prompt strategy",
+                )
+            section = parse_decoder_config(
+                dict(source_metadata.components["flow_decoder"]["config"]),
+            )
+            if not isinstance(section, FlowDecoderSection):
+                raise SystemExit(
+                    f"{source} records a {type(section).__name__} as "
+                    "flow_decoder — gemma_flow carries the flow section",
+                )
+            if section.target_time_embed and not args.target_time_embed:
+                raise SystemExit(
+                    f"{source} records a φ_s-extended decoder but this run "
+                    "resolves target_time_embed=False — dropping trained "
+                    "parameters is not a warm start",
+                )
+            if args.target_time_embed and not section.target_time_embed:
+                phi_s_extension = True
+                section = dataclasses.replace(section, target_time_embed=True)
+                if is_main:
+                    print(
+                        f"note: φ_s target-time extension over {source} "
+                        "(saved decoder has no target-time embedding) — the "
+                        "new parameters initialize fresh with "
+                        "zero-initialized output (step-0 model ≡ "
+                        "checkpoint), sanctioned distill warm start",
+                        flush=True,
+                    )
+            expert_config = expert_config_from_architecture(
+                prompt,
+                section,
+                backbone_config,
+            )
+            if expert_config.action_dim != action_dim:
+                raise SystemExit(
+                    f"data action dim {action_dim} != the checkpoint's "
+                    f"{expert_config.action_dim} — wrong rig/corpus",
+                )
+            max_soft_tokens = prompt.max_soft_tokens
+        else:
+            expert_config = default_expert_config(
+                backbone_config,
+                action_dim=action_dim,
+                state_dim=state_dim,
+                stream_counts=args.stream_counts,
+                hidden_size=args.decoder_hidden,
+                num_attention_heads=args.decoder_heads,
+                intermediate_size=args.decoder_intermediate,
+                cross_attention_heads=args.decoder_cross_heads,
+                chunk_size=args.chunk_size,
+                self_attention_mode=SelfAttentionMode(args.self_attention_mode),
+                time_conditioning=TimeConditioning(args.time_conditioning),
+                target_time_embed=args.target_time_embed,
+            )
+            max_soft_tokens = args.max_soft_tokens
+        gemma_backbone, gemma_encoder, gemma_flow_decoder = build_gemma_flow_parts(
             checkpoint_dir,
+            backbone_config,
             expert_config,
+            max_soft_tokens=max_soft_tokens,
             device=device,
             dtype=backbone_dtype,
             expert_dtype=torch.float32,
         )
+        serving = FlowServing(num_steps=5, method=SamplingMethod.HEUN)
+        if source_metadata is not None and source_metadata.serving.get("kind") == (
+            "flow"
+        ):
+            serving = FlowServing.from_dict(source_metadata.serving)
+        model = GemmaFlowVLA(
+            gemma_backbone,
+            gemma_encoder,
+            gemma_flow_decoder,
+            objective=objective,
+            serving=serving,
+        )
+        backbone_module = gemma_backbone
         schedule_desc = str(expert_config.cross_attention_schedule)
-    elif args.decoder == "ar_backbone" and molmo2_trunk:
-        assert args.fast_tokenizer is not None  # parse_args guard
+    elif args.family == "molmo2_ar":
+        assert args.fast_tokenizer is not None  # parse guard
         assert action_codec is not None
+        assert isinstance(objective, ARObjective)
         molmo2_config = load_molmo2_config(checkpoint_dir)
         # Full multimodal model (decoder + untied head + vision tower);
         # live runs get fp32 masters, frozen runs the bf16 mount
@@ -3914,19 +4076,37 @@ def main() -> int:
             device=device,
             dtype=torch.float32,
         )
-        ar_backbone_config = ARDecoderConfig(
-            tokenizer=args.fast_tokenizer,
-            vocab_total=action_codec.vocab_total,
-            # The SECOND extension block, directly after the 128 image
-            # specials — Qwen3's ~271-id unused tail cannot hold the
-            # 1,026 FAST ids (the second-extension-block anchoring; the embedding and
-            # fresh untied head rows are decoder-owned trainables).
-            block_base=molmo2_config.text.fast_block_base,
-            chunk_size=args.chunk_size,
-            action_dim=action_dim,
-            suffix_format=SUFFIX_FORMAT,
-            aux=aux_decode_config,
-        )
+        if source_metadata is not None:
+            recorded_section = parse_decoder_config(
+                dict(source_metadata.components["ar_decoder"]["config"]),
+            )
+            if not isinstance(recorded_section, ARDecoderConfig):
+                raise SystemExit(
+                    f"{source} records a {type(recorded_section).__name__} "
+                    "as ar_decoder — molmo2_ar carries the ar_backbone "
+                    "section",
+                )
+            ar_backbone_config = ar_section_for_run(
+                recorded_section,
+                aux=aux_decode_config,
+                fast_tokenizer=args.fast_tokenizer,
+                is_main=is_main,
+            )
+        else:
+            ar_backbone_config = ARDecoderConfig(
+                tokenizer=args.fast_tokenizer,
+                vocab_total=action_codec.vocab_total,
+                # The SECOND extension block, directly after the 128 image
+                # specials — Qwen3's ~271-id unused tail cannot hold the
+                # 1,026 FAST ids (the second-extension-block anchoring; the
+                # embedding and fresh untied head rows are decoder-owned
+                # trainables).
+                block_base=molmo2_config.text.fast_block_base,
+                chunk_size=args.chunk_size,
+                action_dim=action_dim,
+                suffix_format=SUFFIX_FORMAT,
+                aux=aux_decode_config,
+            )
         molmo2_text_tokenizer = Molmo2TextTokenizer(str(checkpoint_dir))
         carriers = newline_carrier_ids(
             molmo2_text_tokenizer,
@@ -3960,44 +4140,78 @@ def main() -> int:
         # (full-vocab CE competes against text priors); DDP's
         # construction broadcast makes rank 0's draw authoritative.
         molmo2_decoder.init_tables_from_backbone(molmo2_backbone)
-        model = BijouModel(
-            backbone=molmo2_backbone,
-            encoder=molmo2_encoder,
-            decoder=molmo2_decoder,
+        serving = ARServing()
+        model = Molmo2ARVLA(
+            molmo2_backbone,
+            molmo2_encoder,
+            molmo2_decoder,
+            objective=objective,
+            serving=serving,
         )
+        backbone_module = molmo2_backbone
         schedule_desc = (
             f"molmo2 full-depth suffix, FAST extension block @ "
             f"{ar_backbone_config.block_base}"
         )
-    elif args.decoder == "ar_backbone":
-        assert args.fast_tokenizer is not None  # parse_args guard
+    elif args.family == "gemma_ar":
+        assert args.fast_tokenizer is not None  # parse guard
         assert action_codec is not None
+        assert isinstance(objective, ARObjective)
         backbone_config = load_config(checkpoint_dir)
-        # Prefill still stops at the deepest non-KV-shared layer; its
-        # stream export rides along unused (the decoder reads the CACHE).
-        stop = backbone_config.text.first_kv_shared_layer_idx - 1
-        backbone, encoder = build_gemma_encoder(
+        if source_metadata is not None:
+            prompt = parse_prompt_config(
+                dict(source_metadata.components["prompt"]["config"]),
+            )
+            if not isinstance(prompt, GemmaPromptConfig):
+                raise SystemExit(
+                    f"{source} records a {type(prompt).__name__} prompt — "
+                    "gemma_ar rides the gemma4 prompt strategy",
+                )
+            recorded_section = parse_decoder_config(
+                dict(source_metadata.components["ar_decoder"]["config"]),
+            )
+            if not isinstance(recorded_section, ARDecoderConfig):
+                raise SystemExit(
+                    f"{source} records a {type(recorded_section).__name__} "
+                    "as ar_decoder — gemma_ar carries the ar_backbone "
+                    "section",
+                )
+            ar_backbone_config = ar_section_for_run(
+                recorded_section,
+                aux=aux_decode_config,
+                fast_tokenizer=args.fast_tokenizer,
+                is_main=is_main,
+            )
+            exports = prompt.exports
+            max_soft_tokens = prompt.max_soft_tokens
+        else:
+            # Prefill still stops at the deepest non-KV-shared layer; its
+            # stream export rides along unused (the decoder reads the
+            # CACHE).
+            exports = (backbone_config.text.first_kv_shared_layer_idx - 1,)
+            max_soft_tokens = args.max_soft_tokens
+            # Tail-anchored block: the last vocab_total ids sit inside
+            # the tokenizer's unused tail (E2B: 261118.. ⊂ the 3259-id
+            # run at 258885..262143) — no magic constant, adapts to any
+            # backbone, recorded in the checkpoint's decoder section.
+            ar_backbone_config = ARDecoderConfig(
+                tokenizer=args.fast_tokenizer,
+                vocab_total=action_codec.vocab_total,
+                block_base=backbone_config.text.vocab_size - action_codec.vocab_total,
+                chunk_size=args.chunk_size,
+                action_dim=action_dim,
+                suffix_format=SUFFIX_FORMAT,
+                aux=aux_decode_config,
+            )
+        gemma_ar_backbone, gemma_ar_encoder = build_gemma_encoder(
             checkpoint_dir,
             backbone_config,
-            exports=(stop,),
-            max_soft_tokens=args.max_soft_tokens,
+            exports=exports,
+            max_soft_tokens=max_soft_tokens,
             state_dim=state_dim,
             device=device,
             dtype=backbone_dtype,
             depth=BackboneDepth.FULL,
-        )
-        # Tail-anchored block: the last vocab_total ids sit inside the
-        # tokenizer's unused tail (E2B: 261118.. ⊂ the 3259-id run at
-        # 258885..262143) — no magic constant, adapts to any backbone,
-        # recorded in the checkpoint's decoder section.
-        ar_backbone_config = ARDecoderConfig(
-            tokenizer=args.fast_tokenizer,
-            vocab_total=action_codec.vocab_total,
-            block_base=backbone_config.text.vocab_size - action_codec.vocab_total,
-            chunk_size=args.chunk_size,
-            action_dim=action_dim,
-            suffix_format=SUFFIX_FORMAT,
-            aux=aux_decode_config,
         )
         text_tokenizer = transformers.AutoTokenizer.from_pretrained(
             str(checkpoint_dir),
@@ -4007,7 +4221,7 @@ def main() -> int:
             if aux_decode_config is not None
             else None
         )
-        ar_backbone_decoder = GemmaARDecoder(
+        gemma_ar_decoder = GemmaARDecoder(
             ar_backbone_config,
             backbone_config.text,
             action_codec,
@@ -4020,26 +4234,47 @@ def main() -> int:
         # Block logits start near the average text logit (full-vocab CE
         # competes against text priors); DDP's construction broadcast
         # makes rank 0's draw authoritative.
-        ar_backbone_decoder.init_tables_from_backbone(backbone)
-        model = BijouModel(
-            backbone=backbone,
-            encoder=encoder,
-            decoder=ar_backbone_decoder,
+        gemma_ar_decoder.init_tables_from_backbone(gemma_ar_backbone)
+        serving = ARServing()
+        model = GemmaARVLA(
+            gemma_ar_backbone,
+            gemma_ar_encoder,
+            gemma_ar_decoder,
+            objective=objective,
+            serving=serving,
         )
+        backbone_module = gemma_ar_backbone
         schedule_desc = (
             f"full-depth suffix, FAST block @ {ar_backbone_config.block_base}"
         )
     else:
-        # TrainArgs restricts --decoder to the kinds above; reaching here
+        # TrainArgs restricts --family to the kinds above; reaching here
         # is a dispatch bug, not a user error.
-        raise AssertionError(f"unhandled decoder kind {args.decoder!r}")
+        raise AssertionError(f"unhandled family {args.family!r}")
+    assert model.spec.family.value == args.family  # construction routed right
+
+    # -- LR flags vs the structural offer (D4, both directions) -----------
+    freeze_notes = reconcile_lr_offer(
+        model.param_groups(),
+        family=args.family,
+        backbone_text_lr=args.backbone_text_lr,
+        backbone_vision_lr=args.backbone_vision_lr,
+    )
+    if is_main:
+        for note in freeze_notes:
+            print(note, flush=True)
+    # The parse-time family rule and the built offer must agree (the
+    # decoder group is empty iff the family is the parameterless one).
+    assert (len(model.param_groups()["decoder"]) == 0) == (
+        args.family == "molmoact2_ar"
+    )
     backbone_counts = unfreeze_backbone(model, args)
     if args.activation_checkpointing:
-        if not isinstance(model.backbone, Molmo2Model):
+        if not isinstance(backbone_module, Molmo2Model):
             raise SystemExit(
                 "--activation-checkpointing is wired for the molmo2 decoder stack only",
             )
-        model.backbone.text.transformer.gradient_checkpointing = True
+        backbone_module.text.transformer.gradient_checkpointing = True
         if is_main:
             print(
                 "activation checkpointing ON (molmo2 decoder blocks: "
@@ -4047,18 +4282,21 @@ def main() -> int:
                 "where the trunk runs under grad)",
                 flush=True,
             )
-    if not args.backbone_trained and hasattr(model.encoder, "state_proj"):
-        # Frozen runs encode the prefix under no_grad (BijouTrainStep),
-        # so the prompt-side state projection CANNOT receive gradients
-        # there — freeze it rather than hand DDP a grad-less trainable
-        # (static_graph errors on the first backward otherwise). The
-        # zero init makes the state token exactly inert: frozen-backbone
-        # behavior matches the pre-state-token model. Training it under
-        # a frozen backbone (stage 2) needs a grad-transparent prefix —
-        # a deliberate future change, not a default. (The molmoact2
-        # encoder has NO prompt-side parameters — state is discrete in
-        # the ids — so there is nothing to freeze there.)
-        model.encoder.state_proj.requires_grad_(False)
+    state_proj = getattr(model.encoder, "state_proj", None)
+    if not args.backbone_trained and state_proj is not None:
+        # Frozen runs encode the prefix under no_grad (the family's
+        # forward), so the prompt-side state projection CANNOT receive
+        # gradients there — freeze it rather than hand DDP a grad-less
+        # trainable (static_graph errors on the first backward
+        # otherwise). The zero init makes the state token exactly inert:
+        # frozen-backbone behavior matches the pre-state-token model.
+        # Training it under a frozen backbone (stage 2) needs a
+        # grad-transparent prefix — a deliberate future change, not a
+        # — a deliberate future change, not a
+        # default. (The molmoact2 encoder has NO prompt-side parameters
+        # — state is discrete in the ids — so there is nothing to freeze
+        # there.)
+        state_proj.requires_grad_(False)
         if is_main:
             # Zero-init => exactly inert; a --backbone-init-from load
             # replaces the zeros with the source's TRAINED projection,
@@ -4070,7 +4308,6 @@ def main() -> int:
                 "--backbone-init-from supplies a trained projection",
                 flush=True,
             )
-    model.distill = args.distill
     if args.distill is not None and is_main:
         print(
             f"distill: {args.distill} objective "
@@ -4078,11 +4315,7 @@ def main() -> int:
             "two-step-Euler shortcut targets, no EMA teacher)",
             flush=True,
         )
-    n_trainable = sum(p.numel() for p in model.decoder.parameters()) + (
-        sum(p.numel() for p in model.joint_ce.parameters())
-        if model.joint_ce is not None
-        else 0
-    )
+    n_trainable = sum(p.numel() for p in model.param_groups()["decoder"])
     if is_main:
         backbone_desc = (
             "frozen backbone"
@@ -4095,27 +4328,12 @@ def main() -> int:
                 "embeddings/PLE tables frozen; fp32 masters, bf16 autocast)"
             )
         )
-        banner_encoder = model.encoder
-        banner_backbone = model.backbone
-        if isinstance(banner_encoder, GemmaEncoder):
-            streams_desc = str(banner_encoder.exports)
-            assert isinstance(banner_backbone, Gemma4Model)
-            n_backbone_layers = len(banner_backbone.language_model.layers)
-        elif isinstance(banner_encoder, MolmoAct2Encoder):
-            assert isinstance(banner_backbone, Molmo2Model)
-            streams_desc = "prefix cache (per-layer KV conditioning)"
-            n_backbone_layers = len(banner_backbone.text.transformer.blocks)
-        else:
-            assert isinstance(banner_backbone, Molmo2Model)
-            assert isinstance(banner_encoder, Molmo2Encoder)
-            streams_desc = "prefix cache (AR suffix)"
-            n_backbone_layers = len(banner_backbone.text.transformer.blocks)
         print(
-            f"model: {backbone_desc} "
-            f"({n_backbone_layers} "
-            f"layers, streams {streams_desc}) + fp32 "
-            f"{args.decoder} decoder ({n_trainable / 1e6:.1f}M params, "
-            f"schedule {schedule_desc})",
+            f"model: --family {args.family} ({backbone_desc}) + "
+            f"{n_trainable / 1e6:.1f}M trainable decoder-group params "
+            f"(schedule {schedule_desc}; objective "
+            f"{objective_to_json(objective)}, serving "
+            f"{serving_to_json(serving)})",
             flush=True,
         )
         if distributed:
@@ -4142,8 +4360,7 @@ def main() -> int:
 
     # Fixed-key dicts, deliberately: this is torch's optimizer param-group
     # API format (a third-party boundary), consumed by AdamW below. The
-    # model's named groups route to per-component learning rates; the
-    # head group always trains at --decoder-lr.
+    # model's named groups route to per-component learning rates.
     param_groups, cli_groups, adamc_corrected = build_optimizer_param_groups(
         model,
         optimizer_name=args.optimizer,
@@ -4177,18 +4394,17 @@ def main() -> int:
     else:
         optimizer = torch.optim.AdamW(param_groups, **adamw_kwargs)
     # Everything the optimizer updates, for the gradient clip: the frozen
-    # path clips exactly the expert (unchanged behavior); a live backbone is
-    # clipped jointly with it (one global norm).
+    # path clips exactly the decoder group (unchanged behavior); a live
+    # backbone is clipped jointly with it (one global norm).
     clipped_parameters: list[torch.nn.Parameter] = [
         p for group in param_groups for p in group["params"]
     ]
     # The re-warmup ramp needs the resume step BEFORE the scheduler
     # state loads — read it from the checkpoint's metadata.
-    resume_step = (
-        int(json.loads((args.resume / "bijou_config.json").read_text())["step"])
-        if args.resume is not None
-        else 0
-    )
+    resume_step = 0
+    if args.resume is not None:
+        assert source_metadata is not None
+        resume_step = source_metadata.step
     scheduler = torch.optim.lr_scheduler.LambdaLR(
         optimizer,
         lambda step: lr_lambda(step, args, resume_step),
@@ -4241,161 +4457,27 @@ def main() -> int:
 
     start_step = 0
     adapted_backbone_source: Path | None = None
-    checkpoint_to_load = args.init_from or args.resume
-    if checkpoint_to_load is not None:
-        # An objective TRANSITION (the phase-3 matrix: ar ↔ flow/joint
-        # across molmoact2 sources) legitimately builds a different
-        # decoder section than the source records — the source block
-        # above derived and validated the built config, so the equality
-        # guard is skipped exactly there and nowhere else.
-        built_kind = (
-            "ar_backbone"
-            if isinstance(model.decoder, MolmoAct2ARDecoder)
-            else "molmo_flow"
-            if isinstance(model.decoder, MolmoFlowDecoder)
-            else None
+    if source is not None:
+        assert source_metadata is not None
+        load_family_weights(
+            model,
+            source,
+            source_metadata,
+            args=args,
+            device=device,
+            phi_s_extension=phi_s_extension,
+            is_main=is_main,
         )
-        objective_transition = (
-            args.decoder == "molmo_flow"
-            and molmoact2_source_decoder_kind is not None
-            and built_kind is not None
-            and molmoact2_source_decoder_kind != built_kind
-        )
-        saved_decoder_config: dict[str, Any] = {}
-        if not objective_transition:
-            saved_decoder_config = ensure_matching_decoder_config(
-                model.decoder,
-                checkpoint_to_load,
-            )
-        if isinstance(model.decoder, MolmoAct2ARDecoder):
-            # The discrete head owns ZERO parameters — there is nothing
-            # to load (the trunk deltas ride backbone.safetensors below;
-            # a flow-section source's expert.safetensors is deliberately
-            # left behind: --objective ar drops the expert).
-            expert_state = {}
-        elif isinstance(model.decoder, MolmoFlowDecoder):
-            # The expert weight source (--expert-init, decision on
-            # 2026-08-14): inherit = the source checkpoint; fresh = the
-            # built adaLN-Zero init (stage-2); <ref> = another
-            # checkpoint's expert under the config-equality guard the
-            # source block enforced.
-            if args.expert_init == "fresh":
-                if is_main:
-                    print(
-                        "expert-init: FRESH released-shape expert "
-                        "(adaLN-Zero init) — no expert weights inherited",
-                        flush=True,
-                    )
-            else:
-                expert_source = (
-                    Path(args.expert_init)
-                    if args.expert_init != "inherit"
-                    else checkpoint_to_load
-                )
-                if args.expert_init != "inherit" and is_main:
-                    print(
-                        f"expert-init: borrowing the expert from "
-                        f"{expert_source} (two-source init) — its weights "
-                        "live in ITS training table's normalized space; "
-                        "this run clamps with the SOURCE checkpoint's "
-                        "table (provenance: both recorded in train_args)",
-                        flush=True,
-                    )
-                load_expert_state(
-                    model.decoder,
-                    load_file(
-                        str(expert_source / "expert.safetensors"),
-                        device="cpu",
-                    ),
-                )
-                model.decoder.to(device=device, dtype=torch.float32)
-            expert_state = {}
-        else:
-            # CPU-load + copy-in: loading straight to the device
-            # transiently holds a second copy of the weights next to the
-            # built module (see loading.load_adapted_backbone).
-            expert_state = load_file(
-                str(checkpoint_to_load / "expert.safetensors"),
-                device="cpu",
-            )
-        # Strict always: pre-format-5 checkpoints carry parameters this
-        # code deleted (mode tables, suffix state_proj) and are refused
-        # by the key mismatch — no migration path (owner call,
-        # 2026-08-03). One sanctioned exception: the φ_s target-time
-        # extension (config guard above) may miss EXACTLY the fresh φ_s
-        # keys, which keep their built init (zero-init output => step-0
-        # model ≡ checkpoint).
-        phi_s_extension = (
-            isinstance(model.decoder, FlowDecoder)
-            and model.decoder.config.target_time_embed
-            and not saved_decoder_config.get("target_time_embed", False)
-        )
-        if isinstance(model.decoder, MolmoFlowDecoder | MolmoAct2ARDecoder):
-            pass  # handled above (weights loaded / nothing to load)
-        elif phi_s_extension:
-            phi_s_keys = {
-                key
-                for key in model.decoder.state_dict()
-                if key.startswith(("target_time_in_proj.", "target_time_out_proj."))
-            }
-            missing, unexpected = model.decoder.load_state_dict(
-                expert_state,
-                strict=False,
-            )
-            if set(missing) != phi_s_keys or unexpected:
-                raise SystemExit(
-                    f"expert.safetensors mismatch at {checkpoint_to_load} "
-                    f"beyond the φ_s extension: missing {sorted(missing)} "
-                    f"(expected exactly {sorted(phi_s_keys)}), unexpected "
-                    f"{sorted(unexpected)}",
-                )
-        else:
-            model.decoder.load_state_dict(expert_state, strict=True)
-        # Prompt-side parameters (state_proj) — format-3-prompt
-        # checkpoints always write the file. The molmoact2 format's
-        # encoder is stateless, and CONVERTED checkpoints (which no run
-        # wrote) carry no file at all — trained descendants write an
-        # empty one through the standard save.
-        prompt_path = checkpoint_to_load / "prompt.safetensors"
-        if prompt_path.exists():
-            model.encoder.load_state_dict(
-                load_file(str(prompt_path), device="cpu"),
-                strict=True,
-            )
-        elif len(list(model.encoder.parameters())) > 0:
-            raise SystemExit(
-                f"{checkpoint_to_load} carries no prompt.safetensors but "
-                "the encoder has prompt-side parameters — not a valid "
-                "checkpoint for this composition",
-            )
-        if model.joint_ce is not None and (len(list(model.joint_ce.parameters())) > 0):
-            # The molmoact2 rider owns ZERO parameters (trunk-native
-            # rows) — nothing to load; a future parameterized rider
-            # needs a load path designed, not silently skipped.
-            raise SystemExit(
-                "joint_ce rider carries parameters but no load path "
-                "exists — the molmoact2 rider is parameterless by "
-                "design (trunk-native rows)",
-            )
-        if (
-            is_main
-            and not isinstance(model.decoder, MolmoAct2ARDecoder)
-            and (args.expert_init != "fresh")
-        ):
-            print(f"loaded expert weights from {checkpoint_to_load}", flush=True)
-        # Backbone-trained checkpoints carry the adapted file; plain ones
-        # don't, and the HF backbone loaded above simply stays (that is the
-        # cont45k -> unfreeze continuation path).
-        if (checkpoint_to_load / "backbone.safetensors").exists():
-            load_adapted_backbone(model, checkpoint_to_load)
+        if source_metadata.backbone_trained:
+            load_backbone_state(backbone_module, source)
             if not args.backbone_trained:
-                # Frozen inherited backbone: every checkpoint this run saves
-                # must carry the snapshot too (see save_checkpoint).
-                adapted_backbone_source = checkpoint_to_load / "backbone.safetensors"
+                # Frozen inherited backbone: every checkpoint this run
+                # saves must carry the snapshot too (see save_checkpoint).
+                adapted_backbone_source = source / "backbone.safetensors"
             if is_main:
                 print(
-                    f"loaded ADAPTED backbone weights from "
-                    f"{checkpoint_to_load} (bf16 snapshot into "
+                    f"loaded TRAINED backbone weights from {source} "
+                    f"(bf16 snapshot into "
                     f"{'fp32 masters' if args.backbone_trained else 'bf16'})",
                     flush=True,
                 )
@@ -4411,15 +4493,9 @@ def main() -> int:
                 )
     elif args.backbone_init_from is not None:
         # Stage-2: trunk (+ prompt state_proj) inherited, decoder fresh.
-        load_backbone_init(model, args.backbone_init_from)
+        stage2_backbone_init(model, backbone_module, args.backbone_init_from)
         if not args.backbone_trained:
             adapted_backbone_source = args.backbone_init_from / "backbone.safetensors"
-        if model.joint_ce is not None and (len(list(model.joint_ce.parameters())) > 0):
-            raise SystemExit(
-                "joint_ce rider carries parameters but no load path "
-                "exists — the molmoact2 rider is parameterless by "
-                "design (trunk-native rows)",
-            )
         if is_main:
             print(
                 f"stage-2 init: ADAPTED backbone + prompt state_proj from "
@@ -4432,8 +4508,9 @@ def main() -> int:
         optimizer_path = args.resume / "optimizer.pt"
         if not optimizer_path.exists():
             raise SystemExit(
-                f"{optimizer_path} missing (checkpoint predates optimizer "
-                "saving) — use --init-from for a warm start instead",
+                f"{optimizer_path} missing (a converted checkpoint carries "
+                "no optimizer state) — use --init-from for a warm start "
+                "instead",
             )
         train_state = TrainState.from_payload(
             torch.load(optimizer_path, map_location="cpu", weights_only=True),
@@ -4478,17 +4555,15 @@ def main() -> int:
             for line in hyper_notes:
                 print(f"  {line}", flush=True)
 
-    # DDP wiring: ONE train-step module owns prefix encode + objective, so
-    # a single wrapper hooks gradients of everything trained, for both the
-    # frozen and live-backbone regimes (the frozen backbone contributes no
-    # trainable parameters — DDP's reducer ignores it). Wrapping AFTER the
-    # weight load means DDP's construction-time broadcast (rank 0 -> all)
-    # covers the loaded state. model.decoder stays the raw module for
-    # eval, clipping and checkpointing.
-    train_step: torch.nn.Module = BijouTrainStep(
-        model,
-        backbone_trained=args.backbone_trained,
-    )
+    # DDP wiring: the FAMILY is the train-step module (its forward IS the
+    # objective — D5's entry point), so one wrapper hooks gradients of
+    # everything a run trains, for both the frozen and live-backbone
+    # regimes (a frozen backbone contributes no trainable parameters —
+    # DDP's reducer ignores it). Wrapping AFTER the weight load means
+    # DDP's construction-time broadcast (rank 0 -> all) covers the loaded
+    # state. ``model`` stays the raw module for eval, clipping and
+    # checkpointing.
+    train_step: Callable[..., Any] = model
     if distributed and args.chunk_grad_allreduce:
         # No DDP wrapper AT ALL on this path: the constructor would
         # allocate reducer bucket buffers (a full fp32 gradient copy,
@@ -4496,17 +4571,15 @@ def main() -> int:
         # never syncs. Replicate the two things DDP provided — the
         # construction-time rank-0 state broadcast here, and the
         # per-step gradient sync via allreduce_gradients in the loop.
-        broadcast_module_states(train_step)
+        broadcast_module_states(model)
     elif distributed:
         train_step = torch.nn.parallel.DistributedDataParallel(
-            train_step,
+            model,
             device_ids=[device.index] if device.type == "cuda" else None,
             # Backbone/decoder buffers are constant RoPE tables etc.;
             # per-step broadcasts would be pure overhead. The trainable
             # partition guarantees every grad-enabled parameter receives
-            # gradients every step (frozen: the whole decoder; live backbone:
-            # trainable_text_parameters mirrors kv_stop_layer), and the
-            # graph never changes.
+            # gradients every step, and the graph never changes.
             broadcast_buffers=False,
             gradient_as_bucket_view=True,
             # Chunked backward runs n forwards + a no_sync accumulation
@@ -4518,6 +4591,13 @@ def main() -> int:
             static_graph=args.backward_chunks == 1,
         )
 
+    # The probe's flow operating point: 10 solver steps at the family's
+    # RECORDED serving method (heun for gemma_flow, euler for the
+    # molmoact2 flow pathways) — eval is a measurement, integration
+    # error well below model error.
+    flow_probe_method = serving.method if isinstance(serving, FlowServing) else None
+    probe_aux_fields = tuple(AuxField(f) for f in (args.aux_fields or ()))
+
     # Fixed MAE probe sets, independent of the training batch size, fetched
     # once and kept as CPU-resident collated batches per rank (collation
     # in-process is safe: dataloader workers are spawned, not forked; GPU
@@ -4527,8 +4607,8 @@ def main() -> int:
     # draws are what bijou.eval --episodes {holdout,train} --seed
     # <eval-seed> would score. Rank 0 keeps raw items strided across its
     # shard for the rich wandb table.
-    eval_probe: ProbeSet | None = None
-    train_probe: ProbeSet | None = None
+    eval_probe: ProbeSet[Any] | None = None
+    train_probe: ProbeSet[Any] | None = None
     if args.eval_samples is not None:
         if args.holdout_episodes > 0:
             eval_selection = select_datasets(
@@ -4608,11 +4688,10 @@ def main() -> int:
             name=args.wandb_run_name,
             dir=str(args.save_dir),
             config={
-                "train_args": {
-                    k: str(v) if isinstance(v, Path) else v
-                    for k, v in dataclasses.asdict(args).items()
-                },
-                "decoder_config": decoder_schema_dict(model.decoder),
+                "train_args": train_args_record(args),
+                "family": args.family,
+                "objective": objective_to_json(objective),
+                "serving": serving_to_json(serving),
                 "dataset": {
                     "repo_ids": sorted(per_dataset_stats),
                     "episodes": selection.total_episodes,
@@ -4629,13 +4708,18 @@ def main() -> int:
         )
 
     step = start_step
-    # Loss/grad-norm live on-device between log points: a single .item()
-    # sync per log_every steps instead of one per step. (grad_norm is
-    # identical on all ranks after DDP's gradient sync — no reduce needed.)
+    # Loss + per-component (sum, count) windows live on-device between
+    # log points: a single .item() sync per log_every steps instead of
+    # one per step. (grad_norm is identical on all ranks after DDP's
+    # gradient sync — no reduce needed.) Component sums/counts aggregate
+    # count-weighted across the window AND across ranks (all-reduced as
+    # totals), so sparsely-populated batches weigh by their actual
+    # elements instead of diluting a batch-mean — the aux convention,
+    # now uniform over every component.
     window: list[Tensor] = []
-    window_action: list[Tensor] = []
-    window_aux_sum: list[Tensor] = []
-    window_aux_count: list[Tensor] = []
+    window_component_sums: dict[str, list[Tensor]] = {}
+    window_component_counts: dict[str, list[Tensor]] = {}
+    multi_component = False
     grad_norm = torch.zeros((), device=device)
     prefetcher = DevicePrefetcher(loader, device)
     epoch = 0
@@ -4655,44 +4739,20 @@ def main() -> int:
             if step >= args.steps:
                 break
             if isinstance(batch, ChunkedBatch):
-                # Chunked backward (--backward-chunks > 1): normalize
-                # each chunk's sum-form loss by the FULL step's counts
-                # (data-only, computed before any forward) and
-                # accumulate gradients, syncing DDP only on the last
-                # chunk — the accumulated gradient and every logged
-                # quantity match the unchunked step up to fp reduction
-                # order, at one chunk's activation footprint.
-                step_normalizers: (
-                    tuple[Tensor, Tensor | None] | tuple[Tensor, Tensor, Tensor | None]
-                )
-                if model.joint_ce is not None:
-                    # The joint arm's THREE normalizers (flow positions,
-                    # CE action tokens, CE aux — None on the molmoact2
-                    # rider), summed over chunks before any forward.
-                    joint_counts = [
-                        model.joint_ce_count_normalizers(c) for c in batch.chunks
-                    ]
-                    step_normalizers = (
-                        torch.stack([c[0] for c in joint_counts]).sum(),
-                        torch.stack([c[1] for c in joint_counts]).sum(),
-                        None,
-                    )
-                else:
-                    counts = [model.loss_count_normalizers(c) for c in batch.chunks]
-                    action_norm = torch.stack([c[0] for c in counts]).sum()
-                    aux_norm = (
-                        torch.stack(
-                            [n for c in counts if (n := c[1]) is not None],
-                        ).sum()
-                        if counts[0][1] is not None
-                        else None
-                    )
-                    step_normalizers = (action_norm, aux_norm)
+                # Chunked backward (--backward-chunks > 1): every chunk
+                # forwards against the SAME summed-then-all-reduced
+                # counts and accumulates gradients, syncing DDP only on
+                # the last chunk — the accumulated gradient and every
+                # logged quantity match the unchunked step up to fp
+                # reduction order, at one chunk's activation footprint.
+                counts = summed_loss_counts(model, batch.chunks)
+                if distributed:
+                    for key in sorted(counts):
+                        torch.distributed.all_reduce(counts[key])
                 optimizer.zero_grad(set_to_none=True)
                 loss = torch.zeros((), device=device)
-                action_sum_total = torch.zeros((), device=device)
-                aux_sum = None
-                aux_count = None
+                step_sums: dict[str, Tensor] = {}
+                step_counts: dict[str, Tensor] = {}
                 for i, chunk in enumerate(batch.chunks):
                     if (
                         distributed
@@ -4713,30 +4773,41 @@ def main() -> int:
                     else:
                         sync_ctx = nullcontext()
                     with sync_ctx:
-                        share, share_action, share_aux, share_aux_count = train_step(
-                            chunk,
-                            normalizers=step_normalizers,
+                        report = train_step(chunk, counts=counts)
+                        report.objective.backward()
+                    assert set(report.components) == set(counts)
+                    loss = loss + report.objective.detach()
+                    for key, component in report.components.items():
+                        component_sum = component.sum.detach()
+                        step_sums[key] = (
+                            component_sum
+                            if key not in step_sums
+                            else step_sums[key] + component_sum
                         )
-                        share.backward()
-                    loss = loss + share.detach()
-                    action_sum_total = action_sum_total + share_action
-                    if share_aux is not None and share_aux_count is not None:
-                        aux_sum = share_aux if aux_sum is None else aux_sum + share_aux
-                        aux_count = (
-                            share_aux_count
-                            if aux_count is None
-                            else aux_count + share_aux_count
+                        step_counts[key] = (
+                            component.count
+                            if key not in step_counts
+                            else step_counts[key] + component.count
                         )
                 if distributed and args.chunk_grad_allreduce:
                     allreduce_gradients(clipped_parameters)
-                # The first normalizer is the action-loss normalizer in
-                # BOTH tuple shapes (2 = action/aux, 3 = the joint arm's
-                # flow/CE-action/CE-aux).
-                action_component = action_sum_total / step_normalizers[0]
             else:
-                loss, action_component, aux_sum, aux_count = train_step(batch)
+                counts = model.loss_counts(batch)
+                if distributed:
+                    for key in sorted(counts):
+                        torch.distributed.all_reduce(counts[key])
+                report = train_step(batch, counts=counts)
+                assert set(report.components) == set(counts)
                 optimizer.zero_grad(set_to_none=True)
-                loss.backward()
+                report.objective.backward()
+                loss = report.objective.detach()
+                step_sums = {
+                    key: component.sum.detach()
+                    for key, component in report.components.items()
+                }
+                step_counts = {
+                    key: component.count for key, component in report.components.items()
+                }
             grad_norm = torch.nn.utils.clip_grad_norm_(
                 clipped_parameters,
                 args.grad_clip,
@@ -4746,44 +4817,40 @@ def main() -> int:
             optimizer.step()
             scheduler.step()
             step += 1
-            window.append(loss.detach())
-            window_action.append(action_component)
-            if aux_sum is not None and aux_count is not None:
-                window_aux_sum.append(aux_sum)
-                window_aux_count.append(aux_count)
+            window.append(loss)
+            multi_component = len(step_sums) > 1
+            for key, value in step_sums.items():
+                window_component_sums.setdefault(key, []).append(value)
+                window_component_counts.setdefault(key, []).append(
+                    step_counts[key].float(),
+                )
 
             if step % args.log_every == 0:
                 # All ranks participate in the reduce (they hit the same
-                # step in lockstep); only rank 0 syncs to host and reports.
-                # Aux rides as (CE sum, position count) — the reduced
-                # ratio is the position-weighted mean over the window
-                # across all ranks, so sparsely-labeled batches weigh by
-                # their actual aux tokens instead of diluting a
-                # batch-mean toward 0. Aux runs append every step (0-sum
-                # batches included), so the collective stays aligned.
+                # step in lockstep); only rank 0 syncs to host and
+                # reports. Components ride as (sum, count) totals — the
+                # reduced ratio is the element-weighted mean over the
+                # window across all ranks. Every step appends every
+                # component (key set is run-constant), so the collective
+                # stays aligned.
                 window_mean = torch.stack(window).mean()
-                action_mean = torch.stack(window_action).mean()
-                aux_totals = (
-                    torch.stack(
+                component_totals = {
+                    key: torch.stack(
                         [
-                            torch.stack(window_aux_sum).sum(),
-                            torch.stack(window_aux_count).sum().float(),
+                            torch.stack(window_component_sums[key]).sum(),
+                            torch.stack(window_component_counts[key]).sum(),
                         ],
                     )
-                    if window_aux_sum
-                    else None
-                )
+                    for key in sorted(window_component_sums)
+                }
                 window.clear()
-                window_action.clear()
-                window_aux_sum.clear()
-                window_aux_count.clear()
+                window_component_sums.clear()
+                window_component_counts.clear()
                 if distributed:
                     torch.distributed.all_reduce(window_mean)
                     window_mean /= world_size
-                    torch.distributed.all_reduce(action_mean)
-                    action_mean /= world_size
-                    if aux_totals is not None:
-                        torch.distributed.all_reduce(aux_totals)
+                    for totals in component_totals.values():
+                        torch.distributed.all_reduce(totals)
                 dt = (time.perf_counter() - t_last) / args.log_every
                 t_last = time.perf_counter()
                 if is_main:
@@ -4825,18 +4892,23 @@ def main() -> int:
                             torch.cuda.memory_reserved(device) / 2**30,
                             2,
                         )
-                    if aux_totals is not None:
-                        record["loss_action"] = round(action_mean.item(), 4)
-                        if float(aux_totals[1]) > 0:
-                            record["loss_aux"] = round(
-                                float(aux_totals[0] / aux_totals[1]),
-                                4,
-                            )
+                    if multi_component:
+                        # Component chart series keep the historical
+                        # names (loss_action, loss_aux); single-
+                        # component runs log "loss" alone, exactly as
+                        # before.
+                        for key, totals in component_totals.items():
+                            if float(totals[1]) > 0:
+                                record[f"loss_{key}"] = round(
+                                    float(totals[0] / totals[1]),
+                                    4,
+                                )
                     if args.backbone_trained:
-                        # Same cosine shape as the expert's, scaled to the
-                        # backbone's base lr; the index comes from the group
-                        # table (adamc's decoder split shifts it — a
-                        # hardcoded 1 logged the decoder head's lr).
+                        # Same cosine shape as the decoder group's,
+                        # scaled to the backbone's base lr; the index
+                        # comes from the group table (adamc's decoder
+                        # split shifts it — a hardcoded 1 logged the
+                        # decoder head's lr).
                         index = backbone_group_index(cli_groups)
                         assert index is not None  # backbone_trained
                         record["lr_backbone"] = scheduler.get_last_lr()[index]
@@ -4852,10 +4924,11 @@ def main() -> int:
                             "train/samples": record["samples"],
                             "train/s_per_step": record["s_per_step"],
                         }
-                        if "loss_action" in record:
-                            wandb_metrics["train/loss_action"] = record["loss_action"]
-                        if "loss_aux" in record:
-                            wandb_metrics["train/loss_aux"] = record["loss_aux"]
+                        for key in component_totals:
+                            if f"loss_{key}" in record:
+                                wandb_metrics[f"train/loss_{key}"] = record[
+                                    f"loss_{key}"
+                                ]
                         wandb_run.log(wandb_metrics, step=step)
 
             if (
@@ -4894,6 +4967,8 @@ def main() -> int:
                         action_names=action_names,
                         step=step,
                         table_key="eval/samples",
+                        aux_fields=probe_aux_fields,
+                        flow_probe_method=flow_probe_method,
                     )
                     probe_record["eval_chunk_mae"] = round(eval_mae, 4)
                     probe_metrics["eval/chunk_mae"] = eval_mae
@@ -4908,6 +4983,8 @@ def main() -> int:
                     action_names=action_names,
                     step=step,
                     table_key="train/samples",
+                    aux_fields=probe_aux_fields,
+                    flow_probe_method=flow_probe_method,
                 )
                 probe_record["train_mae"] = round(train_mae, 4)
                 probe_metrics["train/mae"] = train_mae
@@ -4937,18 +5014,21 @@ def main() -> int:
                     )
                     write: Callable[[dict[str, Any]], Path] | None = None
                     if is_main:
-                        checkpoint_dir = args.save_dir / f"step_{step:06d}"
+                        target_dir = args.save_dir / f"step_{step:06d}"
                         tensors = capture_checkpoint_tensors(
                             model,
+                            backbone_module,
                             args=args,
                             adapted_backbone_source=adapted_backbone_source,
+                            pristine_trunk_dir=checkpoint_dir,
                         )
-                        metadata_json = build_checkpoint_metadata(
+                        metadata = build_vla_metadata(
                             model,
                             args=args,
                             normalizers=normalizers,
                             per_dataset_stats=per_dataset_stats,
                             step=step,
+                            adapted_backbone_source=adapted_backbone_source,
                         )
                         # Captured now (copy_to_cpu doubles as a deep
                         # copy): a later scheduler.step() must not leak
@@ -4958,17 +5038,17 @@ def main() -> int:
                         def write_async(
                             optimizer_state: dict[str, Any],
                             *,
-                            _dir: Path = checkpoint_dir,
+                            _dir: Path = target_dir,
                             _tensors: CheckpointTensors = tensors,
-                            _metadata: str = metadata_json,
+                            _metadata: VLAMetadata = metadata,
                             _scheduler: dict[str, Any] = scheduler_state,
                             _step: int = step,
                             _started: float = capture_start,
                         ) -> Path:
                             path = write_checkpoint(
                                 _dir,
+                                metadata=_metadata,
                                 tensors=_tensors,
-                                metadata_json=_metadata,
                                 train_state_payload=TrainState(
                                     optimizer=optimizer_state,
                                     scheduler=_scheduler,
@@ -5002,6 +5082,7 @@ def main() -> int:
                 if is_main:
                     path = save_checkpoint(
                         model,
+                        backbone_module,
                         args=args,
                         normalizers=normalizers,
                         per_dataset_stats=per_dataset_stats,
@@ -5009,6 +5090,7 @@ def main() -> int:
                         scheduler=scheduler,
                         step=step,
                         adapted_backbone_source=adapted_backbone_source,
+                        pristine_trunk_dir=checkpoint_dir,
                     )
                     print(f"saved {path}", flush=True)
         epoch += 1
@@ -5029,15 +5111,198 @@ def main() -> int:
     return 0
 
 
+def ar_section_for_run(
+    recorded: ARDecoderConfig,
+    *,
+    aux: AuxDecodeConfig | None,
+    fast_tokenizer: str,
+    is_main: bool,
+) -> ARDecoderConfig:
+    """The AR-suffix decoder config an --init-from/--resume run builds:
+    the RECORDED section with this run's aux request substituted — aux
+    is a data-side format dial (same parameter set), so a difference is
+    the sanctioned warm-start pattern (enable aux on an aux-less base),
+    noted loudly, never an error. The codec ref must match: the
+    collator already tokenized with the run's artifact."""
+    if recorded.tokenizer != fast_tokenizer:
+        raise SystemExit(
+            f"checkpoint records fast tokenizer {recorded.tokenizer!r} but "
+            f"this run resolves {fast_tokenizer!r} — the codec is "
+            "checkpoint-inferred; drop the flag",
+        )
+    if recorded.aux != aux and is_main:
+        print(
+            "note: data-side decoder config differs from the checkpoint "
+            f"(aux: {recorded.aux} -> {aux}) — sanctioned warm-start "
+            "pattern, proceeding with the run's format",
+            flush=True,
+        )
+    return dataclasses.replace(recorded, aux=aux)
+
+
+def build_molmoact2_ar_component_from_section(
+    section: ARDecoderConfig,
+    prompt: MolmoAct2PromptConfig,
+    text_config: Molmo2TextConfig,
+    trunk_dir: Path,
+) -> MolmoAct2ARDecoder:
+    """The parameterless discrete decoder from a format-6 section —
+    the train-side twin of
+    :func:`bijou.models.molmoact2_ar.build_molmoact2_ar_component`
+    (which parses a metadata record; this one takes the already-parsed
+    section the pathway matrix derived)."""
+    return build_molmoact2_ar_decoder(
+        section,
+        prompt,
+        text_config,
+        str(trunk_dir),
+    )
+
+
+def load_family_weights(
+    model: TrainableVLA,
+    source: Path,
+    metadata: VLAMetadata,
+    *,
+    args: TrainArgs,
+    device: torch.device,
+    phi_s_extension: bool,
+    is_main: bool,
+) -> None:
+    """Load the source checkpoint's component weights into the built
+    family (--init-from/--resume). Strict always — checkpoints carrying
+    parameters this code deleted are refused by the key mismatch, no
+    migration path. One sanctioned exception: the φ_s target-time
+    extension may miss EXACTLY the fresh φ_s keys, which keep their
+    built init (zero-init output ⇒ step-0 model ≡ checkpoint)."""
+    if isinstance(model, MolmoAct2FlowVLA | MolmoAct2JointVLA):
+        # The flow decoder's weight source (--flow-decoder-init):
+        # inherit = the source checkpoint; fresh = the built adaLN-Zero
+        # init (stage-2); <ref> = another checkpoint's decoder under the
+        # config-equality guard the source block enforced.
+        if args.flow_decoder_init == "fresh":
+            if is_main:
+                print(
+                    "flow-decoder-init: FRESH released-shape decoder "
+                    "(adaLN-Zero init) — no flow decoder weights inherited",
+                    flush=True,
+                )
+        else:
+            weights_source = (
+                Path(args.flow_decoder_init)
+                if args.flow_decoder_init != "inherit"
+                else source
+            )
+            if args.flow_decoder_init != "inherit" and is_main:
+                print(
+                    f"flow-decoder-init: borrowing the flow decoder from "
+                    f"{weights_source} (two-source init) — its weights "
+                    "live in ITS training table's normalized space; this "
+                    "run clamps with the SOURCE checkpoint's table "
+                    "(provenance: both recorded in train_args)",
+                    flush=True,
+                )
+            load_expert_state(
+                model.flow_decoder,
+                load_file(
+                    str(weights_source / "flow_decoder.safetensors"),
+                    device="cpu",
+                ),
+            )
+            model.flow_decoder.to(device=device, dtype=torch.float32)
+            if is_main:
+                print(f"loaded flow decoder weights from {weights_source}", flush=True)
+        return  # molmoact2 prompt side is parameterless; trunk loads at call site
+    if isinstance(model, MolmoAct2ARVLA):
+        # The discrete decoder owns ZERO parameters — there is nothing
+        # to load (trunk deltas ride backbone.safetensors at the call
+        # site; a flow-section source's flow_decoder.safetensors is
+        # deliberately left behind: the ar pathway drops the decoder).
+        return
+    if isinstance(model, GemmaFlowVLA):
+        decoder_state = load_file(
+            str(source / "flow_decoder.safetensors"),
+            device="cpu",
+        )
+        if phi_s_extension:
+            phi_s_keys = {
+                key
+                for key in model.flow_decoder.state_dict()
+                if key.startswith(("target_time_in_proj.", "target_time_out_proj."))
+            }
+            missing, unexpected = model.flow_decoder.load_state_dict(
+                decoder_state,
+                strict=False,
+            )
+            if set(missing) != phi_s_keys or unexpected:
+                raise SystemExit(
+                    f"flow_decoder.safetensors mismatch at {source} beyond "
+                    f"the φ_s extension: missing {sorted(missing)} "
+                    f"(expected exactly {sorted(phi_s_keys)}), unexpected "
+                    f"{sorted(unexpected)}",
+                )
+        else:
+            model.flow_decoder.load_state_dict(decoder_state, strict=True)
+    else:
+        model.ar_decoder.load_state_dict(
+            load_file(str(source / "ar_decoder.safetensors"), device="cpu"),
+            strict=True,
+        )
+    # Prompt-side parameters (state_proj) — the gemma/molmo2 encoders
+    # always carry them; the metadata's prompt component records the
+    # fact explicitly.
+    if metadata.components["prompt"]["weights"]:
+        model.encoder.load_state_dict(
+            load_file(str(source / "prompt.safetensors"), device="cpu"),
+            strict=True,
+        )
+    elif len(list(model.encoder.parameters())) > 0:
+        raise SystemExit(
+            f"{source} records no prompt weights but the encoder has "
+            "prompt-side parameters — not a valid checkpoint for this "
+            "composition",
+        )
+    if is_main:
+        print(f"loaded decoder + prompt weights from {source}", flush=True)
+
+
+def stage2_backbone_init(
+    model: TrainableVLA,
+    backbone: nn.Module,
+    checkpoint: Path,
+) -> None:
+    """Stage-2 warm start: inherit ONLY the backbone and the prompt-side
+    parameters (state_proj) from a checkpoint, leaving the decoder as
+    built — the point is mounting a DIFFERENT decoder family (a fresh
+    flow decoder on an adapted trunk), so there is deliberately no
+    decoder-config match check here. Loud when the checkpoint carries no
+    trained backbone: inheriting a pristine trunk would silently run the
+    stock-backbone arm of an ablation twice."""
+    snapshot = checkpoint / "backbone.safetensors"
+    if not snapshot.exists():
+        raise SystemExit(
+            f"--backbone-init-from {checkpoint}: no backbone.safetensors — "
+            "that checkpoint's backbone is pristine, so there is nothing "
+            "to inherit (for a stock backbone simply omit the flag)",
+        )
+    load_backbone_state(backbone, checkpoint)
+    # Prompt-side parameters (state_proj) travel with the trunk: the
+    # backbone was adapted WITH this projection feeding its prompt —
+    # loading one without the other would shift the trunk's input
+    # distribution.
+    prompt_path = checkpoint / "prompt.safetensors"
+    if prompt_path.exists():
+        model.encoder.load_state_dict(
+            load_file(str(prompt_path), device="cpu"),
+            strict=True,
+        )
+    elif len(list(model.encoder.parameters())) > 0:
+        raise SystemExit(
+            f"--backbone-init-from {checkpoint}: no prompt.safetensors but "
+            "this composition's encoder has prompt-side parameters — the "
+            "trunk and its state projection travel together",
+        )
+
+
 if __name__ == "__main__":
-    try:
-        sys.exit(main())
-    except torch.OutOfMemoryError:
-        # The whole point of the recording: bank the allocation history
-        # BEFORE the process dies, one pickle per rank.
-        prefix = os.environ.get("BIJOU_MEM_SNAPSHOT")
-        if prefix:
-            path = f"{prefix}_rank{os.environ.get('RANK', '0')}.pickle"
-            torch.cuda.memory._dump_snapshot(path)
-            print(f"mem-snapshot: OOM — dumped {path}", flush=True)
-        raise
+    sys.exit(main())

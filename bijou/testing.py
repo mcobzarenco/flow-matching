@@ -4,21 +4,26 @@ lives beside ``train``/``loading``; ``bijou/molmo2/testing.py`` stays
 the trunk-only builder underneath).
 
 ``write_tiny_molmoact2_release`` fabricates a loadable, TRAINABLE tiny
-molmoact2-family artifact pair in the CONVERTED layout — the fixture
-behind the objective-matrix CPU loss oracles and the GRPO suite's
-subject. See ``probes/generate_tiny_molmoact2.py`` (the per-checkout
+molmoact2-family artifact pair — the fixture behind the
+objective-matrix CPU loss oracles and the GRPO suite's subject. The
+builder writes the historical legacy layout (``checkpoint/`` — the
+recorded anchors' provenance) and then CONVERTS it as a final step
+(``checkpoint_vla/`` — the VLA-format directory the train CLI
+consumes). See ``probes/generate_tiny_molmoact2.py`` (the per-checkout
 CLI wrapper) for the anchor-recording discipline.
 """
 
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 
 import torch
 from safetensors.torch import save_file
 from tokenizers import Tokenizer
 
+from .convert_legacy import convert as convert_legacy_checkpoint
 from .data import DatasetStats
 from .loading import (
     BackboneConfig,
@@ -156,13 +161,17 @@ def _write_tiny_molmoact2_tokenizer(directory: Path) -> None:
 
 def write_tiny_molmoact2_release(root: Path) -> tuple[Path, Path]:
     """(trunk_dir, checkpoint_dir) — a tiny random molmoact2-family
-    artifact pair in the CONVERTED layout: the trunk (real-id vocab
-    hosting the release action block in-base, ChatML pins at Qwen's
-    real ids, ViT speaking the real 588-dim/27×27 patch geometry) and
-    a release-class bijou checkpoint (molmo_flow section + quantiled
-    stats + fresh expert in converted-export shape). The two dirs are
-    SPLIT because the trunk loader globs ``*.safetensors`` — the expert
-    file must never sit beside the trunk shards."""
+    artifact pair: the trunk (real-id vocab hosting the release action
+    block in-base, ChatML pins at Qwen's real ids, ViT speaking the
+    real 588-dim/27×27 patch geometry) and a release-class bijou
+    checkpoint (molmo_flow section + quantiled stats + fresh expert in
+    converted-export shape) in the LEGACY layout, plus its VLA-format
+    conversion at ``<root>/checkpoint_vla`` (the final build step —
+    ``bijou.convert_legacy`` on the builder's own output; the train CLI
+    and family loaders consume the converted directory). The trunk and
+    checkpoint dirs are SPLIT because the trunk loader globs
+    ``*.safetensors`` — the expert file must never sit beside the trunk
+    shards."""
     trunk = root / "trunk"
     checkpoint = root / "checkpoint"
     config = json.loads(json.dumps(tiny_config_json()))
@@ -244,4 +253,8 @@ def write_tiny_molmoact2_release(root: Path) -> tuple[Path, Path]:
     (checkpoint / "bijou_config.json").write_text(
         json.dumps(metadata.to_json_dict(), indent=2, default=str),
     )
+    converted = root / "checkpoint_vla"
+    if converted.exists():
+        shutil.rmtree(converted)
+    convert_legacy_checkpoint(checkpoint, converted)
     return trunk, checkpoint

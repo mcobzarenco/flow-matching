@@ -36,7 +36,7 @@ from typing import Any
 
 import pytest
 import torch
-from test_checkpoint_backbone import DIM, make_args, tiny_model
+from test_checkpoint_backbone import DIM, make_args, pristine_dir, tiny_model
 from test_zero1 import WORLD, build_params, fake_grads, lr_lambda
 from torch.multiprocessing.spawn import spawn
 
@@ -46,11 +46,10 @@ from bijou.async_save import (
     copy_to_cpu,
 )
 from bijou.train import (
-    CheckpointTensors,
     Normalizer,
     Normalizers,
     TrainState,
-    build_checkpoint_metadata,
+    build_vla_metadata,
     capture_checkpoint_tensors,
     save_checkpoint,
     write_checkpoint,
@@ -171,11 +170,11 @@ def test_zero1_async_gather_bytes_match_consolidate() -> None:
 def populated_optimizer(
     model: Any,
 ) -> tuple[torch.optim.AdamW, torch.optim.lr_scheduler.LambdaLR]:
-    optimizer = torch.optim.AdamW(model.decoder.parameters(), lr=1e-4)
+    optimizer = torch.optim.AdamW(model.flow_decoder.parameters(), lr=1e-4)
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lambda _: 1.0)
     generator = torch.Generator().manual_seed(7)
     for _ in range(2):
-        for parameter in model.decoder.parameters():
+        for parameter in model.flow_decoder.parameters():
             parameter.grad = 0.01 * torch.randn(
                 parameter.shape,
                 dtype=parameter.dtype,
@@ -188,8 +187,9 @@ def populated_optimizer(
 
 def test_async_checkpoint_directory_byte_identical(tmp_path: Path) -> None:
     """The full directory through the async machinery == the sync
-    ``save_checkpoint``, file by file; the async ``optimizer.pt``
-    round-trips through the resume loader."""
+    ``save_checkpoint``, file by file (the pristine backbone/ mirror
+    hard-links the same inodes on both paths); the async
+    ``optimizer.pt`` round-trips through the resume loader."""
     model = tiny_model()
     args = make_args(tmp_path)
     optimizer, scheduler = populated_optimizer(model)
@@ -199,6 +199,7 @@ def test_async_checkpoint_directory_byte_identical(tmp_path: Path) -> None:
     )
     sync_dir = save_checkpoint(
         model,
+        model.backbone,
         args=args,
         normalizers=normalizers,
         per_dataset_stats={},
@@ -206,21 +207,25 @@ def test_async_checkpoint_directory_byte_identical(tmp_path: Path) -> None:
         scheduler=scheduler,
         step=5,
         adapted_backbone_source=None,
+        pristine_trunk_dir=pristine_dir(tmp_path),
     )
     sync_dir = sync_dir.rename(tmp_path / "sync")
 
     capture = capture_optimizer_state(optimizer, zero1=False, is_main=True)
     tensors = capture_checkpoint_tensors(
         model,
+        model.backbone,
         args=args,
         adapted_backbone_source=None,
+        pristine_trunk_dir=pristine_dir(tmp_path),
     )
-    metadata_json = build_checkpoint_metadata(
+    metadata = build_vla_metadata(
         model,
         args=args,
         normalizers=normalizers,
         per_dataset_stats={},
         step=5,
+        adapted_backbone_source=None,
     )
     scheduler_state = copy_to_cpu(scheduler.state_dict())
     saver = AsyncCheckpointSaver(group=None, is_main=True, world_size=1, zero1=False)
@@ -228,8 +233,8 @@ def test_async_checkpoint_directory_byte_identical(tmp_path: Path) -> None:
         capture=capture,
         write=lambda optimizer_state: write_checkpoint(
             tmp_path / "step_000005",
+            metadata=metadata,
             tensors=tensors,
-            metadata_json=metadata_json,
             train_state_payload=TrainState(
                 optimizer=optimizer_state,
                 scheduler=scheduler_state,
@@ -243,15 +248,22 @@ def test_async_checkpoint_directory_byte_identical(tmp_path: Path) -> None:
     sync_files = sorted(path.name for path in sync_dir.iterdir())
     async_files = sorted(path.name for path in async_dir.iterdir())
     assert sync_files == async_files
-    assert "optimizer.pt" in sync_files and "expert.safetensors" in sync_files
+    assert "optimizer.pt" in sync_files
+    assert "flow_decoder.safetensors" in sync_files
+    assert "backbone" in sync_files  # the pristine mirror directory
     for name in sync_files:
+        if (sync_dir / name).is_dir():
+            assert sorted(p.name for p in (async_dir / name).iterdir()) == sorted(
+                p.name for p in (sync_dir / name).iterdir()
+            )
+            continue
         assert (async_dir / name).read_bytes() == (sync_dir / name).read_bytes(), (
             f"{name} diverged between sync and async writers"
         )
 
     payload = torch.load(async_dir / "optimizer.pt", weights_only=True)
     state = TrainState.from_payload(payload)
-    fresh = torch.optim.AdamW(model.decoder.parameters(), lr=1e-4)
+    fresh = torch.optim.AdamW(model.flow_decoder.parameters(), lr=1e-4)
     fresh.load_state_dict(state.optimizer)  # the --resume direction
     assert state.step == 5
 
@@ -263,53 +275,66 @@ def test_write_checkpoint_atomic_on_crash(
     """A crash mid-write publishes nothing: no ``step_*`` directory for
     the failed save (only ``.tmp`` debris), earlier checkpoints
     untouched."""
-    tensors = CheckpointTensors(
-        expert={"w": torch.arange(4.0)},
-        prompt={"p": torch.arange(2.0)},
-        joint_ce=None,
-        backbone=None,
-        backbone_source=None,
+    model = tiny_model()
+    args = make_args(tmp_path)
+    metadata = build_vla_metadata(
+        model,
+        args=args,
+        normalizers=Normalizers(
+            action=Normalizer(mean=torch.zeros(DIM), std=torch.ones(DIM)),
+            state=Normalizer(mean=torch.zeros(DIM), std=torch.ones(DIM)),
+        ),
+        per_dataset_stats={},
+        step=5,
+        adapted_backbone_source=None,
+    )
+    tensors = capture_checkpoint_tensors(
+        model,
+        model.backbone,
+        args=args,
+        adapted_backbone_source=None,
+        pristine_trunk_dir=pristine_dir(tmp_path),
     )
     payload = {"optimizer": {}, "scheduler": {}, "step": 5}
     first = write_checkpoint(
         tmp_path / "step_000005",
+        metadata=metadata,
         tensors=tensors,
-        metadata_json="{}",
         train_state_payload=payload,
     )
-    first_bytes = (first / "expert.safetensors").read_bytes()
+    first_bytes = (first / "flow_decoder.safetensors").read_bytes()
 
     calls = {"count": 0}
-    import bijou.train as train_module
+    import bijou.checkpoint as checkpoint_module
 
-    real_save_file = train_module.save_file
+    real_save_file = checkpoint_module.save_file
 
     def failing_save_file(state: dict[str, Any], path: str) -> None:
         calls["count"] += 1
-        if calls["count"] == 2:  # die after expert, before prompt
+        if calls["count"] == 2:  # die after the first component file
             raise OSError("disk gone")
         real_save_file(state, path)
 
-    monkeypatch.setattr(train_module, "save_file", failing_save_file)
+    monkeypatch.setattr(checkpoint_module, "save_file", failing_save_file)
     with pytest.raises(OSError, match="disk gone"):
         write_checkpoint(
             tmp_path / "step_000010",
+            metadata=metadata,
             tensors=tensors,
-            metadata_json="{}",
             train_state_payload={"optimizer": {}, "scheduler": {}, "step": 10},
         )
     assert not (tmp_path / "step_000010").exists()  # nothing published
     assert (tmp_path / "step_000010.tmp").exists()  # debris, as documented
-    assert (first / "expert.safetensors").read_bytes() == first_bytes
+    assert (first / "flow_decoder.safetensors").read_bytes() == first_bytes
     monkeypatch.undo()
     # The next attempt clobbers the debris and lands.
     retried = write_checkpoint(
         tmp_path / "step_000010",
+        metadata=metadata,
         tensors=tensors,
-        metadata_json="{}",
         train_state_payload={"optimizer": {}, "scheduler": {}, "step": 10},
     )
-    assert (retried / "expert.safetensors").exists()
+    assert (retried / "flow_decoder.safetensors").exists()
     assert not (tmp_path / "step_000010.tmp").exists()
 
 

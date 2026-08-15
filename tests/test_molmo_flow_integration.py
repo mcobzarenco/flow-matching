@@ -26,6 +26,8 @@ access): from_checkpoint assembly → MolmoAct2 collation → prefix encode
 
 from __future__ import annotations
 
+import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -33,6 +35,7 @@ import pytest
 import torch
 from test_convert_molmoact2 import _ACTION_DIM, _HORIZON, _convert, source_dir
 
+from bijou.checkpoint import read_metadata
 from bijou.eval.molmo_norm import MolmoNorm
 from bijou.eval.policies import BijouPolicy
 from bijou.loading import from_checkpoint
@@ -49,16 +52,49 @@ from bijou.modelling.interface import (
 assert source_dir is not None  # re-exported pytest fixture (module-scoped)
 
 
+def legacy_bridge(converted: Path, legacy: Path) -> Path:
+    """The converted (VLA-format) checkpoint re-expressed in the legacy
+    layout — the inverse of ``bijou.convert_legacy``, for THIS module's
+    old-world subjects (BijouModel + BijouPolicy exercise the legacy
+    reader until their own ports land; the bridge dies with them)."""
+    metadata = read_metadata(converted)
+    legacy.mkdir(parents=True)
+    (legacy / "bijou_config.json").write_text(
+        json.dumps(
+            {
+                "format": 3,
+                "backbone": {
+                    "id": metadata.backbone_id,
+                    "depth": metadata.backbone_depth,
+                },
+                "prompt": metadata.components["prompt"]["config"],
+                "decoder": metadata.components["flow_decoder"]["config"],
+                "step": metadata.step,
+                "train_args": metadata.train_args,
+                "normalization": metadata.stats.state_dict(),
+                "per_dataset_normalization": {},
+            },
+        ),
+    )
+    os.link(
+        converted / "flow_decoder.safetensors",
+        legacy / "expert.safetensors",
+    )
+    return legacy
+
+
 @pytest.fixture(scope="module")
 def tiny_checkpoint(
     source_dir: Path,
     tmp_path_factory: pytest.TempPathFactory,
 ) -> Path:
-    return _convert(
+    root = tmp_path_factory.mktemp("molmo-flow-int")
+    converted = _convert(
         source_dir,
-        tmp_path_factory.mktemp("molmo-flow-int") / "converted",
+        root / "converted",
         backbone_ref=str(source_dir),
     )
+    return legacy_bridge(converted, root / "legacy")
 
 
 @pytest.fixture(scope="module")

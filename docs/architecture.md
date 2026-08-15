@@ -1037,40 +1037,61 @@ additionally requires its quantiles.
 **Regression gates.** `check.py` (ruff + pyright + pytest, final verdict
 line only). The **loss oracles** — a 2-step tiny-backbone CPU run after
 any change near the math (tied to the current tiny-gemma4; regenerate ⇒
-re-baseline loudly):
+re-baseline loudly). Command shapes RE-RECORDED 2026-08-15 at the VLA
+phase-5a train port (family CLI, converted fixtures) — a loud
+re-anchoring of SHAPES only: every number below reproduced bitwise
+through the new CLI before and after the swap, twice:
 
-    uv run python -m bijou.train --train-data ~/datasets/mcobzarenco/so101_pick_place_v2 \
+    uv run python -m bijou.train --family gemma_flow \
+      --train-data ~/datasets/mcobzarenco/so101_pick_place_v2 \
       --backbone outputs/tiny-gemma4 --decoder-hidden 64 --decoder-heads 2 \
       --decoder-intermediate 128 --decoder-cross-heads 2 --stream-counts 1 1 2 \
       --steps 2 --batch-size 2 --num-workers 2 --log-every 1 --eval-every 5 \
       --save-every 1000 --eval-samples 4 --device cpu --seed 0 \
       --save-dir outputs/train/oracle_tmp
 
-must reproduce **flow 2.7903 / 1.9152** exactly; with `--decoder
-ar_backbone --fast-tokenizer tests/fixtures/tiny_fast_tokenizer` (and
-the `--decoder-*` shape flags OMITTED — ar_backbone rejects them),
-**27.8306 / 27.767** (random tiny weights under full-vocabulary CE —
-an anchor, not a quality signal).
+must reproduce **flow 2.7903 / 1.9152** exactly; with `--family
+gemma_ar --fast-tokenizer tests/fixtures/tiny_fast_tokenizer` (and the
+`--decoder-*` shape flags OMITTED — the AR-suffix families reject
+them), **27.8306 / 27.767** (random tiny weights under full-vocabulary
+CE — an anchor, not a quality signal).
 
-The **molmoact2 objective matrix** (retirement phase 3) anchors on the
-tiny molmoact2 fixture (`PYTHONPATH=. uv run python
-probes/generate_tiny_molmoact2.py` → `outputs/tiny-molmoact2/` —
-per-checkout like tiny-gemma4; regenerating re-baselines these
-loudly). Same 2-step CLI shape with `--init-from
-outputs/tiny-molmoact2/checkpoint` on the rig v2 data, seed 0, batch
-2:
+The **molmoact2 objective matrix** anchors on the tiny molmoact2
+fixture's CONVERTED (VLA-format) directory: `PYTHONPATH=. uv run
+python probes/generate_tiny_molmoact2.py` → `outputs/tiny-molmoact2/`
+— per-checkout like tiny-gemma4; the generator's output is CONVERTED
+as a final step (the builder runs `bijou.convert_legacy` on its own
+legacy layout, producing `outputs/tiny-molmoact2/checkpoint_vla`; the
+committed fixture's converted directory was produced the same way,
+`uv run python -m bijou.convert_legacy outputs/tiny-molmoact2/checkpoint
+outputs/tiny-molmoact2/checkpoint_vla`). Regenerating re-baselines
+these loudly. Same 2-step CLI shape (no `--family` — checkpoint-inferred)
+with `--init-from outputs/tiny-molmoact2/checkpoint_vla` on the rig v2
+data, seed 0, batch 2:
 
 - `--objective flow`: **1.3906 / 1.3305**
 - `--objective ar --backbone-text-lr 1e-5`: **12.2254 / 12.3317**
-- `--objective joint --insulate-expert --backbone-text-lr 1e-5`:
+- `--objective joint --insulate-flow --backbone-text-lr 1e-5`:
   **13.6160 / 13.6621**, with the built-in cross-oracle: its
   `loss_action` ≡ the flow anchors and `loss_aux` ≡ the ar anchors
-  BITWISE, and total = flow + λ·CE exactly (λ = 1) — the decision-5
+  BITWISE, and total = flow + λ·CE exactly (λ = 1) — the KV-before-CE
   ordering and λ-composition proven inside the real trainer (recorded
-  2026-08-14 at phase-3 landing; the run also exercises the
+  2026-08-14 at retirement phase-3 landing; the run also exercises the
   released-BPE quantization-hole policy — real rig chunks DO hit
   holes, tokenized short + counted like the reference recipe, loud
-  never silent). Re-baselined 2026-08-13 at the T1
+  never silent).
+
+The **resume gate** (recorded 2026-08-15 with the 5a port, manual):
+the joint oracle run saved at step 2 (`--save-every 2`), then
+`--resume <save-dir>/step_000002 --steps 4 --seed 1` (fresh seed — the
+enforced convention) run TWICE continues deterministically — both
+resumes print bitwise-identical step-3/4 records (13.4872/13.5119,
+loss_action 1.416/1.5283, loss_aux 12.0712/11.9836, grad norms equal)
+with the optimizer/scheduler restored on-schedule (lr 2e-05/2.5e-05,
+warmup steps 3-4 of 20).
+
+Anchor history.
+Re-baselined 2026-08-13 at the T1
 (ar_fast-retirement) pre-deletion measurement: flow reproduced its
 2026-08-05 anchor bitwise, ar_backbone had MOVED from 27.8262/27.7701
 somewhere in the 08-05→08-13 window with no re-baseline note — the

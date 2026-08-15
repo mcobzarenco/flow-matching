@@ -28,7 +28,9 @@ Run from the repo root: uv run python -m probes.probe_unfreeze_gradflow
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
+from typing import override
 
 import torch
 import transformers
@@ -44,13 +46,12 @@ from bijou.model import BijouModel
 from bijou.modelling.aux_text import SUFFIX_FORMAT
 from bijou.modelling.codecs import FastActionCodec
 from bijou.modelling.decoders.ar_gemma import GemmaARDecoder
-from bijou.modelling.decoders.ar_suffix import ARDecoderConfig
+from bijou.modelling.decoders.ar_suffix import ARDecoderConfig, ARSuffixDecoder
 from bijou.modelling.decoders.flow import FlowDecoder
 from bijou.modelling.encoders.gemma4 import GemmaEncoder, GemmaInputsCollator
 from bijou.modelling.gemma4.loading import load_config
 from bijou.modelling.gemma4.text import DecoderLayer
 from bijou.modelling.interface import CollatedBatch, Collator
-from bijou.train import BijouTrainStep, TrainArgs, unfreeze_backbone
 
 TINY = "outputs/tiny-gemma4"
 # The oracle corpus (2026-08-05, PR #1): rig v2 at its standard mirror
@@ -61,85 +62,87 @@ FIXTURE_TOKENIZER = Path("tests/fixtures/tiny_fast_tokenizer")
 EXPORTS = (1, 3, 5)  # tiny backbone's global layers
 
 
+# The old-world (BijouModel) harness, inlined 2026-08-15: bijou.train now
+# drives the family classes, and this probe's anchors were recorded
+# through the BijouModel composition - it stays pinned to that path until
+# model.py retires (phase 6), at which point the probe re-anchors on a
+# family.
+@dataclass(frozen=True, slots=True)
+class ProbeArgs:
+    """The slice of the historical train config this probe consumes."""
+
+    seed: int
+    stream_counts: tuple[int, ...]
+    decoder_hidden: int
+    decoder_heads: int
+    decoder_intermediate: int
+    decoder_cross_heads: int
+    chunk_size: int
+    max_soft_tokens: int
+    backbone_text_lr: float | None
+    backbone_vision_lr: float | None
+
+    @property
+    def backbone_trained(self) -> bool:
+        return self.backbone_text_lr is not None or self.backbone_vision_lr is not None
+
+
+def probe_unfreeze(model: BijouModel, args: ProbeArgs) -> None:
+    """The historical unfreeze: flip requires_grad on the requested
+    backbone subsets off the model's named groups."""
+    groups = model.param_groups()
+    if args.backbone_text_lr is not None:
+        for parameter in groups["backbone_text"]:
+            parameter.requires_grad_(True)
+    if args.backbone_vision_lr is not None:
+        for parameter in groups["backbone_vision"]:
+            parameter.requires_grad_(True)
+
+
+class ProbeTrainStep(torch.nn.Module):
+    """The historical train step, reduced to what this probe runs
+    (single-batch mean-form losses; CPU, so the autocast context is
+    constructed disabled - byte-identical to the recorded anchors)."""
+
+    def __init__(self, model: BijouModel, *, backbone_trained: bool) -> None:
+        super().__init__()
+        self.model = model
+        self.backbone_trained = backbone_trained
+
+    @override
+    def forward(
+        self,
+        batch: CollatedBatch,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor | None, torch.Tensor | None]:
+        inputs = batch.encoder_inputs
+        device_type = next(iter(inputs.tensors().values())).device.type
+        autocast_on = device_type == "cuda" and self.backbone_trained
+        with torch.autocast(device_type, torch.bfloat16, enabled=autocast_on):
+            memory = self.model.encode(inputs, with_grad=self.backbone_trained)
+            if isinstance(self.model.decoder, ARSuffixDecoder):
+                return self.model.loss_components(memory, batch)
+        return self.model.loss_components(memory, batch)
+
+
 def make_args(
     backbone_text_lr: float | None,
     backbone_vision_lr: float | None,
-    *,
-    decoder: str = "flow",
-) -> TrainArgs:
-    return TrainArgs(
-        train_data=(DATA,),
-        exclude=(),
-        fps=None,
-        camera_counts=None,
-        holdout_episodes=0.0,
-        split_seed=0,
-        backbone=TINY,
-        save_dir=Path("outputs/train/unused"),
-        init_from=None,
-        resume=None,
-        allow_same_seed_resume=False,
-        backbone_init_from=None,
-        prompt_generate_bracket=False,
-        instruction=None,
-        cameras=None,
-        max_cameras=None,
-        max_crops=1,
-        max_soft_tokens=140,
+) -> ProbeArgs:
+    return ProbeArgs(
+        seed=0,
         stream_counts=(1, 1, 2),
-        insulate_expert=False,
-        self_attention_mode="causal_actions",
-        time_conditioning="additive",
-        target_time_embed=False,
-        distill=None,
-        decoder=decoder,
-        fast_tokenizer=(str(FIXTURE_TOKENIZER) if decoder != "flow" else None),
-        aux_fields=None,
-        aux_loss_weight=0.5,
-        aux_dropout=0.0,
-        field_dropout=0.0,
-        aux_prompt_hash=None,
-        camera_kind_dropout=0.0,
-        instruction_augment=0.0,
-        condition_fields=None,
-        condition_dropout=0.0,
-        subgoal_dropout=0.0,
-        state_dropout=0.0,
         decoder_hidden=64,
         decoder_heads=2,
         decoder_intermediate=128,
         decoder_cross_heads=2,
         chunk_size=50,
-        batch_size=2,
-        bucket_by_length=False,
-        backward_chunks=1,
-        zero1=False,
-        chunk_grad_allreduce=False,
-        activation_checkpointing=False,
-        steps=2,
-        decoder_lr=1e-4,
+        max_soft_tokens=140,
         backbone_text_lr=backbone_text_lr,
         backbone_vision_lr=backbone_vision_lr,
-        warmup_steps=1,
-        rewarmup_steps=0,
-        weight_decay=1e-5,
-        grad_clip=1.0,
-        log_every=1,
-        eval_every=5,
-        save_every=1000,
-        num_workers=0,
-        prefetch_factor=4,
-        video_decoder_cache=4,
-        device="cpu",
-        seed=0,
-        eval_samples=None,
-        eval_seed=0,
-        wandb_project=None,
-        wandb_run_name=None,
     )
 
 
-def build_flow(args: TrainArgs) -> BijouTrainStep:
+def build_flow(args: ProbeArgs) -> ProbeTrainStep:
     torch.manual_seed(args.seed)
     expert_config = default_expert_config(
         load_config(Path(TINY)),
@@ -166,11 +169,11 @@ def build_flow(args: TrainArgs) -> BijouTrainStep:
     # from a trained checkpoint; simulate that here (seeded).
     assert isinstance(model.decoder, FlowDecoder)
     torch.nn.init.normal_(model.decoder.action_out_proj.weight, std=0.02)
-    unfreeze_backbone(model, args)
-    return BijouTrainStep(model, backbone_trained=args.backbone_trained)
+    probe_unfreeze(model, args)
+    return ProbeTrainStep(model, backbone_trained=args.backbone_trained)
 
 
-def build_ar_backbone(args: TrainArgs) -> BijouTrainStep:
+def build_ar_backbone(args: ProbeArgs) -> ProbeTrainStep:
     torch.manual_seed(args.seed)
     backbone_config = load_config(Path(TINY))
     codec = FastActionCodec.load(FIXTURE_TOKENIZER)
@@ -203,8 +206,8 @@ def build_ar_backbone(args: TrainArgs) -> BijouTrainStep:
     )
     decoder.init_tables_from_backbone(backbone)
     model = BijouModel(backbone=backbone, encoder=encoder, decoder=decoder)
-    unfreeze_backbone(model, args)
-    return BijouTrainStep(model, backbone_trained=args.backbone_trained)
+    probe_unfreeze(model, args)
+    return ProbeTrainStep(model, backbone_trained=args.backbone_trained)
 
 
 def grad_state(parameter: torch.Tensor) -> str:
@@ -219,7 +222,7 @@ def grad_state(parameter: torch.Tensor) -> str:
     return "nonzero"
 
 
-def check_text_partition(step: BijouTrainStep, label: str) -> None:
+def check_text_partition(step: ProbeTrainStep, label: str) -> None:
     """The shared text-only assertions (both decoders)."""
     backbone = step.model.backbone
     text = backbone.language_model
@@ -341,7 +344,6 @@ def main() -> None:
         make_args(
             backbone_text_lr=2.5e-5,
             backbone_vision_lr=None,
-            decoder="ar_backbone",
         ),
     )
     torch.manual_seed(0)

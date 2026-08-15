@@ -35,18 +35,20 @@ import torch
 from test_molmo2_ar import build_decoder, build_encoder
 from torch import nn
 
-from bijou.model import BijouModel
 from bijou.modelling.decoders.ar_molmo2 import Molmo2ARDecoder
 from bijou.modelling.molmo2.model import load_model
 from bijou.modelling.molmo2.testing import write_tiny_text_checkpoint
+from bijou.models.molmo2_ar import Molmo2ARVLA
+from bijou.models.objectives import ARObjective
+from bijou.models.serving import ARServing
 from bijou.train import (
-    adamc_output_head_parameters,
     apply_adamc_weight_decay,
     backbone_group_index,
     build_optimizer_param_groups,
     decay_split,
     resume_hyperparameter_notes,
 )
+from bijou.vla import VLA
 
 
 @pytest.fixture(scope="module")
@@ -56,14 +58,20 @@ def tiny_checkpoint(tmp_path_factory: pytest.TempPathFactory) -> Path:
     )
 
 
-def bijou_model(tiny_checkpoint: Path) -> BijouModel:
-    """The molmo2 AR composition with train.py's freezing applied:
-    backbone fully frozen, then the text + vision subsets unfrozen the
-    way unfreeze_backbone does for the run spec's flags."""
+def bijou_model(tiny_checkpoint: Path) -> Molmo2ARVLA:
+    """The molmo2 AR family with train.py's freezing applied: backbone
+    fully frozen, then the text + vision subsets unfrozen the way
+    unfreeze_backbone does for the run spec's flags."""
     backbone = load_model(str(tiny_checkpoint), dtype=torch.float32)
     decoder, _ = build_decoder(backbone)
     encoder = build_encoder(tiny_checkpoint)
-    model = BijouModel(backbone=backbone, encoder=encoder, decoder=decoder)
+    model = Molmo2ARVLA(
+        backbone,
+        encoder,
+        decoder,
+        objective=ARObjective(aux_loss_weight=0.5),
+        serving=ARServing(),
+    )
     for parameter in backbone.parameters():
         parameter.requires_grad_(False)
     subsets = encoder.param_groups(backbone)
@@ -74,7 +82,7 @@ def bijou_model(tiny_checkpoint: Path) -> BijouModel:
 
 
 def groups_of(
-    model: BijouModel,
+    model: VLA[Any],
     optimizer_name: str,
 ) -> tuple[list[dict], list[tuple[str, float, float]], list[bool]]:
     return build_optimizer_param_groups(
@@ -101,7 +109,7 @@ def test_adamc_partition_molmo2_ar(tiny_checkpoint: Path) -> None:
     ]
     assert corrected == [True, False, False, True, False, True, False]
     ids = [{id(p) for p in group["params"]} for group in param_groups]
-    decoder = model.decoder
+    decoder = model.ar_decoder
     assert isinstance(decoder, Molmo2ARDecoder)
     # The untied output head is the ONLY standard-decay decoder param;
     # the untied input table stays on the corrected side.
@@ -119,8 +127,11 @@ def test_adamc_partition_molmo2_ar(tiny_checkpoint: Path) -> None:
         id(p) for p in model.parameters() if p.requires_grad
     }
     frozen_text = model.backbone.text
+    assert frozen_text.lm_head is not None  # the tiny trunk ships a head
     assert not frozen_text.lm_head.weight.requires_grad
     assert id(frozen_text.lm_head.weight) not in {id(p) for p in flat}
+    # The family's audited output head IS the standard-decay set.
+    assert {id(p) for p in model.output_head_parameters()} == ids[1]
 
 
 def test_adamw_partition_unchanged(tiny_checkpoint: Path) -> None:
@@ -146,33 +157,43 @@ def test_adamw_partition_unchanged(tiny_checkpoint: Path) -> None:
 
 def test_tied_parameter_in_two_groups_dies(tiny_checkpoint: Path) -> None:
     model = bijou_model(tiny_checkpoint)
-    decoder = model.decoder
+    decoder = model.ar_decoder
     assert isinstance(decoder, Molmo2ARDecoder)
     shared = next(iter(decoder.fast_embed.parameters()))
     original = model.param_groups()
     original["backbone_text"] = [*original["backbone_text"], shared]
-    model.param_groups = lambda: original
+    model.param_groups = lambda: original  # fault injection
     with pytest.raises(SystemExit, match="decayed twice"):
         groups_of(model, "adamw")
 
 
 def test_head_missing_from_decoder_group_dies(tiny_checkpoint: Path) -> None:
     model = bijou_model(tiny_checkpoint)
-    decoder = model.decoder
+    decoder = model.ar_decoder
     assert isinstance(decoder, Molmo2ARDecoder)
     head = decoder.fast_head.weight
     original = model.param_groups()
     original["decoder"] = [p for p in original["decoder"] if p is not head]
-    model.param_groups = lambda: original
+    model.param_groups = lambda: original  # fault injection
     with pytest.raises(SystemExit, match="output-head parameter"):
         groups_of(model, "adamc")
 
 
-def test_unaudited_decoder_dies(tiny_checkpoint: Path) -> None:
+def test_unaudited_family_dies(tiny_checkpoint: Path) -> None:
+    """Families whose corrected/standard partition is unaudited refuse
+    adamc from their own output_head_parameters — the loud refusal
+    build_optimizer_param_groups propagates."""
     model = bijou_model(tiny_checkpoint)
-    model.decoder = cast(Any, nn.Linear(4, 4))
+
+    def refuse() -> list[nn.Parameter]:
+        raise SystemExit(
+            "the corrected/standard weight-decay partition is not audited "
+            "for this family — audit before training with adamc",
+        )
+
+    model.output_head_parameters = cast(Any, refuse)
     with pytest.raises(SystemExit, match="not audited"):
-        adamc_output_head_parameters(model)
+        groups_of(model, "adamc")
 
 
 def tiny_setup(

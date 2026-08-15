@@ -203,7 +203,14 @@ def test_zero1_requires_torchrun(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("WORLD_SIZE", raising=False)
     monkeypatch.setattr(
         "sys.argv",
-        ["bijou.train", "--train-data", "/nonexistent", "--zero1"],
+        [
+            "bijou.train",
+            "--family",
+            "gemma_flow",
+            "--train-data",
+            "/nonexistent",
+            "--zero1",
+        ],
     )
     with pytest.raises(SystemExit, match="world size > 1"):
         main()

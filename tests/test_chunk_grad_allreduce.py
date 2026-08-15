@@ -158,6 +158,8 @@ def test_chunk_grad_allreduce_requires_torchrun(
         "sys.argv",
         [
             "bijou.train",
+            "--family",
+            "gemma_flow",
             "--train-data",
             "/nonexistent",
             "--backward-chunks",
@@ -181,7 +183,14 @@ def test_chunk_grad_allreduce_requires_chunks(
     monkeypatch.setenv("WORLD_SIZE", "2")
     monkeypatch.setattr(
         "sys.argv",
-        ["bijou.train", "--train-data", "/nonexistent", "--chunk-grad-allreduce"],
+        [
+            "bijou.train",
+            "--family",
+            "gemma_flow",
+            "--train-data",
+            "/nonexistent",
+            "--chunk-grad-allreduce",
+        ],
     )
     with pytest.raises(SystemExit, match="backward-chunks"):
         main()

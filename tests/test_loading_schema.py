@@ -1,11 +1,19 @@
-"""Checkpoint-schema tests: format-3 sectioned configs, the format-2 and
-format-1 read-side synthesizers, and the --init-from config guard across
-formats.
+"""Checkpoint-schema tests: format-3 sectioned configs and the format-2
+and format-1 read-side synthesizers (the legacy world convert_legacy
+reads until phase 6).
 
 Offline by construction: the backbone architecture comes from
 ``Gemma4Config.e2b()`` (built in code, matching google/gemma-4-e2b-it), and the
 legacy fixture is a real pre-format-2 ``bijou_config.json`` (the adaRMS
 rig fine-tune's, per-dataset table trimmed).
+
+The historical --init-from config guard
+(``ensure_matching_decoder_config``) retired with the family CLI: the
+new train path builds decoders FROM the recorded component sections, so
+a CLI-vs-checkpoint shape mismatch is unrepresentable; the φ_s
+extension direction is covered at the parse layer
+(tests/test_train_args.py) and the load layer
+(tests/test_train_vla.py).
 """
 
 from __future__ import annotations
@@ -34,7 +42,6 @@ from bijou.loading import (
 )
 from bijou.modelling.decoders.flow import FlowDecoder, FlowDecoderConfig
 from bijou.modelling.gemma4.config import Gemma4Config
-from bijou.train import ensure_matching_decoder_config
 
 FIXTURE = Path(__file__).parent / "fixtures" / "legacy_bijou_config.json"
 
@@ -276,28 +283,22 @@ def test_molmo2_prompt_config_round_trips() -> None:
 
 
 def meta_decoder(config: FlowDecoderConfig) -> FlowDecoder:
-    """An e2b-sized decoder on the meta device: no allocation, and the
-    config guard only reads ``.config``."""
+    """An e2b-sized decoder on the meta device: no allocation — the
+    schema round-trip only reads ``.config``."""
     return FlowDecoder(config, device="meta")
 
 
-def test_ensure_matching_decoder_config_both_formats(tmp_path: Path) -> None:
+def test_decoder_schema_roundtrips_the_legacy_expert(tmp_path: Path) -> None:
+    """The legacy expert config synthesized from a format-1 fixture
+    round-trips through the write-side schema bridge — the invariant the
+    retired --init-from guard leaned on (both sides now read the SAME
+    recorded section, so equality is the schema's, not a runtime
+    check's)."""
     expert_config = legacy_expert_config()
     decoder = meta_decoder(expert_config)
+    section = flow_decoder_config_from_expert(decoder.config)
+    assert FlowDecoderSection.from_dict(section.to_dict()) == section
     mismatched = meta_decoder(
         dataclasses.replace(expert_config, hidden_size=1024),
     )
-
-    legacy_dir = tmp_path / "legacy"
-    legacy_dir.mkdir()
-    (legacy_dir / "bijou_config.json").write_text(json.dumps(legacy_meta()))
-    ensure_matching_decoder_config(decoder, legacy_dir)
-    with pytest.raises(SystemExit, match="decoder config mismatch"):
-        ensure_matching_decoder_config(mismatched, legacy_dir)
-
-    format2_dir = tmp_path / "format2"
-    format2_dir.mkdir()
-    (format2_dir / "bijou_config.json").write_text(json.dumps(format2_meta()))
-    ensure_matching_decoder_config(decoder, format2_dir)
-    with pytest.raises(SystemExit, match="decoder config mismatch"):
-        ensure_matching_decoder_config(mismatched, format2_dir)
+    assert flow_decoder_config_from_expert(mismatched.config) != section
