@@ -8,7 +8,7 @@ Two layers of gating:
 - GOLDEN tests (skip when the Molmo2-4B snapshot is not in the HF cache):
   byte-for-byte agreement with the shipped ``trust_remote_code``
   processor, whose outputs were banked by
-  ``bijou.molmo2.bank_processor_goldens`` in its pinned 4.x environment.
+  ``bijou.modelling.molmo2.bank_processor_goldens`` in its pinned 4.x environment.
   ids/grids/pooling indices are exact; pixel values are gated on strided
   samples + per-crop stats (the full stacks are not committed).
 """
@@ -21,7 +21,7 @@ import numpy as np
 import pytest
 import torch
 
-from bijou.encoders.molmo2 import (
+from bijou.modelling.encoders.molmo2 import (
     BOS_ID,
     IM_END_TEXT_ID,
     IM_START_TEXT_ID,
@@ -31,13 +31,13 @@ from bijou.encoders.molmo2 import (
     hoist_text,
     user_turn_text,
 )
-from bijou.molmo2.bank_processor_goldens import (
+from bijou.modelling.molmo2.bank_processor_goldens import (
     FIXTURE_DIR,
     PIXEL_STRIDES,
     sample_for,
 )
-from bijou.molmo2.config import Molmo2TextConfig
-from bijou.molmo2.processor import (
+from bijou.modelling.molmo2.config import Molmo2TextConfig
+from bijou.modelling.molmo2.processor import (
     IM_COL_ID,
     IM_END_ID,
     IM_PATCH_ID,
@@ -47,7 +47,7 @@ from bijou.molmo2.processor import (
     process_image,
     select_tiling,
 )
-from bijou.molmo2.testing import GoldenCase, golden_cases
+from bijou.modelling.molmo2.testing import GoldenCase, golden_cases
 
 
 def cached_checkpoint_dir() -> Path | None:
@@ -127,7 +127,7 @@ def golden(case: GoldenCase) -> dict[str, np.ndarray]:
         pytest.fail(
             f"missing golden fixture {path} — run "
             "`uv run --with transformers==4.57.1 "
-            "python -m bijou.molmo2.bank_processor_goldens`",
+            "python -m bijou.modelling.molmo2.bank_processor_goldens`",
         )
     with np.load(path) as data:
         return {name: data[name] for name in data.files}

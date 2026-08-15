@@ -79,8 +79,8 @@ cited, and the doc-cited `probe_rollout_vram.py` is lost outright
   2026-08-11: the MolmoAct2 released expert's 15 fields were spelled out
   in a probe AND a test; module-level `*_config()` factories were the
   older form and were migrated the same day.)
-- **One word per concept: the pretrained trunk network (Gemma or Molmo2) is the `backbone`** — in
-  - **One word per concept: the Gemma network is the `backbone`** — in
+- **One word per concept: the pretrained trunk network (Gemma or
+  Molmo2) is the `backbone`** — in
   both senses (the pretrained artifact: `--backbone`,
   `BackboneConfig.id`, `backbone.safetensors`; and the mounted module:
   `model.backbone`, `backbone_text`/`backbone_vision` groups,
@@ -116,6 +116,35 @@ cited, and the doc-cited `probe_rollout_vram.py` is lost outright
 - Unused-but-required parameters (protocol conformance, callbacks) keep
   their public name when the protocol requires it; use a leading
   underscore (`_worker_id`) when the name is ours to choose.
+
+## Classes and inheritance
+
+- **Composition over inheritance.** Subclassing to reuse another
+  class's code is banned: share code through free functions or a
+  composed helper, and pass collaborators in. In Rust terms: traits
+  and enums exist, `extends` does not.
+- **Abstract bases are traits**: abstract methods plus, at most,
+  algorithm skeletons written purely against them (`ARSuffixDecoder`'s
+  suffix scaffold). **Inheriting data is the trap** — a stateful base
+  couples every concrete to assumptions no contract states. Whatever a
+  base method needs arrives through `__init__` parameters or abstract
+  methods, never by assuming what subclasses define; state shared
+  between variants is a composed struct, not a parent.
+- **Polymorphism, in order of preference**: a `Protocol` when
+  implementations only share a surface (`ActionCodec`); a closed union
+  with exhaustive `match` at the composition root when the variants'
+  signatures legitimately differ (action decoders in `BijouModel`); an
+  `nn.Module + abc.ABC` trait only when implementations must BE
+  modules (parameters, module tree).
+- Concretes override only abstract methods — needing to override a
+  concrete one means the base's contract is wrong; fix the base.
+  Stateful hierarchies are one level below the framework base; mixins
+  (stateful behavior injection) are banned. Stateless traits are not
+  depth-bounded: a trait may refine another and a class may implement
+  several at once — that adds contracts, not state, like Rust trait
+  bounds. Extending a concrete class is tolerated only for third-party
+  classes where the reference implementation does the same
+  (`ScaledEmbedding`).
 
 ## Errors and fallibility
 
@@ -227,6 +256,22 @@ cited, and the doc-cited `probe_rollout_vram.py` is lost outright
   collective behavior (e.g. "every rank must call this at the same step").
   Math typography (τ, ε, σ, −) is welcome; the confusables whitelist in
   `pyproject.toml` covers it.
+- **Docstrings are EVERGREEN and self-contained.** They describe what
+  the code IS — contract, invariants, semantics — never how it got
+  here: no dates, no decision/phase numbers, no sign-offs, no "owner
+  call", no author or agent names, no pointers into planning or
+  historical documents. A reader must not need the project's history
+  to understand a module, and narrative provenance in docstrings rots
+  silently (git log and the historical docs in `docs/` are the
+  provenance). Pointers to AS-OF-NOW docs (architecture.md sections)
+  are fine. The boundary with the neighbouring rules: `#` comments MAY
+  carry dated measurements and incident notes (that convention
+  stands), and probe/launcher module HEADERS MUST (pre-registered
+  expectations are dated by nature) — the docstring rule is about
+  library code's contract surface. (Added after the molmoact2
+  retirement repeatedly landed module docstrings narrating decisions,
+  dates and sign-offs — a recurring class; the fix is the rule plus a
+  sweep, not another cleanup commit.)
 - **Every function that takes tensors documents their shapes as
   docstring bullets** — a `Shapes:` block, one line per tensor argument
   (and the return): ``- ``x``: [B, T, hidden] role``. Inline `# [B, S]`

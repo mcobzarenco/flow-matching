@@ -31,7 +31,7 @@ from test_flow_decoder import (
     tiny_config,
 )
 
-from bijou.decoders.flow import (
+from bijou.modelling.decoders.flow import (
     SNAPFLOW_ALPHA,
     SNAPFLOW_LAMBDA,
     FlowDecoder,
@@ -41,7 +41,7 @@ from bijou.decoders.flow import (
     snapflow_distill_loss,
     snapflow_distill_loss_sums,
 )
-from bijou.interface import CollatedBatch, NormStats
+from bijou.modelling.interface import CollatedBatch, NormStats
 
 PHI_S_KEYS = {
     "target_time_in_proj.weight",
@@ -227,15 +227,15 @@ def test_one_nfe_sampling_is_single_shortcut_forward() -> None:
 
 
 def test_config_roundtrip_and_backcompat() -> None:
-    from bijou.loading import FlowDecoderConfig, flow_decoder_config_from_expert
+    from bijou.loading import FlowDecoderSection, flow_decoder_config_from_expert
 
     extended = flow_decoder_config_from_expert(build_extended().config)
     assert extended.target_time_embed
-    assert FlowDecoderConfig.from_dict(extended.to_dict()) == extended
+    assert FlowDecoderSection.from_dict(extended.to_dict()) == extended
     # Checkpoints predating the field: absent key parses as unextended.
     legacy = dict(extended.to_dict())
     del legacy["target_time_embed"]
-    assert not FlowDecoderConfig.from_dict(legacy).target_time_embed
+    assert not FlowDecoderSection.from_dict(legacy).target_time_embed
 
 
 def test_init_from_guard_sanctions_extension_direction_only(

@@ -31,9 +31,8 @@ import torch
 from test_ar_backbone import batch, encode_memory
 from test_token_rows import greedy_rows, rngs, unpack
 
-from bijou.decoders.ar_backbone import ActionCaptureStep, ARSampling
 from bijou.eval.policies import TokenRow, token_rows_from_capture
-from bijou.interface import CollatedBatch
+from bijou.modelling.interface import ActionCaptureStep, ARSampling, CollatedBatch
 from bijou.train_grpo import (
     GRPOConfig,
     grammar_masks_from_ids,

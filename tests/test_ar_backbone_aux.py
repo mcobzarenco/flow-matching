@@ -1,4 +1,4 @@
-"""ARBackboneDecoder aux path (suffix format 5, headerless values).
+"""GemmaARDecoder aux path (suffix format 5, headerless values).
 
 Builds on test_ar_backbone's tiny fixture family (256-vocab text-only
 model, fixture FAST codec at the vocabulary tail). Covers: the
@@ -28,8 +28,9 @@ from test_ar_backbone import (
 )
 from test_aux_text import CharTokenizer
 
-import bijou.decoders.ar_backbone
-from bijou.aux_text import (
+import bijou.modelling.decoders.ar_suffix
+from bijou.loading import ar_backbone_config_to_dict, parse_decoder_config
+from bijou.modelling.aux_text import (
     AUX_TEMPLATE_VERSION,
     GENERATION_OPENER,
     VALUE_BUDGETS,
@@ -38,14 +39,10 @@ from bijou.aux_text import (
     assemble_suffix,
     build_aux_runtime,
 )
-from bijou.decoders.ar_backbone import (
-    ARBackboneDecoder,
-    ar_backbone_loss,
-    ar_backbone_losses,
-)
-from bijou.gemma4.model import Gemma4Model
-from bijou.loading import ar_backbone_config_to_dict, parse_decoder_config
-from bijou.nn import AttentionBackend
+from bijou.modelling.decoders.ar_gemma import GemmaARDecoder
+from bijou.modelling.decoders.ar_suffix import ar_backbone_loss, ar_backbone_losses
+from bijou.modelling.gemma4.model import Gemma4Model
+from bijou.modelling.nn import AttentionBackend
 
 
 def aux_config() -> AuxDecodeConfig:
@@ -57,7 +54,7 @@ def aux_config() -> AuxDecodeConfig:
     )
 
 
-def build_with_aux() -> tuple[Gemma4Model, ARBackboneDecoder]:
+def build_with_aux() -> tuple[Gemma4Model, GemmaARDecoder]:
     """An aux-CAPABLE decoder: aux rides the config (non-empty generate
     is gated on it), runtime + loss weight attached."""
     loaded = codec()
@@ -65,7 +62,7 @@ def build_with_aux() -> tuple[Gemma4Model, ARBackboneDecoder]:
     backbone = Gemma4Model(gemma_config(), attn_backend=AttentionBackend.EAGER)
     backbone.eval()
     backbone.requires_grad_(False)
-    decoder = ARBackboneDecoder(
+    decoder = GemmaARDecoder(
         dataclasses.replace(decoder_config(loaded), aux=aux_config()),
         gemma_config().text,
         loaded,
@@ -198,7 +195,7 @@ def test_zero_budget_forces_terminator_and_counts_fallback(
     # constrained fields (holding) never consult the budget (their
     # candidate + terminator are forced).
     monkeypatch.setattr(
-        bijou.decoders.ar_backbone,
+        bijou.modelling.decoders.ar_suffix,
         "VALUE_BUDGETS",
         dict.fromkeys(AuxField, 0),
     )
@@ -223,7 +220,7 @@ def test_zero_budget_forces_terminator_and_counts_fallback(
 def test_construction_requires_tokenizer() -> None:
     loaded = codec()
     with pytest.raises(ValueError, match="text tokenizer"):
-        ARBackboneDecoder(
+        GemmaARDecoder(
             decoder_config(loaded),
             gemma_config().text,
             loaded,

@@ -59,11 +59,11 @@ from lerobot.cameras.opencv import OpenCVCameraConfig
 from lerobot.robots.so_follower import SOFollower, SOFollowerRobotConfig
 
 from .annotations import ConditionField
-from .aux_text import AuxField, AuxGeneration
 from .data import DatasetStats
-from .decoders.molmo_flow import MolmoFlowDecoder
 from .eval.policies import BijouPolicy
 from .model import SamplingMethod
+from .modelling.aux_text import AuxField, AuxGeneration
+from .modelling.decoders.molmo_flow import MolmoFlowDecoder
 from .rollout_async import AsyncExecutor, AsyncPlanner, PredictFn, sustainable
 from .rollout_safety import (
     JointFrameTransform,
@@ -502,7 +502,7 @@ def main() -> int:
     stats = rig_stats(args, policy)
     envelope = state_envelope(stats, expected_dim=len(SO_MOTORS))
     # molmo_flow normalizes with ONE checkpoint-resident table (§8.13
-    # decision 6), so the joint-angle convention is baked into the
+    # merged-table scheme), so the joint-angle convention is baked into the
     # checkpoint — gate the first observation in MODEL frame against
     # that table's own band: this is what catches a missing or wrong
     # --joint-frame before any action is sent. Per-dataset decoders
@@ -899,7 +899,7 @@ def run_async_loop(
                 f"{args.control_fps} Hz needs 2·{latency_ticks}+"
                 f"{args.trigger_margin_ticks} ≤ chunk {chunk_size} — each "
                 "plan would arrive one latency stale and the loop would "
-                "starve into hold-lunge cycles (field-tested 2026-08-05). "
+                "starve into hold-lunge cycles (field-tested). "
                 "Run sync mode, lower --control-fps, or shrink latency "
                 "(power profile, batch-free GPU).",
             )

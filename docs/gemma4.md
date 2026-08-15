@@ -6,7 +6,7 @@ will silently substitute Gemma-2/3 facts and mis-describe the model
 (e.g. calling the trunk "Gemma-3-class"). Owner directive 2026-08-05:
 this doc is the antidote. Everything below is distilled from
 `bijou/gemma4/` — a pure-torch reimplementation verified bit-exact
-against the HF reference (`python -m bijou.gemma4.verify_parity`) — and
+against the HF reference (`python -m bijou.modelling.gemma4.verify_parity`) — and
 from the released checkpoints' `config.json`. **When in doubt, the code
 is ground truth, not model memory.** Per the owner: Gemma 4 is
 universally better than Gemma 3; do not treat Gemma-3 intuitions

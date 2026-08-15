@@ -1,6 +1,6 @@
 """Convert a MolmoAct2 HF checkpoint into a bijou checkpoint (§8.13 step 2).
 
-Conversion-first loading (architecture.md §8.13 decision 4): runtime
+Conversion-first loading (architecture.md §8.13): runtime
 never reads their HF layout — this CLI materializes a normal bijou
 checkpoint directory once, and everything downstream (`--init-from`,
 eval, rollout) consumes it like any other checkpoint:
@@ -15,7 +15,7 @@ eval, rollout) consumes it like any other checkpoint:
   flow parameters + the real action geometry of the norm tag).
 - ``normalization``: the tag's merged stats table verbatim (their
   mean/std/q01/q99 rows, unfloored — the q01/q99 fields ARE the
-  decoder-owned clamp table, stored once; decision 6).
+  decoder-owned clamp table, stored once).
 - ``expert.safetensors``: the 588 ``model.action_expert.*`` tensors,
   prefix-stripped, bytes verbatim (the parity oracle byte-compares all
   three artifacts: their export, the port, the step-3 decoder). The
@@ -49,13 +49,6 @@ from safetensors.torch import save_file
 from torch import Tensor
 
 from .data import DatasetStats
-from .encoders.molmoact2 import MOLMOACT2_PROMPT_FORMAT
-from .encoders.molmoact2_processing import (
-    load_norm_stats,
-    require_single_obs,
-    validate_inference_config,
-)
-from .gemma4.loading import resolve_checkpoint_dir
 from .loading import (
     BackboneConfig,
     BackboneDepth,
@@ -64,6 +57,13 @@ from .loading import (
     MolmoFlowDecoderConfig,
     read_checkpoint_info,
 )
+from .modelling.encoders.molmoact2 import MOLMOACT2_PROMPT_FORMAT
+from .modelling.encoders.molmoact2_processing import (
+    load_norm_stats,
+    require_single_obs,
+    validate_inference_config,
+)
+from .modelling.gemma4.loading import resolve_checkpoint_dir
 
 _EXPERT_PREFIX = "model.action_expert."
 
@@ -112,7 +112,7 @@ def _stats_vector(stats: dict[str, Any], field: str, *, what: str) -> tuple[floa
 def _dataset_stats(tag_metadata: dict[str, Any], action_dim: int) -> DatasetStats:
     """The tag's merged table as a DatasetStats row, VERBATIM (no std
     flooring — this is their table, not a data-path fit; its q01/q99
-    fields are the molmo_flow clamp table, decision 6). Their vectors
+    fields are the molmo_flow clamp table). Their vectors
     are max_action_dim-padded; the real ``action_dim`` prefix is the
     recorded geometry."""
     action = tag_metadata["action_stats"]
@@ -211,10 +211,9 @@ def convert(
     geometry/setup fields) from ANOTHER artifact's ``norm_stats.json``
     instead of the source's — their fine-tune recipe's semantics, where
     the table is RECOMPUTED on the target-domain data at fine-tune
-    start (docs/molmoact2-retirement.md decision 7: gate-d-lite
-    reproduces the rig rung from the RELEASED weights under the RIG
-    table, exactly their starting point). Weights still come from
-    ``source``; the substitution is recorded in ``converted_from``."""
+    start (e.g. released weights under a rig table, exactly a rig
+    fine-tune's starting point). Weights still come from ``source``;
+    the substitution is recorded in ``converted_from``."""
     source_dir = resolve_checkpoint_dir(source)
     config = json.loads((source_dir / "config.json").read_text())
     _validate_source_config(config)
@@ -276,7 +275,7 @@ def convert(
         n_obs_steps=int(config["n_obs_steps"]),
         camera_keys=tuple(str(key) for key in tag.get("camera_keys", [])),
         # Their checkpoints never narrate; narration-on is a bijou
-        # training choice (§8.13 decision 7) recorded when a run makes it.
+        # training choice recorded when a run makes it.
         narration=False,
     )
 

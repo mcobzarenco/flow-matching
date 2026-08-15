@@ -1,8 +1,8 @@
 """Off-contract normalization modes for molmo_flow checkpoints
-(``--molmo-norm``; §8.13 follow-up to the 2026-08-12 curated-v0 read).
+(``--molmo-norm``).
 
 A molmo_flow checkpoint's contract is ONE global q01/q99 table baked in
-at conversion (decision 6): state clamps/bins through it, decoded
+at conversion (the merged-table scheme): state clamps/bins through it, decoded
 actions unnormalize through it. The 256-frame curated-v0 read showed
 what happens when the eval corpus violates the table's homogeneity
 assumption: 55% of panel frames sat on datasets whose calibration

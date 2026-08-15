@@ -22,7 +22,7 @@ import numpy as np
 import pytest
 import torch
 
-from bijou.decoders.molmo_flow import (
+from bijou.modelling.decoders.molmo_flow import (
     MolmoFlowConfig,
     MolmoFlowDecoder,
     SamplingMethod,

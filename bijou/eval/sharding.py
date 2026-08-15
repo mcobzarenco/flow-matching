@@ -15,7 +15,7 @@ world_size, batch_size)``. Across world sizes they match only to
 batch-composition numerics (measured on the rcond-100k 1024-frame
 holdout eval, 1 vs 4 GPUs: bijou chunk MAE 5.328 vs 5.315, 0.25%;
 state-copy baselines match exactly). Root-caused via
-``outputs/probe_batch_invariance.py`` (2026-08-04): decode SEMANTICS
+``outputs/probe_batch_invariance.py``: decode SEMANTICS
 are exactly batch-invariant — cpu/fp32 and cuda/fp32 reproduce the
 same actions under four batch groupings including ragged padding and
 the round-robin interleave — but under the production bf16 backbone a
@@ -35,8 +35,8 @@ from dataclasses import dataclass
 
 from torch import Tensor
 
-from ..aux_text import AuxGeneration
-from ..decoders.ar_backbone import ValueCandidate
+from ..modelling.aux_text import AuxGeneration
+from ..modelling.interface import ValueCandidate
 from .metrics import FrameScore
 from .policies import SubgoalRecord
 from .report import ReportSample

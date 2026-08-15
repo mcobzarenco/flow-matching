@@ -49,7 +49,7 @@ from bijou.eval.subgoal_swap import (
     fraction_matched_label,
     labeled_episodes,
 )
-from bijou.interface import Collator
+from bijou.modelling.interface import Collator
 
 
 def labeled_item(

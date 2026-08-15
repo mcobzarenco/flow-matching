@@ -43,10 +43,7 @@ import numpy as np
 import torch
 
 from bijou.data import EpisodeSplit, select_datasets
-from bijou.decoders.ar_backbone import ActionCaptureStep
-from bijou.encoders.molmoact2 import MolmoAct2Encoder
 from bijou.fast.molmoact2 import QuantileStats, normalize_state
-from bijou.interface import CameraFrame, CollatedBatch, NormStats, PromptInputs
 from bijou.loading import (
     MOLMOACT2_FAST_TOKENIZER_REF,
     MolmoAct2PromptConfig,
@@ -59,8 +56,16 @@ from bijou.loading import (
     resolve_checkpoint_dir,
 )
 from bijou.model import BijouModel
-from bijou.molmo2.loading import load_config as load_molmo2_config
-from bijou.molmo2.model import load_model as load_molmo2_model
+from bijou.modelling.encoders.molmoact2 import MolmoAct2Encoder
+from bijou.modelling.interface import (
+    ActionCaptureStep,
+    CameraFrame,
+    CollatedBatch,
+    NormStats,
+    PromptInputs,
+)
+from bijou.modelling.molmo2.loading import load_config as load_molmo2_config
+from bijou.modelling.molmo2.model import load_model as load_molmo2_model
 
 FIXTURE = Path("tests/fixtures/molmoact2_discrete/decode_anchors.npz")
 NUM_ROWS = 6

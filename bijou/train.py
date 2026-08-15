@@ -77,16 +77,6 @@ from .async_save import (
     capture_optimizer_state,
     copy_to_cpu,
 )
-from .aux_text import (
-    AUX_TEMPLATE_VERSION,
-    SUFFIX_FORMAT,
-    AuxDecodeConfig,
-    AuxField,
-    AuxGeneration,
-    AuxSpec,
-    aux_label_text,
-    build_aux_runtime,
-)
 from .data import (
     DatasetStats,
     EpisodeSplit,
@@ -96,43 +86,7 @@ from .data import (
     select_datasets,
     worker_init,
 )
-from .decoders.ar_backbone import (
-    ARBackboneConfig,
-    ARBackboneDecoder,
-    ARSuffixDecoder,
-)
-from .decoders.ar_molmo2 import Molmo2ARDecoder
-from .decoders.ar_molmoact2 import MolmoAct2ARDecoder
-from .decoders.flow import (
-    SNAPFLOW_ALPHA,
-    SNAPFLOW_LAMBDA,
-    FlowDecoder,
-    SelfAttentionMode,
-    TimeConditioning,
-)
-from .decoders.molmo_flow import (
-    MolmoFlowDecoder,
-    load_expert_state,
-    molmo_flow_loss_sums,
-)
-from .encoders.gemma4 import PROMPT_FORMAT, GemmaEncoder, GemmaInputsCollator
-from .encoders.molmo2 import (
-    MOLMO2_PROMPT_FORMAT,
-    Molmo2Encoder,
-    Molmo2InputsCollator,
-)
-from .encoders.molmoact2 import MolmoAct2Encoder, MolmoAct2InputsCollator
-from .fast.codec import ActionCodec
-from .fast.molmoact2 import MolmoAct2ActionCodec, MolmoAct2FastTokenizer
-from .gemma4.config import Gemma4Config
-from .gemma4.loading import load_config, resolve_checkpoint_dir
-from .gemma4.model import Gemma4Model
-from .interface import (
-    BatchInputs,
-    CollatedBatch,
-    Collator,
-    ObservationMemory,
-)
+from .fast.molmoact2 import MolmoAct2FastTokenizer
 from .loading import (
     BackboneConfig,
     BackboneDepth,
@@ -160,10 +114,53 @@ from .loading import (
     resolve_action_codec,
 )
 from .model import BijouModel
-from .molmo2.loading import load_config as load_molmo2_config
-from .molmo2.model import Molmo2Model
-from .molmo2.model import load_model as load_molmo2_model
-from .molmo2.tokenizer import Molmo2TextTokenizer, newline_carrier_ids
+from .modelling.aux_text import (
+    AUX_TEMPLATE_VERSION,
+    SUFFIX_FORMAT,
+    AuxDecodeConfig,
+    AuxField,
+    AuxGeneration,
+    AuxSpec,
+    aux_label_text,
+    build_aux_runtime,
+)
+from .modelling.codecs import ActionCodec, MolmoAct2ActionCodec
+from .modelling.decoders.ar_gemma import GemmaARDecoder
+from .modelling.decoders.ar_molmo2 import Molmo2ARDecoder
+from .modelling.decoders.ar_molmoact2 import MolmoAct2ARDecoder
+from .modelling.decoders.ar_suffix import ARDecoderConfig, ARSuffixDecoder
+from .modelling.decoders.flow import (
+    SNAPFLOW_ALPHA,
+    SNAPFLOW_LAMBDA,
+    FlowDecoder,
+    SelfAttentionMode,
+    TimeConditioning,
+)
+from .modelling.decoders.molmo_flow import (
+    MolmoFlowDecoder,
+    load_expert_state,
+    molmo_flow_loss_sums,
+)
+from .modelling.encoders.gemma4 import PROMPT_FORMAT, GemmaEncoder, GemmaInputsCollator
+from .modelling.encoders.molmo2 import (
+    MOLMO2_PROMPT_FORMAT,
+    Molmo2Encoder,
+    Molmo2InputsCollator,
+)
+from .modelling.encoders.molmoact2 import MolmoAct2Encoder, MolmoAct2InputsCollator
+from .modelling.gemma4.config import Gemma4Config
+from .modelling.gemma4.loading import load_config, resolve_checkpoint_dir
+from .modelling.gemma4.model import Gemma4Model
+from .modelling.interface import (
+    BatchInputs,
+    CollatedBatch,
+    Collator,
+    ObservationMemory,
+)
+from .modelling.molmo2.loading import load_config as load_molmo2_config
+from .modelling.molmo2.model import Molmo2Model
+from .modelling.molmo2.model import load_model as load_molmo2_model
+from .modelling.molmo2.tokenizer import Molmo2TextTokenizer, newline_carrier_ids
 
 DEFAULT_BACKBONE = "google/gemma-4-e2b-it"
 # Rows in the wandb probe tables (each costs camera images + a
@@ -215,8 +212,8 @@ ARCH_FLAGS: dict[str, tuple[str, ArchSection]] = {
     "time_conditioning": ("--time-conditioning", ArchSection.DECODER),
     "fast_tokenizer": ("--fast-tokenizer", ArchSection.DECODER),
     "target_time_embed": ("--target-time-embed", ArchSection.EXTENSION),
-    # The molmoact2 objective matrix (docs/molmoact2-retirement.md phase
-    # 3): EXTENSION so --init-from may pick any pathway of a
+    # The molmoact2 objective matrix: EXTENSION so --init-from may
+    # pick any pathway of a
     # 'both'-mode source (the transition matrix), while --resume stays
     # locked to the recorded objective (the standard resume refusal).
     "objective": ("--objective", ArchSection.EXTENSION),
@@ -276,7 +273,7 @@ class TrainArgs:
     max_soft_tokens: int
     max_crops: int
     stream_counts: tuple[int, ...]
-    # Knowledge insulation on the molmo_flow KV seam (§8.13 decision 8):
+    # Knowledge insulation on the molmo_flow KV seam (§8.13):
     # detach the extracted per-layer K/V before the expert. Run
     # property; molmo_flow only.
     insulate_expert: bool
@@ -288,7 +285,7 @@ class TrainArgs:
     target_time_embed: bool
     # Training objective variant: None = the decoder's standard
     # objective; "snapflow" = the self-distillation loss mix (flow only,
-    # α/λ frozen in bijou.decoders.flow).
+    # α/λ frozen in bijou.modelling.decoders.flow).
     distill: str | None
     decoder: str
     fast_tokenizer: str | None
@@ -307,7 +304,7 @@ class TrainArgs:
     # collation (normalized token ≡ 0). Probes score intact state.
     state_dropout: float
     # Sim2real appearance regularizer: probability a camera frame gets
-    # the bijou.image_augment photometric recipe at collation. Probes
+    # the bijou.modelling.image_augment photometric recipe at collation. Probes
     # and evals always see clean frames.
     image_augment: float
     decoder_hidden: int
@@ -381,14 +378,14 @@ class TrainArgs:
     # (unlike every field above) so checkpoints predating the flag
     # replay their train_args cleanly.
     sync_save: bool = False
-    # The molmoact2 objective matrix (docs/molmoact2-retirement.md
-    # phase 3; molmo_flow-family only): 'flow' = the expert pathway
+    # The molmoact2 objective matrix (molmo_flow-family only):
+    # 'flow' = the expert pathway
     # (the historical implicit value — defaulted so recorded train_args
     # predating the field replay cleanly), 'ar' = the trunk's discrete
     # head (MolmoAct2ARDecoder — zero decoder parameters, trains via
     # --backbone-text-lr), 'joint' = both, L_flow + λ·L_CE with the
-    # decision-5 ordering (flow extracts prompt-only KV BEFORE the CE
-    # suffix appends to the cache).
+    # KV-before-CE ordering (flow extracts prompt-only KV BEFORE the
+    # CE suffix appends to the cache).
     objective: str = "flow"
     # λ of the joint objective — a run hyperparameter like the LRs
     # (re-passable on --resume; recorded for provenance, never
@@ -1039,7 +1036,7 @@ def broadcast_module_states(module: torch.nn.Module) -> None:
     without the reducer DDP would also build — its bucket buffers are a
     full fp32 gradient copy allocated AT CONSTRUCTION, not at first
     sync (the measured 13.6 GiB block from the molmo2 smoke-ladder
-    snapshot, 2026-08-06). Params and buffers both; state_dict values
+    snapshot). Params and buffers both; state_dict values
     are live views, so in-place broadcast lands in the module."""
     for tensor in module.state_dict().values():
         if isinstance(tensor, torch.Tensor):
@@ -1206,7 +1203,7 @@ def adamc_output_head_parameters(
       shipped trunk ``lm_head`` and ``wte`` are frozen and never reach
       the optimizer). ``fast_embed`` is an untied input table and stays
       on the corrected side with the other hidden matrices.
-    - ``ARBackboneDecoder`` (Gemma trunk): ``fast_embed.weight`` — the
+    - ``GemmaARDecoder`` (Gemma trunk): ``fast_embed.weight`` — the
       table doubles as the block-logits head (``hidden @ fast_embed.Tᵀ``),
       a TIED embedding/head pair. One parameter object, one group,
       standard decay; the group-disjointness assert at construction
@@ -1219,7 +1216,7 @@ def adamc_output_head_parameters(
     decoder = model.decoder
     if isinstance(decoder, Molmo2ARDecoder):
         return list(decoder.fast_head.parameters())
-    if isinstance(decoder, ARBackboneDecoder):
+    if isinstance(decoder, GemmaARDecoder):
         return list(decoder.fast_embed.parameters())
     raise SystemExit(
         f"--optimizer adamc: the output-head partition is not audited "
@@ -1450,7 +1447,7 @@ class BijouTrainStep[I: BatchInputs](torch.nn.Module):
                 return self._chunk_share(memory, batch, normalizers)
         # Cross-attention decoders are fp32-by-design OUTSIDE autocast.
         if self.model.joint_ce is not None:
-            # Decision-5 ordering (docs/molmoact2-retirement.md): the
+            # KV-before-CE ordering (the joint invariant): the
             # flow branch extracts its PROMPT-ONLY KV pairs first — the
             # CE rider's suffix forward APPENDS to the same cache, and
             # the expert must never condition on teacher-forced action
@@ -1489,8 +1486,10 @@ class BijouTrainStep[I: BatchInputs](torch.nn.Module):
         batch's own counts (unchunked) or the full-step normalizers
         (chunked) — ONE composition for both modes, so chunked and
         unchunked joint numerics agree up to fp reduction order. CE
-        weight λ = --joint-ce-weight (decision 4; default 1.0, the KI
-        no-tuning value); the molmoact2 rider has no aux fields."""
+        weight λ = --joint-ce-weight (default 1.0 — under knowledge
+        insulation the two objectives reach disjoint parameter sets,
+        so λ is an LR-relative knob, not a tuned constant); the
+        molmoact2 rider has no aux fields."""
         flow_sum, flow_count = flow_sums
         ce_action_sum, ce_action_count, ce_aux_sum, _ = ce_sums
         assert ce_aux_sum is None  # rider constructed aux-None
@@ -2118,7 +2117,7 @@ def write_checkpoint(
     save_file(tensors.prompt, str(staging_dir / "prompt.safetensors"))
     if tensors.joint_ce:
         # A PARAMETERIZED rider's tables (none exists today: the
-        # molmoact2 rider is trunk-native, decision 2 — its section
+        # molmoact2 rider is trunk-native — its section
         # rides the metadata's joint_ce slot with no weights file).
         save_file(tensors.joint_ce, str(staging_dir / "joint_ce.safetensors"))
     if tensors.backbone is not None:
@@ -2169,7 +2168,7 @@ def save_checkpoint(
     byte-identical to that file, so it is linked/copied rather than
     re-serialized). Conditioning only on ``args.backbone_trained`` paired a
     decoder fine-tuned against adapted features with the pristine backbone on
-    load — silently (found 2026-07-31, ft-rig arm F)."""
+    load — silently."""
     train_state = TrainState(
         optimizer=optimizer.state_dict(),
         scheduler=scheduler.state_dict(),
@@ -2253,7 +2252,7 @@ def build_checkpoint_metadata(
         )
     normalization = aggregate_stats(normalizers)
     if isinstance(model.decoder, MolmoFlowDecoder):
-        # The load-bearing tables (decision 6) ride the normalization
+        # The load-bearing tables (§8.13's merged scheme) ride the normalization
         # row: the run aggregate honestly carries no quantiles
         # (aggregate_stats), but molmo_flow NORMALIZED with the source
         # checkpoint's merged tables — the written row must carry the
@@ -2312,7 +2311,7 @@ def build_checkpoint_metadata(
 def ensure_matching_decoder_config(
     decoder: (
         FlowDecoder
-        | ARBackboneDecoder
+        | GemmaARDecoder
         | Molmo2ARDecoder
         | MolmoAct2ARDecoder
         | MolmoFlowDecoder
@@ -2337,7 +2336,7 @@ def ensure_matching_decoder_config(
             saved.setdefault("target_time_embed", False)
     elif isinstance(decoder, FlowDecoder):
         saved = meta["expert_config"]
-        # Back-compat: fields added to ExpertConfig after a checkpoint was
+        # Back-compat: fields added to FlowDecoderConfig after a checkpoint was
         # written are absent from its serialized config; fill their defaults
         # so an unchanged run still matches. A pre-adaRMS checkpoint is
         # additive.
@@ -2519,8 +2518,8 @@ def rehome_fused_step_tensors(
     consolidated resume payload (async-save's device→CPU capture +
     ZeRO-1 merge) stores everything CPU-tagged without those flags, so
     the steps stay on CPU and fused AdamW aborts at the first
-    ``optimizer.step()`` ('state_steps is on cpu…', measured live at
-    the molmo2 60k resume, 2026-08-08 10:15Z). Move each param's step
+    ``optimizer.step()`` ('state_steps is on cpu…', measured live on
+    a resumed run). Move each param's step
     counter to the param's device. Exact no-op for non-fused (CPU)
     runs, whose reference kernels want CPU scalar steps. Handles the
     ZeRO-1 wrapper by operating on its local inner optimizer."""
@@ -2682,7 +2681,7 @@ def _build_parser() -> argparse.ArgumentParser:
         type=int,
         default=None,
         help="molmo2 trunks: crops per camera image (fresh-run default 1 "
-        "= the port plan's operating point, 410 image tokens/camera — "
+        "= the standard operating point, 410 image tokens/camera — "
         "the smallest layout inside the shipped distribution; ignored "
         "for Gemma trunks; checkpoint-inferred under --resume/--init-from)",
     )
@@ -2699,7 +2698,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "--insulate-expert",
         action="store_true",
         help="knowledge insulation on the molmo_flow KV seam (§8.13 "
-        "decision 8, their post-train): the extracted per-layer K/V "
+        "their post-train recipe): the extracted per-layer K/V "
         "detach before the expert, so flow gradients into every trunk "
         "parameter are exactly zero. molmo_flow only (--objective flow "
         "with a frozen trunk, or joint — the RL-then-refine recipe); "
@@ -2710,7 +2709,7 @@ def _build_parser() -> argparse.ArgumentParser:
         choices=["flow", "ar", "joint"],
         default=None,
         help="the molmoact2 family's pathway selector "
-        "(docs/molmoact2-retirement.md phase 3; other families pick ONE "
+        "(the molmoact2 family's pathway matrix; other families pick ONE "
         "decoder with --decoder): flow = the molmo_flow expert (the "
         "historical default), ar = the trunk's discrete head (zero "
         "decoder parameters — requires --backbone-text-lr), joint = "
@@ -2873,7 +2872,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "photometric recipe at collation (brightness/contrast/"
         "saturation/hue/gamma jitter, Gaussian sensor noise, slight "
         "defocus blur, JPEG artifacts, small random crop/translate — "
-        "the bijou.image_augment v0 spec). Probes and evals always "
+        "the bijou.modelling.image_augment v0 spec). Probes and evals always "
         "see clean frames",
     )
     parser.add_argument(
@@ -3313,7 +3312,7 @@ def main() -> int:
         )
     # The molmoact2 compositions rebuild from the source checkpoint's
     # sections (inherit-only, §8.13 step 5) — read them once, early.
-    # The objective matrix (retirement phase 3) derives per-objective
+    # The objective matrix derives per-objective
     # sections here: the flow section for flow/joint (synthesized under
     # --expert-init fresh from ar-only sources), the format-6 AR
     # section for ar/joint (derived from a flow-section source's
@@ -3321,7 +3320,7 @@ def main() -> int:
     molmo_flow_info: CheckpointInfo | None = None
     molmo_flow_prompt: MolmoAct2PromptConfig | None = None
     molmo_flow_section: MolmoFlowDecoderConfig | None = None
-    molmoact2_ar_section: ARBackboneConfig | None = None
+    molmoact2_ar_section: ARDecoderConfig | None = None
     molmoact2_source_decoder_kind: str | None = None
     if args.decoder == "molmo_flow":
         source = args.init_from if args.init_from is not None else args.resume
@@ -3354,7 +3353,7 @@ def main() -> int:
                         str(checkpoint_dir),
                     )
                 )
-        elif isinstance(source_sections.decoder, ARBackboneConfig):
+        elif isinstance(source_sections.decoder, ARDecoderConfig):
             # An ar-only source (this plan's stage-1 product): carries
             # the format-6 section and NO expert.
             molmoact2_source_decoder_kind = "ar_backbone"
@@ -3520,7 +3519,7 @@ def main() -> int:
             raise SystemExit(
                 "the source checkpoint's normalization row carries no "
                 "action q01/q99 — the discrete head tokenizes under the "
-                "merged table (decision 6); this table predates it",
+                "merged table (§8.13); this table predates it",
             )
         molmoact2_action_table = (
             torch.tensor(source_normalization.action_q01, dtype=torch.float32),
@@ -3892,7 +3891,7 @@ def main() -> int:
                 model.joint_ce_weight = args.joint_ce_weight
                 schedule_desc += (
                     f" + joint CE rider (λ={args.joint_ce_weight:g}, "
-                    "decision-5 ordering: flow KV before the CE append)"
+                    "flow KV extracted before the CE append)"
                 )
         model.insulate_expert = args.insulate_expert
     elif args.decoder == "flow":
@@ -3945,12 +3944,12 @@ def main() -> int:
             device=device,
             dtype=torch.float32,
         )
-        ar_backbone_config = ARBackboneConfig(
+        ar_backbone_config = ARDecoderConfig(
             tokenizer=args.fast_tokenizer,
             vocab_total=action_codec.vocab_total,
             # The SECOND extension block, directly after the 128 image
             # specials — Qwen3's ~271-id unused tail cannot hold the
-            # 1,026 FAST ids (port plan §6 amendment; the embedding and
+            # 1,026 FAST ids (the second-extension-block anchoring; the embedding and
             # fresh untied head rows are decoder-owned trainables).
             block_base=molmo2_config.text.fast_block_base,
             chunk_size=args.chunk_size,
@@ -4021,7 +4020,7 @@ def main() -> int:
         # tokenizer's unused tail (E2B: 261118.. ⊂ the 3259-id run at
         # 258885..262143) — no magic constant, adapts to any backbone,
         # recorded in the checkpoint's decoder section.
-        ar_backbone_config = ARBackboneConfig(
+        ar_backbone_config = ARDecoderConfig(
             tokenizer=args.fast_tokenizer,
             vocab_total=action_codec.vocab_total,
             block_base=backbone_config.text.vocab_size - action_codec.vocab_total,
@@ -4038,7 +4037,7 @@ def main() -> int:
             if aux_decode_config is not None
             else None
         )
-        ar_backbone_decoder = ARBackboneDecoder(
+        ar_backbone_decoder = GemmaARDecoder(
             ar_backbone_config,
             backbone_config.text,
             action_codec,
@@ -4406,7 +4405,7 @@ def main() -> int:
             raise SystemExit(
                 "joint_ce rider carries parameters but no load path "
                 "exists — the molmoact2 rider is parameterless by "
-                "design (decision 2)",
+                "design (trunk-native rows)",
             )
         if (
             is_main
@@ -4449,7 +4448,7 @@ def main() -> int:
             raise SystemExit(
                 "joint_ce rider carries parameters but no load path "
                 "exists — the molmoact2 rider is parameterless by "
-                "design (decision 2)",
+                "design (trunk-native rows)",
             )
         if is_main:
             print(

@@ -1,10 +1,10 @@
-"""Token-GRPO gradient step (design memo 2026-08-13 §2/§8 item 2):
+"""Token-GRPO gradient step:
 advantage-weighted clipped token-level CE over the action block of a
 SAMPLED suffix, DAPO clip-higher bounds, ratio against the rollout's
 recorded per-token logprobs (the TokenRow surface, §8 item 1).
 
 The training forward is the SFT teacher-forced path verbatim —
-:func:`~bijou.decoders.ar_backbone.suffix_targets` builds the same
+:func:`~bijou.modelling.decoders.ar_backbone.suffix_targets` builds the same
 ``[opener][BOA][a_1..a_T]`` scaffold and the decoder forward consumes
 the memory's prefix cache exactly as :func:`ar_backbone_losses` does —
 except the suffix carries the ROLLOUT-SAMPLED ids and the objective is
@@ -40,8 +40,8 @@ from typing import Any
 import torch
 from torch import Tensor, nn
 
-from .decoders.ar_backbone import ARSuffixDecoder, suffix_targets
-from .interface import CollatedBatch, ObservationMemory
+from .modelling.decoders.ar_suffix import ARSuffixDecoder, suffix_targets
+from .modelling.interface import CollatedBatch, ObservationMemory
 
 
 @dataclasses.dataclass(frozen=True, slots=True)

@@ -17,7 +17,7 @@ import pytest
 import torch
 
 from bijou.data import DatasetStats
-from bijou.interface import CollatedBatch, Collator, PromptInputs
+from bijou.modelling.interface import CollatedBatch, Collator, PromptInputs
 
 CHUNK, DIM = 4, 6
 
@@ -197,7 +197,7 @@ def test_camera_prompt_order_sorts_by_kind_then_name() -> None:
 def test_aux_rejects_camera_selection() -> None:
     """The 'visible' indices are positions in the full sorted camera
     set — camera_filter/max_cameras would silently shift them."""
-    from bijou.aux_text import AuxField, AuxSpec
+    from bijou.modelling.aux_text import AuxField, AuxSpec
 
     aux = AuxSpec(
         tokenizer_dir="unused",

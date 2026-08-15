@@ -33,15 +33,7 @@ from pathlib import Path
 import torch
 import transformers
 
-from bijou.aux_text import SUFFIX_FORMAT
 from bijou.data import EpisodeSplit, select_datasets
-from bijou.decoders.ar_backbone import ARBackboneConfig, ARBackboneDecoder
-from bijou.decoders.flow import FlowDecoder
-from bijou.encoders.gemma4 import GemmaEncoder, GemmaInputsCollator
-from bijou.fast.codec import FastActionCodec
-from bijou.gemma4.loading import load_config
-from bijou.gemma4.text import DecoderLayer
-from bijou.interface import CollatedBatch, Collator
 from bijou.loading import (
     BackboneDepth,
     build_gemma_encoder,
@@ -49,6 +41,15 @@ from bijou.loading import (
     from_backbone,
 )
 from bijou.model import BijouModel
+from bijou.modelling.aux_text import SUFFIX_FORMAT
+from bijou.modelling.codecs import FastActionCodec
+from bijou.modelling.decoders.ar_gemma import GemmaARDecoder
+from bijou.modelling.decoders.ar_suffix import ARDecoderConfig
+from bijou.modelling.decoders.flow import FlowDecoder
+from bijou.modelling.encoders.gemma4 import GemmaEncoder, GemmaInputsCollator
+from bijou.modelling.gemma4.loading import load_config
+from bijou.modelling.gemma4.text import DecoderLayer
+from bijou.modelling.interface import CollatedBatch, Collator
 from bijou.train import BijouTrainStep, TrainArgs, unfreeze_backbone
 
 TINY = "outputs/tiny-gemma4"
@@ -185,8 +186,8 @@ def build_ar_backbone(args: TrainArgs) -> BijouTrainStep:
         dtype=torch.float32 if args.backbone_trained else None,
         depth=BackboneDepth.FULL,
     )
-    decoder = ARBackboneDecoder(
-        ARBackboneConfig(
+    decoder = GemmaARDecoder(
+        ARDecoderConfig(
             tokenizer=str(FIXTURE_TOKENIZER),
             vocab_total=codec.vocab_total,
             block_base=backbone_config.text.vocab_size - codec.vocab_total,
@@ -355,7 +356,7 @@ def main() -> None:
     backbone = step.model.backbone
     text = backbone.language_model
     decoder = step.model.decoder
-    assert isinstance(decoder, ARBackboneDecoder)
+    assert isinstance(decoder, GemmaARDecoder)
     encoder = step.model.encoder
     assert isinstance(encoder, GemmaEncoder)  # narrow the seam type
     last = text.layers[len(text.layers) - 1]

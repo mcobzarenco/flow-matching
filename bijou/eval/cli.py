@@ -44,7 +44,9 @@ from typing import Any
 import numpy as np
 import torch
 
-from ..aux_text import (
+from ..data import EpisodeSplit, select_datasets
+from ..model import SamplingMethod
+from ..modelling.aux_text import (
     EVENT_NONE,
     HOLDING_VALUES,
     AuxField,
@@ -52,8 +54,6 @@ from ..aux_text import (
     label_values,
     parse_visibility,
 )
-from ..data import EpisodeSplit, select_datasets
-from ..model import SamplingMethod
 from .metrics import (
     DatasetSlice,
     FrameScore,
@@ -437,7 +437,7 @@ def parse_args() -> argparse.Namespace:
         default="stable",
         help="flow-noise derivation: 'stable' (frame-identity triple — "
         "corpus-composition-invariant; the quoted keying for all new "
-        "flow numbers since the 2026-08-06 anchor re-bank) or 'index' "
+        "flow numbers under the current anchor bank) or 'index' "
         "(legacy, corpus-relative concat index — comparable only at "
         "frozen corpus composition; pass explicitly to reproduce "
         "historical index-keyed reports). The keyings are DIFFERENT "
@@ -560,7 +560,7 @@ def parse_args() -> argparse.Namespace:
         "bins and actions unnormalize through the ONE global q01/q99 "
         "table baked in at conversion — the only deployment-honest "
         "read, but truth outside the table's box is unreachable by "
-        "construction (the 2026-08-12 curated-v0 read: 55% of panel "
+        "construction (measured on curated-v0: 55% of panel "
         "frames floored, >=13.9 of 21.4 MAE). "
         "'per-dataset' = quantile equating: per joint, affinely map "
         "each dataset's own q01/q99 onto the table's before the "

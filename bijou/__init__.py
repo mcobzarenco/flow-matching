@@ -5,10 +5,10 @@ Gemma lineage and to the model's on-device ambitions.
 
 Package layout:
 
-- ``bijou.gemma4`` — hackable pure-torch Gemma 4 E-series (E2B, E4B)
+- ``bijou.modelling.gemma4`` — hackable pure-torch Gemma 4 E-series (E2B, E4B)
   implementation, verified against the HF reference
-  (``python -m bijou.gemma4.verify_parity``).
-- ``bijou.encoders`` / ``bijou.decoders`` / ``bijou.model`` / ``bijou.loading``
+  (``python -m bijou.modelling.gemma4.verify_parity``).
+- ``bijou.modelling.encoders`` / ``bijou.modelling.decoders`` / ``bijou.model`` / ``bijou.loading``
   — the VLA: a frozen, truncated backbone encodes the multimodal prefix once
   per observation and exports its global-attention K/V streams as an
   ObservationMemory; action decoders (the flow-matching expert, the AR FAST
@@ -24,15 +24,15 @@ Quick start::
     actions = model.sample_actions(prefix, state)
 """
 
-from .decoders.flow import ExpertConfig, FlowDecoder, SelfAttentionMode
-from .interface import MemoryStream, ObservationMemory
 from .loading import default_expert_config, from_backbone, prefix_global_layers
 from .model import BijouModel
+from .modelling.decoders.flow import FlowDecoder, FlowDecoderConfig, SelfAttentionMode
+from .modelling.interface import MemoryStream, ObservationMemory
 
 __all__ = [
     "BijouModel",
-    "ExpertConfig",
     "FlowDecoder",
+    "FlowDecoderConfig",
     "MemoryStream",
     "ObservationMemory",
     "SelfAttentionMode",

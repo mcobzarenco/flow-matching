@@ -1113,7 +1113,7 @@ MEASURED, not assumed, during the corpus migration: the laptop
 reproduces the box-recorded base flow oracle 2.7903/1.9152 bitwise,
 so these CPU anchors are machine-portable. Regenerate the tiny backbone
 with
-`uv run python -m bijou.gemma4.testing --output outputs/tiny-gemma4`
+`uv run python -m bijou.modelling.gemma4.testing --output outputs/tiny-gemma4`
 (per checkout; changing it re-baselines every oracle). gemma4 changes
 additionally gate on `verify_parity` (needs a big GPU). Any new
 architecture path records its own oracle loudly.

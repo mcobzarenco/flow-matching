@@ -20,7 +20,7 @@ import pytest
 import torch
 
 from bijou.data import DatasetStats
-from bijou.interface import Collator, PromptInputs
+from bijou.modelling.interface import Collator, PromptInputs
 
 CHUNK, DIM = 4, 6
 

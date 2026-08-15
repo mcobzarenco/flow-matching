@@ -59,16 +59,7 @@ from test_molmoact2_ar import (
 from test_train_args import _checkpoint_info, _parse
 
 from bijou.data import DatasetStats
-from bijou.decoders.ar_backbone import ar_backbone_losses
-from bijou.decoders.ar_molmoact2 import MolmoAct2ARDecoder
-from bijou.decoders.flow import TimeConditioning
-from bijou.decoders.molmo_flow import (
-    MolmoFlowDecoder,
-    molmo_flow_loss,
-)
-from bijou.encoders.molmoact2 import MolmoAct2Encoder
-from bijou.fast.molmoact2 import MolmoAct2ActionCodec, MolmoAct2FastTokenizer
-from bijou.interface import Collator, ObservationMemory
+from bijou.fast.molmoact2 import MolmoAct2FastTokenizer
 from bijou.loading import (
     BackboneConfig,
     BackboneDepth,
@@ -80,8 +71,18 @@ from bijou.loading import (
     molmoact2_fresh_flow_section,
 )
 from bijou.model import BijouModel
-from bijou.molmo2.cache import Molmo2KVCache
-from bijou.molmo2.model import Molmo2Model, build_multimodal_mask, load_model
+from bijou.modelling.codecs import MolmoAct2ActionCodec
+from bijou.modelling.decoders.ar_molmoact2 import MolmoAct2ARDecoder
+from bijou.modelling.decoders.ar_suffix import ar_backbone_losses
+from bijou.modelling.decoders.flow import TimeConditioning
+from bijou.modelling.decoders.molmo_flow import (
+    MolmoFlowDecoder,
+    molmo_flow_loss,
+)
+from bijou.modelling.encoders.molmoact2 import MolmoAct2Encoder
+from bijou.modelling.interface import Collator, ObservationMemory
+from bijou.modelling.molmo2.cache import Molmo2KVCache
+from bijou.modelling.molmo2.model import Molmo2Model, build_multimodal_mask, load_model
 
 PROMPT_LEN = 9
 

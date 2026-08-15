@@ -286,10 +286,10 @@ def value_lines(text: str) -> dict[str, str]:
 def phase_probe() -> None:
     import torch
 
-    from bijou.aux_text import AuxField
     from bijou.data import EpisodeSplit, select_datasets
     from bijou.eval.policies import BijouPolicy
     from bijou.eval.report import _image_data_uri
+    from bijou.modelling.aux_text import AuxField
 
     dump = json.loads(DUMP.read_text())
     rows = event_rows(dump)
@@ -349,7 +349,7 @@ def phase_probe() -> None:
         text_allowed[
             torch.tensor(sorted(decoder.newline_carrier_ids), device=device)
         ] = False
-    from bijou.aux_text import VALUE_BUDGETS
+    from bijou.modelling.aux_text import VALUE_BUDGETS
 
     budget = VALUE_BUDGETS[AuxField.EVENT]
 

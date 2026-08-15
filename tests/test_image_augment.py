@@ -20,8 +20,8 @@ import pytest
 import torch
 
 from bijou.data import DatasetStats
-from bijou.image_augment import ImageAugmentSpec, augment_image
-from bijou.interface import Collator, PromptInputs
+from bijou.modelling.image_augment import ImageAugmentSpec, augment_image
+from bijou.modelling.interface import Collator, PromptInputs
 
 CHUNK, DIM = 4, 6
 SIZE = 16

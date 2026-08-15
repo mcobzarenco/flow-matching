@@ -28,15 +28,15 @@ from safetensors.torch import load_file, save_file
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from bijou.decoders.flow import FlowDecoder
-from bijou.gemma4.loading import load_config, resolve_checkpoint_dir
 from bijou.loading import (
-    FlowDecoderConfig,
+    FlowDecoderSection,
     expert_config_from_architecture,
     flow_decoder_config_from_expert,
     parse_decoder_config,
     parse_prompt_config,
 )
+from bijou.modelling.decoders.flow import FlowDecoder
+from bijou.modelling.gemma4.loading import load_config, resolve_checkpoint_dir
 
 PHI_S_KEYS = {
     "target_time_in_proj.weight",
@@ -62,7 +62,7 @@ def main() -> None:
 
     meta = json.loads((args.checkpoint / "bijou_config.json").read_text())
     decoder_config = parse_decoder_config(meta["decoder"])
-    if not isinstance(decoder_config, FlowDecoderConfig):
+    if not isinstance(decoder_config, FlowDecoderSection):
         sys.exit(f"not a flow checkpoint: {meta['decoder'].get('kind')}")
     if decoder_config.target_time_embed:
         sys.exit("checkpoint is ALREADY φ_s-extended — nothing to do")

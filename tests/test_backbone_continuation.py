@@ -41,18 +41,18 @@ import pytest
 import torch
 from torch import Tensor
 
-from bijou.encoders.gemma4 import GemmaEncoder
-from bijou.gemma4.cache import KVCache
-from bijou.gemma4.config import (
+from bijou.modelling.encoders.gemma4 import GemmaEncoder
+from bijou.modelling.gemma4.cache import KVCache
+from bijou.modelling.gemma4.config import (
     Gemma4Config,
     Gemma4TextConfig,
     LayerType,
     RopeParameters,
     RopeType,
 )
-from bijou.gemma4.model import Gemma4Model
-from bijou.gemma4.text import TextModel
-from bijou.nn import AttentionBackend
+from bijou.modelling.gemma4.model import Gemma4Model
+from bijou.modelling.gemma4.text import TextModel
+from bijou.modelling.nn import AttentionBackend
 
 # Window 8 with prompt lengths straddling it: the long prompt exceeds the
 # window (exercising the sliding cache trim + kv_offset path), the short

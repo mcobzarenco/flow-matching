@@ -39,20 +39,17 @@ from typing import override
 import torch
 from torch import Tensor, nn
 
-from .aux_text import AuxField
-from .decoders.ar_backbone import (
-    ActionCaptureStep,
-    ARBackboneDecoder,
-    ARSampling,
+from .modelling.aux_text import AuxField
+from .modelling.decoders.ar_gemma import GemmaARDecoder
+from .modelling.decoders.ar_molmo2 import Molmo2ARDecoder
+from .modelling.decoders.ar_molmoact2 import MolmoAct2ARDecoder
+from .modelling.decoders.ar_suffix import (
     ARSuffixDecoder,
-    ValueCandidate,
     ar_backbone_counts,
     ar_backbone_loss_sums,
     ar_backbone_losses,
 )
-from .decoders.ar_molmo2 import Molmo2ARDecoder
-from .decoders.ar_molmoact2 import MolmoAct2ARDecoder
-from .decoders.flow import (
+from .modelling.decoders.flow import (
     FlowDecoder,
     SamplingMethod,
     flow_matching_loss,
@@ -60,21 +57,24 @@ from .decoders.flow import (
     snapflow_distill_loss,
     snapflow_distill_loss_sums,
 )
-from .decoders.molmo_flow import (
+from .modelling.decoders.molmo_flow import (
     MolmoFlowDecoder,
     molmo_flow_loss,
     molmo_flow_loss_sums,
 )
-from .encoders.gemma4 import GemmaEncoder
-from .gemma4.model import Gemma4Model
-from .interface import (
+from .modelling.encoders.gemma4 import GemmaEncoder
+from .modelling.gemma4.model import Gemma4Model
+from .modelling.interface import (
+    ActionCaptureStep,
+    ARSampling,
     BatchInputs,
     BijouPrediction,
     CollatedBatch,
     ObservationEncoder,
     ObservationMemory,
+    ValueCandidate,
 )
-from .molmo2.model import Molmo2Model
+from .modelling.molmo2.model import Molmo2Model
 
 
 class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
@@ -87,7 +87,7 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
         encoder: ObservationEncoder[I, B],
         decoder: (
             FlowDecoder
-            | ARBackboneDecoder
+            | GemmaARDecoder
             | Molmo2ARDecoder
             | MolmoAct2ARDecoder
             | MolmoFlowDecoder
@@ -174,7 +174,7 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
         self,
     ) -> (
         FlowDecoder
-        | ARBackboneDecoder
+        | GemmaARDecoder
         | Molmo2ARDecoder
         | MolmoAct2ARDecoder
         | MolmoFlowDecoder
@@ -244,7 +244,7 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
                 )
                 total = objective(decoder, memory, batch)
                 return total, total.detach(), None, None
-            case ARBackboneDecoder():
+            case GemmaARDecoder():
                 total, action, aux_sum, aux_count = ar_backbone_losses(
                     self._gemma_backbone(),
                     decoder,
@@ -337,8 +337,9 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
         split out so BijouTrainStep can run the suffix forward INSIDE
         the autocast region (the [B, S, 154k] logits want bf16) while
         the flow branch stays fp32 outside it — and AFTER the flow
-        branch extracted its prompt-only KV (decision 5: this forward
-        APPENDS suffix K/V to the memory's cache)."""
+        branch extracted its prompt-only KV: this forward APPENDS
+        suffix K/V to the memory's cache, and the expert must never
+        condition on teacher-forced action tokens."""
         joint_ce = self.joint_ce
         assert joint_ce is not None  # joint-arm-only path (train.py routes)
         return ar_backbone_loss_sums(
@@ -369,7 +370,7 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
                     None,
                 )
 
-            case ARBackboneDecoder() | Molmo2ARDecoder() | MolmoAct2ARDecoder():
+            case GemmaARDecoder() | Molmo2ARDecoder() | MolmoAct2ARDecoder():
                 return ar_backbone_counts(decoder, batch)
             case MolmoFlowDecoder():
                 # Position count B*T (the per-position valid-dim mean is
@@ -406,7 +407,7 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
                 loss_sum, count = sums(decoder, memory, batch)
                 return loss_sum, count, None, None
 
-            case ARBackboneDecoder():
+            case GemmaARDecoder():
                 return ar_backbone_loss_sums(
                     self._gemma_backbone(),
                     decoder,
@@ -498,7 +499,7 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
                     method=SamplingMethod.HEUN if method is None else method,
                     target_time=target_time,
                 )
-            case ARBackboneDecoder():
+            case GemmaARDecoder():
                 return decoder.predict_chunk(
                     self._gemma_backbone(),
                     memory,
@@ -551,7 +552,7 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
         bin step — observation, never intervention). Loud on decoders
         without a suffix cache to share (flow samples noise instead)."""
         match self.decoder:
-            case ARBackboneDecoder():
+            case GemmaARDecoder():
                 return self.decoder.predict_chunk(
                     self._gemma_backbone(),
                     memory,
@@ -591,7 +592,7 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
         logits (:class:`ActionCaptureStep`). ``ar_predict_sampled``'s
         decoder dispatch, minus the sampling."""
         match self.decoder:
-            case ARBackboneDecoder():
+            case GemmaARDecoder():
                 return self.decoder.predict_chunk(
                     self._gemma_backbone(),
                     memory,
@@ -625,7 +626,7 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
         masked-reference forward. See
         :meth:`ARSuffixDecoder.teacher_forced_block_logits`."""
         match self.decoder:
-            case ARBackboneDecoder():
+            case GemmaARDecoder():
                 return self.decoder.teacher_forced_block_logits(
                     self._gemma_backbone(),
                     memory,
@@ -693,7 +694,7 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
             return full, rows
 
         match self.decoder:
-            case ARBackboneDecoder():
+            case GemmaARDecoder():
                 prediction, candidates = run(self.decoder, self._gemma_backbone())
             case Molmo2ARDecoder():
                 prediction, candidates = run(self.decoder, self._molmo2_backbone())
@@ -759,7 +760,7 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
         time: Tensor,
     ) -> Tensor:
         """Velocity of the action chunk at flow time ``time`` (see
-        ``bijou.decoders.flow`` for the flow convention); returns
+        ``bijou.modelling.decoders.flow`` for the flow convention); returns
         [B, chunk, action_dim].
 
         Shapes:

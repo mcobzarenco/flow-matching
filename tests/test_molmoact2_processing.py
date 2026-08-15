@@ -30,7 +30,7 @@ import numpy as np
 import pytest
 import torch
 
-from bijou.encoders.molmoact2_processing import (
+from bijou.modelling.encoders.molmoact2_processing import (
     ACTION_OUTPUT_ID,
     BOS_ID,
     IM_END_ID,
@@ -54,7 +54,7 @@ from bijou.encoders.molmoact2_processing import (
     unnormalize_action,
     unnormalize_q01q99,
 )
-from bijou.molmo2.tokenizer import Molmo2TextTokenizer
+from bijou.modelling.molmo2.tokenizer import Molmo2TextTokenizer
 
 _GOLDENS_PATH = (
     Path(__file__).resolve().parents[1]

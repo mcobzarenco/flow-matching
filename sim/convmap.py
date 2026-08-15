@@ -133,7 +133,7 @@ def coverage_report(
     *,
     max_uncovered: float = 0.5,
 ) -> tuple[list[str], list[str]]:
-    """Tripwire (a) of the pre-reg: the mapped seam workspace
+    """Workspace tripwire: the mapped seam workspace
     (action q01/q99 through A) must land inside the model's box — the
     clamp travels with the model, so workspace outside the box is
     unreachable and state outside it is invisible.

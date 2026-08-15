@@ -37,9 +37,8 @@ from test_collator import CHUNK, DIM
 from test_selfsubgoal import FakeBase, eval_collator, labeled_item
 from test_selfsubgoal import _parse as parse_cli
 
-from bijou.decoders.ar_backbone import ActionCaptureStep
 from bijou.eval.policies import BijouPolicy, MaskedContrastSubgoalPolicy
-from bijou.interface import BijouPrediction
+from bijou.modelling.interface import ActionCaptureStep, BijouPrediction
 
 # ------------------------------------------------- scripted harness
 
@@ -60,7 +59,7 @@ class _FakeMemory:
 
 class ScriptedModel:
     """Speaks exactly the model surface MaskedContrastSubgoalPolicy
-    consumes. The decoder is the REAL tiny ARBackboneDecoder (the
+    consumes. The decoder is the REAL tiny GemmaARDecoder (the
     isinstance gate + block_base arithmetic are exercised for real);
     encode/decode/teacher-forcing are scripted: one active action step
     whose conditional block logits are keyed on the RENDERED condition

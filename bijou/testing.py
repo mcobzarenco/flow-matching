@@ -4,11 +4,10 @@ lives beside ``train``/``loading``; ``bijou/molmo2/testing.py`` stays
 the trunk-only builder underneath).
 
 ``write_tiny_molmoact2_release`` fabricates a loadable, TRAINABLE tiny
-molmoact2-family artifact pair in the CONVERTED layout — the phase-3
-loss-oracle fixture and the phase-4 GRPO suite's subject
-(docs/molmoact2-retirement.md). See
-``probes/generate_tiny_molmoact2.py`` (the per-checkout CLI wrapper)
-for the anchor-recording discipline.
+molmoact2-family artifact pair in the CONVERTED layout — the fixture
+behind the objective-matrix CPU loss oracles and the GRPO suite's
+subject. See ``probes/generate_tiny_molmoact2.py`` (the per-checkout
+CLI wrapper) for the anchor-recording discipline.
 """
 
 from __future__ import annotations
@@ -21,8 +20,6 @@ from safetensors.torch import save_file
 from tokenizers import Tokenizer
 
 from .data import DatasetStats
-from .encoders.molmoact2 import MOLMOACT2_PROMPT_FORMAT
-from .encoders.molmoact2_processing import BOS_ID, PAD_ID
 from .loading import (
     BackboneConfig,
     BackboneDepth,
@@ -31,7 +28,9 @@ from .loading import (
     MolmoFlowDecoderConfig,
     build_molmo_flow_decoder,
 )
-from .molmo2.testing import tiny_config_json, write_tiny_text_checkpoint
+from .modelling.encoders.molmoact2 import MOLMOACT2_PROMPT_FORMAT
+from .modelling.encoders.molmoact2_processing import BOS_ID, PAD_ID
+from .modelling.molmo2.testing import tiny_config_json, write_tiny_text_checkpoint
 
 TINY_MOLMOACT2_BLOCK_BASE = 151_934  # the release's action_token_start_id
 TINY_MOLMOACT2_VOCAB = 154_048  # ≥ block end 153,982, multiple of 64
