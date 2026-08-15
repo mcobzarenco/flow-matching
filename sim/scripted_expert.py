@@ -242,13 +242,35 @@ class ExpertState:
     # and the flip retried once — kinematic overlap at solved poses
     # does not separate jamming from grazing branches (measured).
     roll_flip: bool = False
-    flip_tried: bool = False
+    # Flip BUDGET, not a one-shot: the jam-press nudges the boat, so
+    # the branch that jammed can be clean on re-approach (gate read
+    # 08-15: a held seed jammed on BOTH branches in sequence and the
+    # exhausted one-shot left it wedged for the rest of the clock).
+    flips_left: int = 3
     recover_arm: np.ndarray | None = None
     # Servo-droop compensation (descend): position servos settle a
     # few degrees short under gravity, leaving the pads ~2 cm off the
     # kinematic target — the measured pad error feeds back into the
     # IK target until the PHYSICAL pads bracket the hull.
     droop: np.ndarray = field(default_factory=lambda: np.zeros(3))
+    # Servo-droop compensation (lower): the same undershoot under the
+    # boat's added load stalls the radial trim short of the disk (gate
+    # read 08-15: 4 held seeds parked at ~4.7 cm, arm quiet, full
+    # phase clock burnt) — XY-only feedback of the measured pad error.
+    place_droop: np.ndarray = field(default_factory=lambda: np.zeros(3))
+    # Re-grasp recovery (loaded phases): a slipped pinch strands the
+    # boat on the table mid-carry and the remaining phases run empty
+    # (gate read 08-15: 3 held seeds; contacts gone, boat at z~0.3 cm).
+    # One re-approach per episode, gated on a sustained no-contact
+    # streak so a contact flicker never aborts a live carry.
+    grip_lost_ticks: int = 0
+    regrasp_tried: bool = False
+    # Post-retry alignment dwell (descend): a pinch-miss retry enters
+    # with the pads parked quiet at the failed pose — without a forced
+    # re-measure it re-closes on tick 1 at the same pose forever. Zero
+    # on a fresh approach: the dwell shifts the close pose and broke a
+    # clean seed when applied unconditionally (measured, 08-15).
+    descend_dwell: int = 0
     trace: list[str] = field(default_factory=list)
 
 
@@ -322,11 +344,11 @@ class ScriptedExpert:
         solved-pose overlap does not separate jamming branches from
         grazing-but-fine ones (measured across the smoke seeds)."""
         state = self.state
-        if state.flip_tried or state.ticks_in_phase <= 50 or err_m < 0.035:
+        if state.flips_left <= 0 or state.ticks_in_phase <= 50 or err_m < 0.035:
             return False
         if float(np.abs(sim.data.qvel[self.planner.arm_dofs]).max()) > 0.05:
             return False
-        state.flip_tried = True
+        state.flips_left -= 1
         state.roll_flip = not state.roll_flip
         state.droop[:] = 0.0
         state.trace.append("jam-flip")
@@ -348,6 +370,22 @@ class ScriptedExpert:
         timeout = state.ticks_in_phase > self.PHASE_TIMEOUT
 
         pads_now = planner.grasp_point(self._arm_now(sim), JAW_OPEN_RAD)
+
+        if state.phase in ("lift", "traverse", "lower"):
+            fixed, moving = sim.benchy_grip_contacts()
+            state.grip_lost_ticks = 0 if fixed or moving else state.grip_lost_ticks + 1
+            on_disk = float(np.hypot(*(boat_pos[:2] - self.disk[:2]))) < 0.03
+            if (
+                state.grip_lost_ticks >= 15
+                and boat_pos[2] < 0.005
+                and not on_disk
+                and not state.regrasp_tried
+            ):
+                state.regrasp_tried = True
+                state.grip_lost_ticks = 0
+                state.droop[:] = 0.0
+                state.trace.append("regrasp")
+                self._enter("approach")
 
         if state.phase == "recover":
             assert state.recover_arm is not None
@@ -387,7 +425,11 @@ class ScriptedExpert:
                 self._grasp_seed(),
             )
             xy_err = float(np.hypot(*(pads_now[:2] - grasp[:2])))
-            aligned = xy_err < 0.008 and arm_speed < 0.08
+            aligned = (
+                xy_err < 0.008
+                and arm_speed < 0.08
+                and state.ticks_in_phase > state.descend_dwell
+            )
             if aligned or timeout:
                 state.grasp_arm = arm
                 self._enter("close")
@@ -400,6 +442,12 @@ class ScriptedExpert:
                 if fixed and moving:
                     self._enter("lift")
                 else:
+                    # Fresh droop: the failed pinch's integrator is
+                    # tuned to the pose that just missed (and a jam's
+                    # clip-saturated residual poisons every later
+                    # attempt — gate read 08-15).
+                    state.droop[:] = 0.0
+                    state.descend_dwell = 6
                     self._enter("descend")
                     state.trace.append("pinch-miss-retry")
             return self._command(state.grasp_arm, JAW_CLOSED_RAD)
@@ -435,6 +483,7 @@ class ScriptedExpert:
             )
             aligned = abs(disk_bearing - boat_bearing) < np.deg2rad(3.0)
             if aligned or timeout:
+                state.place_droop[:] = 0.0
                 self._enter("lower")
             return self._carry(sim, arm, JAW_CLOSED_RAD, rate_deg=2.5)
 
@@ -448,8 +497,20 @@ class ScriptedExpert:
                 + np.array([0.0, 0.0, self.PLACE_Z])
                 + np.array([grip_offset[0], grip_offset[1], 0.0])
             )
+            # The descend lesson under the boat's added load: the
+            # force-saturated arm parks the pads SHORT of the solved
+            # target and the radial trim stalls (gate read 08-15:
+            # 4 held seeds quiet at ~4.7 cm for the full clock) —
+            # once quiet and unplaced, fold the measured pad error
+            # into the target. XY only: z feedback would press the
+            # hull into the disk (the settle phase owns set-down).
+            arm_speed = float(np.abs(sim.data.qvel[planner.arm_dofs]).max())
+            if state.ticks_in_phase > 20 and arm_speed < 0.08:
+                pad_err = place - pads_now
+                state.place_droop += np.array([pad_err[0], pad_err[1], 0.0])
+                state.place_droop = np.clip(state.place_droop, -0.04, 0.04)
             arm, _ = planner.solve_ik_pads(
-                place,
+                place + state.place_droop,
                 self._arm_now(sim),
                 free_dofs=3,
             )
