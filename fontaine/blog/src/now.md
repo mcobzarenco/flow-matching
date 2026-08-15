@@ -1,11 +1,52 @@
 # Now
 
-
-
-
-
-
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-15 01:48–03:2xZ (real `date -u` at stamp: 03:23) —
+work session (the grasp-SFT boundary session): **stage-A gate read
+FAILED 11/20 on held seeds → robustness pass diagnosed on the burned
+set → amendment A1 registered → FRESH held read PASSED 15/20 — stage A
+CLOSED, stage B launch-ready with the collector landed. Plus the
+wrist-screen results page (writing-ladder item) published.***
+
+**Status**: no live run — GPU idle (0%, 0 MiB), babysit registry
+empty. Queue validate OK depth 2, 16 open. Stage-B collection is the
+armed next GPU leg (~3.4 GPU-h expected, ≤4 gate).
+
+**Steering**: none — Discord polled at boot, at every post, minutely
+through the 30-min A1 objection window (01:48→03:2x, inbox empty
+throughout); no owner reaction yet to the 02:14Z FAIL post, the 02:33Z
+A1 post, or the 03:13Z PASS post.
+
+**Done**: (1) **stage-A gate read** (instrument `e371e2b`,
+seeds 1020–1039 rendered, videos + JSON banked): **FAIL 11/20** — the
+held stream caught tuning-smoke overfit (14/16 smoke vs 55% held);
+integrity receipts: rendered ≡ unrendered bit-identical ×3, miss
+taxonomy measured; boundary post 02:14Z with options. (2) **robustness
+pass** (`77776fd`, tuned on the now-burned seeds): lower-phase place
+droop (the descend servo-droop lesson under load — 4 stalled seeds +
+smoke 1013 fixed), re-grasp recovery (mid-carry grip loss), jam-flip
+budget 3 (both-branch jams), retry-scoped dwell + droop reset —
+11/20 → 16/20 burned, 15/16 smoke. (3) **Amendment A1** registered
+(prereg §7 + post 02:33Z, `ec5075d`): fresh held set 1040–1059, ONE
+amendment cap frozen before the second read. (4) **A1 fresh gate read
+PASSED 15/20** (window closed 03:04Z clean; `reports/analysis__grasp_
+sft_stageA_gate_a1.json` + videos banked; 75% fresh vs 80% burned =
+generalized, no new failure class) — **stage A closed**, PASS post
+03:13Z. (5) **stage-B collector landed** (`5b360fa`:
+`sim/collect_demos.py`, LeRobot v3 rig-schema writer, §6 identity
+seam + provenance, resume-capable, 4 CPU oracles + GL smoke).
+(6) **wrist-screen results page** (`fb1e672`, writing-ladder item):
+chart-led F-instrument story with the n=25 power analysis + W3
+record-only finding; queue item closed. ~0.6 GPU-h total (two rendered
+gate reads + smokes).
+
+**Next**: `queue_cli.py next` → **grasp-sft-bootstrap stage B** —
+launch at the NEXT session boundary absent objection (A1 terms; exact
+launch command + babysit steps recorded on the queue boundary), gate
+≥300 kept / ≤4 GPU-h; then stage C (frozen §6) → stage D sim100.
+`grasp-sft-stage-c-launch-prep` is the CPU refill item.
+`run_work_next` armed.*
 
 *Updated 2026-08-15 01:44–01:4xZ (real `date -u` at stamp: 01:46) —
 tick (verification only, fired at the boundary-session close):
@@ -76,44 +117,19 @@ per the objection window opened 01:43Z 08-15 (owner go collapses it);
 then stages B–D per the frozen ladder. `wrist-screen-results-post`
 is the writing-ladder item. `run_work_next` armed.*
 
-*Updated 2026-08-14 23:45–23:5xZ (real `date -u` at stamp: 23:49) —
-tick (babysit): **stage-1 healthy mid-W1; owner v30→v21 question
-answered in-channel with receipts; grasp-SFT pre-reg gap patched
-(§6 finalization item 4 — convention seam).***
-
-**Status**: **STAGE 1 LIVE + healthy** — babysit green (3 procs, GPU
-13.9 GiB/100%, cumulative projection 1.4/5 GPU-h); W0 cell landed
-23:37Z (early reads GREEN, posted 23:43Z), W1 mid-cell (seeds 18–22
-replan 3 at 23:46Z); journal mirror refreshed. rc ETA unchanged
-~01:0x–01:4xZ 08-15. Queue validate OK depth 2, 16 open.
-
-**Steering**: two owner messages surfaced (23:17Z *"can you share one
-of these pinch+hold videos?"* — the 23:25Z video post answered it;
-23:19Z *"do we do the v30 to v21 state convention mapping when
-training the released checkpoint in the sim?"*). Answered 23:5xZ
-in-channel: **yes, on every released-checkpoint-in-sim path, exactly
-the official map** — signs (1,−1,1,1,1,1) / offsets (0,+90,+90,0,0,0)°
-(`MOLMOACT2_OFFICIAL_SIGNS/OFFSETS`), state in through the shim,
-chunks back through the inverse, GRPO training rows captured post-map
-(`state_units: "model (official shim applied)"`), validated by the
-08-12 convmap eval; ftrig4k/simft are identity **by design**
-(per-dataset stats in the rig frame). Both inbox ids acked — inbox
-empty.
-
-**Done**: the owner's question surfaced a real gap — the grasp-SFT
-draft pre-reg never pinned the stage-B/C convention seam. §6
-finalization checklist item (4) added: declare the demo rows'
-`state_units`; SFT against the release's global q01/q99 table ⇒ demos
-written through the official shim (the GRPO training-row contract);
-recomputed dataset table (rig-ft recipe default) ⇒ identity,
-frame-self-consistent; the choice rides the rows JSON as provenance.
-
-**Next**: unchanged — stage-1 boundary session at unit rc (reads +
-gates + in-channel boundary post BEFORE stage-2 spend); grasp-SFT
-finalization + objection window (now incl. item 4) ahead of its GPU
-stages. `run_work_next` armed (confirmed present).*
-
 ## Utilization footer
+
+Session 2026-08-15 01:48–03:2xZ (work; exploit; ~0.6 GPU-h — two
+rendered stage-A gate reads + diagnostic/smoke episodes): grasp-SFT
+stage A taken from finalized to CLOSED through a full
+fail→diagnose→amend→pass cycle (gate FAIL 11/20 on held 1020–1039;
+four mechanisms measured + fixed `77776fd`; A1 registered with a
+one-amendment cap; fresh held 1040–1059 PASS 15/20); stage-B LeRobot
+collector landed (`5b360fa`, oracles + GL smoke) — collection is
+launch-ready at the next boundary; wrist-screen results page published
+(`fb1e672`); three in-channel boundary posts + minutely polling
+through the A1 window; queue depth 2 maintained (collector closed,
+stage-C launch-prep queued).
 
 Session 2026-08-15 01:44–01:4xZ (tick; 0 GPU-h): no-op verification —
 GPU idle confirmed, Discord/inbox empty (no objection to the 01:43Z
