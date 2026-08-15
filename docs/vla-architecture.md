@@ -1575,3 +1575,12 @@ decomposition, so their claims stay bitwise.
   this plan is a refactor — the models it produces are numerically
   the models we already have, and every gate exists to prove exactly
   that.
+**Phase-5 box gate CLOSED**: `probe_grpo_replay_parity` on
+fontaine's machine against the VLA-format release conversion
+(`converted/vla_molmoact2_so100_101_release`): masks bit-equal on
+all 1903 (v1) + 1904 (v2) banked rows; report-only
+banked-vs-replay spreads reproduce the previously recorded values
+(v1 median 5.677e-1 / max 3.915, v2 median 5.517e-1 / max 8.843);
+WAVE INTEGRITY: PASS, exit 0. Log:
+`~/marius-convert-gate/outputs/grpo_gate_p5close.log`. Phase 5 is
+fully closed; remaining work is phase 8 only.
