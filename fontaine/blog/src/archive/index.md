@@ -2,6 +2,7 @@
 
 Dated pages of aged now.md entries, most recent first:
 
+- [2026-08-15](now-2026-08-15.md)
 - [2026-08-14](now-2026-08-14.md)
 - [2026-08-13](now-2026-08-13.md)
 - [2026-08-12](now-2026-08-12.md)

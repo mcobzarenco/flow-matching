@@ -1,7 +1,50 @@
 # Now
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-15 03:37–07:1xZ (real `date -u` at stamp: 07:02) —
+work session (stage-B ride + stage-C/D launch prep): **collection ridden
+to within ~30 min of its wall with the keep-rate story diagnosed and
+posted; the ENTIRE remaining GPU ladder (stage C AR + flow, stage D
+sim100) is now launch-ready behind preflights.***
+
+**Status**: **LIVE** — `fontaine-grasp-sft-stageb`: **271/400 kept, 427
+attempted (63%)** at 07:00Z, 1.3 kept/min steady, GPU ~45%/989 MiB.
+Wall self-stop **07:29:18Z**; projection **~305 kept** vs the ≥300
+gate — borderline-green. Babysit green all session (6 polls ~30 min
+apart, Discord read at each).
+
+**Steering**: none — inbox empty all session; no owner reaction yet to
+the 04:13Z mid-ride status (objection window on the top-up path open
+since then).
+
+**Done**: (1) **stage-C launch prep** (queue item DONE, `f5b120d`):
+AR-primary launcher = rig-ft r1 verbatim-class (mechanical diff
+receipt in the header; only mixture/name/steps-3000/save-folder
+differ), flow-arm launcher = ftrig4k verbatim (only the dataset swap),
+shared preflight refusing on every frozen §6 precondition
+(oracle-tested: PASS + 4 refusal paths), PREPARED babysit entries;
+mixture `so101_grasp_sft` landed owner-side (`~/molmoact2` `7fb6552`).
+(2) **stage-B keep-rate diagnosis** (gate crossing surfaced at 04:06):
+no collector bug (6/6 misses reproduce bit-exact fresh), no spawn
+drift, **true expert rate 62.5%** (125/200 CPU-side, seeds 1078–1277)
+vs the n=20 gate reads' 75–80% — mid-ride post 04:13Z, prereg **§8
+record** appended (`36be8c6`, page 200). (3) **stage-D eval prep**
+(queue item DONE, `c15727c`): convert+eval launcher (two-hop
+conversion, sequential rollout_sim, frozen seeds 0–99), reads script
+with the frozen §2 verdict surface (band edges oracle-tested),
+PREPARED babysit entry. (4) Wall-tick boundary instructions recorded
+on the queue item (`ea386ff`). 0 GPU-h in-session (the collection
+accrues to its own gate; diagnosis ran CPU-side).
+
+**Next**: `queue_cli.py next` → **grasp-sft-bootstrap** wall boundary
+(07:29:18Z self-stop, `[collect] DONE` + provenance banked): kept ≥300
+→ **stage C launches** via `launch_local_molmoact2_grasp_sft_stagec_ar.sh`
+(self-preflighting; activate the PREPARED babysit entry); 290–299 →
+the recorded top-up first (command on the queue boundary); <290 →
+diagnose. `run_work_next` armed — the chained tick owns the wall.*
 
 *Updated 2026-08-15 03:27–03:3xZ (real `date -u` at stamp: 03:32) —
 tick: **owner 👍 on the pre-reg finalization surfaced at the history
@@ -82,27 +125,18 @@ launch command + babysit steps recorded on the queue boundary), gate
 `grasp-sft-stage-c-launch-prep` is the CPU refill item.
 `run_work_next` armed.*
 
-*Updated 2026-08-15 01:44–01:4xZ (real `date -u` at stamp: 01:46) —
-tick (verification only, fired at the boundary-session close):
-**no-op — all state confirmed as the head entry below records it.***
-
-**Status**: no live run — GPU idle (0 %, no training/eval procs),
-babysit registry empty. Queue validate OK depth 2, 16 open.
-
-**Steering**: none new — Discord read empty, inbox empty; no owner
-reaction yet to the 01:34Z boundary post or the 01:43Z grasp-SFT
-finalization (objection window open, ~3 min old at this poll).
-
-**Done**: verification only (Discord read + history, GPU/proc check,
-queue validate). 0 GPU-h.
-
-**Next**: unchanged from the entry below — `run_work_next` armed
-(confirmed on disk): the chained work session is the next
-work-session boundary, where the grasp-SFT **stage-A gate read**
-(~0.2 GPU-h, held seeds 1020–1039, ≥14/20) launches absent objection;
-`wrist-screen-results-post` is the writing-ladder item.*
-
 ## Utilization footer
+
+Session 2026-08-15 03:37–07:1xZ (work; exploit; 0 GPU-h in-session —
+stage-B collection rides detached on its own ≤4 gate): stage-C launch
+prep DONE (verbatim-class launchers + oracle-tested preflight +
+owner-side mixture 7fb6552) and stage-D eval prep DONE (convert+eval
+launcher + frozen verdict surface, band edges oracle-tested) — the
+whole remaining GPU ladder is launch-ready behind preflights; stage-B
+ridden 6 polls green with the keep-rate cliff diagnosed CPU-side (true
+rate 62.5% n=200, no bug, no drift; mid-ride post 04:13Z + prereg §8);
+wall-tick boundary instructions on the queue item; queue validate
+green depth 2; run_work_next armed for the 07:29Z wall.
 
 Session 2026-08-15 03:27–03:3xZ (tick; 0 GPU-h in-session — stage-B
 collection rides detached, counted at its boundary): owner 👍 on the
