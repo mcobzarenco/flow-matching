@@ -33,8 +33,6 @@ import io
 import json
 import sys
 from pathlib import Path
-from types import SimpleNamespace
-from typing import Any, cast
 
 import numpy as np
 import pytest
@@ -236,19 +234,19 @@ def test_empty_capture_is_loud() -> None:
 def test_policy_capture_guards_are_loud() -> None:
     """The flag promises rows — a predict that cannot produce them must
     refuse before any compute: ensembled draws execute no single token
-    stream, and non-AR decoders have no token stream at all."""
+    stream, and non-AR families have no token stream at all."""
     _, decoder, _ = build()
     policy = object.__new__(BijouPolicy)
     policy.mask_state = False
     policy.subgoal_swap = None
     policy.condition_override = {}
     policy.capture_token_rows = True
-    policy.model = cast(Any, SimpleNamespace(decoder=decoder))
+    policy.ar_decoder = decoder
     policy.sample_draws = 2
     with pytest.raises(SystemExit, match="sample-draws"):
         policy.predict_with_text([], [])
     policy.sample_draws = 1
-    policy.model = cast(Any, SimpleNamespace(decoder=object()))
+    policy.ar_decoder = None
     with pytest.raises(SystemExit, match="AR-suffix"):
         policy.predict_with_text([], [])
 

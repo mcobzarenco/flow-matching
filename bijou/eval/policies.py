@@ -9,7 +9,22 @@ paired by construction.
 Determinism: policies that sample flow-matching noise derive it per item
 from ``seed + global_index`` on CPU, so predictions are independent of batch
 composition, evaluation order and device.
+
+Model access is the VLA trait lattice: :class:`BijouPolicy` loads a
+checkpoint through :func:`bijou.loading.load_vla` and narrows the
+family's capabilities (:class:`~bijou.vla.FlowVLA` /
+:class:`~bijou.vla.ARVLA` / :class:`~bijou.vla.NarratingVLA`) into
+typed handles ONCE, at construction. An explicitly requested
+instrument the family cannot back is a SystemExit naming the family —
+never a silent skip.
 """
+# The loud-narrowing rule above has a scar behind it: instrument
+# legality once keyed on a CONCRETE decoder class where a capability
+# was meant — the Gemma-concrete isinstance silently dropped the
+# narrated pass (and refused --generate) on molmo2 checkpoints, whose
+# decoder narrates identically. Capability questions ride the traits;
+# concrete-class narrowing below is reserved for genuinely
+# family-specific instruments (SDE, φ_s, ticket/tile geometry).
 
 from __future__ import annotations
 
@@ -24,9 +39,9 @@ import torch
 from torch import Tensor
 
 from ..annotations import ConditionField
+from ..checkpoint import read_metadata
 from ..data import DatasetStats
-from ..loading import CheckpointInfo, from_checkpoint, molmo_flow_state_table
-from ..model import BijouModel, SamplingMethod
+from ..loading import load_vla, molmo_flow_state_table, parse_prompt_config
 from ..modelling.aux_text import AuxField, AuxGeneration, subgoal_text
 from ..modelling.decoders.ar_suffix import ARSuffixDecoder
 from ..modelling.decoders.flow import FlowDecoder
@@ -36,15 +51,42 @@ from ..modelling.interface import (
     ARSampling,
     CollatedBatch,
     Collator,
+    InputsCollator,
     MemoryStream,
     NormStats,
     ObservationMemory,
+    SamplingMethod,
     ValueCandidate,
     mask_state_item,
 )
+from ..models.gemma_ar import GemmaARVLA
+from ..models.gemma_flow import GemmaFlowVLA
+from ..models.molmo2_ar import Molmo2ARVLA
+from ..models.molmoact2_ar import MolmoAct2ARVLA
+from ..models.molmoact2_flow import MolmoAct2FlowVLA
+from ..models.molmoact2_joint import MolmoAct2JointVLA
+from ..vla import ARVLA, VLA, FlowVLA, NarratingVLA, VLASpec
 from .molmo_norm import ItemMaps, MolmoNorm, fit_item_maps
 from .subgoal_scoring import ceiling_pick, eligible_indices, self_certainty_pick
 from .subgoal_swap import SubgoalSwapMap, SwapRecord
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
+class PolicyInfo:
+    """The checkpoint facts eval/rollout/sim consumers read off
+    ``BijouPolicy.info``, parsed from the checkpoint's metadata.
+
+    ``normalization`` is the count-weighted aggregate over the training
+    datasets (molmo_flow's ONE global table rides here);
+    ``per_dataset_normalization`` the per-repo tables (keyed by repo id
+    — genuinely dynamic). ``condition_fields``/``generate_bracket`` are
+    the prompt-side facts inference collation must reproduce."""
+
+    chunk_size: int
+    normalization: DatasetStats
+    per_dataset_normalization: dict[str, DatasetStats]
+    condition_fields: tuple[str, ...]
+    generate_bracket: bool
 
 
 class ChunkPolicy(Protocol):
@@ -479,9 +521,17 @@ def collapse_draws(stacked: Tensor) -> tuple[list[Tensor], list[Tensor]]:
 
 
 class BijouPolicy:
-    """A bijou training checkpoint. Normalization is per dataset with the
-    stats attached to each item (identical to training; works on held-out
-    datasets because stats travel with the data, not the checkpoint)."""
+    """A bijou training checkpoint (the VLA format — a legacy directory
+    is refused at load with the converter pointer). Normalization is per
+    dataset with the stats attached to each item (identical to training;
+    works on held-out datasets because stats travel with the data, not
+    the checkpoint).
+
+    Capabilities narrow ONCE, at construction, into typed handles
+    (``flow``/``ar``/``narrating`` plus the family-concrete decoder
+    views); every predict path reads the handles, and an explicitly
+    requested instrument the family cannot back exits loudly, naming
+    the family (module comment)."""
 
     def __init__(
         self,
@@ -625,24 +675,75 @@ class BijouPolicy:
                 f"--noise-key must be one of {NOISE_KEYS}, got {noise_key!r}",
             )
         self.noise_key = noise_key
-        self.model: BijouModel
-        self.info: CheckpointInfo
-        self.model, self.info = from_checkpoint(
-            checkpoint,
-            device=device,
-            expert_dtype=expert_dtype,
-            offload_ple=offload_ple,
-        )
-        # The whole AR-suffix family (--decoder ar_backbone on any
-        # trunk: Gemma's GemmaARDecoder AND Molmo2ARDecoder) — the
-        # Gemma-concrete isinstance here silently dropped the narrated
-        # pass (and refused --generate) on molmo2 checkpoints.
-        is_ar_backbone = isinstance(self.model.decoder, ARSuffixDecoder)
-        if generate and not is_ar_backbone:
+        if offload_ple:
             raise SystemExit(
-                "--generate is ar_backbone-only (the request rides its "
-                "prompt); this checkpoint's decoder is "
-                f"{type(self.model.decoder).__name__}",
+                "--offload-ple parked Gemma's PLE table through the legacy "
+                "loader; the VLA loader does not carry the offload path — "
+                "drop the flag",
+            )
+        # bf16 is the trunk's serving mount (the released artifacts' own
+        # dtype; fp32 masters beyond bf16 live only in optimizer.pt).
+        # Decoders and prompt-side parameters load fp32 — the families'
+        # "new parameters" convention.
+        vla: VLA[Any] = load_vla(checkpoint, device=device, dtype=torch.bfloat16)
+        # The legacy composition-root alias: rollout/sim still reach
+        # `.model.<part>` (the BijouModel shape) and re-point with their
+        # own port — typed Any until that lands. Eval-side code reads
+        # the typed handles below, never this.
+        self.model: Any = vla
+        self.spec: VLASpec = vla.spec
+        # Taken BEFORE the family narrowing below: the trait's collator
+        # is the [Any]-erased pairing boundary (isinstance chains would
+        # re-sharpen it into a family union).
+        inputs_collator: InputsCollator[Any] = vla.collator()
+        metadata = read_metadata(checkpoint)
+        prompt = parse_prompt_config(metadata.components["prompt"]["config"])
+        self.info = PolicyInfo(
+            chunk_size=metadata.chunk_size,
+            normalization=metadata.stats,
+            per_dataset_normalization=dict(metadata.per_dataset_stats),
+            condition_fields=tuple(prompt.condition_fields),
+            generate_bracket=prompt.generate_bracket,
+        )
+        # Capability narrowing — ONCE, at the load boundary. Instrument
+        # legality below asks these traits, never a concrete class
+        # (module comment).
+        self.flow: FlowVLA[Any] | None = vla if isinstance(vla, FlowVLA) else None
+        self.ar: ARVLA[Any] | None = vla if isinstance(vla, ARVLA) else None
+        self.narrating: NarratingVLA[Any] | None = (
+            vla if isinstance(vla, NarratingVLA) else None
+        )
+        # Family-concrete instrument surfaces (instruments that are not
+        # capabilities stay on their family): the gemma flow family
+        # carries the SDE sampler, the φ_s shortcut read, ticket-noise
+        # geometry and tileable stream memory; the decoder views feed
+        # noise geometry, the merged state table and token-row capture.
+        self.gemma_flow: GemmaFlowVLA | None = (
+            vla if isinstance(vla, GemmaFlowVLA) else None
+        )
+        if isinstance(vla, GemmaFlowVLA | MolmoAct2FlowVLA | MolmoAct2JointVLA):
+            self.flow_decoder: FlowDecoder | MolmoFlowDecoder | None = vla.flow_decoder
+        else:
+            self.flow_decoder = None
+        if isinstance(
+            vla,
+            GemmaARVLA | Molmo2ARVLA | MolmoAct2ARVLA | MolmoAct2JointVLA,
+        ):
+            self.ar_decoder: ARSuffixDecoder[Any] | None = vla.ar_decoder
+        else:
+            self.ar_decoder = None
+        if expert_dtype is not torch.float32:
+            # The legacy serving-speed knob (sim drivers mount the flow
+            # decoder bf16): families load decoders fp32, so honor it as
+            # a post-load cast — bit-equivalent to building at the dtype
+            # (load_state_dict copies cast either way).
+            for decoder_module in (self.flow_decoder, self.ar_decoder):
+                if decoder_module is not None:
+                    decoder_module.to(dtype=expert_dtype)
+        if generate and self.narrating is None:
+            raise SystemExit(
+                f"--generate requested but {self.spec.family.value} has "
+                "no narration surface",
             )
         if sample_draws < 1:
             raise SystemExit(f"--sample-draws must be >= 1, got {sample_draws}")
@@ -653,11 +754,17 @@ class BijouPolicy:
                     "(the greedy read is the default, not a temperature "
                     "limit)",
                 )
-            if not isinstance(self.model.decoder, ARSuffixDecoder):
+            if self.ar is None:
                 raise SystemExit(
-                    "--ar-temperature samples the backbone-suffix AR "
-                    "action decode; this checkpoint's decoder is "
-                    f"{type(self.model.decoder).__name__}",
+                    "--ar-temperature samples the discrete action-block "
+                    f"decode, but {self.spec.family.value} has no AR "
+                    "action decoder",
+                )
+            if generate:
+                raise SystemExit(
+                    "--ar-temperature runs the sampled block decode, "
+                    "which emits no value lines — drop --generate (the "
+                    "narrated voice is greedy-only)",
                 )
         self.ar_temperature = ar_temperature
         if sde_noise_level is not None:
@@ -666,11 +773,11 @@ class BijouPolicy:
                     f"--sde-noise-level must be >= 0, got {sde_noise_level} "
                     "(0 is the bit-identity-with-euler oracle setting)",
                 )
-            if not isinstance(self.model.decoder, FlowDecoder):
+            if self.gemma_flow is None:
                 raise SystemExit(
-                    "--sde-noise-level is the Euler–Maruyama flow decode; "
-                    "this checkpoint's decoder is "
-                    f"{type(self.model.decoder).__name__}",
+                    "--sde-noise-level is the Euler–Maruyama flow decode "
+                    "(the gemma flow family's trainable sampler), but "
+                    f"{self.spec.family.value} does not carry it",
                 )
             if ar_temperature is not None:
                 raise SystemExit(
@@ -706,12 +813,11 @@ class BijouPolicy:
                 )
         self.sde_noise_level = sde_noise_level
         if self.tickets is not None:
-            if not isinstance(self.model.decoder, FlowDecoder):
+            if self.gemma_flow is None:
                 raise SystemExit(
-                    "--noise-tickets substitutes flow initial noise; this "
-                    "checkpoint's decoder is "
-                    f"{type(self.model.decoder).__name__} (AR decodes take "
-                    "no flow noise)",
+                    "--noise-tickets substitutes the gemma flow family's "
+                    "[chunk, dim] initial noise, but "
+                    f"{self.spec.family.value} takes no such draw",
                 )
             if sample_draws > self.tickets.shape[0]:
                 raise SystemExit(
@@ -730,19 +836,18 @@ class BijouPolicy:
         # the two modes' semantics.
         self._molmo_norm_maps: dict[str, ItemMaps] = {}
         if molmo_norm is not MolmoNorm.CHECKPOINT:
-            if not isinstance(self.model.decoder, MolmoFlowDecoder):
+            if not isinstance(self.flow_decoder, MolmoFlowDecoder):
                 raise SystemExit(
                     "--molmo-norm re-maps a molmo_flow checkpoint's global "
-                    "q01/q99 table; this checkpoint's decoder is "
-                    f"{type(self.model.decoder).__name__} (per-dataset "
-                    "normalization is already its native scheme)",
+                    f"q01/q99 table, but {self.spec.family.value} "
+                    "normalizes per dataset already — its native scheme",
                 )
             # Off-contract inference class: the suffix keeps these reads
             # from ever pooling with contract reads (charter §2).
             self.name += (
                 "_pdnorm" if molmo_norm is MolmoNorm.PER_DATASET else "_convmap"
             )
-        if sample_draws > 1 and isinstance(self.model.decoder, MolmoFlowDecoder):
+        if sample_draws > 1 and isinstance(self.flow_decoder, MolmoFlowDecoder):
             # The decode IS stochastic (flow noise), but draw ensembling
             # tiles the prefix memory and the molmo2 KV cache has no
             # tile path yet (§8.13 loose end) — refuse with the real
@@ -752,25 +857,21 @@ class BijouPolicy:
                 "draw ensembling tiles the prefix memory, and the "
                 "molmo2 KV cache has no tile path yet — run single-draw",
             )
-        if sample_draws > 1 and not (
-            isinstance(self.model.decoder, FlowDecoder) or ar_temperature is not None
-        ):
+        if sample_draws > 1 and self.gemma_flow is None and ar_temperature is None:
             raise SystemExit(
                 "--sample-draws > 1 needs a stochastic decode: flow noise "
-                "draws, or an ar_backbone checkpoint with --ar-temperature; "
-                f"this checkpoint's decoder is "
-                f"{type(self.model.decoder).__name__} (greedy AR decode has "
-                "no noise to draw)",
+                "draws, or an AR checkpoint with --ar-temperature; "
+                f"{self.spec.family.value} decodes deterministically "
+                "without either",
             )
         if target_time is not None:
-            decoder_module = self.model.decoder
-            if not isinstance(decoder_module, FlowDecoder):
+            if self.gemma_flow is None:
                 raise SystemExit(
-                    "--target-time zero drives the flow shortcut field; "
-                    "this checkpoint's decoder is "
-                    f"{type(decoder_module).__name__}",
+                    "--target-time zero drives the gemma flow decoder's "
+                    f"φ_s shortcut field, but {self.spec.family.value} "
+                    "has none",
                 )
-            if not decoder_module.config.target_time_embed:
+            if not self.gemma_flow.flow_decoder.config.target_time_embed:
                 raise SystemExit(
                     "--target-time zero requires a φ_s-extended checkpoint "
                     "(config target_time_embed); this checkpoint has none — "
@@ -823,11 +924,16 @@ class BijouPolicy:
         # shift every state bin off its trained meaning.
         state_table = (
             molmo_flow_state_table(self.info.normalization)
-            if isinstance(self.model.decoder, MolmoFlowDecoder)
+            if isinstance(self.flow_decoder, MolmoFlowDecoder)
             else None
         )
+        # The families whose DESIGNATED action decoder is the AR suffix
+        # (flow-less): their prompts always carry [generate|…] and the
+        # request set is the caller's ask; a joint family serves through
+        # its flow decoder and renders no bracket.
+        is_ar_serving = self.flow is None and self.ar is not None
         self.collator = Collator(
-            inputs=self.model.encoder.inputs_collator(),
+            inputs=inputs_collator,
             instruction=None,
             camera_filter=None,
             max_cameras=None,
@@ -836,14 +942,14 @@ class BijouPolicy:
             # collator, which does carry the codec.
             action_codec=None,
             aux=None,
-            # ar_backbone prompts always carry [generate|…] (the
+            # AR-serving prompts always carry [generate|…] (the
             # request is the caller's ask; () = the fast path and must
             # match the decode's ``generate`` — same tuple, one
-            # source). Other decoders render it iff training did
+            # source). Other families render it iff training did
             # (info.generate_bracket — the --prompt-generate-bracket
             # record; inference reproduces the training prompt).
-            generate_bracket=is_ar_backbone or self.info.generate_bracket,
-            generate_override=generate if is_ar_backbone else None,
+            generate_bracket=is_ar_serving or self.info.generate_bracket,
+            generate_override=generate if is_ar_serving else None,
             # Kinds travel with the items (StatsAttachedDataset attaches
             # them; rollout items carry an explicit map); never dropped
             # at inference — dropout is a train-time regularizer. Same
@@ -871,10 +977,10 @@ class BijouPolicy:
 
     @property
     def aux_fields(self) -> tuple[AuxField, ...]:
-        """The aux fields this checkpoint trained (empty for aux-less /
-        non-ar_backbone) — what a narrated pass can request."""
-        decoder = self.model.decoder
-        if isinstance(decoder, ARSuffixDecoder) and decoder.config.aux is not None:
+        """The aux fields this checkpoint trained (empty for aux-less
+        and non-AR families) — what a narrated pass can request."""
+        decoder = self.ar_decoder
+        if decoder is not None and decoder.config.aux is not None:
             return decoder.config.aux.fields
         return ()
 
@@ -1091,21 +1197,20 @@ class BijouPolicy:
         items: list[dict[str, Any]],
         indices: list[int],
     ) -> tuple[list[Tensor], list[AuxGeneration] | None]:
-        """Chunks plus the decode's aux generations — one per item for
-        ar_backbone (empty-text on the fast path), None for decoders
-        that generate no text. Rollout prints these live; eval's
+        """Chunks plus the decode's aux generations — one per item when
+        the pass narrated (an explicit ``generate`` request), None for
+        every text-free decode. Rollout prints these live; eval's
         ChunkPolicy protocol keeps consuming ``predict``."""
         items = self.apply_overrides(items)
         self.last_token_rows = None
         if self.capture_token_rows:
             # Loud before any compute: the flag promises rows, so a
             # predict that cannot produce them must never run quietly.
-            if not isinstance(self.model.decoder, ARSuffixDecoder):
+            if self.ar_decoder is None:
                 raise SystemExit(
-                    "capture_token_rows needs an AR-suffix decoder (the "
-                    "token stream IS the trainable surface); this "
-                    "checkpoint's decoder is "
-                    f"{type(self.model.decoder).__name__}",
+                    "capture_token_rows needs an AR-suffix action decoder "
+                    "(the token stream IS the trainable surface); this "
+                    "checkpoint has none",
                 )
             if self.sample_draws > 1:
                 raise SystemExit(
@@ -1114,26 +1219,38 @@ class BijouPolicy:
                     "single token stream — rollout draws ride (seed, "
                     "draw) work units instead",
                 )
+            if self.generate:
+                raise SystemExit(
+                    "capture_token_rows records the action-block decode, "
+                    "which emits no value lines — drop --generate",
+                )
         item_maps: list[ItemMaps] | None = None
         if self.molmo_norm is not MolmoNorm.CHECKPOINT:
             # Off-contract normalization (molmo_flow only — __init__
             # guard): state passes through A here; chunks come back
-            # through A⁻¹ below. Only the plain single-decode branch is
-            # reachable with the modes active (draws/temperature arms
-            # are refused for molmo_flow at construction).
+            # through A⁻¹ below. Only the plain single-decode flow
+            # branch is reachable with the modes active
+            # (draws/temperature arms are refused at construction).
             items, item_maps = self._molmo_norm_rewrite(items)
         batch = self.collator(items).to(self.device)
-        decoder = self.model.decoder
-        if isinstance(decoder, FlowDecoder) and self.sample_draws > 1:
+        if self.gemma_flow is not None and self.sample_draws > 1:
             # Unconstrained-class noise-draw ensembling (charter §8
             # item 1): encode the prefix ONCE, then integrate ALL draws
             # in ONE solver call at batch draws x B — draws are
             # independent batch rows, and at rollout's B=1 a sequential
             # loop leaves the GPU starved (N x num_steps tiny forwards).
             # Draws-major tiling keeps collapse_draws/--dump-draws
-            # layouts unchanged. Average in raw degrees (unnormalization
-            # is affine, so the mean commutes with it).
-            memory = self.model.encode(batch.encoder_inputs, with_grad=False)
+            # layouts unchanged; the tile trick needs the gemma family's
+            # STREAM memory (family-concrete — module comment). Average
+            # in raw degrees (unnormalization is affine, so the mean
+            # commutes with it).
+            model = self.gemma_flow
+            memory = model.encoder.encode(
+                model.backbone,
+                batch.encoder_inputs,
+                with_grad=False,
+                retain_cache=False,
+            )
             shape = (batch.actions.shape[1], batch.actions.shape[2])
             noise = self._flow_noise(
                 items,
@@ -1141,7 +1258,7 @@ class BijouPolicy:
                 self.sample_draws,
                 shape,
             ).to(self.device)
-            stacked = decoder.predict_chunk(
+            stacked = model.flow_decoder.predict_chunk(
                 tile_memory(memory, self.sample_draws),
                 tile_stats(batch, self.sample_draws),
                 noise=noise,
@@ -1151,20 +1268,19 @@ class BijouPolicy:
             ).actions.reshape(self.sample_draws, len(items), *shape)
             means, self.last_draws = collapse_draws(stacked)
             return means, None
-        if self.ar_temperature is not None and isinstance(decoder, ARSuffixDecoder):
+        if self.ar_temperature is not None:
             # AR sampled-draws instrument (the flow ensembling's
-            # mirror): encode the prefix ONCE, snapshot the cache,
-            # temperature-sample one chunk per draw against the restored
-            # prefill, average the decoded chunks in raw units. Value
-            # lines stay greedy, so generations are draw-invariant —
-            # draw 0's are returned.
-            memory = self.model.encode(batch.encoder_inputs, with_grad=False)
-            snapshot = decoder.cache_snapshot(memory)
+            # mirror): temperature-sample one chunk per draw, average
+            # the decoded chunks in raw units. Each draw runs its own
+            # trait decode (prefill included — deterministic, so draws
+            # differ exactly in their sampled suffixes); no value lines
+            # decode under sampling (--generate is refused at
+            # construction).
+            ar = self.ar
+            decoder = self.ar_decoder
+            assert ar is not None and decoder is not None  # __init__ guarded
             draws: list[Tensor] = []
-            generations: list[AuxGeneration] | None = None
             for draw in range(self.sample_draws):
-                if draw:
-                    decoder.cache_restore(memory, snapshot)
                 sampling = ARSampling(
                     temperature=self.ar_temperature,
                     rngs=tuple(
@@ -1181,13 +1297,7 @@ class BijouPolicy:
                 capture: list[ActionCaptureStep] | None = (
                     [] if self.capture_token_rows else None
                 )
-                prediction = self.model.ar_predict_sampled(
-                    memory,
-                    batch,
-                    generate=self.generate,
-                    sampling=sampling,
-                    action_capture=capture,
-                )
+                prediction = ar.predict_ar(batch, sampling=sampling, capture=capture)
                 if capture is not None:
                     # sample_draws == 1 here (the top guard), so this
                     # single-draw retention is the whole batch's rows.
@@ -1196,23 +1306,29 @@ class BijouPolicy:
                         block_base=decoder.config.block_base,
                         temperature=self.ar_temperature,
                     )
-                if generations is None:
-                    generations = prediction.generations
                 draws.append(prediction.actions)
             stacked = torch.stack(draws)
             if self.sample_draws > 1:
                 means, self.last_draws = collapse_draws(stacked)
-                return means, generations
-            return [chunk.cpu() for chunk in stacked[0]], generations
-        if self.sde_noise_level is not None and isinstance(decoder, FlowDecoder):
-            # SDE stochastic decode (Euler–Maruyama, the trainable
-            # sampler): initial noise stays the stable keyed stream;
-            # per-step ε comes pre-drawn per item from its own keyed
-            # domain, so the batched decode stays batch-composition-
-            # invariant like every other stable stream. Draw identity
-            # rides the item's repo_id (the rollout drivers' draw-suffix
-            # convention), so the in-call draw index is always 0.
-            memory = self.model.encode(batch.encoder_inputs, with_grad=False)
+                return means, None
+            return [chunk.cpu() for chunk in stacked[0]], None
+        if self.sde_noise_level is not None:
+            # SDE stochastic decode (Euler–Maruyama, the gemma flow
+            # family's trainable sampler — family-concrete): initial
+            # noise stays the stable keyed stream; per-step ε comes
+            # pre-drawn per item from its own keyed domain, so the
+            # batched decode stays batch-composition-invariant like
+            # every other stable stream. Draw identity rides the item's
+            # repo_id (the rollout drivers' draw-suffix convention), so
+            # the in-call draw index is always 0.
+            model = self.gemma_flow
+            assert model is not None  # __init__ guarded
+            memory = model.encoder.encode(
+                model.backbone,
+                batch.encoder_inputs,
+                with_grad=False,
+                retain_cache=False,
+            )
             shape = (batch.actions.shape[1], batch.actions.shape[2])
             sde_noise = self._flow_noise(items, indices, 1, shape).to(self.device)
             step_noise = torch.stack(
@@ -1230,7 +1346,7 @@ class BijouPolicy:
                 ],
                 dim=1,
             ).to(self.device)
-            prediction = decoder.predict_chunk(
+            prediction = model.flow_decoder.predict_chunk(
                 memory,
                 batch,
                 noise=sde_noise,
@@ -1240,64 +1356,89 @@ class BijouPolicy:
                 sde_step_noise=step_noise,
             )
             return [chunk.cpu() for chunk in prediction.actions], None
-        if self.capture_token_rows and isinstance(decoder, ARSuffixDecoder):
-            # Greedy decode WITH the capture surface: encode + greedy
-            # dispatch is compute-identical to model.predict_chunk's AR
-            # case (generator/noise are None there), the capture is
-            # observation only — the training-rows oracle path.
-            memory = self.model.encode(batch.encoder_inputs, with_grad=False)
+        if self.capture_token_rows:
+            # Greedy decode WITH the capture surface: the trait block
+            # decode is compute-identical to the plain AR path
+            # (sampling=None), the capture is observation only — the
+            # training-rows oracle path.
+            ar = self.ar
+            decoder = self.ar_decoder
+            assert ar is not None and decoder is not None  # guarded above
             greedy_capture: list[ActionCaptureStep] = []
-            prediction = self.model.ar_predict_greedy(
-                memory,
-                batch,
-                generate=self.generate,
-                action_capture=greedy_capture,
-            )
+            prediction = ar.predict_ar(batch, capture=greedy_capture)
             self.last_token_rows = token_rows_from_capture(
                 greedy_capture,
                 block_base=decoder.config.block_base,
                 temperature=None,
             )
-            return [chunk.cpu() for chunk in prediction.actions], prediction.generations
+            return [chunk.cpu() for chunk in prediction.actions], None
         # Flow integrates from per-item seeded noise (deterministic and
         # batch-composition-independent); AR decodes greedily and takes
-        # none.
+        # none. Geometry is the decoder's own: [chunk, action_dim] for
+        # the gemma flow decoder, [action_horizon, max_action_dim] at
+        # the decoder dtype for molmo_flow (32 padded dims — it consumes
+        # a supplied tensor as-is, the parity surface; without the cast
+        # the decoder would draw from ambient RNG: irreproducible and
+        # batch-composition-dependent).
         noise: Tensor | None = None
-        if isinstance(decoder, FlowDecoder):
+        if isinstance(self.flow_decoder, FlowDecoder):
             shape = (batch.actions.shape[1], batch.actions.shape[2])
             noise = self._flow_noise(items, indices, 1, shape).to(self.device)
-        elif isinstance(decoder, MolmoFlowDecoder):
-            # Same determinism contract, THEIR geometry: noise lives in
-            # [action_horizon, max_action_dim] (32 padded dims, not the
-            # tag's action_dim) and must match the expert dtype — the
-            # decoder consumes a supplied tensor as-is (parity surface),
-            # so the cast happens here. Without this branch the decoder
-            # draws from ambient RNG: irreproducible and
-            # batch-composition-dependent.
-            runtime = decoder.runtime
+        elif isinstance(self.flow_decoder, MolmoFlowDecoder):
+            runtime = self.flow_decoder.runtime
             assert runtime is not None  # from_checkpoint configures at load
-            shape = (runtime.action_horizon, decoder.config.max_action_dim)
+            shape = (runtime.action_horizon, self.flow_decoder.config.max_action_dim)
             noise = self._flow_noise(items, indices, 1, shape).to(
                 device=self.device,
-                dtype=decoder.action_embed.weight.dtype,
+                dtype=self.flow_decoder.action_embed.weight.dtype,
             )
-        prediction = self.model.predict_chunk(
-            batch,
-            noise=noise,
-            num_steps=self.sample_steps,
-            method=self.method,
-            target_time=self.target_time,
-            generate=self.generate,
-        )
-        chunks = [chunk.cpu() for chunk in prediction.actions]
-        if item_maps is not None:
-            # Decoded raw chunks are in checkpoint-table units — pull
-            # them back into each item's dataset units.
-            chunks = [
-                maps.action.invert(chunk)
-                for maps, chunk in zip(item_maps, chunks, strict=True)
-            ]
-        return chunks, prediction.generations
+        if self.generate:
+            narrating = self.narrating
+            assert narrating is not None  # __init__ guarded
+            narrated = narrating.predict_narrated(batch, generate=self.generate)
+            return (
+                [chunk.cpu() for chunk in narrated.actions],
+                narrated.generations,
+            )
+        if self.flow is not None:
+            if self.target_time is not None:
+                # The φ_s shortcut read — a gemma-flow-concrete
+                # instrument (__init__ validated the extension).
+                model = self.gemma_flow
+                assert model is not None  # __init__ guarded
+                memory = model.encoder.encode(
+                    model.backbone,
+                    batch.encoder_inputs,
+                    with_grad=False,
+                    retain_cache=False,
+                )
+                actions = model.flow_decoder.predict_chunk(
+                    memory,
+                    batch,
+                    noise=noise,
+                    num_steps=self.sample_steps,
+                    method=self.method,
+                    target_time=self.target_time,
+                ).actions
+            else:
+                actions = self.flow.predict_flow(
+                    batch,
+                    num_steps=self.sample_steps,
+                    method=self.method,
+                    noise=noise,
+                ).actions
+            chunks = [chunk.cpu() for chunk in actions]
+            if item_maps is not None:
+                # Decoded raw chunks are in checkpoint-table units — pull
+                # them back into each item's dataset units.
+                chunks = [
+                    maps.action.invert(chunk)
+                    for maps, chunk in zip(item_maps, chunks, strict=True)
+                ]
+            return chunks, None
+        ar = self.ar
+        assert ar is not None  # every family carries a flow or AR surface
+        return [chunk.cpu() for chunk in ar.predict_ar(batch).actions], None
 
     @torch.no_grad()
     def predict(self, items: list[dict[str, Any]], indices: list[int]) -> list[Tensor]:
@@ -1326,7 +1467,14 @@ class NarratedBijouPolicy:
                 "narrated pass on a checkpoint without trained aux fields "
                 "— nothing to request",
             )
+        narrating = base.narrating
+        if narrating is None:
+            raise SystemExit(
+                f"narrated pass requested but {base.spec.family.value} "
+                "has no narration surface",
+            )
         self.base = base
+        self.narrating = narrating
         self.fields = fields
         self.name = f"{base.name}+fields"
         self.collator = dataclasses.replace(
@@ -1339,13 +1487,7 @@ class NarratedBijouPolicy:
     def predict(self, items: list[dict[str, Any]], indices: list[int]) -> list[Tensor]:
         items = self.base.apply_overrides(items)
         batch = self.collator(items).to(self.base.device)
-        prediction = self.base.model.predict_chunk(
-            batch,
-            num_steps=self.base.sample_steps,
-            method=self.base.method,
-            generate=self.fields,
-        )
-        assert prediction.generations is not None  # ar_backbone always generates
+        prediction = self.narrating.predict_narrated(batch, generate=self.fields)
         for index, generation in zip(indices, prediction.generations, strict=True):
             self.generations[index] = generation
         return [chunk.cpu() for chunk in prediction.actions]
@@ -1397,6 +1539,12 @@ class SelfSubgoalPass1Policy:
                 f"{[f.value for f in base.aux_fields] or 'NONE'} — no "
                 "subgoal to decode",
             )
+        narrating = base.narrating
+        if narrating is None:
+            raise SystemExit(
+                "self-subgoal pass 1 decodes the model's own subgoal, "
+                f"but {base.spec.family.value} has no narration surface",
+            )
         if ConditionField.SUBGOAL in base.collator.condition_fields:
             raise SystemExit(
                 "self-subgoal pass 1 must collate the PLANNER-LESS "
@@ -1412,6 +1560,7 @@ class SelfSubgoalPass1Policy:
                 "(greedy is the draws-0 limit, not a temperature limit)",
             )
         self.base = base
+        self.narrating = narrating
         # None = plain self-subgoal probe: the legacy single-greedy
         # path, byte-for-byte.
         # An int >= 0 = subgoal-draws candidates mode: the same greedy full
@@ -1435,10 +1584,8 @@ class SelfSubgoalPass1Policy:
         items = self.base.apply_overrides(items)
         batch = self.collator(items).to(self.base.device)
         if self.draws is None:
-            prediction = self.base.model.predict_chunk(
+            prediction = self.narrating.predict_narrated(
                 batch,
-                num_steps=self.base.sample_steps,
-                method=self.base.method,
                 generate=(AuxField.SUBGOAL,),
             )
         else:
@@ -1461,7 +1608,7 @@ class SelfSubgoalPass1Policy:
                     ),
                 )
 
-            prediction, candidates = self.base.model.ar_predict_with_value_candidates(
+            prediction, candidates = self.narrating.predict_with_value_candidates(
                 batch,
                 field=AuxField.SUBGOAL,
                 generate=(AuxField.SUBGOAL,),
@@ -1470,7 +1617,6 @@ class SelfSubgoalPass1Policy:
             )
             for index, row_candidates in zip(indices, candidates, strict=True):
                 self.candidates[index] = row_candidates
-        assert prediction.generations is not None  # ar_backbone always generates
         for item, index, generation in zip(
             items,
             indices,
@@ -1511,7 +1657,15 @@ class SelfSubgoalPolicy:
         *,
         force_empty: bool = False,
     ) -> None:
+        ar = base.ar
+        if ar is None:
+            raise SystemExit(
+                "self-subgoal pass 2 decodes the deployment fast path "
+                f"through the discrete decoder, but {base.spec.family.value} "
+                "has no AR action decoder",
+            )
         self.base = base
+        self.ar = ar
         self.pass1 = pass1
         self.force_empty = force_empty
         self.name = f"{base.name}_selfsubgoal" + ("_emptyhint" if force_empty else "")
@@ -1542,12 +1696,7 @@ class SelfSubgoalPolicy:
             # — it must never fall through to the frame's true label.
             conditioned.append({**item, "condition_subgoal": text})
         batch = self.collator(conditioned).to(self.base.device)
-        prediction = self.base.model.predict_chunk(
-            batch,
-            num_steps=self.base.sample_steps,
-            method=self.base.method,
-            generate=(),
-        )
+        prediction = self.ar.predict_ar(batch)
         return [chunk.cpu() for chunk in prediction.actions]
 
 
@@ -1581,10 +1730,13 @@ class MaskedContrastSubgoalPolicy:
         candidates_by_index: dict[int, list[dict[str, Any]]],
         tau: float,
     ) -> None:
-        if not isinstance(base.model.decoder, ARSuffixDecoder):
+        ar = base.ar
+        decoder = base.ar_decoder
+        if ar is None or decoder is None:
             raise SystemExit(
-                "masked-contrast scoring continues a trunk suffix; the "
-                f"loaded decoder is {type(base.model.decoder).__name__}",
+                "masked-contrast scoring teacher-forces the discrete "
+                f"action block, but {base.spec.family.value} has no AR "
+                "action decoder",
             )
         if ConditionField.SUBGOAL in base.collator.condition_fields:
             raise SystemExit(
@@ -1604,6 +1756,8 @@ class MaskedContrastSubgoalPolicy:
                 "'text' and 'truncated' — not a clean-list candidates dump",
             )
         self.base = base
+        self.ar = ar
+        self.decoder = decoder
         self.candidates_by_index = candidates_by_index
         self.tau = float(tau)
         # One width for every dumped row (the reader's [N, C] contract);
@@ -1639,20 +1793,20 @@ class MaskedContrastSubgoalPolicy:
                     "candidate-list width, stop",
                 )
             rows_cands.append(cands)
-        model = self.base.model
-        decoder = model.decoder
-        assert isinstance(decoder, ARSuffixDecoder)  # __init__ guarded
-        block_base = decoder.config.block_base
+        block_base = self.decoder.config.block_base
+        # PAD is the batch filler the teacher-forced scaffold expects:
+        # ragged rows pad to the widest with it, and a filler-only row
+        # (an ineligible candidate slot) is opener+BOA+PAD… — exactly
+        # the decoder's own convention, so the tokens tensor matches
+        # the per-row ragged form position for position.
+        pad = self.decoder.codec.pad
 
-        # Masked pass: ONE planner-less prefill for the reference
-        # prediction AND (snapshot/restored) every candidate's
-        # teacher-forced reference forward.
+        # Masked pass: the planner-less greedy decode is the reference
+        # prediction (record-only); the trait teacher-forced calls below
+        # re-run the same deterministic planner-less prefill per
+        # candidate.
         batch = self.collator(items).to(self.base.device)
-        memory = model.encode(batch.encoder_inputs, with_grad=False)
-        snapshot = decoder.cache_snapshot(memory)
-        masked_chunks = [
-            chunk.cpu() for chunk in model.ar_predict_greedy(memory, batch).actions
-        ]
+        masked_chunks = [chunk.cpu() for chunk in self.ar.predict_ar(batch).actions]
 
         n_rows = len(items)
         kl = torch.full((n_rows, self.n_candidates), float("nan"), dtype=torch.float64)
@@ -1674,13 +1828,8 @@ class MaskedContrastSubgoalPolicy:
                 for row in eligible
             ]
             cbatch = self.cond_collator(cond_items).to(self.base.device)
-            cmemory = model.encode(cbatch.encoder_inputs, with_grad=False)
             capture: list[ActionCaptureStep] = []
-            conditioned = model.ar_predict_greedy(
-                cmemory,
-                cbatch,
-                action_capture=capture,
-            )
+            conditioned = self.ar.predict_ar(cbatch, capture=capture)
             # CPU once per step — the per-row loop below must not sync
             # the device thousands of times.
             steps = [
@@ -1696,26 +1845,24 @@ class MaskedContrastSubgoalPolicy:
                 [t for t, (_, _, active, _) in enumerate(steps) if bool(active[sub])]
                 for sub in range(len(eligible))
             ]
-            sequences: list[list[int] | None] = [None] * n_rows
+            sequences: list[list[int]] = [
+                [int(steps[t][3][sub]) - block_base for t in active_steps[sub]]
+                for sub in range(len(eligible))
+            ]
+            # Rectangular id batch over the FULL masked batch: eligible
+            # rows carry their decoded ids (PAD-padded to the widest),
+            # other rows are PAD-only filler — the same tokens the
+            # decoder's ragged per-row form would build, so the forward
+            # is position-identical; only eligible prefixes are read.
+            t_max = max(len(ids) for ids in sequences)
+            action_ids = torch.full((n_rows, t_max), pad, dtype=torch.long)
             for sub, row in enumerate(eligible):
-                sequences[row] = [
-                    int(steps[t][3][sub]) - block_base for t in active_steps[sub]
-                ]
-            decoder.cache_restore(memory, snapshot)
-            reference = model.ar_teacher_forced_block_logits(memory, sequences)
+                ids = sequences[sub]
+                action_ids[row, : len(ids)] = torch.tensor(ids, dtype=torch.long)
+            reference = self.ar.teacher_forced_block_logits(batch, action_ids).cpu()
             for sub, row in enumerate(eligible):
-                ref_row = reference[row]
-                assert ref_row is not None  # sequences[row] was non-None
                 own_steps = active_steps[sub]
-                if ref_row.shape[0] != len(own_steps):
-                    raise SystemExit(
-                        f"row {row} candidate {j}: reference forward "
-                        f"returned {ref_row.shape[0]} positions for "
-                        f"{len(own_steps)} decoded steps — the "
-                        "teacher-forced scaffold drifted from the decode, "
-                        "stop",
-                    )
-                ref_row = ref_row.cpu()
+                ref_row = reference[row, : len(own_steps)]
                 total = 0.0
                 for position, t in enumerate(own_steps):
                     step_logits, step_allowed, _, _ = steps[t]
@@ -1789,7 +1936,15 @@ class SelectedSubgoalPolicy:
                 "selected-subgoal pass 2 needs pass 1 in candidates mode — "
                 "construct SelfSubgoalPass1Policy with draws >= 0",
             )
+        ar = base.ar
+        if ar is None:
+            raise SystemExit(
+                "selected-subgoal pass 2 decodes the deployment fast path "
+                f"through the discrete decoder, but {base.spec.family.value} "
+                "has no AR action decoder",
+            )
         self.base = base
+        self.ar = ar
         self.pass1 = pass1
         self.mode = mode
         self.force_empty = force_empty
@@ -1863,10 +2018,5 @@ class SelectedSubgoalPolicy:
             # — it must never fall through to the frame's true label.
             conditioned.append({**item, "condition_subgoal": text})
         batch = self.collator(conditioned).to(self.base.device)
-        prediction = self.base.model.predict_chunk(
-            batch,
-            num_steps=self.base.sample_steps,
-            method=self.base.method,
-            generate=(),
-        )
+        prediction = self.ar.predict_ar(batch)
         return [chunk.cpu() for chunk in prediction.actions]

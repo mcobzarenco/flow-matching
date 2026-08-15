@@ -252,16 +252,16 @@ def test_bijou_policy_aux_fields_sees_the_molmo2_concrete(
     checkpoint reported NO trained fields and the eval's narrated pass
     — the sole producer of the report's accuracy-by-field table —
     silently never rode (the banked molmo2 40k panel is missing the
-    table for exactly this reason). The gate is the family scaffold,
-    ARSuffixDecoder."""
+    table for exactly this reason). The gate is the family scaffold
+    (the policy's ARSuffixDecoder handle), never a trunk concrete."""
     aux_fields = BijouPolicy.aux_fields.fget
     assert aux_fields is not None
     decoder, _ = build_aux_decoder(model)
-    stub = SimpleNamespace(model=SimpleNamespace(decoder=decoder))
+    stub = SimpleNamespace(ar_decoder=decoder)
     assert aux_fields(stub) == aux_config().fields
     # Aux-less molmo2 stays narration-free — same property, same trunk.
     bare, _ = build_decoder(model)
-    stub = SimpleNamespace(model=SimpleNamespace(decoder=bare))
+    stub = SimpleNamespace(ar_decoder=bare)
     assert aux_fields(stub) == ()
 
 

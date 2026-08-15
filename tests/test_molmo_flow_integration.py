@@ -17,11 +17,12 @@ access): from_checkpoint assembly → MolmoAct2 collation → prefix encode
   loss_component_sums / loss_count_normalizers (the chunked-backward
   contract), and per-sample batch stats are deliberately unused
   (decision 6: perturbing them changes nothing);
-- the eval seam (BijouPolicy): the collator carries the checkpoint's
-  merged q01/q99 STATE table (training's scheme — without it the
-  per-sample mean/std path silently shifts every state bin), predict
-  noise is frame-identity keyed (ambient RNG perturbation is inert),
-  and draw ensembling is refused with the cache-tiling reason.
+- the eval seam (BijouPolicy, loading the CONVERTED VLA-format
+  checkpoint through the family registry): the collator carries the
+  checkpoint's merged q01/q99 STATE table (training's scheme — without
+  it the per-sample mean/std path silently shifts every state bin),
+  predict noise is frame-identity keyed (ambient RNG perturbation is
+  inert), and draw ensembling is refused with the cache-tiling reason.
 """
 
 from __future__ import annotations
@@ -40,6 +41,7 @@ from bijou.eval.molmo_norm import MolmoNorm
 from bijou.eval.policies import BijouPolicy
 from bijou.loading import from_checkpoint
 from bijou.model import BijouModel
+from bijou.modelling.aux_text import AuxField
 from bijou.modelling.decoders.molmo_flow import MolmoFlowDecoder, molmo_flow_loss
 from bijou.modelling.interface import (
     CameraFrame,
@@ -55,8 +57,9 @@ assert source_dir is not None  # re-exported pytest fixture (module-scoped)
 def legacy_bridge(converted: Path, legacy: Path) -> Path:
     """The converted (VLA-format) checkpoint re-expressed in the legacy
     layout — the inverse of ``bijou.convert_legacy``, for THIS module's
-    old-world subjects (BijouModel + BijouPolicy exercise the legacy
-    reader until their own ports land; the bridge dies with them)."""
+    old-world subject (BijouModel exercises the legacy reader until the
+    old world is deleted; the bridge dies with it — BijouPolicy now
+    loads the converted directory itself)."""
     metadata = read_metadata(converted)
     legacy.mkdir(parents=True)
     (legacy / "bijou_config.json").write_text(
@@ -84,17 +87,30 @@ def legacy_bridge(converted: Path, legacy: Path) -> Path:
 
 
 @pytest.fixture(scope="module")
-def tiny_checkpoint(
+def tiny_worlds(
     source_dir: Path,
     tmp_path_factory: pytest.TempPathFactory,
-) -> Path:
+) -> tuple[Path, Path]:
+    """(converted VLA-format checkpoint, its legacy re-expression) —
+    one conversion serves the module's new-world (BijouPolicy) and
+    old-world (BijouModel) subjects."""
     root = tmp_path_factory.mktemp("molmo-flow-int")
     converted = _convert(
         source_dir,
         root / "converted",
         backbone_ref=str(source_dir),
     )
-    return legacy_bridge(converted, root / "legacy")
+    return converted, legacy_bridge(converted, root / "legacy")
+
+
+@pytest.fixture(scope="module")
+def tiny_vla_checkpoint(tiny_worlds: tuple[Path, Path]) -> Path:
+    return tiny_worlds[0]
+
+
+@pytest.fixture(scope="module")
+def tiny_checkpoint(tiny_worlds: tuple[Path, Path]) -> Path:
+    return tiny_worlds[1]
 
 
 @pytest.fixture(scope="module")
@@ -334,8 +350,8 @@ def test_chunk_length_mismatch_is_loud(tiny_model: BijouModel) -> None:
 
 
 @pytest.fixture(scope="module")
-def tiny_policy(tiny_checkpoint: Path) -> BijouPolicy:
-    policy = BijouPolicy(tiny_checkpoint, device=torch.device("cpu"), seed=7)
+def tiny_policy(tiny_vla_checkpoint: Path) -> BijouPolicy:
+    policy = BijouPolicy(tiny_vla_checkpoint, device=torch.device("cpu"), seed=7)
     _stub_ids(policy.collator.inputs)
     return policy
 
@@ -403,17 +419,49 @@ def test_eval_policy_noise_is_keyed_not_ambient(tiny_policy: BijouPolicy) -> Non
         assert torch.equal(a, b)
 
 
-def test_eval_policy_refuses_draw_ensembling(tiny_checkpoint: Path) -> None:
+def test_eval_policy_refuses_draw_ensembling(tiny_vla_checkpoint: Path) -> None:
     """molmo_flow draws>1 needs prefix-memory tiling the molmo2 KV
     cache does not have — refused with THAT reason (the generic guard's
-    'greedy AR' message would misdiagnose a stochastic decoder)."""
+    deterministic-decode message would misdiagnose a stochastic
+    decoder)."""
     with pytest.raises(SystemExit, match="molmo_flow"):
         BijouPolicy(
-            tiny_checkpoint,
+            tiny_vla_checkpoint,
             device=torch.device("cpu"),
             seed=7,
             sample_draws=2,
         )
+
+
+def test_eval_policy_narrows_capabilities_loudly(
+    tiny_vla_checkpoint: Path,
+) -> None:
+    """The loud-narrowing rule on a real flow-only family: every
+    explicitly requested instrument this family cannot back exits
+    naming it — never a silent skip (the module-level scar in
+    eval/policies.py)."""
+
+    def refused(**kwargs: Any) -> None:
+        with pytest.raises(SystemExit, match="molmoact2_flow"):
+            BijouPolicy(
+                tiny_vla_checkpoint,
+                device=torch.device("cpu"),
+                seed=7,
+                **kwargs,
+            )
+
+    refused(generate=(AuxField.SUBGOAL,))
+    refused(ar_temperature=1.0)
+    refused(sde_noise_level=0.0)
+    refused(target_time=0.0)
+
+
+def test_eval_policy_refuses_legacy_directory(tiny_checkpoint: Path) -> None:
+    """BijouPolicy reads the VLA format ONLY — a legacy
+    bijou_config.json directory is refused at load with the converter
+    pointer, never silently read through the old path."""
+    with pytest.raises(SystemExit, match="convert_legacy"):
+        BijouPolicy(tiny_checkpoint, device=torch.device("cpu"), seed=7)
 
 
 def _offset_item(
@@ -451,7 +499,7 @@ def _offset_item(
 
 
 def test_convention_map_mode_is_offset_equivariant(
-    tiny_checkpoint: Path,
+    tiny_vla_checkpoint: Path,
     tiny_policy: BijouPolicy,
 ) -> None:
     """The convmap arm's end-to-end contract on the REAL composition: a
@@ -461,7 +509,7 @@ def test_convention_map_mode_is_offset_equivariant(
     out. Pins state rewrite, map fit (offset −180 per joint), and the
     chunk pull-back in one oracle."""
     convmap = BijouPolicy(
-        tiny_checkpoint,
+        tiny_vla_checkpoint,
         device=torch.device("cpu"),
         seed=7,
         molmo_norm=MolmoNorm.CONVENTION_MAP,
@@ -478,7 +526,7 @@ def test_convention_map_mode_is_offset_equivariant(
 
 
 def test_per_dataset_mode_is_scale_equivariant(
-    tiny_checkpoint: Path,
+    tiny_vla_checkpoint: Path,
     tiny_policy: BijouPolicy,
 ) -> None:
     """The pdnorm arm's contract: a dataset spanning [-6, 6] (2x the
@@ -486,7 +534,7 @@ def test_per_dataset_mode_is_scale_equivariant(
     state collates the same prompt as the contract read on x/2, and
     the decoded chunks come back exactly 2x the contract chunks."""
     pdnorm = BijouPolicy(
-        tiny_checkpoint,
+        tiny_vla_checkpoint,
         device=torch.device("cpu"),
         seed=7,
         molmo_norm=MolmoNorm.PER_DATASET,
