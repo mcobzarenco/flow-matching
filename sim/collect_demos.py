@@ -152,6 +152,40 @@ def _git_head() -> str:
         return "unknown"
 
 
+def rewrite_quantile_stats(root: Path) -> dict[str, list[float]]:
+    """Recompute meta/stats.json quantile rows for the vector features
+    from the raw frames, in place.
+
+    LeRobot's ``aggregate_feature_stats`` merges per-episode quantiles
+    as a count-weighted MEAN of quantiles — wrong whenever episodes are
+    heterogeneous, and catastrophic on cross-episode-bimodal channels
+    (measured 2026-08-15 on grasp_sft_demos_v0: wrist_roll true action
+    q01/q99 ±157° with 17% of episodes on the π-flipped branch, banked
+    table said [35.5, 94.4] → the flipped branch was clamped out of
+    both state and action space through training AND serving). Mean /
+    std / min / max merge through proper pooled formulas and are left
+    untouched; every ``qNN`` key is recomputed exactly over all frames.
+    """
+    import pandas as pd
+
+    stats_path = root / "meta" / "stats.json"
+    stats = json.loads(stats_path.read_text())
+    frames = pd.concat(
+        [pd.read_parquet(p) for p in sorted(root.glob("data/*/*.parquet"))],
+    )
+    fixed: dict[str, list[float]] = {}
+    for feature in ("action", "observation.state"):
+        values = np.stack(list(frames[feature].to_numpy())).astype(np.float64)
+        for key in list(stats[feature]):
+            if key.startswith("q") and key[1:].isdigit():
+                q = int(key[1:]) / 100.0
+                exact = np.quantile(values, q, axis=0)
+                stats[feature][key] = [float(x) for x in exact]
+                fixed[f"{feature}/{key}"] = stats[feature][key]
+    stats_path.write_text(json.dumps(stats, indent=4) + "\n")
+    return fixed
+
+
 def open_dataset(root: Path):  # noqa: ANN201 — lerobot type, import deferred
     """Create the dataset, or resume an existing collection at root."""
     from lerobot.datasets.lerobot_dataset import LeRobotDataset
@@ -237,6 +271,8 @@ def collect(
         )
 
     dataset.finalize()
+    fixed = rewrite_quantile_stats(root)
+    log(f"[collect] stats.json quantiles recomputed from raw frames: {sorted(fixed)}")
     summary = {
         "kept": len(kept_seeds),
         "attempted": attempted,

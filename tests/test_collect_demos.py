@@ -135,3 +135,56 @@ def test_refuses_foreign_directory(tmp_path: Path) -> None:
             seed_start=1000,
             log=lambda _: None,
         )
+
+
+def test_rewrite_quantile_stats_fixes_bimodal_aggregation(tmp_path: Path) -> None:
+    """The 2026-08-15 class bug: lerobot merges per-episode quantiles as
+    a weighted MEAN of quantiles, so a channel bimodal ACROSS episodes
+    (the π-flipped wrist_roll branch) gets a clamp box that excludes an
+    entire mode. The rewrite must land the exact all-frame quantiles."""
+    import pandas as pd
+
+    from sim.collect_demos import rewrite_quantile_stats
+
+    root = tmp_path / "demos"
+    (root / "meta").mkdir(parents=True)
+    (root / "data" / "chunk-000").mkdir(parents=True)
+    # Two "episodes": one mode at +90, one at -150 — per-episode q01
+    # averaging would land mid-air between the modes.
+    pos = np.full((80, 6), 90.0)
+    neg = np.full((20, 6), -150.0)
+    values = np.concatenate([pos, neg])
+    frame = pd.DataFrame(
+        {
+            "action": list(values.astype(np.float32)),
+            "observation.state": list(values.astype(np.float32)),
+            "episode_index": [0] * 80 + [1] * 20,
+        },
+    )
+    frame.to_parquet(root / "data" / "chunk-000" / "file-000.parquet")
+    corrupt = {
+        key: {"q01": [42.0] * 6, "q99": [66.0] * 6, "mean": [42.0] * 6}
+        for key in ("action", "observation.state")
+    }
+    (root / "meta" / "stats.json").write_text(json.dumps(corrupt))
+
+    fixed = rewrite_quantile_stats(root)
+
+    stats = json.loads((root / "meta" / "stats.json").read_text())
+    for key in ("action", "observation.state"):
+        q01 = np.array(stats[key]["q01"])
+        q99 = np.array(stats[key]["q99"])
+        expected_q01 = np.quantile(values, 0.01, axis=0)
+        expected_q99 = np.quantile(values, 0.99, axis=0)
+        np.testing.assert_allclose(q01, expected_q01)
+        np.testing.assert_allclose(q99, expected_q99)
+        # The -150 mode is INSIDE the box again.
+        assert (q01 <= -150.0 + 1e-9).all()
+        # Non-quantile rows untouched.
+        assert stats[key]["mean"] == [42.0] * 6
+    assert set(fixed) == {
+        "action/q01",
+        "action/q99",
+        "observation.state/q01",
+        "observation.state/q99",
+    }
