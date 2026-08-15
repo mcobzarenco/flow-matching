@@ -160,3 +160,40 @@ scratch-data purity, eval-seed refusal at `DEMO_SEED_BASE` 1000) plus
 the settle-before-release and deck-strike jam-recovery mechanisms;
 14/16 on the tuning smoke. The gate read (seeds 1020–1039) is what
 counts.
+
+## §7 Amendment A1 — fresh held gate set after the 08-15 gate FAIL
+*(registered 2026-08-15 ~02:5xZ, in-channel post before any new read)*
+
+The §6 gate read ran 02:0x–02:1xZ 08-15 (HEAD `e371e2b`, rendered,
+videos + `reports/analysis__grasp_sft_stageA_gate.json` banked):
+**FAIL, 11/20** — the held stream caught tuning-smoke overfit (14/16
+on 1000–1015). Integrity receipts: rendered ≡ unrendered bit-identical
+on 3 re-run seeds; failure classes measured, not guessed (4× lower
+radial stall, 3× mid-carry grip loss, jam-on-both-branches tail).
+Record-only honesty note: 11 clean grasp-lift-place runs contradict
+F-physics' mechanistic reading ("the sim can't host the grasp") — the
+gap was expert *coverage*, so the boundary decision went to the owner
+(boundary post 02:14Z) with a registered amendment as the stated
+default absent steering.
+
+**A1, frozen:**
+
+- **Seeds 1020–1039 are reclassified as tuning data** (burned by the
+  read + diagnosis). The robustness pass tuned on them is `77776fd`:
+  lower-phase place droop, re-grasp recovery, jam-flip budget 3,
+  retry-scoped dwell + droop reset — measured 11/20 → **16/20** on
+  the burned set, 14/16 → 15/16 smoke, no regressions.
+- **Fresh held gate set: seeds 1040–1059**, protocol otherwise
+  verbatim §6 (rendered, videos banked, production `SO101Sim()`
+  substrate, ≥ 14/20, HEAD `77776fd` or later).
+- **One amendment only**: if the fresh read fails, §4 F-physics fires
+  as frozen (Squint twin tier) with **no further expert tuning** — the
+  amendment loop is capped here, before the second read, so it cannot
+  become a re-roll ladder.
+- Window: the fresh read runs at this session's close (≥ 30 min from
+  the in-channel A1 post) absent objection; stages B–D are unchanged
+  from §6 and launch at the next session boundary absent objection if
+  the read passes. Demo collection (stage B) draws seeds ascending
+  from 1000 **excluding nothing** — tuning seeds are legitimate demos
+  (§6), and the gate stream stays disjoint from eval seeds 0–99 as
+  always.
