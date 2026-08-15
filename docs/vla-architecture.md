@@ -548,6 +548,7 @@ term is unrepresentable. Shared payloads live in
 @dataclass(frozen=True, slots=True)
 class FlowObjective:
     """Plain flow matching over the action chunk."""
+
     # unit variant — no knobs
 
 
@@ -562,7 +563,7 @@ class SnapflowObjective:
     validates and names the remedy (extend at --init-from; the φ_s
     MLP is zero-initialized, so extension is function-preserving)."""
 
-    alpha: float            # FM share of the mix, in (0, 1)
+    alpha: float  # FM share of the mix, in (0, 1)
     shortcut_weight: float  # the shortcut term's multiplier, > 0
 ```
 
@@ -657,7 +658,7 @@ class MolmoAct2JointVLA(
         ar_decoder: MolmoAct2ARDecoder,
         *,
         objective: JointObjective,
-        serving: FlowServing,          # recorded operating point (§7)
+        serving: FlowServing,  # recorded operating point (§7)
     ) -> None:
         super().__init__()
         self.backbone = backbone
@@ -674,7 +675,7 @@ class MolmoAct2JointVLA(
     @override
     def loss_counts(self, batch: CollatedBatch[MolmoAct2Inputs]) -> dict[str, Tensor]:
         return {
-            "action": flow_element_count(batch),   # B·chunk·action_dim
+            "action": flow_element_count(batch),  # B·chunk·action_dim
             "aux": ce_target_count(self.ar_decoder, batch),
         }
 
@@ -687,7 +688,9 @@ class MolmoAct2JointVLA(
     ) -> LossReport:
         with torch.autocast("cuda", dtype=torch.bfloat16):
             memory = self.encoder.encode(
-                self.backbone, batch.encoder_inputs, retain_cache=True,
+                self.backbone,
+                batch.encoder_inputs,
+                retain_cache=True,
             )
             # Prompt-only KV for the flow decoder, extracted BEFORE
             # the CE rider appends suffix K/V to the cache. Insulation
@@ -858,14 +861,16 @@ for flag, group in (
     ("--backbone-vision-lr", "backbone_vision"),
 ):
     if lr(flag) > 0 and len(groups[group]) == 0:
-        parser.error(f"{flag} given, but {group!r} receives no gradients "
-                     f"under {model.spec.family.value}'s objective")
+        parser.error(
+            f"{flag} given, but {group!r} receives no gradients "
+            f"under {model.spec.family.value}'s objective"
+        )
 
 counts = model.loss_counts(batch)
 if dist.is_initialized():
     for key in sorted(counts):
         dist.all_reduce(counts[key])
-report = model(batch, counts=counts)          # DDP entry point
+report = model(batch, counts=counts)  # DDP entry point
 (report.objective / grad_accum).backward()
 log({k: (v.sum.detach(), v.count) for k, v in report.components.items()})
 ```
@@ -1014,6 +1019,10 @@ oracles at current HEAD (post-fontaine-rebase) and confirm the
 recorded numbers reproduce; regenerate/verify both tiny fixtures.
 Gate: five anchors bitwise at HEAD. This is the pre-registration the
 whole migration is measured against.
+VERDICT: PASS — all five anchors reproduced bitwise on the laptop
+(gemma flow 2.7903/1.9152, gemma ar 27.8306/27.767, molmoact2 flow
+1.3906/1.3305, ar 12.2254/12.3317, joint 13.616/13.6621 with the
+cross-oracle exact); `check.py` 828 green at the freeze commit.
 
 **Phase 1 — pure motion.** Create `modelling/`; move `gemma4/`,
 `molmo2/`, `encoders/`, `decoders/`, `nn.py`, `aux_text.py`,
