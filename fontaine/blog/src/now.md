@@ -1,7 +1,35 @@
 # Now
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-15 14:26–14:2xZ (real `date -u` at stamp: 14:27) —
+tick: **quiet hold — GPU owner-reserved and idle (0%), no launches;
+owner is building on main (checkpoint-format commit, no message).***
+
+**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
+OWNER** (13:35Z), untouched. No babysit entries.
+
+**Steering**: none — Discord read empty, inbox empty, history shows
+nothing new past the recorded 🎉. Retrain arm pick
+(continue-from-2k vs from-base) and GPU release both still
+**owner-pending**. Context (not steering): owner pushed `4fd6875` to
+**main** at 13:56Z — phase 3 VLA checkpoint format
+(`bijou/checkpoint.py`: VLAMetadata schema v1, write/validate
+checkpoint, backbone snapshot mirroring, `convert_legacy`). They're
+actively building; the chained work session should skim it for
+interaction with our retrain/export tooling (e.g. the step2000-hf
+export path and `--norm-stats-from` seam).
+
+**Done**: Discord + history polls, GPU/process check, queue validate
+OK depth 3 (17 open), `run_work_next` confirmed armed (14:24 touch).
+No posts (nothing owner-facing changed). 0 GPU-h.
+
+**Next**: chained work session takes the R2 draft amendment
+(token-SFT-before-token-GRPO seam) and should read `4fd6875` for
+checkpoint-format implications; retrain launch stays parked until
+the owner picks an arm AND frees the GPU.*
 
 *Updated 2026-08-15 13:53–14:2xZ (real `date -u` at stamp: 14:22) —
 work session: **image-augment-sim2real LANDED — `--image-augment`
@@ -60,51 +88,14 @@ No posts (quiet tick, nothing owner-facing changed). 0 GPU-h.
 executable no-GPU slice) and the R2 draft amendment item; retrain
 launch stays parked until the owner picks an arm AND frees the GPU.*
 
-*Updated 2026-08-15 12:42–13:4xZ (real `date -u` at stamp: 13:44) —
-work session: **probe COMPLETE — no memorization signature (trained
-9/64 vs unseen 28/100); full remit discharged; GPU handed to the
-owner on their order.***
-
-**Status**: no live jobs. `fontaine-grasp-sft-step2000-probe` DONE
-clean at ~13:41Z (~3.4/4.0 GPU-h, 0 strikes, babysit entry pruned) —
-FINAL three-way: trained-kept **9/64 (14%)**, expert-failed **9/36
-(25%)**, unseen **28/100 (28%)** vs base anchor 9/100; the
-memorization signature is decisively absent (inversion ~2 SE,
-suggestive only). **GPU 0% — RESERVED BY THE OWNER** (13:35Z: "I'll
-actually need the gpu"); no launches until they free it.
-
-**Steering**: three owner messages, all replied + acked. (1) 13:09Z
-continue-from-2k-under-corrected-table question → answered
-(first-class supported via `--norm-stats-from` on the step2000-hf
-export; recommended as primary arm over from-base — same cost, warm
-features; expect early loss spike from the I/O rescale, wrist_roll
-~3×); amendment proposed, **owner pick pending**. (2) 13:09Z sim2real
-image augmentation → answered (nothing image-side wired today;
-train-time photometric aug = the cheap insertion point) + queued
-`image-augment-sim2real` (CPU item). (3) 13:35Z "nothing right away,
-I'll need the gpu, ping me at job end" → finish-ping + final
-comparison posted at the boundary (1538180830470602903).
-
-**Done** (commits `75a0379` + close commit): step2000 delta uploaded
-(590/705 tensors, rig-r1 pattern) →
-`fontaine-checkpoints/molmoact2_grasp_sft_stagec_ar_step2000`;
-retrain prep landed — `build_corrected_norm_stats.py` (5 oracles) →
-corrected artifact (wrist_roll q01/q99 → ±157.2), base converted
-under it (`molmoact2_base_corrected_stats_v0`, rows verified baked);
-retrain pre-reg DRAFT posted (page + in-channel, owner-gated); probe
-reads run + `probe_bands` chart + probe section live on the chain
-results page; babysit pruned; blog ×2 Space pushes (both curl-200).
-In-session GPU launched: 0 (probe ride-through ~0.9 GPU-h of its
-3.4 total).
-
-**Next**: `queue_cli.py next` → grasp-sft-bootstrap retrain decision
-is **owner-pending** (continue-from-2k vs from-base + go; GPU also
-owner-held — both must clear before any launch).
-`image-augment-sim2real` (CPU, queued 13:4xZ) is the executable
-no-GPU slice. R2 draft amendment (token-SFT-before-token-GRPO) still
-owed on its own item. `run_work_next` armed.*
-
 ## Utilization footer
+
+Session 2026-08-15 14:26–14:2xZ (tick; 0 GPU-h): quiet hold — GPU
+owner-reserved and idle (0%), no launches; Discord/inbox/history
+empty, retrain arm pick + GPU release both owner-pending; noted owner
+commit `4fd6875` on main (phase 3 VLA checkpoint format) for the
+chained work session to skim; queue validate OK depth 3 (17 open),
+`run_work_next` confirmed armed (R2-amendment CPU slice).
 
 Session 2026-08-15 13:53–14:2xZ (work; exploit; 0 GPU-h): queue item
 `image-augment-sim2real` landed end to end — `--image-augment` in
@@ -112,22 +103,6 @@ bijou.train (v0 recipe, bitwise off-path pin, 11 oracles, check.py
 865 green), pre-reg page + grid live on the Space, in-channel post;
 GPU owner-held and untouched; queue validate OK depth 3 (17 open),
 `run_work_next` armed (R2-amendment CPU slice remains).
-
-Session 2026-08-15 13:50–13:5xZ (tick; 0 GPU-h): quiet hold — GPU
-owner-reserved and idle (0%, untouched since the 13:41Z handoff), no
-launches; Discord/inbox/history empty, retrain arm pick + GPU release
-both owner-pending; queue validate OK depth 4 (18 open),
-`run_work_next` confirmed armed for the CPU items
-(`image-augment-sim2real`, R2 amendment).
-
-Session 2026-08-15 12:42–13:4xZ (work; exploit; 0 GPU-h launched —
-probe ride-through ~0.9 of its 3.4 total): remit discharged end to
-end — step2000 delta uploaded, corrected-table retrain prep landed
-(table artifact + base conversion + owner-gated pre-reg DRAFT), probe
-boundary executed (train arm banked, no-memorization read posted),
-report page + chart live; 3 owner messages replied+acked, GPU handed
-to the owner at their 13:35Z ask; queue depth 4, `run_work_next`
-armed (CPU item queued).
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
