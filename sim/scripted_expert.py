@@ -249,6 +249,12 @@ class ScriptedExpert:
     CLEARANCE_Z = 0.055
     GRASP_Z = 0.014  # pad-midpoint height bracketing the hull (P4)
     PLACE_Z = 0.035
+    # Set-down height over the disk: the grasp pad height plus the
+    # disk's top surface (z 0.012) — releasing at PLACE_Z instead
+    # drops the hull ~2 cm and it lands heeled (measured: upright
+    # 0.88 vs the 0.9 success gate on 3 of 6 smoke misses).
+    RELEASE_Z = 0.026
+    SETTLE_TICKS = 60  # settle budget; keeps pressing-down bounded
     CLOSE_TICKS = 30  # 1 s pinch close+hold before lifting (P4 pace)
     OPEN_TICKS = 20
     PHASE_TIMEOUT = 200  # ticks; a stuck phase advances (never wedges)
@@ -394,8 +400,31 @@ class ScriptedExpert:
             )
             boat_placed = float(np.hypot(*(boat_pos[:2] - self.disk[:2]))) < 0.03
             if boat_placed or timeout:
-                self._enter("open")
+                self._enter("settle")
             return self._carry(sim, arm, JAW_CLOSED_RAD, rate_deg=2.0)
+
+        if state.phase == "settle":
+            # Set the boat DOWN before letting go: keep the pinch and
+            # lower the pad target to RELEASE_Z so the keel touches the
+            # disk before the jaws open. Exit when the boat base is at
+            # disk-top height with the arm quiet (never press past the
+            # settle budget — pinning the hull tips it on retreat).
+            grip_offset = pads_now - boat_pos
+            place = (
+                self.disk
+                + np.array([0.0, 0.0, self.RELEASE_Z])
+                + np.array([grip_offset[0], grip_offset[1], 0.0])
+            )
+            arm, _ = planner.solve_ik_pads(
+                place,
+                self._arm_now(sim),
+                free_dofs=3,
+            )
+            arm_speed = float(np.abs(sim.data.qvel[planner.arm_dofs]).max())
+            down = boat_pos[2] < 0.0135 and arm_speed < 0.08
+            if down or state.ticks_in_phase > self.SETTLE_TICKS or timeout:
+                self._enter("open")
+            return self._carry(sim, arm, JAW_CLOSED_RAD, rate_deg=1.5)
 
         if state.phase == "open":
             if state.ticks_in_phase >= self.OPEN_TICKS:
