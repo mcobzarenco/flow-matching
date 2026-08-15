@@ -25,6 +25,7 @@ kinematically without GL.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -500,11 +501,16 @@ def run_expert_episode(
     *,
     max_ticks: int = 600,
     render: bool = False,
+    on_obs: Callable[[Any], None] | None = None,
 ) -> dict[str, object]:
     """One privileged episode: reset, run the expert to the clock,
     return the outcome row. ``render=False`` steps physics without
     calling ``observe()`` (planning is pixel-free) — the reset render
     itself is unavoidable (reset returns an observation).
+
+    ``on_obs`` receives every SimObservation (reset + one per tick) —
+    the gate read's video bank rides here; it needs ``render=True``
+    because the unrendered path never produces frames.
 
     REFUSES eval seeds (< DEMO_SEED_BASE): the frozen sim100 holdout
     never appears in demo generation (pre-reg §3)."""
@@ -513,13 +519,19 @@ def run_expert_episode(
             f"seed {seed} is inside the frozen eval holdout — demo seeds "
             f"start at {DEMO_SEED_BASE} (pre-reg contamination guard)",
         )
-    sim.reset(seed)
+    if on_obs is not None and not render:
+        raise ValueError("on_obs needs render=True — no frames otherwise")
+    obs = sim.reset(seed)
+    if on_obs is not None:
+        on_obs(obs)
     expert = ScriptedExpert(sim)
     tick = 0
     for tick in range(max_ticks):  # noqa: B007 — tick is the returned count
         action = expert.action(sim)
         if render:
-            sim.step(action)
+            obs = sim.step(action)
+            if on_obs is not None:
+                on_obs(obs)
         else:
             target = np.clip(
                 np.deg2rad(action),
