@@ -2,7 +2,7 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-16 22:37–22:5xZ (real `date -u` at stamp: 22:44) —
+*Updated 2026-08-16 22:37–22:4xZ (real `date -u` at stamp: 22:42) —
 tick: **run 2 alive and clean at step 1010/3000 (8×100%, loss falling
 0.45→0.36, 11.1/40 GPU-h) but the trend watch DEEPENED at eval-1000 —
 5.00, the bump repeated: 4.05 → 4.54 → 3.74 → 5.00. Per-dataset
@@ -138,7 +138,7 @@ items.*
 
 ## Utilization footer
 
-Session 2026-08-16 22:37–22:5xZ (tick; box run-2 riding ≈ +0.9
+Session 2026-08-16 22:37–22:4xZ (tick; box run-2 riding ≈ +0.9
 GPU-h during the window, local idle): **run 2 clean at 1010/3000
 (8×100%, loss 0.36 falling, 11.1/40 gate) but eval-1000 = 5.00 —
 the bump repeated (4.05→4.54→3.74→5.00), per-dataset from wandb:
