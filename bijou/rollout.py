@@ -12,12 +12,15 @@ checkpoint's per-dataset table (``--stats-repo-id``, present when the
 checkpoint was fine-tuned on this rig's data) or directly from a local
 dataset directory (``--stats-dataset``).
 
-Camera naming matters: prompt slots are positional over SORTED camera keys,
-so the ``--camera`` names must sort the same way as the training dataset's
-camera keys (e.g. a dataset recorded with front/wrist must roll out with
---camera front=... --camera wrist=...). Camera *kinds* (the semantic prompt
-tags) mirror training: the rig dataset's stamped ``meta/camera_kinds.json``
-when ``--stats-dataset`` is given, ``--camera-kind name=kind`` to override.
+Camera keys ARE semantic kinds (``--camera wrist=/dev/video4 --camera
+top=/dev/video6``; vocabulary wrist/top/front/side/unknown, anything
+else refused): the kind is the axis the model sees — it drives the
+prompt's (kind, name) image order, matching training's own kind-major
+sort, and the tag kind-aware prompt formats render. Asserted kinds are
+cross-checked loudly against the ``--stats-dataset``'s judged kinds
+(``meta/camera_kinds.json``) and always win; a mismatch or an
+uncovered judged kind is a warning naming both sides, never a silent
+rewrite.
 
 Safety gates before the arm moves (``bijou.rollout_safety``):
 ``--max-relative-target`` is mandatory (``--unclamped`` opts out,
@@ -82,7 +85,6 @@ from .rollout_safety import (
     JointFrameTransform,
     envelope_violations,
     home_trajectory,
-    parse_camera_kind_overrides,
     require_clamp,
     resolve_camera_kinds,
     state_envelope,
@@ -143,9 +145,13 @@ def parse_args() -> argparse.Namespace:
         "--camera",
         action="append",
         default=[],
-        metavar="NAME=INDEX_OR_PATH",
-        help="repeatable; NAMEs must sort like the training dataset's camera "
-        "keys (positional prompt slots)",
+        metavar="KIND=INDEX_OR_PATH",
+        help="repeatable; the key IS the camera's semantic kind "
+        "(wrist/top/front/side/unknown — anything else is refused): it "
+        "sets the prompt's (kind, name) image order, mirroring "
+        "training's, and the tag kind-aware prompt formats render. "
+        "Cross-checked loudly against the --stats-dataset's judged "
+        "kinds; the asserted kinds always win",
     )
     parser.add_argument("--camera-width", type=int, default=640)
     parser.add_argument("--camera-height", type=int, default=480)
@@ -295,16 +301,6 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="explicitly run without --max-relative-target (nothing limits "
         "per-tick joint motion — not for first runs)",
-    )
-    parser.add_argument(
-        "--camera-kind",
-        action="append",
-        default=[],
-        metavar="NAME=KIND",
-        help="repeatable; override a camera's semantic kind in the prompt "
-        "(the training-time tag). Default resolution mirrors training: "
-        "the rig dataset's stamped meta/camera_kinds.json when "
-        "--stats-dataset is given, else the name-is-kind heuristic",
     )
     parser.add_argument(
         "--skip-envelope-check",
@@ -577,11 +573,7 @@ def main() -> int:
     # run catches a missing clamp early.
     require_clamp(args.max_relative_target, unclamped=args.unclamped)
     camera_names = [spec.partition("=")[0] for spec in args.camera]
-    rig_kinds = resolve_camera_kinds(
-        camera_names,
-        parse_camera_kind_overrides(args.camera_kind, camera_names),
-        args.stats_dataset,
-    )
+    rig_kinds = resolve_camera_kinds(camera_names, args.stats_dataset)
     condition_values = {
         ConditionField.OUTCOME.value: args.outcome,
         ConditionField.SMOOTHNESS.value: args.smoothness,

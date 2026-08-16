@@ -12,13 +12,17 @@ Three gates, all cheap and all before the arm moves:
   the rig stats — catches a wrong ``--stats-repo-id``, a
   ticks-vs-degrees convention mismatch, and an uncalibrated arm before
   any action is sent.
-- **Camera kinds**: resolved the way TRAINING resolved them (the rig
-  dataset's stamped ``meta/camera_kinds.json``), or by explicit
-  ``--camera-kind`` override. Deriving kinds from operator camera
-  names when the dataset says otherwise (a fixed overhead cam named
-  "front" judged kind "top") is silent conditioning skew on exactly
-  the few-shot-transfer surface; the name heuristic survives only when
-  no dataset directory is available.
+- **Camera kinds**: ``--camera`` keys ARE semantic kinds
+  (wrist/top/front/side/unknown; off-vocabulary or duplicate keys are
+  refused). The kind is what the model sees — the prompt's
+  (kind, name) image order and the kind-aware formats' text tags — so
+  the operator asserts it directly, and the assertion is cross-checked
+  LOUDLY against the rig dataset's judged kinds
+  (``meta/camera_kinds.json``: the record of what training rendered
+  for this rig's views — e.g. a fixed overhead cam the dataset NAMED
+  "front" was judged kind "top"). Mismatches and uncovered judged
+  kinds warn and proceed with the asserted kinds — explicit operator
+  input is never silently rewritten.
 
 Plus the joint-frame remap the rollout applies around the robot
 boundary (``--joint-frame``, :class:`JointFrameTransform`): state maps
@@ -222,103 +226,83 @@ def envelope_violations(
     return [j for j, value in enumerate(state) if not (lo[j] <= value <= hi[j])]
 
 
-def parse_camera_kind_overrides(
-    specs: Iterable[str],
-    camera_names: Iterable[str],
-) -> dict[str, str]:
-    """``--camera-kind NAME=KIND`` overrides, validated: the name must be
-    a ``--camera`` name and the kind must be in the vocabulary —
-    explicit operator input is corrected, never degraded to unknown."""
-    names = set(camera_names)
-    overrides: dict[str, str] = {}
-    for spec in specs:
-        name, sep, kind = spec.partition("=")
-        if not sep or not name or not kind:
-            raise SystemExit(f"--camera-kind expects NAME=KIND, got {spec!r}")
-        if name not in names:
-            raise SystemExit(
-                f"--camera-kind {name!r} is not a --camera name ({sorted(names)})",
-            )
-        if kind not in CAMERA_KINDS:
-            raise SystemExit(
-                f"--camera-kind {name}={kind!r}: kind not in the vocabulary "
-                f"{sorted(CAMERA_KINDS)}",
-            )
-        overrides[name] = kind
-    return overrides
-
-
-def camera_kinds_from_names(
-    names: Iterable[str],
-    *,
-    overridden: set[str] | None = None,
-) -> dict[str, str]:
-    """Per-camera semantic kinds from the operator's own camera names: a
-    name inside the judge vocabulary IS its kind; anything else renders
-    "unknown" (trained in-distribution via kind dropout) with a LOUD
-    warning — name cameras by viewpoint to give the model the signal.
-    ``overridden`` names are exempt from the warning (an explicit
-    --camera-kind replaces the fallback, so the message would be
-    untrue)."""
-    kinds: dict[str, str] = {}
-    for name in names:
-        if name in CAMERA_KINDS:
-            kinds[name] = name
-        else:
-            if overridden is None or name not in overridden:
-                print(
-                    f"WARNING: camera name {name!r} is not in the semantic "
-                    f"kind vocabulary {sorted(CAMERA_KINDS)} — its prompt tag "
-                    "renders as 'unknown'",
-                    flush=True,
-                )
-            kinds[name] = "unknown"
-    return kinds
-
-
 def resolve_camera_kinds(
     names: Iterable[str],
-    overrides: dict[str, str],
     stats_dataset: Path | None,
 ) -> dict[str, str]:
-    """Per-camera kinds for the rollout prompt, resolved the way training
-    resolved them.
+    """Validate the rollout's camera kinds and cross-check them against
+    the rig dataset's judged kinds.
 
-    Priority per camera: explicit override → the rig dataset's stamped
-    ``meta/camera_kinds.json`` through training's own resolution path
-    (an unstamped or hash-mismatched dataset rendered its cameras
-    "unknown" in training prompts, so the rollout mirror does too) →
-    the name-is-kind heuristic, only when no dataset directory is
-    available. Fallback notices print only for cameras an override
-    does NOT cover — a loud message must describe what will actually
-    be rendered."""
+    ``--camera`` keys ARE semantic kinds (``top=/dev/video6``): the
+    kind is the axis the model actually sees — it drives the prompt's
+    (kind, name) image order and the tag kind-aware formats render —
+    so the operator states it directly. A key outside the fixed
+    vocabulary (wrist/top/front/side/unknown) or given twice is a
+    SystemExit: explicit operator input is corrected, never silently
+    rewritten, and two same-kind cameras have no expressible prompt
+    slots on this CLI.
+
+    The asserted kinds are ALWAYS used. When ``--stats-dataset`` points
+    at a stamped rig dataset, they are cross-checked against its judged
+    kinds (``meta/camera_kinds.json``, the record of what training
+    rendered for this rig's views): asserted kinds the dataset never
+    judged and judged kinds no camera covers print ONE loud warning —
+    the run proceeds with the operator's kinds. An unstamped dataset
+    (whose training prompts rendered 'unknown') warns when any
+    non-unknown kind is asserted."""
     names = list(names)
-    if stats_dataset is not None:
-        repo_id = stats_dataset.name
-        stamp = annotation_stamp(stats_dataset, repo_id, None)
-        trained = (
-            camera_kinds_of(stats_dataset, repo_id, stamp) if stamp is not None else {}
+    off_vocabulary = sorted(name for name in names if name not in CAMERA_KINDS)
+    if off_vocabulary:
+        raise SystemExit(
+            f"--camera keys are semantic kinds; {off_vocabulary} not in the "
+            f"vocabulary {sorted(CAMERA_KINDS)} — key each camera by its "
+            "viewpoint, e.g. --camera top=/dev/video6 --camera "
+            "wrist=/dev/video4",
         )
-        if not trained and any(name not in overrides for name in names):
+    duplicates = sorted({name for name in names if names.count(name) > 1})
+    if duplicates:
+        raise SystemExit(
+            f"--camera kind(s) {duplicates} given more than once — each "
+            "kind keys ONE prompt slot; a rig with two same-kind views "
+            "cannot be expressed on this CLI",
+        )
+    kinds = {name: name for name in names}
+    if stats_dataset is None:
+        return kinds
+    repo_id = stats_dataset.name
+    stamp = annotation_stamp(stats_dataset, repo_id, None)
+    judged = camera_kinds_of(stats_dataset, repo_id, stamp) if stamp is not None else {}
+    if not judged:
+        if any(kind != "unknown" for kind in kinds):
             print(
-                f"[camera-kinds] {repo_id}: no stamped kinds file — training "
-                "rendered these cameras 'unknown'; mirroring that "
-                "(--camera-kind overrides)",
+                f"WARNING: {repo_id} has no usable stamped kinds file — "
+                "its training prompts rendered every camera 'unknown', "
+                f"but this rollout asserts {sorted(kinds)}. Proceeding "
+                "with the asserted kinds",
                 flush=True,
             )
-        kinds: dict[str, str] = {}
-        for name in names:
-            if trained and name not in trained and name not in overrides:
-                print(
-                    f"[camera-kinds] camera {name!r} is not in the dataset's "
-                    "kinds file — rendering as 'unknown' "
-                    "(--camera-kind overrides)",
-                    flush=True,
-                )
-            kinds[name] = trained.get(name, "unknown")
-    else:
-        kinds = camera_kinds_from_names(names, overridden=set(overrides))
-    kinds.update(overrides)
+        return kinds
+    judged_kinds = set(judged.values())
+    unjudged = sorted(set(kinds) - judged_kinds)
+    uncovered = sorted(judged_kinds - set(kinds))
+    if unjudged or uncovered:
+        clauses: list[str] = []
+        if unjudged:
+            clauses.append(
+                f"asserted kind(s) {unjudged} were never judged for this rig's views",
+            )
+        if uncovered:
+            clauses.append(
+                f"judged kind(s) {uncovered} are covered by no --camera",
+            )
+        print(
+            f"WARNING: --camera kinds {sorted(kinds)} disagree with "
+            f"{repo_id}'s judged kinds {sorted(judged_kinds)} "
+            f"({'; '.join(clauses)}). Proceeding with the asserted kinds — "
+            "the prompt may carry tags/order the model did not train on "
+            "for these views",
+            flush=True,
+        )
     return kinds
 
 
