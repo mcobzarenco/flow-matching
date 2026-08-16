@@ -131,7 +131,28 @@ table vs our mixture: scale 1.0 on every joint, `shoulder_lift`
 is a tripwire (wrong tag, wrong table, `use_degrees` mismatch), not a
 value to accept.
 
-## 6. Rules
+## 6. The four mechanisms — and why they never stack
+
+Four places handle convention differences; each is a COMPLETE fix for
+its scope, so applying two to the same deployment double-remaps:
+
+| Mechanism | Scope | Kind |
+|---|---|---|
+| conversion-time table remap (planned `--remap-stats-to`) | the checkpoint itself, permanently | exact affine, flips included |
+| `--joint-frame v30-to-v21` (rollout; `JointFrameTransform` in `rollout_safety.py` owns the literals, test-pinned both directions) | one physical deployment, at the robot boundary | the official transforms, applied to state in / chunks out |
+| `sim/convmap.py` seam (+ `--convmap-override`) | release-checkpoint-in-sim reads | fitted discrete map around an unmodified checkpoint (off-contract, `_convmap`-tagged) |
+| `bijou.eval --molmo-norm` pdnorm/convmap | offline eval reads only | per-dataset affine wraps; `_pdnorm` additionally rescales spans (quantile equating), which is a DIFFERENT thing from a convention fix |
+
+Rule: a checkpoint whose table was remapped at conversion deploys with
+`--joint-frame rig` and needs no sim seam or eval wrap; an unremapped
+v2.1-table checkpoint picks exactly ONE mechanism per context. The
+rollout envelope gate catches a missing remap (state lands outside the
+table's box); nothing automatic catches a DOUBLE remap on
+shoulder_lift's self-inverse map (90 − (90 − x) = x — identity again!)
+while elbow shifts 180° — a double remap is a half-broken arm, so the
+exclusivity is a rule, not a runtime check.
+
+## 7. Rules
 
 - **Classify before you mix.** Every new dataset, table, or checkpoint
   gets placed on both axes (use §4's fingerprints) before it enters a

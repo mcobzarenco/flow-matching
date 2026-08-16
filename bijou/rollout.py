@@ -841,8 +841,10 @@ def main() -> int:
                     f"({joints}). molmo_flow normalizes with ONE baked-in "
                     "table, so this is a joint-convention mismatch: a "
                     "missing or wrong --joint-frame (converted MolmoAct2 "
-                    "releases speak the pre-lerobot-0.5 degrees frame — try "
-                    "--joint-frame v30-to-v21), or an arm calibrated "
+                    "releases speak the v2.1-era calibration — try "
+                    "--joint-frame v30-to-v21 — unless the table was "
+                    "remapped at conversion, which needs NO remap here), "
+                    "or an arm calibrated "
                     "differently than the checkpoint's training rigs. "
                     "--skip-envelope-check overrides for a deliberately "
                     "unusual start pose.",

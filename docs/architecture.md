@@ -2179,7 +2179,8 @@ Euler-10, 2 cameras, sync loop) — a validation mode, not a control
 mode (~1 s of motion per replan at chunk 30). Deploying the released
 checkpoint on a post-PR#777-calibrated arm (lerobot ≥ 0.5) requires
 `--joint-frame v30-to-v21`: the global q01/q99 table bakes in the
-pre-0.5 degrees frame, so rollout remaps state/actions at the robot
+v2.1-era calibration (zeros/directions; both conventions are degrees
+here — `so101-joint-conventions.md`), so rollout remaps state/actions at the robot
 boundary and gates the first observation against the checkpoint's own
 state band in model frame (docs/rollout_so101.md). Horizon 30 vs 50
 makes matched-window reporting a first-class eval flag. Checkpoint schema grows (new kind,

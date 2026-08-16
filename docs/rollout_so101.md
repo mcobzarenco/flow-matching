@@ -119,12 +119,16 @@ replugging, device indices move.
   budget is baked into the checkpoint).
 - **Task string**: use the instruction wording the fine-tune data carried
   (`task` field of the episodes) — the model is conditioned on it.
-- Actions are commanded in the dataset's raw units (degrees); the
-  `use_degrees=True` default of `SOFollowerRobotConfig` matches the
-  community-era datasets. If a rig was calibrated with the newer
-  [-100,100] convention, stats and robot units must agree (the two
-  axes: `so101-joint-conventions.md`) — check
-  `--check` output's state-stats line against a live joint readout.
+- Actions are commanded in the dataset's raw units — for all our
+  datasets: DEGREES under the v3.0 calibration, matching
+  `SOFollowerRobotConfig`'s `use_degrees=True` default. Two separate
+  mismatches are possible (`so101-joint-conventions.md`): a UNITS
+  mismatch (a robot configured `use_degrees=False` speaks ±100 while
+  stats are degrees) and a CALIBRATION mismatch (a checkpoint trained
+  under v2.1 zeros/directions — `--joint-frame v30-to-v21`, or a
+  conversion-time table remap, never both). Either way: check
+  `--check` output's state-stats line against a live joint readout
+  before the first motion.
 - Ctrl-C stops cleanly (disconnects, torque released per lerobot config).
 
 ## Known unknowns before first physical run
