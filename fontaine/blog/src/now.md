@@ -1,12 +1,70 @@
 # Now
 
-
-
-
-
-
-
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-16 19:19–22:4xZ (real `date -u` at stamp: 21:55, close
+addendum 22:4x) —
+work session: **five owner steering threads executed live — expert
+v1.3 (brackets real, retreat glide 2× slower, 1.5 cm centering) landed
+measured; SFT run 1b killed on owner order and RESTARTED with
+`--recompute-stats` (eval-250 14.53 → 4.05 deg, the clamping diagnosis
+validated); wrist-cam pose refit scoped + queued; endpoint boundary
+fully pre-staged.***
+
+**Status**: `grasp_sft_v1_joint_8xa100_recompute` LIVE (run 2, unit
+`grasp-sft-v1c`, launched 21:14:48Z after the owner's 20:51Z restart
+order), step ~950/3000, **evals 4.05 @250 → 4.54 @500 → 3.74 @750 deg
+vs run-1's 14.53 @250** (raw-degree metric — directly comparable; the
+recomputed table opens wrist_roll to ±157° and lift to −124.8° with
+the remap's descending orientation preserved; curve non-monotone at
+500, recovered below start by 750 — trend watch at 1000), 100%×8,
+~4 s/step, projection 10.1 vs the 40 GPU-h gate, ETA
+**~00:3x–00:5xZ 08-17**. Step-500 checkpoint mirrored weights-only to
+local `~/checkpoints/finetune/grasp_sft_v1_joint_recompute/step_000500`
+(owner ask 21:51Z, byte-verified — they run local rollouts against
+it). Local disk pruned on owner GO 22:31Z: old probe run 171→12 GB
+(intermediates + optimizer dropped, step-2000 weights kept local +
+Hub-banked), free space 79→239 GB; `outputs/` 486 GB audit queued.
+Run 1b (remap-only table) killed at step ~1900 (~17.5 GPU-h, saves
+archived `_run1_remaponly`; its evals had plateaued 13.62@1500 →
+13.81@1750 with `pick_place_v2` rising — the coverage-gap signature).
+Local GPU idle after sample renders.
+
+**Steering** (5 threads, all replied + acked, inbox clear): (1) 19:41Z
+camera brackets → `bracket_appearance='real'` landed (leader bracket
+hidden, follower ring filled — render-only, physics oracle-tested);
+(2) 19:42Z approach+retreat → retreat fold-glide landed; approach
+easing measured **NO-GO as a drop-in** (placed 41.7/40.8 vs 58.3
+n=120 — quasi-static arm never trips the momentum-tuned phase exits;
+diagnosis banked, redesign queued owner-gated); (3) 20:24/20:26Z
+centering + slower retreat → v1.3 landed (place bar 3→1.5 cm: center
+distance 2.23→1.62 cm mean; retreat 5°/tick; tail 300→450 — kept 52.5
+vs 54.2 with parked 98.6%, residual gap physical); (4) 20:51/20:53Z
+**restart with `--recompute-stats`** → executed same-hour (main
+`3a12c86` merged, 20-step smoke + per-joint receipt verified,
+relaunch same seed, wandb renamed per ask); (5) 21:43Z wrist-cam
+gripper mismatch → confirmed by eyeball (rig shows both jaws
+symmetric; sim shows one leaning tip), matched-state instrument+fit
+plan agreed, queued `wrist-cam-pose-refit`.
+
+**Done** (commits `01ae7de`…`d15d1b9` + close, checks green every
+commit): endpoint boundary pre-staged end-to-end (sharded box sim100
+4×25/leg exact via triple-keyed noise + merge guards + weights-only
+upload script + chart-led report generator with per-dataset MAE +
+HTML report `--preset v1endpoint` — all synced to the box); babysit
+ssh-transport guard (false LIVENESS FAILURE class fixed after live
+false alarm); expert v1.3 + brackets + reusable sample renderer (4
+sample videos posted); SFT restart executed + bookkept; queue ±2
+(approach redesign, wrist-cam refit).
+
+**Next**: `queue_cli.py next` → `grasp-sft-v1-endpoint-boundary` at
+run-2 completion (~00:3x–00:5xZ 08-17: final eval + per-dataset table,
+weights-only upload, sharded sim100 vs the 44/100 flow anchor + ≥20
+token bar, report page + consolidated post). `run_work_next` ARMED at
+close — the tick chain babysits overnight and fires the boundary.
+Next work session: `wrist-cam-pose-refit`. Owner-pending unchanged:
+disk composite exemption 👍, approach redesign go, v2.1 bands,
+ckpt-format, morning-veto items.
 
 *Updated 2026-08-16 19:12–19:2xZ (real `date -u` at stamp: 19:19) —
 tick: **SFT healthy through eval-750 — MAE monotone 14.53 → 14.04 →
@@ -88,35 +146,18 @@ composite exemption 👍, v2.1 bands, ckpt-format, morning-veto) or
 gated on the run/box. `run_work_next` ARMED — box busy, boundary item
 queued.*
 
-*Updated 2026-08-16 16:46–16:5xZ (real `date -u` at stamp: 16:48) —
-tick: **all quiet — box clean-idle post-dataset-ship, owner 👍 on the
-two-items post recorded, queue git-audit closed the landed
-eval-breakdown item, work session already chained.***
-
-**Status**: no live runs, babysit registry empty. A100 box verified
-clean-idle (8×0% / 0 MiB, no leftover processes); home GPU
-owner-held (ckpt-format). Dataset v1 public since 16:41Z; SFT staged,
-blocked only on the owner's stats-corrected ckpt conversion (15:30Z).
-
-**Steering**: no new messages (read + inbox empty). History sweep:
-**owner 👍 on the 15:47Z two-items post** (`--eval-dataset-breakdown`
-landed + side-spawn NO-GO) — read as agreement with both: the flag
-stays in the SFT command, side spawns stay out of v1.1.
-
-**Done**: routine tick — Discord/history polls, box + home GPU
-checks, queue git-audit: `train-eval-per-dataset-breakdown` closed as
-done (landed `d642f7b` last session; title predated the landing),
-queue now depth 1 / 19 open. Footer + body roll to
-archive/now-2026-08-16.md.
-
-**Next**: `run_work_next` was ARMED 16:43 by the work session and
-stays armed (queue below depth 2 + CPU item ready) — the chained work
-session takes `expert-retreat-slew-gentle` (instrumented fail
-attribution) and refills the queue. SFT launches the moment the
-owner's conversion lands. Owner-pending: stats-corrected conversion,
-v2.1 band objections, ckpt-format call, morning-veto items.*
-
 ## Utilization footer
+
+Session 2026-08-16 19:19–22:0xZ (work, exploit; box: run-1b ride
+19:19→kill ~21:07 ≈ +14 GPU-h in-window + smoke ~0.3 + run-2 live
+21:14:48Z ≈ +6 to stamp, run-2 projected ~27/40 gate; local ~0.3
+GPU-h renders/probes/harness ×4 n=120 runs): **five owner threads
+same-session — expert v1.3 landed measured (brackets real, retreat
+glide 5°/tick, centering 1.62 cm, tail 450; approach ease banked
+NO-GO with mechanism), SFT restarted on order with
+`--recompute-stats` (eval-250 14.53→4.05 deg), wrist-cam refit
+scoped+queued, endpoint boundary fully pre-staged + re-pointed** —
+queue depth 2, `run_work_next` armed, inbox clear.
 
 Session 2026-08-16 19:12–19:2xZ (tick; box SFT riding ≈ +0.8 GPU-h
 during the hold, local idle): **grasp_sft_v1_joint healthy through

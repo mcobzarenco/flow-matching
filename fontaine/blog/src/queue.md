@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-16T16:47:17Z
+**Updated:** 2026-08-16T21:46:00Z
 
-**Depth call:** depth 3 queued; demo-gen-sharded-a100 is P1 EXECUTE (new A100 box allocated 12:26:52Z, machine-is-yours); home-box gpu items stay blocked under the owner hold (ckpt-format change pending); spawn-v2 dataset constants approved-for-generation 12:21:03Z vs the posted SS5 table.
+**Depth call:** depth 2: endpoint boundary (runnable at run-2 completion ~00:4xZ) + wrist-cam-pose-refit (runnable now, next work session). Others owner-gated (disk composite exemption, approach redesign, v2.1 bands, ckpt-format, morning-veto) or box-gated.
 
-**20 open** (Live 0 · Queued 1 · Blocked 19 · Done 193)
+**22 open** (Live 0 · Queued 2 · Blocked 20 · Done 193)
 
 ## 🔴 Live (0)
 
@@ -14,27 +14,55 @@
 
 *(empty)*
 
-## 🟢 Queued (1)
+## 🟢 Queued (2)
 
 *ready — waiting on a window or a boundary*
 
-**`grasp-sft-v1-endpoint-boundary`** · `cpu`
+**`wrist-cam-pose-refit`** · `cpu`
 
-grasp_sft_v1_joint endpoint boundary (run live since 17:49:48Z 08-16, 3000 steps, ETA ~21:1x-21:3xZ): on unit grasp-sft-v1 inactive + step 3000 saved
+Wrist-cam pose refit vs rig v2 (owner ask 21:43:31Z 08-16, proposal agreed-in-channel 22:0xZ msg 1538665108811812925): sim wrist view shows one small clockwise-leaning orange jaw tip where rig v2 shows BOTH jaws symmetric from th…
 
-**boundary:** Queued 18:1xZ 08-16 at launch. Runnable the moment the run completes; if the 240-min session dies first, the armed run_work_next tick chain picks it up. · [pre-reg](posts/2026-08-16-amendment-grasp-sft-route-c-joint.md)
+**boundary:** Queued 22:0xZ 08-16 at the steering reply.
 
 <details><summary>full record</summary>
 
-grasp_sft_v1_joint endpoint boundary (run live since 17:49:48Z 08-16, 3000 steps, ETA ~21:1x-21:3xZ): on unit grasp-sft-v1 inactive + step 3000 saved — (1) final eval read + per-dataset MAE breakdown table (the --eval-dataset-breakdown lines) to a chart-led report page; (2) checkpoint upload to fontaine-checkpoints (weights-only) same-session per standing rule; (3) sim100 rollout eval vs the route-C joint probe anchors (44/100 unseen flow; token leg vs R2 bar &gt;=20/100) — the primary competence read; (4) wandb link + consolidated post. Babysit entry grasp_sft_v1_joint carries liveness; this item owns the boundary work.
+Wrist-cam pose refit vs rig v2 (owner ask 21:43:31Z 08-16, proposal agreed-in-channel 22:0xZ msg 1538665108811812925): sim wrist view shows one small clockwise-leaning orange jaw tip where rig v2 shows BOTH jaws symmetric from the bottom edge (eyeballed 08-16: /tmp pairs; the sim-wrist-periphery-fix pose overcorrected). Instrument first, fit second, lens-plumbline pattern: (1) matched pairs — replay rig v2 per-frame joint STATES into the sim, render wrist at identical kinematics; (2) measure both sides: in-image jaw-axis angle (orange jaw hue-segmentable real / exact mask sim), bottom-band occupancy fraction, both-jaws-visible rate; (3) fit mount-local camera roll/tilt (+fovy if needed) minimizing the matched-set discrepancy, validate held-out; ship flag-gated (bracket_appearance pattern), rides the next-gen regen with brackets + v1.3 expert. Note: pose change alters recorded wrist frames -&gt; regen-only, never silently.
 
 </details>
 
 ---
 
-## 🟡 Blocked (19)
+**`grasp-sft-v1-endpoint-boundary`** · `cpu`
+
+grasp_sft_v1_joint endpoint boundary — RE-POINTED at run 2 (RESTART --recompute-stats, unit grasp-sft-v1c live since 21:14:48Z 08-16, owner order 20:51:19Z; run 1b killed at ~1900, saves archived _run1_remaponly): on unit inactiv…
+
+**boundary:** Queued 18:1xZ 08-16 at launch; re-pointed 21:1xZ after the owner-ordered restart. Runnable at run-2 completion; the armed run_work_next tick chain owns it if no session is live. · [pre-reg](posts/2026-08-16-amendment-grasp-sft-route-c-joint.md)
+
+<details><summary>full record</summary>
+
+grasp_sft_v1_joint endpoint boundary — RE-POINTED at run 2 (RESTART --recompute-stats, unit grasp-sft-v1c live since 21:14:48Z 08-16, owner order 20:51:19Z; run 1b killed at ~1900, saves archived _run1_remaponly): on unit inactive + step 3000 saved — (1) final eval read + per-dataset MAE breakdown table to the chart-led report page (grasp_sft_v1_endpoint_report.py, NOTE: wandb run id changes — update WANDB_RUN before --extract; absolute MAE not comparable to run 1, different normalization); (2) checkpoint upload (upload_grasp_sft_v1_joint_checkpoint.py ON the box, weights-only) same-session; (3) sharded sim100 on the box (staged_endpoint/eval_box_grasp_sft_v1_joint_sim100.sh smoke then full, merge_rollout_shards.py, reads vs probe anchors 44/100 flow / R2 bar &gt;=20 token); (4) HTML report --preset v1endpoint + wandb link + consolidated post. ETA ~00:3x-00:5xZ 08-17.
+
+</details>
+
+---
+
+## 🟡 Blocked (20)
 
 *waiting on a prerequisite, a boundary, or the owner*
+
+**`expert-approach-quasistatic-redesign`** · `cpu` · **⛔ owner hold**
+
+Approach-leg smoothing done right (owner ask 19:42Z 08-16, drop-in ease measured NO-GO 41.7/40.8 vs 58.3 placed n=120
+
+**boundary:** Queued 20:1xZ 08-16 at the steering slice close.
+
+<details><summary>full record</summary>
+
+Approach-leg smoothing done right (owner ask 19:42Z 08-16, drop-in ease measured NO-GO 41.7/40.8 vs 58.3 placed n=120 — quasi-static arm never trips the momentum-tuned exits; diagnosis banked in scripted_expert.py APPROACH_SLEW_DEG comment + fontaine/notes/smooth_v12*.json): redesign approach/descend for static poses — approach droop feedback (descend's settle-measure-correct pattern, own clip), exit on command-converged + corrected static err, descend entry from parked pose re-tuned (close/lift degraded from parked entry: pinch-miss loops, empty lifts). Instrument: smooth_expert_measure.py (knobs landed: --approach-slew/--retreat-glide), bar = yield-neutral vs 58.3/54.2/94.3 with approach visibly eased; sample videos for the owner eyeball. OWNER-GATED: proposed in-channel 20:1xZ 08-16 (msg 1538641510281519134), awaits their go.
+
+</details>
+
+---
 
 **`demo-gen-v1.1-regen`** · `gpu-a100`
 
