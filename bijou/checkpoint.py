@@ -378,3 +378,48 @@ def write_checkpoint(
         link_or_copy(optimizer, staging / "optimizer.pt")
     validate_checkpoint(staging)
     staging.rename(directory)
+
+
+def describe(checkpoint: Path) -> str:
+    """Human-readable summary of a VALIDATED checkpoint — the
+    inspection surface behind ``python -m bijou.checkpoint <dir>``
+    (validation runs first; an invalid directory raises before any
+    summary prints). Link counts surface the frozen-part dedup: an
+    nlink > 1 weight file shares its inode with a parent save or the
+    imported artifact."""
+    metadata = validate_checkpoint(checkpoint)
+    lines = [
+        f"{checkpoint}: VALID (schema {SCHEMA_VERSION})",
+        (
+            f"  family {metadata.family.value}  step {metadata.step}  "
+            f"chunk {metadata.chunk_size}  action_dim {metadata.action_dim}"
+        ),
+        (
+            f"  backbone {metadata.backbone_id} ({metadata.backbone_depth})  "
+            f"text_trained={metadata.backbone_text_trained}  "
+            f"vision_trained={metadata.backbone_vision_trained}"
+        ),
+        f"  objective {metadata.objective}",
+        f"  serving {metadata.serving}",
+    ]
+    for name, record in sorted(metadata.components.items()):
+        if record["weights"]:
+            weight_file = checkpoint / f"{name}.safetensors"
+            stat = weight_file.stat()
+            lines.append(
+                f"  component {name}: {stat.st_size / 2**20:.1f} MiB, "
+                f"nlink={stat.st_nlink}",
+            )
+        else:
+            lines.append(f"  component {name}: parameterless (config only)")
+    for part in ("backbone_text", "backbone_vision"):
+        stat = (checkpoint / f"{part}.safetensors").stat()
+        lines.append(
+            f"  {part}: {stat.st_size / 2**20:.1f} MiB, nlink={stat.st_nlink}",
+        )
+    lines.append(
+        f"  optimizer.pt: {'present' if (checkpoint / 'optimizer.pt').exists() else 'absent'}",
+    )
+    if metadata.stats_note is not None:
+        lines.append(f"  stats_note: {metadata.stats_note}")
+    return "\n".join(lines)
