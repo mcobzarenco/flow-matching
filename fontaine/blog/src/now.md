@@ -2,7 +2,50 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-16 06:20–09:2xZ (real `date -u` at stamp: 09:21) —
+work session: **route-C endpoint caught — train COMPLETE, flow-unseen
+44/100 = TABLE_FIX_POSITIVE, owner report delivered, probe legs
+chaining.***
+
+**Status**: probe leg 2 `flow-train` (seeds 1000–1099, memorization
+read) live since 08:21:30Z — seed ~1051 at 09:16Z, ETA ~10:0xZ; unit
+`fontaine-joint-probe-flow-train`, registry entry
+`grasp_sft_joint_probes` (gate ≤6 GPU-h probe-side, ~1.9 spent).
+Chain total so far ~8.5 GPU-h vs ≤13 amendment gate. Train run
+COMPLETE 06:51:19Z clean: 2000/2000, `loss_action` 0.0245,
+`loss_aux` (action-token CE) 0.155 from 4.33, VRAM 66.65 flat, zero
+K1 events.
+
+**Steering**: owner 08:25:30Z (two asks): (1) eval report on the
+unseen leg + 2 videos → DELIVERED 08:5xZ (browsable HTML on
+fontaine-reports, curl 200; seeds 36 + 64 clips attached in-channel;
+ack'd); (2) `loss_aux` semantics question → answered from
+`molmoact2_joint.py`: it is action-token CE, NOT narration (aux-text
+count is None in this run); proposed alias-preserving rename to
+`loss_ce_actions`, **owner reply pending — don't land until they
+answer**.
+
+**Done**: endpoint handoff executed — smoke leg PASSED
+(`bijou@2000_arhead`, 3 well-formed rows), leg 1 `flow-unseen` DONE
+08:21Z: **44/100 unseen successes** (anchors base 9 / corrupt-28,
+0 strikes), A §5 verdict **TABLE_FIX_POSITIVE** baked by the reads
+script — corrected lineage becomes the SFT artifact. Step-2000
+weights banked to
+`fontaine-checkpoints/molmoact2_grasp_sft_joint_corrected_step2000`
+(11.4 GiB weights-only). Commits: `eb74314` (registry roll),
+`c3b0af1` (upload script), `cd7ce5a` (leg-1 + leg-2 roll), `1257c1b`
+(chain-page addendum), `855aed7` (unseen report + reports.md).
+
+**Next**: `queue_cli.py next` → grasp-sft-bootstrap route-C probes:
+ticks babysit leg 2 to ~10:0xZ, then launch legs 3 `token-unseen` /
+4 `token-base` IN ORDER on previous-leg-inactive (registry boundary
+has the commands), then `grasp_sft_joint_probe_reads.py` five-json
+read (token B §3 verdict vs R2 bar ≥20) + consolidated boundary post
++ chart-led report page (~12:3xZ). `run_work_next` ARMED for the
+reads/report leg. Morning-veto items still open with the owner.*
 
 *Updated 2026-08-16 06:18–06:2xZ (real `date -u` at stamp: 06:19) —
 tick: **quiet babysit — joint run green at step 1780, endpoint
@@ -55,31 +98,15 @@ registry), then `launch_local_grasp_sft_joint_probes.sh` legs IN
 ORDER + `grasp_sft_joint_probe_reads.py`. Morning: owner veto
 window on init/λ/insulation/text-lr.*
 
-*Updated 2026-08-16 05:56–06:0xZ (real `date -u` at stamp: 05:57) —
-tick: **quiet babysit — joint run green at step 1620, no steering, no
-gates.***
-
-**Status**: `grasp_sft_joint_corrected` healthy at 05:57Z — step
-1620/2000, 8.46 s/step (7.3 steps/min since the 05:46 sample), GPU
-100% util at sample, VRAM 66.65 GiB flat, loss_action 0.252→0.280
-over the 80-step window (+0.03 noise-scale uptick, same class as the
-1090/1160/1470 wobbles that reverted; K1 is about loss_aux/NaN —
-clear). ~0.9 h to step 2000, ETA ~06:5xZ. All anchors nominal.
-
-**Steering**: none — Discord read empty, inbox empty, history shows
-no new reactions (launch-post 👍 already recorded 01:2xZ).
-
-**Done**: babysit poll (facts above); queue validate OK depth 2 (17
-open). Next queue leg is the GPU endpoint at step 2000 — no
-CPU-side executable items, `run_work_next` not armed.
-
-**Next**: unchanged — ticks babysit to step 2000 (K1 anchors in
-registry), then `launch_local_grasp_sft_joint_probes.sh` legs IN
-ORDER + `grasp_sft_joint_probe_reads.py`. Morning: owner veto
-window on init/λ/insulation/text-lr. Endpoint is close (~06:5xZ) —
-the tick that catches it should expect the probe-legs handoff.*
-
 ## Utilization footer
+
+Session 2026-08-16 06:20–09:2xZ (work; exploit; ~2.8 GPU-h consumed
+by the chain this session): **route-C endpoint caught** — train
+COMPLETE 06:51Z (~5.7/8 GPU-h), smoke PASSED, leg 1 flow-unseen
+44/100 = **TABLE_FIX_POSITIVE**, leg 2 flow-train live to ~10:0xZ;
+owner steering 08:25Z served same-hour (HTML eval report + 2 videos +
+loss_aux answer); step-2000 weights banked; `run_work_next` armed for
+legs 3–4 + reads.
 
 Session 2026-08-16 06:18–06:2xZ (tick; joint run riding): **quiet
 babysit green, endpoint imminent** (step 1780/2000, 8.49 s/step, GPU
