@@ -2,9 +2,9 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-16T12:22:34Z
+**Updated:** 2026-08-16T12:27:46Z
 
-**Depth call:** depth 3 queued (2 new owner-ordered/accepted 12:1xZ 08-16: demo-gen sharding readiness P1 + side-spawn probe); gpu-local/box items blocked under the GPU owner-hold (extended 12:11:32Z: checkpoint-format change first); spawn-v2 finalization owner-gated.
+**Depth call:** depth 3 queued; demo-gen-sharded-a100 is P1 EXECUTE (new A100 box allocated 12:26:52Z, machine-is-yours); home-box gpu items stay blocked under the owner hold (ckpt-format change pending); spawn-v2 dataset constants approved-for-generation 12:21:03Z vs the posted SS5 table.
 
 **20 open** (Live 0 · Queued 3 · Blocked 17 · Done 185)
 
@@ -46,11 +46,13 @@ Side-spawn (capsized boat) feasibility probe (owner ask 12:18:57Z 08-16 'place t
 
 **`demo-gen-sharded-a100`** · `cpu`
 
-P1 OWNER-ORDERED 12:18:57Z 08-16 ('Make the sharding changes to be ready to generate the demo dataset'; 8xA100-80GB box confirmed 12:18Z): demo-gen sharding readiness
+P1 EXECUTE (allocation landed 12:26:52Z 08-16: 'machine is all yours'
+
+[pre-reg](posts/2026-08-16-prereg-sim-spawn-v2.md)
 
 <details><summary>full record</summary>
 
-P1 OWNER-ORDERED 12:18:57Z 08-16 ('Make the sharding changes to be ready to generate the demo dataset'; 8xA100-80GB box confirmed 12:18Z): demo-gen sharding readiness — (1) shard driver for sim.collect_demos: N processes, disjoint seed ranges, per-shard --out + resume state, EGL context per shard round-robined over GPUs; (2) LeRobot v3 shard-merge into one dataset (episode/frame reindex + meta/provenance union, kept-seed lists concatenated); (3) HF dataset upload path (hub repo fontaine/*, same huggingface_hub route as checkpoints); (4) benchy tint-band knob: rig-gray band (current) vs wide-hue, mixed-slice config (70/30 APPROVED 12:21:03Z); target ~5,000 kept episodes; spawn protocol = spawn-v2 annulus + upright, OWNER-APPROVED 12:21:03Z ('agree with v1 with just the boat upright in the annulus'); finalize against the posted SS5 proposed-freeze table, objection window open until the box lands. All CPU-implementable now; oracles: 2-shard smoke merge bit-identical to single-run on same seeds, upload dry-run.
+P1 EXECUTE (allocation landed 12:26:52Z 08-16: 'machine is all yours' — 8xA100-80GB box 147.224.218.164 provisioned-access, verified idle, 240 cores/1.77TB/19TB, SSH BatchMode green): demo-gen sharding readiness — (1) shard driver for sim.collect_demos: N processes, disjoint seed ranges, per-shard --out + resume state, EGL context per shard round-robined over GPUs; (2) LeRobot v3 shard-merge into one dataset (episode/frame reindex + meta/provenance union, kept-seed lists concatenated); (3) HF dataset upload path (hub repo fontaine/*, same huggingface_hub route as checkpoints); (4) benchy tint-band knob: rig-gray band (current) vs wide-hue, mixed-slice config (70/30 APPROVED 12:21:03Z); target ~5,000 kept episodes; spawn protocol = spawn-v2 annulus + upright, OWNER-APPROVED 12:21:03Z ('agree with v1 with just the boat upright in the annulus'); finalize against the posted SS5 proposed-freeze table, objection window open until the box lands. All CPU-implementable now; oracles: 2-shard smoke merge bit-identical to single-run on same seeds, upload dry-run. EXECUTION extension: provision the box (repo+uv+assets per checklist), measure per-EGL-context render throughput then size shard count (240 cores &gt;&gt; the 16-32 estimate), launch v1 generation (spawn-v2 annulus + upright +/-180 yaw, 70/30 tint mix, ~5k kept), HF upload + dataset card post. Long-running remote job: launch detached on the box (systemd-run --user or setsid+nohup over ssh), babysit.toml entry at launch. NOTE: class taxonomy has no entry for the new A100 box yet (validator: gpu-local/gpu-box/cpu) — carried as cpu; work session adds a class for 147.224.218.164 to queue_cli validation as part of provisioning.
 
 </details>
 
