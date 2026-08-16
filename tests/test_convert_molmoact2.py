@@ -35,18 +35,18 @@ import torch
 from safetensors.torch import save_file
 
 from bijou.checkpoint import read_metadata, validate_checkpoint
-from bijou.loading import load_vla
-from bijou.models.molmoact2_joint import MolmoAct2JointVLA
 from bijou.convert_molmoact2 import convert
 from bijou.loading import (
     CheckpointTrainArgs,
     MolmoAct2PromptConfig,
     MolmoFlowDecoderConfig,
+    load_vla,
     parse_decoder_config,
     parse_prompt_config,
 )
 from bijou.modelling.decoders.molmo_flow import MolmoFlowConfig
 from bijou.models.molmoact2_flow import MolmoAct2FlowVLA
+from bijou.models.molmoact2_joint import MolmoAct2JointVLA
 from bijou.testing import TINY_MOLMOACT2_VOCAB
 from bijou.vla import VLAFamily
 

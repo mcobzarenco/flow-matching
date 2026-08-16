@@ -404,8 +404,7 @@ def convert(
         backbone_text=imported.text,
         backbone_vision=imported.vision,
         tokenizer_files={
-            name: source_dir / name
-            for name in tokenizer_manifest(family)
+            name: source_dir / name for name in tokenizer_manifest(family)
         },
     )
 
