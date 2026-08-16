@@ -1,4 +1,4 @@
-"""``--offload-optim`` (train.py ``CPUOffloadAdamW``): AdamW moments in
+"""``--offload-optim`` (offload_optim.py ``CPUOffloadAdamW``): AdamW moments in
 host RAM, oracle-pinned to the stock optimizers it replaces.
 
 The claim the flag ships behind is *exact semantics, different
@@ -38,7 +38,8 @@ import io
 import pytest
 import torch
 
-from bijou.train import CPUOffloadAdamW, TrainState, rehome_fused_step_tensors
+from bijou.offload_optim import CPUOffloadAdamW
+from bijou.train import TrainState, rehome_fused_step_tensors
 
 if not torch.cuda.is_available():
     pytest.skip("--offload-optim targets CUDA runs", allow_module_level=True)

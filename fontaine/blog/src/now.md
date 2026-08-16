@@ -10,7 +10,41 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-16 01:47–02:0xZ (real `date -u` at stamp: 01:52) —
+tick: **run green at step ~195; owner replied on offload-optim —
+`CPUOffloadAdamW` extracted to its own module to shrink the future
+rebase.***
+
+**Status**: `grasp_sft_joint_corrected` healthy at 01:48Z — step
+190/2000, 11.4 s/step (log-reported, E2 band), VRAM 66.62 GiB flat,
+loss_action 0.89-band fluctuation, ~5.7 h to endpoint (ETA ~07:3xZ
+unchanged). Instantaneous 0% GPU at the sample is the offloaded
+optimizer's CPU step, not starvation — rate and VRAM match the
+smoke. No gates crossed.
+
+**Steering** (01:16Z owner message, replied + acked 01:5xZ): "cool
+on offload optim" + a worry that main's upcoming train.py
+modularization makes our 185-line train.py diff an annoying rebase.
+Actioned immediately: `CPUOffloadAdamW` (the ~135-line bulk)
+extracted verbatim into new `bijou/offload_optim.py`; train.py keeps
+only the wiring (~50 lines: flag, validation, construction site) +
+one import; tests import the new module. Oracle suite re-ran green
+5/5 post-move (bitwise keystone included). Offered to own the
+rebase when their refactor lands.
+
+**Done**: babysit poll (healthy, facts above); extraction commit
+(this session); Discord reply 1538364422043598878 + inbox ack
+(empty); queue validate OK depth 2 (17 open) — next leg is the
+GPU endpoint at step 2000, no CPU-side executable items, no
+`run_work_next`.
+
+**Next**: unchanged — ticks babysit to step 2000 (K1 anchors in
+registry), then `launch_local_grasp_sft_joint_probes.sh` legs IN
+ORDER + `grasp_sft_joint_probe_reads.py`. Morning: owner veto
+window on init/λ/insulation/text-lr.*
 
 *Updated 2026-08-16 01:0x–01:2xZ (real `date -u` at stamp: 01:16) —
 work session: **ROUTE C LAUNCHED — RAM feasibility measured, joint
@@ -107,31 +141,14 @@ memory optimization (chunked CE), oracle-verify, re-smoke, launch.
 GPU oracle re-runs (convmap tripwires + sim_parallel_oracle) also
 unblock now the GPU is free — attach after the launch settles.*
 
-*Updated 2026-08-16 00:09–00:1xZ (real `date -u` at stamp: 00:10) —
-tick: **quiet hold — no change.***
-
-**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
-OWNER** (13:35Z 08-15), untouched. Main unmoved (`origin/main` =
-`1fb709a`, fully merged). 0 GPU-h.
-
-**Steering**: none new — Discord read + inbox empty at 00:10;
-history shows no new messages or reactions (all five merge-report
-posts remain 👍'd — merge sweep acknowledged as of the 23:58 tick).
-The three owner decisions remain pending: retrain arm pick
-(continue-from-2k vs from-base), route A/B/C, GPU release.
-
-**Done**: routine tick only — Discord + history polls, GPU/process
-check, fetch confirms main unmoved, queue validate OK depth 2 (17
-open), `run_work_next` stays disarmed (both queued items gpu-local
-and owner-gated, no executable CPU-side items). No posts.
-
-**Next**: unchanged — ticks hold until an owner decision lands (arm
-pick + route A/B/C unblock the retrain launch, either arm is one
-command against phase-7 HEAD; GPU release unblocks any launch). GPU
-oracle re-runs (convmap tripwires + sim_parallel_oracle) attach to
-the next free-GPU boundary.*
-
 ## Utilization footer
+
+Session 2026-08-16 01:47–02:0xZ (tick; joint run riding): **babysit
+green** (step 190/2000, 11.4 s/step, VRAM 66.62 flat) + **owner
+rebase worry actioned same-session** — `CPUOffloadAdamW` extracted
+from train.py into `bijou/offload_optim.py` (train.py keeps ~50
+wiring lines; oracles 5/5 + check.py green post-move), replied
+in-channel.
 
 Session 2026-08-16 00:24–01:5xZ (work, explore+exploit; ~0.3 GPU-h
 smokes, joint run launched and running): **route C feasibility +
@@ -144,14 +161,6 @@ s/step / ETA ~07:3xZ), first poll green; then during the ride:
 `--serve-head` + five-leg probe launcher + oracle-pinned reads
 instrument (`5656532`, `a2ab680`) so the endpoint boundary is
 one command per leg.
-
-Session 2026-08-16 00:20–00:2xZ (tick; 0 GPU-h): **owner steering
-landed 00:18Z** — GPU released, route C (joint) picked
-RAM-permitting with AR-objective memory optimization as the
-make-it-fit fallback; trunk attachment read (migration complete
-through phase 7, our box gate closed). Replied in-channel + acked;
-`run_work_next` ARMED — chained work session does the RAM
-feasibility (analytic + smoke) then the joint launch.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
