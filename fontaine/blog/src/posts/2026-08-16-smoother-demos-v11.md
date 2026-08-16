@@ -84,8 +84,17 @@ the same session:
   real rig's wooden disk is **78% brighter than its table** (ratio
   1.78, visible side wall + drop shadow, ~3,400 px); the sim disk is
   **slightly darker than its surround** (ratio 0.95) — isoluminant
-  camouflage. Proposed v1.1 fix: recalibrate the disk material to the
-  real ratio (registered appearance change, owner sign-off pending).
+  camouflage. Calibration attempt (same session) found the real
+  constraint: the raw-rendered disk is *already* near saturation
+  (228/255) — the v3 composite's per-episode affine (gain ~0.55,
+  fitted on table statistics) compresses any foreground white to
+  ≤~1.1× the plate, so the real 1.78 is unreachable by material alone
+  (measured: v1 0.88 mean, brightened material 0.87). Revised v1.1
+  proposal: exempt the disk's segmentation mask from the episode
+  affine (keep the global grade) — predicted ~1.5; a composite-
+  semantics change under the `disk_appearance="realcal"` flag, owner
+  sign-off pending (`fontaine/scripts/disk_contrast_probe.py` is the
+  instrument).
 - **Episode-boundary frame**: the merged dataset is exact — data
   indices contiguous across all 5,000 episodes, per-episode video
   spans equal length/fps, zero overlaps, ffprobe frame counts match

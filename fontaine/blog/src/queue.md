@@ -6,7 +6,7 @@
 
 **Depth call:** depth 3 queued; demo-gen-sharded-a100 is P1 EXECUTE (new A100 box allocated 12:26:52Z, machine-is-yours); home-box gpu items stay blocked under the owner hold (ckpt-format change pending); spawn-v2 dataset constants approved-for-generation 12:21:03Z vs the posted SS5 table.
 
-**21 open** (Live 0 · Queued 2 · Blocked 19 · Done 191)
+**20 open** (Live 0 · Queued 1 · Blocked 19 · Done 193)
 
 ## 🔴 Live (0)
 
@@ -14,23 +14,9 @@
 
 *(empty)*
 
-## 🟢 Queued (2)
+## 🟢 Queued (1)
 
 *ready — waiting on a window or a boundary*
-
-**`disk-retint-prep-cpu`** · `cpu`
-
-Disk retint prep (CPU, flag-gated — activation owner-gated): implement the top-cam disk material recalibration behind a sim flag (target = measured real ratio ~1.8 disk/table luminance, warm hue, check side-wall shading term), re…
-
-**boundary:** Queued 18:1xZ 08-16. Executable now (local GPU free for renders). Output: flag + oracle + comparison strip + achieved-ratio number appended to the smoother-demos post; unblocks regen blocker (2) into a pure owner 👍.
-
-<details><summary>full record</summary>
-
-Disk retint prep (CPU, flag-gated — activation owner-gated): implement the top-cam disk material recalibration behind a sim flag (target = measured real ratio ~1.8 disk/table luminance, warm hue, check side-wall shading term), render before/after top composites at 3 disk positions + the real reference crop into a comparison strip, measure the achieved ratio with the segmentation instrument (/tmp probes -&gt; proper script). NO default change: v1 appearance stays bit-identical with the flag off (oracle), activation rides demo-gen-v1.1-regen after the owner sign-off on the 18:07Z proposal.
-
-</details>
-
----
 
 **`grasp-sft-v1-endpoint-boundary`** · `cpu`
 
@@ -58,7 +44,7 @@ Demo-gen v1.1 regen on the box (owner 17:07Z: 'develop the next version of the d
 
 <details><summary>full record</summary>
 
-Demo-gen v1.1 regen on the box (owner 17:07Z: 'develop the next version of the demos with much smoother trajectories'): same sharded driver + protocol as v1 (spawn v2.1, mix70, 5k kept, seeds fresh stride) with the landed v1.1 expert (slew 10/12 + tail 300, kept 54.2% measured -&gt; ~2h class instead of 2h07m at better yield). BLOCKED on: (1) box busy with grasp_sft_v1_joint until ~21:1x-21:3xZ 08-16; (2) owner sign-off on the measured disk retint (real/table ratio 1.78 vs sim 0.95 — proposal posted 18:07Z with numbers; instrument item DONE); (3) any further smoothness steering after they see the charts page.
+Demo-gen v1.1 regen on the box (owner 17:07Z: 'develop the next version of the demos with much smoother trajectories'): same sharded driver + protocol as v1 (spawn v2.1, mix70, 5k kept, seeds fresh stride) with the landed v1.1 expert (slew 10/12 + tail 300, kept 54.2% measured -&gt; ~2h class instead of 2h07m at better yield). BLOCKED on: (1) box busy with grasp_sft_v1_joint until ~21:1x-21:3xZ 08-16; (2) owner sign-off on the disk-visibility fix — REVISED after the measured ceiling: material-only NO-GO (episode affine caps foreground at ~1.1x plate), proposal = exempt the disk mask from the episode affine (predicted ~1.5 vs real 1.78; flag disk_appearance='realcal' carries it); (3) any further smoothness steering after they see the charts page.
 
 </details>
 
@@ -312,9 +298,37 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (191)
+## ✅ Done (193)
 
 *closed — the full record stays in each fold*
+
+**`v11-sample-videos`** · `cpu`
+
+v1.1 sample videos for the owner eyeball (pre-regen evidence): re-render 2 kept episodes with the landed v1.1 expert (slew 10/12 + tail 300) through the production collector render path (v2.1+mix70), encode top+wrist side-by-side…
+
+**boundary:** Queued 18:4xZ 08-16. | DONE 18:4xZ 08-16 same slice: seeds 1005 + 1002 (both kept under v1.1) rendered via the production path, top+wrist side-by-side mp4s posted in-channel with --attach (ids 1538620093930405899, 1538620098313453699).
+
+<details><summary>full record</summary>
+
+v1.1 sample videos for the owner eyeball (pre-regen evidence): re-render 2 kept episodes with the landed v1.1 expert (slew 10/12 + tail 300) through the production collector render path (v2.1+mix70), encode top+wrist side-by-side mp4s (&lt;10MB bot cap), post with --attach so the owner can judge the smoothness in-channel before green-lighting the 30-GPU-h regen. Local GPU (owner-released), ~10 min.
+
+</details>
+
+---
+
+**`disk-retint-prep-cpu`** · `cpu`
+
+Disk retint prep (CPU, flag-gated — activation owner-gated): implement the top-cam disk material recalibration behind a sim flag (target = measured real ratio ~1.8 disk/table luminance, warm hue, check side-wall shading term), re…
+
+**boundary:** Queued 18:1xZ 08-16. Executable now (local GPU free for renders). Output: flag + oracle + comparison strip + achieved-ratio number appended to the smoother-demos post; unblocks regen blocker (2) into a pure owner 👍. | DONE 19:0xZ 08-16 with a MEASURED NO-GO on the material-only route: disk_appearance flag landed ('realcal': fresh-beech rgba + emission 0.35, raw 228-&gt;240 near ceiling) + probe promoted to fontaine/scripts/disk_contrast_probe.py (3-seed composite read + real anchor baked). Finding: the v1 raw disk is ALREADY bright (228/255) - the darkening is the v3 top composite's per-episode affine (gain ~0.55 fitted on table stats) which caps ANY foreground at &lt;=~1.1x plate, so ratio 1.78 is unreachable by material alone (measured composite: v1 0.88 mean, realcal 0.87). REVISED PROPOSAL for the owner: exempt the disk segmentation mask from the episode affine (keep the V1 global grade) -&gt; predicted ~1.5; composite-semantics change, owner-gated, would ride v1.1 regen under the same flag.
+
+<details><summary>full record</summary>
+
+Disk retint prep (CPU, flag-gated — activation owner-gated): implement the top-cam disk material recalibration behind a sim flag (target = measured real ratio ~1.8 disk/table luminance, warm hue, check side-wall shading term), render before/after top composites at 3 disk positions + the real reference crop into a comparison strip, measure the achieved ratio with the segmentation instrument (/tmp probes -&gt; proper script). NO default change: v1 appearance stays bit-identical with the flag off (oracle), activation rides demo-gen-v1.1-regen after the owner sign-off on the 18:07Z proposal.
+
+</details>
+
+---
 
 **`topcam-disk-contrast-instrument`** · `cpu`
 

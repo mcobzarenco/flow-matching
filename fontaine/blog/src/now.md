@@ -8,56 +8,57 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-16 16:53–18:0xZ (real `date -u` at stamp: 18:08) —
-work session: **grasp_sft_v1_joint LAUNCHED on the 8×A100 box (owner
-GO + ASAP) and healthy; smoother-demos v1.1 SOLVED + landed with
-kept% UP; both owner bug reports root-caused with instruments, one
-vindicated with real-vs-sim numbers.***
+*Updated 2026-08-16 16:53–19:0xZ (real `date -u` at stamp: 19:02) —
+work session: **grasp_sft_v1_joint LIVE on the 8×A100 box (one
+crash-fix-relaunch cycle, 12-min turnaround, fix first-real-run
+validated); smoother-demos v1.1 SOLVED + landed with kept% UP; disk
+"does not render" root-caused to a composite-grade ceiling; sample
+videos posted.***
 
-**Status**: `grasp_sft_v1_joint_8xa100` LIVE on the box since
-17:49:48Z (unit `grasp-sft-v1`, babysit entry registered): 3000 steps
-eff-96 (12×8), owner's reconverted `molmoact2-so101-released` init;
-20-step fit smoke GREEN first (VRAM 59.65/80 GiB, banner 3 datasets /
-4,551 train eps / 1.49M frames, repeat ×4 = 7.9%+0.8%); first poll
-all 8 GPUs 99–100%, host RAM fine; step 210 loss 3.29→0.65, 3.87
-s/step, ~26 GPU-h/80 gate, **ETA ~21:1x–21:3xZ** (past this session's
-20:53 kill — endpoint boundary is queued + tick-chained). Local GPU
-owner-released ("all yours") and free after chart renders.
+**Status**: `grasp_sft_v1_joint_8xa100` LIVE since **18:21:14Z**
+(unit `grasp-sft-v1b`; launch 1 17:49:48Z died at its FIRST eval —
+the ported molmo_flow decoder returns CPU actions and the joint
+family is the first through in-train validate(); fixed `2d6a2b3`
+`sampled.to(device)`, ~2.5 GPU-h lost, no save existed). Relaunch:
+eval-250 GREEN 14.53 → eval-500 **14.04**, step 530 loss 0.45,
+3.9 s/step, VRAM 59.7/80, **first async save validated** (captured
+24.9s, published 287s behind boundary), host RAM fine, 0 tracebacks.
+Projection ~3.1 GPU-h so far vs the 40 babysit gate; **ETA
+~21:4x–22:0xZ** (past this session's 20:53 kill — endpoint boundary
+queued, babysit registry current, `run_work_next` armed). Local GPU
+owner-released, idle after renders.
 
 **Steering** (3 messages, all replied + acked, inbox clear): (1)
-16:53Z "action traces very jumpy — smoother overall?" → executed
-same-session (below). (2) 17:07Z four-parter: SFT GO at eff-96 →
-launched; smoother demos next → done; top-cam cylinder missing →
-root-caused (real/table lum ratio 1.78 vs sim **0.95** — sim disk
-isoluminant with the table; retint proposal posted 18:07Z, sign-off
-pending); next-episode frame leak → dataset exact (ffprobe counts
-match, contiguous spans), visualizer's inclusive endpoint. (3) 17:29Z
-"start training ASAP" → smoke was already running; launch 17:49:48Z.
+16:53Z "traces jumpy — smoother overall?" → executed same-session.
+(2) 17:07Z four-parter: SFT GO eff-96 → launched; smoother demos →
+landed; top-cam cylinder → root-caused in TWO stages (real/table lum
+ratio 1.78 vs sim 0.95; then the calibration attempt found the v3
+episode affine caps any foreground at ≤~1.1× plate — material-only
+NO-GO, revised proposal = exempt the disk mask from the episode
+affine, predicted ~1.5, flag `disk_appearance='realcal'` landed,
+sign-off pending); frame leak → dataset exact (ffprobe counts match),
+visualizer's inclusive endpoint. (3) 17:29Z "start ASAP" → launched.
 
-**Done** (commits `859b249` merge, `0e77650`, `dbc0731`, + this
-close; checks green): main merged (owner's convert fix);
-**smoother-expert v1.1 landed** — output-stage feedforward slew
-limiter (10°/tick arm / 12 jaw, `None`=legacy, 2 oracles) + collector
-tail budget 150→300; instrumented attribution harness
-`smooth_expert_measure.py` (5 configs × 120 seeds banked in
-notes/smooth_*.json): **v1.1 kept 54.2% vs 45.8 baseline / 48.3
-anchor, parked-of-placed 94.3% vs 53.5, max commanded step 293°→10°**;
-root causes measured (6°/tick starved retries at the main clock;
-success() fires mid-settle so tail-150 demoted 13/120 placed episodes
-— a shipped-v1 yield tax); 3 dark-theme charts + blog post
-`2026-08-16-smoother-demos-v11.md`; merged-dataset boundary audit
-(5,000 eps clean); disk-contrast instrument (real 1.78 vs sim 0.95);
-SFT launcher script + babysit entry; queue ±: 2 closed
-(retreat-slew broadened order, disk instrument), 3 added.
+**Done** (commits `859b249`, `0e77650`, `dbc0731`, `d40d43d`,
+`2d6a2b3` + close; checks green): main merged; **smoother-expert
+v1.1** — output-stage feedforward slew (10°/tick arm / 12 jaw,
+`None`=legacy, 2 oracles) + tail budget 150→300; attribution harness
+`smooth_expert_measure.py`, 5 configs × 120 seeds banked: **kept
+54.2% vs 45.8 baseline / 48.3 anchor, parked 94.3% vs 53.5, max step
+293°→10°/tick** (6°/tick NO-GO measured: main-clock starvation;
+tail-150 was demoting 13/120 placed at BASELINE — a shipped-v1 yield
+tax); blog post + 3 dark charts; merged-dataset boundary audit (5,000
+eps exact); disk instruments (`disk_contrast_probe.py` + real
+anchor); eval-device fix `2d6a2b3`; SFT launcher + babysit entry;
+2 sample v1.1 videos posted in-channel; queue ±: 4 closed, 4 added.
 
 **Next**: `queue_cli.py next` → `grasp-sft-v1-endpoint-boundary`
-(fires when the run completes ~21:1x–21:3xZ: eval read + per-dataset
-MAE table + ckpt upload + sim100 rollout vs the 44/100 anchor +
-report). Then `disk-retint-prep-cpu` (flag-gated, unblocks the v1.1
-regen to a pure owner 👍). `demo-gen-v1.1-regen` blocked on box-free
-+ retint sign-off. Owner-pending: retint 👍, v2.1 band objections,
-morning-veto items. `run_work_next` ARMED — box busy + CPU queue
-non-empty.*
+(fires at run completion ~21:4x–22:0xZ: final eval + per-dataset MAE
+table + ckpt upload + sim100 rollout vs the 44/100 anchor + report
+page). Depth 1 with reason: every other item is owner-gated (disk
+composite exemption 👍, v2.1 bands, ckpt-format, morning-veto) or
+gated on the run/box. `run_work_next` ARMED — box busy, boundary item
+queued.*
 
 *Updated 2026-08-16 16:46–16:5xZ (real `date -u` at stamp: 16:48) —
 tick: **all quiet — box clean-idle post-dataset-ship, owner 👍 on the
@@ -143,22 +144,18 @@ ARMED — box idle + CPU queue non-empty.*
 
 ## Utilization footer
 
-Session 2026-08-16 16:53–18:0xZ (work, exploit; box SFT launched
-17:49:48Z ≈ +8.5 GPU-h box share this session (8 GPUs × ~64 min),
-run projected ~26/80 gate; local ~0.1 GPU-h chart/probe renders):
-**grasp_sft_v1_joint launched** (smoke-gated, eff-96 owner delta,
-first-poll 8×100% util) + **smoother-demos v1.1 landed same-session**
-(kept 54.2 vs 45.8, parked 94.3 vs 53.5, max step 293°→10°/tick,
-n=120×5 configs instrumented) + owner bug reports: dataset boundaries
-proven exact, top-cam disk mis-calibration measured (real 1.78 vs sim
-0.95) with retint proposal pending; 3 owner messages answered live.
-
-
-Session 2026-08-16 16:46–16:5xZ (tick; 0 GPU-h — box clean-idle
-post-ship, home GPU owner-held): quiet babysit — owner 👍 on the
-two-items post recorded, queue git-audit closed the landed
-eval-breakdown item (depth 1), `run_work_next` stays armed for the
-retreat-slew item; SFT remains owner-blocked on the conversion.
+Session 2026-08-16 16:53–19:0xZ (work, exploit; box SFT: launch 1
++8×28 min ≈ 3.7 GPU-h incl. the eval-crash loss ~2.5, relaunch live
+18:21Z ≈ +5.5 GPU-h to stamp, run projected ~26/80 gate; local ~0.2
+GPU-h renders/probes): **grasp_sft_v1_joint launched, crashed at
+first eval (molmo_flow CPU actions × in-train validate), fixed +
+relaunched in 12 min, fix + first async save both first-real-run
+validated, evals falling 14.53→14.04**; **smoother-demos v1.1 landed
+same-session** (kept 54.2 vs 45.8, parked 94.3, max step 293°→10°,
+n=120×5 instrumented + attribution); dataset boundaries proven exact;
+top-cam disk: real-vs-sim 1.78-vs-0.95 then the composite-affine
+ceiling (material NO-GO, exemption proposal pending 👍); 2 v1.1
+sample videos in-channel; 3 owner messages answered live.
 
 Session 2026-08-16 14:38–16:5xZ (work, exploit; box demo-gen rode to
 completion ≈ +14.4 GPU-h this session's share of the 16.9 total, home

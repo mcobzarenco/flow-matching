@@ -226,6 +226,26 @@ class SimObservation:
     state: np.ndarray
 
 
+def _apply_disk_realcal(model: mujoco.MjModel) -> None:
+    """Disk material recalibrated to the MEASURED real top-cam
+    statistics (2026-08-16 instrument read: real disk/table luminance
+    ratio 1.78 with a visible side wall; the v1 material composites at
+    0.95 — slightly darker than its surround, isoluminant camouflage).
+    Brightens the diffuse color to fresh-beech with a small emission
+    floor (raw render 228 -> 240). MEASURED LIMIT (2026-08-16 19:0xZ,
+    disk_contrast_probe.py): material changes alone CANNOT reach the
+    real ratio — the raw disk is already near saturation and the v3
+    episode affine (gain ~0.55 fitted on table statistics) compresses
+    any foreground white to <=~1.1x the plate; the remaining piece is
+    composite-side (exempt the disk mask from the episode affine,
+    predicted ~1.5) — a registered appearance change, owner-gated.
+    Touches ONLY the wood_disk material — flag-gated, v1 default
+    untouched (oracle in tests)."""
+    mat = model.material("wood_disk")
+    model.mat_rgba[mat.id, :3] = (1.0, 0.93, 0.78)
+    model.mat_emission[mat.id] = 0.35
+
+
 class SO101Sim:
     """Seeded, deterministic-per-seed SO-101 pick-place environment."""
 
@@ -243,6 +263,7 @@ class SO101Sim:
         arm_texture: str | None = None,
         spawn_version: str = "v1",
         tint_band: str = "rig_gray",
+        disk_appearance: str = "v1",
     ) -> None:
         if render_style not in ("v0", "v1", "v2", "v3", "v4"):
             raise ValueError(
@@ -288,6 +309,11 @@ class SO101Sim:
             raise ValueError(
                 f"tint_band {tint_band!r} not in ('rig_gray', 'wide', 'mix70')",
             )
+        if disk_appearance not in ("v1", "realcal"):
+            raise ValueError(
+                f"disk_appearance {disk_appearance!r} not in ('v1', 'realcal')",
+            )
+        self.disk_appearance = disk_appearance
         self.spawn_version = spawn_version
         self.tint_band = tint_band
         # Spawn-v2 (pre-reg 2026-08-16, finalized): disk uniform over
@@ -309,6 +335,8 @@ class SO101Sim:
             self.model = self._compile_arm_surface_texture()
         else:
             self.model = mujoco.MjModel.from_xml_path(str(SCENE_PATH))
+        if disk_appearance == "realcal":
+            _apply_disk_realcal(self.model)
         self._widen_joint_limits()
         self._apply_servo_sysid()
         self.data = mujoco.MjData(self.model)
