@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-16T16:42:46Z",
+ "updated_utc": "2026-08-16T16:47:17Z",
  "depth_reason": "depth 3 queued; demo-gen-sharded-a100 is P1 EXECUTE (new A100 box allocated 12:26:52Z, machine-is-yours); home-box gpu items stay blocked under the owner hold (ckpt-format change pending); spawn-v2 dataset constants approved-for-generation 12:21:03Z vs the posted SS5 table.",
  "items": [
   {
@@ -1853,10 +1853,11 @@
   {
    "id": "train-eval-per-dataset-breakdown",
    "class": "cpu",
-   "status": "queued",
+   "status": "done",
    "owner_hold": false,
    "prereg": null,
-   "title": "OWNER WORK ORDER 15:21:37Z 08-16: bijou.train eval flag reporting the eval MAE-chunk PER DATASET to wandb (breakdown keyed by each holdout item's repo id, riding the existing per-item MAE reduction in train/loop.py) plus a wandb table of eval-sample counts per dataset (how many of --eval-samples came from each repo). Lands with tests BEFORE the SFT pre-reg; the SFT command then runs --eval-every 250 --eval-samples 256 --holdout-episodes 0.1 (owner-specified)."
+   "title": "OWNER WORK ORDER 15:21:37Z 08-16: bijou.train eval flag reporting the eval MAE-chunk PER DATASET to wandb (breakdown keyed by each holdout item's repo id, riding the existing per-item MAE reduction in train/loop.py) plus a wandb table of eval-sample counts per dataset (how many of --eval-samples came from each repo). Lands with tests BEFORE the SFT pre-reg; the SFT command then runs --eval-every 250 --eval-samples 256 --holdout-episodes 0.1 (owner-specified).",
+   "closed": "2026-08-16T16:48Z tick git-audit: landed as d642f7b last work session (per-dataset MAE lines + counts table, 4 oracles, flag default-off), posted 15:47Z and owner-\ud83d\udc4dd; queue title predated the landing."
   },
   {
    "id": "expert-retreat-slew-gentle",
@@ -1875,5 +1876,5 @@
    "title": "OWNER-TAKEN 15:30:26Z 08-16 ('I'll fix the different joint convention at conversion time and let you know'): PREREQ FOUND 15:3xZ 08-16 (measured): released so101 checkpoint's recorded q01/q99 stats table is in a different joint convention than ALL our v3.0 data (lift q01-q99 = 45->186 vs data -103->+29, non-overlapping) -- direct SFT would clamp-distort every frame (corrected-stats-table failure class, at conversion). Fix: recompute mean/std/q01/q99 from the SFT train mixture (demo-v1 + both rig sets) and write into the converted checkpoint's stats row (+ per-dataset rows if the tooling allows) before any launch; oracle: normalized-range coverage check over a sample of each dataset."
   }
  ],
- "updated": "2026-08-16T16:42:46Z"
+ "updated": "2026-08-16T16:47:17Z"
 }

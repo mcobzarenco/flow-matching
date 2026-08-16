@@ -8,6 +8,34 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-16 16:46–16:5xZ (real `date -u` at stamp: 16:48) —
+tick: **all quiet — box clean-idle post-dataset-ship, owner 👍 on the
+two-items post recorded, queue git-audit closed the landed
+eval-breakdown item, work session already chained.***
+
+**Status**: no live runs, babysit registry empty. A100 box verified
+clean-idle (8×0% / 0 MiB, no leftover processes); home GPU
+owner-held (ckpt-format). Dataset v1 public since 16:41Z; SFT staged,
+blocked only on the owner's stats-corrected ckpt conversion (15:30Z).
+
+**Steering**: no new messages (read + inbox empty). History sweep:
+**owner 👍 on the 15:47Z two-items post** (`--eval-dataset-breakdown`
+landed + side-spawn NO-GO) — read as agreement with both: the flag
+stays in the SFT command, side spawns stay out of v1.1.
+
+**Done**: routine tick — Discord/history polls, box + home GPU
+checks, queue git-audit: `train-eval-per-dataset-breakdown` closed as
+done (landed `d642f7b` last session; title predated the landing),
+queue now depth 1 / 19 open. Footer + body roll to
+archive/now-2026-08-16.md.
+
+**Next**: `run_work_next` was ARMED 16:43 by the work session and
+stays armed (queue below depth 2 + CPU item ready) — the chained work
+session takes `expert-retreat-slew-gentle` (instrumented fail
+attribution) and refills the queue. SFT launches the moment the
+owner's conversion lands. Owner-pending: stats-corrected conversion,
+v2.1 band objections, ckpt-format call, morning-veto items.*
+
 *Updated 2026-08-16 14:38–16:5xZ (real `date -u` at stamp: 16:43) —
 work session: **v1 DATASET SHIPPED — 5,000/5,000 kept, merged, PUBLIC
 on HF with card + visualizer link; SFT staged end-to-end; side-spawn
@@ -62,87 +90,13 @@ pre-reg once the owner's stats-corrected conversion lands
 ckpt-format conversion call, morning-veto items. `run_work_next`
 ARMED — box idle + CPU queue non-empty.*
 
-*Updated 2026-08-16 14:34–14:4xZ (real `date -u` at stamp: 14:37) —
-tick: **demo-gen-v1c babysit GREEN — 96/96 shards live, kept ratio
-46.6% tracking the 48.3% anchor, rate ramped to 39.6 kept/min, ETA
-~16:3xZ.***
-
-**Status**: **demo-gen-v1c LIVE** on 147.224.218.164, babysit exit 0
-— 3 driver procs, all 8 GPUs loaded (~9.5 GiB each, 58–97% util),
-driver log 396/5000 kept of 850 attempted (**46.6%**, tracking the
-measured 48.3%, well above the ~40% regression floor), rate ramped
-23→39.6 kept/min since launch, driver ETA 116 min → **DONE ~16:3xZ**;
-GPU-h projection 18.4 vs the 80 gate. Home GPU untouched (owner
-hold). `origin/main` advanced to `cdac435` (ckpt schema-v2 flip +
-`validate_checkpoint` CLI + `--family` importer) — merge stays queued
-for the next work session per the 14:24Z post.
-
-**Steering**: none — `read` empty, inbox empty, history sweep shows
-no new messages or reactions since the 14:32:53Z launch post.
-
-**Done**: routine tick — babysit + kept-ratio anomaly check straight
-from the driver log (no regression, no substitution flood), queue
-validate OK depth 2 (20 open), overdue footer roll executed (26
-session notes + the 12:03-stamp entry → archive/now-2026-08-16.md).
-
-**Next**: unchanged — **`run_work_next` ARMED** (14:33, by the work
-session): the chained work session takes the main merge past
-`57c6843` and `side-spawn-feasibility-probe` (CPU) while generation
-runs; boundary ~16:3xZ: merge shards → HF upload → dataset card post
-(recipe in the queue item + babysit entry). Owner-pending: v2.1 band
-objections, ckpt-format conversion call, morning-veto items.*
-
-*Updated 2026-08-16 12:36–14:3xZ (real `date -u` at stamp: 14:29) —
-work session: **P1 executed end-to-end — sharded demo-gen stack
-built, A100 box provisioned, spawn-v2 A′ FAILED → measured v2.1
-amendment, two owner mid-flight changes folded in, 5k generation
-LIVE.***
-
-**Status**: **demo-gen-v1c LIVE on 147.224.218.164** since 14:25:12Z —
-96 shards × 8 GPUs (37–83% util, ~9.3 GiB each), v2.1 + mix70 tint +
-retreat tail, target 5,000 kept from seeds 10000+ (stride 2000).
-First poll 14:2xZ: 96/96 shards live, 69 kept/155 attempted (44.5% ≈
-the measured 48.3%), rate ramping through 23 kept/min, ETA ~2.5–3.5 h.
-Babysit entry `demo_gen_v1` registered (progress-log,
-`logs/driver.log`). Home GPU untouched (owner hold, ckpt-format).
-
-**Steering** (5 messages, all replied + acked, inbox clear): (1)
-13:38Z local-agent ckpt schema-v2 note (main `57c6843`) → ack'd;
-merge at next session top, nothing of mine loads checkpoints now. (2)
-13:46Z **retreat-to-rest tail for demos** → implemented: expert
-retreats up-and-back then slews HOME; collector records the tail and
-re-verifies success after it (knocked boat = miss); 48.3% kept, 86%
-end parked, median 272 ticks (n=120). (3) 14:05Z **standalone public
-dataset repo** → confirmed `mcobzarenco/fontaine-grasp-demos-v1`,
-public at creation. (4+5) single-core question, self-resolved (was
-the smoke).
-
-**Done** (commits `05a1199`, `439704f`, `07f6de5`, check.py 952):
-sharded demo-gen stack (driver w/ manifest-guarded resume + EGL/CUDA
-round-robin; LeRobot shard-merge with **bit-identical oracle** —
-parquet columns, decoded video pixels, stats; HF upload + card w/
-dry-run); tint knob (rig_gray/wide/mix70); spawn-v2 **finalized**
-(frozen 977-cell mask committed) then **A′ FAILED 19.8%/600 seeds**
-→ diagnosed shoulder-lift servo *saturation* (hold probe: force frac
-1.00, sag 3→20 mm over r 0.20→0.36; the reachability instrument's
-torque field was wrong) → **registered v2.1 amendment** (boat r_base
-[0.16,0.27], disk [0.18,0.32]; 53.8%/400 measured); found + fixed the
-**phantom moved-disk collision** (midphase BVH bakes compiled
-geom_pos; boat fell through — v2/v2.1 disable midphase, v1
-bit-identical); A100 box provisioned (GL/EGL userspace + fabric
-manager 580.178.04 aligned after apt skew, uv env, assets, HF token);
-queue class `gpu-a100`; prereg §6/§7/§7.1 addenda; 3 probe reports
-banked.
-
-**Next**: `queue_cli.py next` → `side-spawn-feasibility-probe` (CPU,
-owner-accepted). Boundary: generation DONE ~17–18Z → merge → upload →
-card post (recipe in the queue item + babysit entry). Owner-pending:
-v2.1 band objections (flagged in-channel), ckpt-format conversion
-call, morning-veto items. Next session: merge main past `57c6843`.
-`run_work_next` ARMED — the tick chain babysits the run and the next
-work session takes the merge/upload boundary or the side-spawn probe.*
-
 ## Utilization footer
+
+Session 2026-08-16 16:46–16:5xZ (tick; 0 GPU-h — box clean-idle
+post-ship, home GPU owner-held): quiet babysit — owner 👍 on the
+two-items post recorded, queue git-audit closed the landed
+eval-breakdown item (depth 1), `run_work_next` stays armed for the
+retreat-slew item; SFT remains owner-blocked on the conversion.
 
 Session 2026-08-16 14:38–16:5xZ (work, exploit; box demo-gen rode to
 completion ≈ +14.4 GPU-h this session's share of the 16.9 total, home
@@ -155,28 +109,6 @@ oracles; main merged; released-ckpt stats-table convention mismatch
 FOUND (would clamp-distort SFT) → owner took the conversion fix; 7
 owner messages answered live incl. a corrected claim of mine; queue
 ±: +3 owner items, 3 closed (probe, demo-gen, stale spawn-v2 parent).
-
-Session 2026-08-16 12:36–14:3xZ (work, exploit; ~0.5 GPU-h of
-smokes/probes on the A100 box + **demo-gen-v1c live from 14:25Z
-accruing 8 GPU-h/h**, home GPU owner-held): **P1 demo-gen executed:
-stack built with oracles (952 green), box provisioned from bare
-(GL/EGL + fabric-manager version skew diagnosed + fixed), spawn-v2
-A′ failed honest (19.8%) → servo-saturation diagnosis → registered
-v2.1 amendment (53.8% measured) + phantom-disk collision fix +
-owner's retreat-tail folded in mid-flight — 5k generation running.**
-5 owner messages answered, inbox clear; queue depth 2,
-`run_work_next` ARMED.
-
-Session 2026-08-16 12:09–12:3xZ (tick; home GPU owner-reserved, hold
-extended): **live 7-message owner exchange all answered <2 min from
-code/measured data, ending in a new 8×A100-80GB machine allocated**
-— 80-GiB rec (66.65 GiB measured) taken, demo-gen sharding ordered,
-**v1 dataset locked 12:21:03Z (spawn-v2 annulus + upright + 70/30
-tint mix, ~5k kept)**, box `147.224.218.164` provisioned + verified
-(8×A100 idle, 240 cores) and **allocated 12:26:52Z "machine is all
-yours"**; side-spawn needs a righting capability (probe queued);
-main fast-forwarded to fontaine `3a3daa6` by the owner; queue depth
-3, `run_work_next` ARMED for the P1 execution.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
