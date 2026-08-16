@@ -558,6 +558,7 @@ class BijouPolicy:
         ticket_map: Path | None = None,
         mask_state: bool = False,
         molmo_norm: MolmoNorm = MolmoNorm.CHECKPOINT,
+        serve_head: str | None = None,
     ) -> None:
         self.name = f"bijou@{checkpoint.name.removeprefix('step_').lstrip('0') or '0'}"
         if sample_draws > 1:
@@ -770,6 +771,53 @@ class BijouPolicy:
             for decoder_module in (self.flow_decoder, self.ar_decoder):
                 if decoder_module is not None:
                     decoder_module.to(dtype=flow_decoder_dtype)
+        # Serving-head override (--serve-head): dispatch-only — the
+        # batch, prompt and encode are the family's own (a joint
+        # family's CE rider trained on exactly the flow branch's
+        # prefix, so the token head is served on the SAME collated
+        # inputs; predict_ar consumes them as-is). The name suffix
+        # follows the house convention: a non-designated-head read
+        # must never be mistakable for the deployment decode.
+        if serve_head not in (None, "flow", "ar"):
+            raise SystemExit(
+                f"--serve-head must be 'flow' or 'ar', got {serve_head!r}",
+            )
+        if serve_head == "ar" and self.ar is None:
+            raise SystemExit(
+                f"--serve-head ar: {self.spec.family.value} has no AR "
+                "surface — drop the flag",
+            )
+        if serve_head == "flow" and self.flow is None:
+            raise SystemExit(
+                f"--serve-head flow: {self.spec.family.value} has no flow "
+                "surface — drop the flag",
+            )
+        if serve_head == "flow" and ar_temperature is not None:
+            raise SystemExit(
+                "--serve-head flow contradicts --ar-temperature (an AR "
+                "sampling knob) — pick one",
+            )
+        if serve_head == "ar" and sde_noise_level is not None:
+            raise SystemExit(
+                "--serve-head ar contradicts --sde-noise-level (a flow "
+                "decode knob) — pick one",
+            )
+        if serve_head == "ar" and target_time is not None:
+            raise SystemExit(
+                "--serve-head ar contradicts --target-time (the φ_s flow "
+                "shortcut read) — pick one",
+            )
+        if serve_head is not None and generate:
+            raise SystemExit(
+                "--serve-head with --generate is unmeasured (narration "
+                "owns its own decode path) — pick one",
+            )
+        self.serve_flow: bool = (
+            self.flow is not None if serve_head is None else serve_head == "flow"
+        )
+        default_head = "flow" if self.flow is not None else "ar"
+        if serve_head is not None and serve_head != default_head:
+            self.name += f"_{serve_head}head"
         if generate and self.narrating is None:
             raise SystemExit(
                 f"--generate requested but {self.spec.family.value} has "
@@ -1405,7 +1453,13 @@ class BijouPolicy:
         # the decoder would draw from ambient RNG: irreproducible and
         # batch-composition-dependent).
         noise: Tensor | None = None
-        if isinstance(self.flow_decoder, FlowDecoder):
+        if not self.serve_flow:
+            # --serve-head ar on a flow-carrying family: dispatch-only —
+            # same batch, same encode; the designated flow decode (and
+            # its noise pre-draw) is skipped, the token head decodes
+            # greedily below.
+            pass
+        elif isinstance(self.flow_decoder, FlowDecoder):
             shape = (batch.actions.shape[1], batch.actions.shape[2])
             noise = self._flow_noise(items, indices, 1, shape).to(self.device)
         elif isinstance(self.flow_decoder, MolmoFlowDecoder):
@@ -1424,7 +1478,7 @@ class BijouPolicy:
                 [chunk.cpu() for chunk in narrated.actions],
                 narrated.generations,
             )
-        if self.flow is not None:
+        if self.flow is not None and self.serve_flow:
             if self.target_time is not None:
                 # The φ_s shortcut read — the gemma flow family's
                 # concrete predict_flow widening (__init__ validated

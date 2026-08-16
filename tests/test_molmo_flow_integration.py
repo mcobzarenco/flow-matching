@@ -442,6 +442,43 @@ def test_eval_policy_narrows_capabilities_loudly(
     refused(sde_noise_level=0.0)
     refused(target_time=0.0)
     refused(offload_ple=True)  # Molmo2 trunks have no PLE table
+    refused(serve_head="ar")  # flow-only family: no AR surface
+
+
+def test_serve_head_flow_is_dispatch_neutral(
+    tiny_vla_checkpoint: Path,
+) -> None:
+    """--serve-head on the real flow-only family: an unknown head is
+    refused loudly, and 'flow' — the designated head named explicitly —
+    is a pure no-op: same policy name (no _flowhead suffix, it IS the
+    deployment decode) and a bitwise-identical decode. The 'ar' arm of
+    the dispatch (a joint checkpoint's token head) is GPU-smoked by
+    launch_local_grasp_sft_joint_probes.sh smoke before any registered
+    leg — this test pins that the flag cannot move the default path."""
+    with pytest.raises(SystemExit, match="serve-head"):
+        BijouPolicy(
+            tiny_vla_checkpoint,
+            device=torch.device("cpu"),
+            seed=7,
+            serve_head="both",
+        )
+    plain = BijouPolicy(tiny_vla_checkpoint, device=torch.device("cpu"), seed=7)
+    _stub_ids(plain.collator.inputs)
+    explicit = BijouPolicy(
+        tiny_vla_checkpoint,
+        device=torch.device("cpu"),
+        seed=7,
+        serve_head="flow",
+    )
+    _stub_ids(explicit.collator.inputs)
+    assert explicit.name == plain.name
+    assert explicit.serve_flow and plain.serve_flow
+    generator = torch.Generator().manual_seed(11)
+    items = [_eval_item(0, generator), _eval_item(1, generator)]
+    plain_chunks = plain.predict(items, [0, 1])
+    explicit_chunks = explicit.predict(items, [0, 1])
+    for ours, theirs in zip(plain_chunks, explicit_chunks, strict=True):
+        assert torch.equal(ours, theirs)
 
 
 def test_offload_ple_narrows_on_family_before_load(tmp_path: Path) -> None:

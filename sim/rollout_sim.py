@@ -141,6 +141,18 @@ def parse_args() -> argparse.Namespace:
         "(bfloat16 halves flow-decoder memory)",
     )
     parser.add_argument(
+        "--serve-head",
+        default=None,
+        choices=["flow", "ar"],
+        help="serving-head override for families carrying both decoders "
+        "(molmoact2_joint serves flow by default): 'ar' decodes the "
+        "trunk's discrete head grammar-masked greedy on the SAME "
+        "collated inputs (dispatch-only — the CE rider trained on "
+        "exactly the flow branch's prefix). The policy/report name "
+        "carries _arhead so the read is never mistakable for the "
+        "deployment decode",
+    )
+    parser.add_argument(
         "--wrist-transform",
         default="none",
         choices=WRIST_TRANSFORMS,
@@ -165,6 +177,8 @@ def parse_args() -> argparse.Namespace:
             "--wrist-transform rewrites the policy's wrist input — "
             "meaningless with --hold (which never looks at frames)",
         )
+    if args.serve_head is not None and args.hold:
+        parser.error("--serve-head picks a policy decoder — meaningless with --hold")
     if args.replans is not None and args.episode_seconds is not None:
         parser.error(
             "--replans and --episode-seconds state the same budget in "
@@ -523,6 +537,7 @@ def main() -> int:
             ar_temperature=args.ar_temperature,
             sde_noise_level=args.sde_noise_level,
             flow_decoder_dtype=getattr(torch, args.flow_decoder_dtype),
+            serve_head=args.serve_head,
         )
         horizon = min(args.execute_horizon, policy.info.chunk_size)
         print(
@@ -591,6 +606,7 @@ def main() -> int:
                 "ar_temperature": args.ar_temperature,
                 "sde_noise_level": args.sde_noise_level,
                 "flow_decoder_dtype": args.flow_decoder_dtype,
+                "serve_head": args.serve_head,
                 "wrist_transform": args.wrist_transform,
                 "control_hz": CONTROL_HZ,
                 "task": TASK,
