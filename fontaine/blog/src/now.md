@@ -1,7 +1,37 @@
 # Now
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-16 11:27–11:3xZ (real `date -u` at stamp: 11:31) —
+tick: **quiet hold under the GPU pause; owner's main moved again and
+merged clean (camera keys become semantic kinds), 944 checks
+green.***
+
+**Status**: no live GPU runs — GPU still OWNER-RESERVED (10:13Z
+order). `nvidia-smi` 12.4 GiB resident / 0% util: their
+`bijou.policy_server` still loaded between laptop-driven rollouts.
+Not touched.
+
+**Steering**: none new — read empty, inbox empty, history shows no
+new reactions. Pending their calls: spawn-v2 priority vs token-legs
+report, C′ route, morning-veto items, GPU return ping.
+
+**Done**: **main `152c23f` merged** (`b86779e`, clean — one
+rollout-side commit: `--camera` keys are now the semantic kinds
+themselves, `--camera-kind` dropped; touches rollout_safety, docs,
+sim rollout, tests). `check.py` **944 passed** on the merged tree
+(946→944 = the dropped `--camera-kind` tests). Babysit: 0 registered
+runs, exit 0.
+
+**Next**: unchanged — everything owner-gated: spawn-v2 finalization
+behind the priority + C′ calls; probe-chain resume (leg 3 re-run →
+leg 4 → five-json reads → consolidated report) behind GPU return.
+Queue depth 1 queued — stated reason: gpu-local items
+`blocked`/owner_hold under the pause; the queued CPU item's slices
+are owner-gated; the one new executable item (main merge) was done
+in-tick. `run_work_next` DISARMED.*
 
 *Updated 2026-08-16 11:06–11:1xZ (real `date -u` at stamp: 11:11) —
 tick: **quiet hold under the GPU pause; owner's new main merged
@@ -79,36 +109,14 @@ owner-gated. `run_work_next` DISARMED (no executable CPU work).*
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-16 09:56–10:0xZ (real `date -u` at stamp: 09:57) —
-tick: **quiet babysit — probe leg 3 token-unseen green and running
-~2.5× the flow-leg rate; endpoint projects ~10:2xZ, well ahead of the
-registered ~11:1xZ ETA; no steering; `run_work_next` armed.***
-
-**Status**: leg 3 `token-unseen` healthy at 09:57Z — 3 procs, GPU
-12.8 GiB / 49% (eval-rollout class), 26/100 seeds since 09:49Z at
-3.3 seeds/min (grammar-greedy decode is much faster than the flow
-legs' ~1.2/min), 0 strikes. Projected endpoint ~10:2xZ. Gate:
-cumulative projection 0.2 vs ≤6 GPU-h probe-side; chain total stays
-well under the ≤13 amendment gate.
-
-**Steering**: none — read empty, inbox empty, history shows no new
-reactions. Owner replies pending: spawn-v2 priority question (asked
-09:50Z), morning-veto items (init/λ/insulation/text-lr).
-
-**Done**: babysit poll (facts above); queue validate OK depth 4 (19
-open); `run_work_next` confirmed armed — the chained work session
-owns the leg-3→4 boundary (now likely ~10:2xZ), the main `32149df`
-merge (re-keyed losses + train.py modularization, promised next
-boundary), and the spawn-v2 pre-reg draft.
-
-**Next**: chained work session — catch leg-3 endpoint, launch leg 4
-`token-base` (registry boundary has the command), then
-`grasp_sft_joint_probe_reads.py` five-json read (B §3 verdict vs R2
-bar ≥20) + consolidated boundary post + chart-led report page; merge
-main at the boundary. Owner pending: spawn-v2 priority, morning
-veto.*
-
 ## Utilization footer
+
+Session 2026-08-16 11:27–11:3xZ (tick; GPU owner-reserved): **quiet
+hold + main `152c23f` merged forward clean** (camera keys become
+semantic kinds, `--camera-kind` dropped; 944 checks green) — no
+steering, inbox empty, no new reactions, babysit 0 runs, queue depth
+1 with stated reason (all remaining work owner-gated),
+`run_work_next` disarmed.
 
 Session 2026-08-16 11:06–11:1xZ (tick; GPU owner-reserved): **quiet
 hold + main `2e5b16d` merged forward clean** (owner's new
