@@ -42,19 +42,27 @@ init from-base / λ=1.0 / insulation ON / text-lr 1e-5.
 merging A+B pre-regs into route C
 (`posts/2026-08-16-amendment-grasp-sft-route-c-joint.md`, in-channel
 1538353817303654480); launch 01:09:16Z + babysit entry
-`grasp_sft_joint_corrected` (endpoint instructions in-registry:
-BOTH heads' probes per amendment §4); first-poll green + launch
-post 1538354838427934811; queue boundary updated, validate OK
-depth 2 (17 open).
+`grasp_sft_joint_corrected`; first-poll green + launch post
+1538354838427934811; queue boundary updated, validate OK depth 2
+(17 open). **Endpoint mechanized during the ride** (`5656532` +
+`a2ab680`): `rollout_sim --serve-head {flow,ar}` (dispatch-only
+token-head decode on the training prefix, `_arhead` voice suffix,
+default path pinned bitwise by a real-fixture test),
+`launch_local_grasp_sft_joint_probes.sh` (five one-command legs incl.
+a mandatory 3-seed `--serve-head ar` GPU smoke before any registered
+leg), and `grasp_sft_joint_probe_reads.py` (all five jsons, A §5 /
+B §3 verdicts baked and oracle-pinned edge-by-edge; the A §5 29–31
+clause overlap SURFACED, never silently resolved). check.py 913.
 
-**Next**: ticks babysit the ride (~30-min cadence; K1 anchors in
-registry). At step 2000 + unit inactive: flow probe (euler-10,
-unseen 0–99 + train 1000–1099; anchors base 9 / corrupt-table 28)
-then token probe (grammar-greedy, unseen 0–99; R2 bar ≥20) + base-
-token anchor leg — per `queue_cli.py next` (grasp-sft-bootstrap).
-GPU oracle re-runs (convmap tripwires + sim_parallel_oracle) wait
-for the next free-GPU boundary. Morning: owner veto window on
-init/λ/insulation/text-lr.*
+**Next**: ticks babysit the ride (K1 anchors in registry; latest
+01:45Z sample: step 180/2000, 11.84 s/step, flow 0.108 / CE 0.737,
+VRAM 66.62 stable). At step 2000 + unit inactive:
+`launch_local_grasp_sft_joint_probes.sh` legs IN ORDER (smoke →
+flow-unseen → flow-train → token-unseen → token-base), reads via
+`grasp_sft_joint_probe_reads.py` — per `queue_cli.py next`
+(grasp-sft-bootstrap). GPU oracle re-runs (convmap tripwires +
+sim_parallel_oracle) wait for the next free-GPU boundary. Morning:
+owner veto window on init/λ/insulation/text-lr.*
 
 *Updated 2026-08-16 00:20–00:2xZ (real `date -u` at stamp: 00:22) —
 tick: **OWNER STEERING — route C (joint) picked RAM-permitting, GPU
@@ -125,14 +133,17 @@ the next free-GPU boundary.*
 
 ## Utilization footer
 
-Session 2026-08-16 00:24–01:2xZ (work, explore+exploit; ~0.3 GPU-h
+Session 2026-08-16 00:24–01:5xZ (work, explore+exploit; ~0.3 GPU-h
 smokes, joint run launched and running): **route C feasibility +
-launch** — measured the fit (joint OOMs as-was; binder = fp32 Adam
-moments, not CE logits), landed `--offload-optim` (exact,
-oracle-pinned bitwise, `8bb5b70`), posted the registered amendment
-merging A+B, launched `fontaine-grasp-sft-joint-corrected`
-01:09:16Z (66.5 GiB / 11.3 s/step / ETA ~07:3xZ), first poll green,
-babysit entry live with endpoint instructions.
+launch + endpoint mechanization** — measured the fit (joint OOMs
+as-was; binder = fp32 Adam moments, not CE logits), landed
+`--offload-optim` (exact, oracle-pinned bitwise, `8bb5b70`), posted
+the registered amendment merging A+B, launched
+`fontaine-grasp-sft-joint-corrected` 01:09:16Z (66.5 GiB / 11.8
+s/step / ETA ~07:3xZ), first poll green; then during the ride:
+`--serve-head` + five-leg probe launcher + oracle-pinned reads
+instrument (`5656532`, `a2ab680`) so the endpoint boundary is
+one command per leg.
 
 Session 2026-08-16 00:20–00:2xZ (tick; 0 GPU-h): **owner steering
 landed 00:18Z** — GPU released, route C (joint) picked
