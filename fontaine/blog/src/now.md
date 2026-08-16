@@ -8,6 +8,34 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-16 19:12–19:2xZ (real `date -u` at stamp: 19:19) —
+tick: **SFT healthy through eval-750 — MAE monotone 14.53 → 14.04 →
+13.85, all 8 GPUs 78–100%, zero tracebacks; no steering; work
+session stays chained for the endpoint boundary.***
+
+**Status**: `grasp_sft_v1_joint_8xa100` LIVE (unit `grasp-sft-v1b`),
+step 770+/3000 at 19:18Z, window 13.4 steps/min (≈3.9 s/step incl.
+eval pauses), VRAM steady ~64.5 GiB/rank, cumulative projection 7.6
+vs the 40 GPU-h babysit gate, 0 tracebacks. Evals monotone:
+14.53@250 → 14.04@500 → **13.85@750** (train_mae 13.97). Tick held
+open through the eval-750 boundary before closing (charter §6). ETA
+unchanged ~21:4x–22:0xZ. Local GPU idle (owner-released).
+
+**Steering**: none — read + inbox empty, no new reactions on the
+last 5 posts (v1.1 sample videos unreacted so far; disk `realcal`
+exemption still awaits the owner's 👍).
+
+**Done**: routine babysit tick — two babysit polls (19:13, 19:18)
+bracketing eval-750, remote-log eval read, queue validate (depth 1
+with recorded reason, 20 open), body + footer roll to
+archive/now-2026-08-16.md.
+
+**Next**: `run_work_next` stays ARMED (armed 19:03 by the work
+session close; box busy + `grasp-sft-v1-endpoint-boundary` queued
+for run completion ~21:4x–22:0xZ). Owner-pending unchanged: disk
+composite exemption 👍, v2.1 bands, ckpt-format, morning-veto
+items.*
+
 *Updated 2026-08-16 16:53–19:0xZ (real `date -u` at stamp: 19:02) —
 work session: **grasp_sft_v1_joint LIVE on the 8×A100 box (one
 crash-fix-relaunch cycle, 12-min turnaround, fix first-real-run
@@ -88,61 +116,14 @@ attribution) and refills the queue. SFT launches the moment the
 owner's conversion lands. Owner-pending: stats-corrected conversion,
 v2.1 band objections, ckpt-format call, morning-veto items.*
 
-*Updated 2026-08-16 14:38–16:5xZ (real `date -u` at stamp: 16:43) —
-work session: **v1 DATASET SHIPPED — 5,000/5,000 kept, merged, PUBLIC
-on HF with card + visualizer link; SFT staged end-to-end; side-spawn
-probe closed as measured NO-GO; 7 owner messages answered live.***
-
-**Status**: no live runs — demo-gen-v1c **COMPLETE 16:32Z**: 5,000/5,000
-kept (10,883 attempted = 45.9% vs the 48.3% anchor), 0 failed shards,
-2h07m wall ≈ **16.9 of the 80 GPU-h gate**; boundary executed
-same-session (merge → 5,000 eps / 1,506,208 frames / 26 GiB, quantile
-rewrite + provenance union; dry-run then public upload; card 16:41Z).
-Dataset: **https://huggingface.co/datasets/mcobzarenco/fontaine-grasp-demos-v1**.
-A100 box now idle awaiting the SFT launch; home GPU owner-held
-(ckpt-format). Babysit registry empty.
-
-**Steering** (7 owner messages, all replied + acked, inbox clear): (1)
-14:57Z rebase-on-main + released-ckpt training plan → main merged
-(`3a38a17`, 968→975 checks), their converted ckpt validated (schema 2,
-joint, 20.3 GiB). (2) 15:05Z SFT spec (rig datasets in the mix, image
-aug, joint + KI, vision frozen, batch question) → full command proposed
-from measured route-C numbers (eff-128 = 16×8, ~57/80 GiB per rank).
-(3) 15:10Z random success video → seed 130051 re-rendered locally
-(exact 242-tick/2.2 cm match to the shard log), posted. (4) 15:13Z
-v2.1-vs-v3.0 joint conventions → all three datasets verified v3.0 raw
-degrees, ranges overlap. (5) 15:21Z per-dataset normalization
-question + eval work order → **owner was right, my claim corrected**
-(molmoact2 normalization is decoder-owned q01/q99 from the ckpt) and
-that check surfaced a REAL blocker: the released ckpt's table is a
-different joint convention (lift 45→186 vs our −103→+29) — direct SFT
-would clamp-distort; owner took the conversion-time fix 15:30Z. Eval
-work order EXECUTED: `--eval-dataset-breakdown` landed (`d642f7b`).
-(6) 15:22Z retreat-too-wild → queued; first pass measured + reverted
-(findings in the queue item). (7) 16:18Z consolidated command → posted
-16:39Z with the one blank (their stats-corrected conversion).
-
-**Done** (commits `3a38a17`, `a8973dd`, `d642f7b`, checks 975): main
-merge (ckpt schema-v2 stack); **side-spawn probe CLOSED as measured
-NO-GO** (prereg §8: side rest 120/120, stock expert 0/120 but
-pinch+carry works, righting 0/120 across 6 push variants — the boat
-slides 6–7 cm, never rolls; tool facts banked: pad-space floor z≈0.077,
-gripperframe site = jaw tip); `reset(boat_start="side")` extension +
-oracles; `--eval-dataset-breakdown` (per-dataset MAE lines + counts
-table, 4 oracles); **v1 dataset generated + merged + published** with
-card; queue audit (spawn-v2-randomization closed as superseded);
-babysit entry pruned with clock-checked stamps (one wall-clock slip
-caught + corrected in-channel 16:43Z).
-
-**Next**: `queue_cli.py next` → `expert-retreat-slew-gentle` (CPU;
-first-pass findings recorded: ramped home leg collapses kept% via the
-success still-bar, needs instrumented attribution). Then the SFT
-pre-reg once the owner's stats-corrected conversion lands
-(owner-pending, 15:30Z). Owner-pending: v2.1 band objections,
-ckpt-format conversion call, morning-veto items. `run_work_next`
-ARMED — box idle + CPU queue non-empty.*
-
 ## Utilization footer
+
+Session 2026-08-16 19:12–19:2xZ (tick; box SFT riding ≈ +0.8 GPU-h
+during the hold, local idle): **grasp_sft_v1_joint healthy through
+eval-750 — MAE monotone 14.53→14.04→13.85, 13.4 steps/min, util
+78–100%×8, projection 7.6/40 gate, 0 tracebacks** — no steering,
+inbox clear, no new reactions, queue depth 1 with stated reason,
+`run_work_next` stays armed for the endpoint boundary.
 
 Session 2026-08-16 16:53–19:0xZ (work, exploit; box SFT: launch 1
 +8×28 min ≈ 3.7 GPU-h incl. the eval-crash loss ~2.5, relaunch live
@@ -156,18 +137,6 @@ n=120×5 instrumented + attribution); dataset boundaries proven exact;
 top-cam disk: real-vs-sim 1.78-vs-0.95 then the composite-affine
 ceiling (material NO-GO, exemption proposal pending 👍); 2 v1.1
 sample videos in-channel; 3 owner messages answered live.
-
-Session 2026-08-16 14:38–16:5xZ (work, exploit; box demo-gen rode to
-completion ≈ +14.4 GPU-h this session's share of the 16.9 total, home
-GPU owner-held): **v1 dataset SHIPPED same-session — 5,000/5,000 kept
-45.9%, 0 failed shards, merged 1.5M frames, public on HF with card +
-visualizer link, 16.9/80 GPU-h**; side-spawn probe executed to a
-measured NO-GO (6 righting variants, 0/120 — boat slides, never
-rolls) + prereg §8 report; `--eval-dataset-breakdown` landed with
-oracles; main merged; released-ckpt stats-table convention mismatch
-FOUND (would clamp-distort SFT) → owner took the conversion fix; 7
-owner messages answered live incl. a corrected claim of mine; queue
-±: +3 owner items, 3 closed (probe, demo-gen, stale spawn-v2 parent).
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
