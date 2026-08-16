@@ -1,17 +1,29 @@
 # Now
 
-
-
-
-
-
-
-
-
-
-
-
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-16 02:06–02:1xZ (real `date -u` at stamp: 02:09) —
+tick: **quiet babysit — joint run green at step 290, no steering, no
+gates.***
+
+**Status**: `grasp_sft_joint_corrected` healthy at 02:07Z — step
+290/2000, 11.26 s/step (5.5 steps/min over the last 100-step
+window), VRAM 66.62 GiB flat, GPU 100%/71.5 GB, loss_action
+0.89→0.66 over the window and falling. ~5.3 h to step 2000, ETA
+~07:3xZ unchanged. All anchors nominal (E2 rate/VRAM band, E3 both
+losses declining, no K1 signals).
+
+**Steering**: none — Discord read empty, inbox empty, history shows
+no new reactions (launch-post 👍 already recorded 01:2xZ).
+
+**Done**: babysit poll (facts above); queue validate OK depth 2 (17
+open). Next queue leg is the GPU endpoint at step 2000 — no
+CPU-side executable items, `run_work_next` not armed.
+
+**Next**: unchanged — ticks babysit to step 2000 (K1 anchors in
+registry), then `launch_local_grasp_sft_joint_probes.sh` legs IN
+ORDER + `grasp_sft_joint_probe_reads.py`. Morning: owner veto
+window on init/λ/insulation/text-lr.*
 
 *Updated 2026-08-16 01:47–02:0xZ (real `date -u` at stamp: 01:52) —
 tick: **run green at step ~195; owner replied on offload-optim —
@@ -98,50 +110,12 @@ flow-unseen → flow-train → token-unseen → token-base), reads via
 sim_parallel_oracle) wait for the next free-GPU boundary. Morning:
 owner veto window on init/λ/insulation/text-lr.*
 
-*Updated 2026-08-16 00:20–00:2xZ (real `date -u` at stamp: 00:22) —
-tick: **OWNER STEERING — route C (joint) picked RAM-permitting, GPU
-released. Work session chained.***
-
-**Status**: no live jobs yet; GPU **released back to us** at 00:18Z
-(owner message) — H100 80 GB confirmed idle (0 MiB / 0%), host RAM
-~197 GB available. Main at `b43b4d0` (fast-forwarded to our tip per
-the trunk note). 0 GPU-h this tick.
-
-**Steering** (00:18Z owner message + attached trunk status note,
-replied 00:22Z, inbox cleared): **(1) GPU release** — reservation
-over, GPU is ours. **(2) Route call**: assess whether RAM suffices
-for **route C (`--objective joint`, L_flow + λ·CE)**; if not,
-**optimize the AR objective's memory** to make it fit — route C
-either way, so the A/B/C decision is resolved. Arm pick is
-effectively subsumed (joint run inits from-base/corrected-table by
-default; will be spelled in the launch post for morning veto). The
-attached trunk note: migration COMPLETE through phase 7, our box
-gate CLOSED (probe_grpo_replay_parity bit-equal on all 1903+1904
-banked rows, WAVE INTEGRITY PASS), adoption items for our next
-boundary (launcher re-pins `--insulate-flow` /
-`--flow-decoder-init` / `--flow-decoder-dtype` + `--family`; three
-scripts re-pointed on main; corrected-table prep collapses to
-`--replace-stats` at conversion; post-migration GRPO starts FRESH
-from converted checkpoints).
-
-**Done**: Discord read + history (all five merge posts remain
-👍'd), attachment fetched + read, in-channel reply posted (plan:
-analytic RAM estimate → empirical smoke on the real batch → launch
-joint if it fits, else chunked/fused-CE memory optimization
-oracle-pinned then launch), inbox acked, `run_work_next` **ARMED**
-— the chained 4-h work session does the feasibility + launch.
-
-**Next** (work session, immediately): (1) analytic peak-memory
-estimate for joint (CE full-vocab logits over text length on top of
-flow-head activations is the expected peak); (2) empirical smoke at
-the real batch on the H100; (3) registered amendment merging the
-A+B pre-regs into route C, then launch with babysit entry +
-first-poll util check; (4) if RAM blocks, implement AR-objective
-memory optimization (chunked CE), oracle-verify, re-smoke, launch.
-GPU oracle re-runs (convmap tripwires + sim_parallel_oracle) also
-unblock now the GPU is free — attach after the launch settles.*
-
 ## Utilization footer
+
+Session 2026-08-16 02:06–02:1xZ (tick; joint run riding): **quiet
+babysit green** (step 290/2000, 11.26 s/step, VRAM 66.62 flat, loss
+0.89→0.66 over the window) — no steering, inbox empty, queue OK
+depth 2, no CPU-side items.
 
 Session 2026-08-16 01:47–02:0xZ (tick; joint run riding): **babysit
 green** (step 190/2000, 11.4 s/step, VRAM 66.62 flat) + **owner
@@ -149,18 +123,6 @@ rebase worry actioned same-session** — `CPUOffloadAdamW` extracted
 from train.py into `bijou/offload_optim.py` (train.py keeps ~50
 wiring lines; oracles 5/5 + check.py green post-move), replied
 in-channel.
-
-Session 2026-08-16 00:24–01:5xZ (work, explore+exploit; ~0.3 GPU-h
-smokes, joint run launched and running): **route C feasibility +
-launch + endpoint mechanization** — measured the fit (joint OOMs
-as-was; binder = fp32 Adam moments, not CE logits), landed
-`--offload-optim` (exact, oracle-pinned bitwise, `8bb5b70`), posted
-the registered amendment merging A+B, launched
-`fontaine-grasp-sft-joint-corrected` 01:09:16Z (66.5 GiB / 11.8
-s/step / ETA ~07:3xZ), first poll green; then during the ride:
-`--serve-head` + five-leg probe launcher + oracle-pinned reads
-instrument (`5656532`, `a2ab680`) so the endpoint boundary is
-one command per leg.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
