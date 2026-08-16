@@ -6,6 +6,11 @@ checkpoint directory (``bijou/checkpoint.py``) once, and everything
 downstream (`--init-from`, eval, rollout) consumes it like any other
 checkpoint:
 
+The recorded stats table is in the RELEASE'S joint convention
+(v2.1-era degrees) — consuming it against v3.0-calibrated data clamps
+elbow/lift and inverts lift's direction; the two convention axes and
+the remap story live in ``docs/so101-joint-conventions.md``.
+
 - ``metadata.json`` (schema 2): family per ``--family`` (flow, ar or
   joint — the release trained BOTH heads; rig-ft 'continuous' exports
   refuse ar/joint), prompt

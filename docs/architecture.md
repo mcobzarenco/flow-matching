@@ -96,7 +96,10 @@ This document is the deep reference for the model and training system
 as they exist, the measured results that shaped them (§7), and the
 directions under evaluation (§8). Per-module contracts live in
 docstrings; code conventions in `code-styleguide.md`;
-collaboration/operating conventions in `working-together.md`.
+collaboration/operating conventions in `working-together.md`; the
+SO-10x joint-convention axes (calibration v2.1/v3.0 × `use_degrees` —
+a standing footgun for stats tables, conversions and sims) in
+`so101-joint-conventions.md`.
 Transient state (in-flight runs, machine inventory, the queue) lives
 in wandb, the HF hub, and `reports/` — not in docs.
 

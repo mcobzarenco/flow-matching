@@ -10,7 +10,8 @@ core path; flags added since it was written — `--sample-draws`,
 `--offload-ple`, `--target-time`, `--control-fps`, `--noise-ticket`
 (fixed noise vector for every replan, npz `tickets [count, chunk,
 dim]` — the eval CLI's ticket format; sha256 echoed in the banner),
-`--joint-frame` (arm↔model joint-convention remap — required as
+`--joint-frame` (arm↔model joint-convention remap — see
+`so101-joint-conventions.md` for the two axes; required as
 `v30-to-v21` when a checkpoint bakes in the pre-lerobot-0.5 degrees
 frame, e.g. converted MolmoAct2 releases, on an arm calibrated with
 lerobot ≥ 0.5; molmo_flow checkpoints are additionally gated against
@@ -121,7 +122,8 @@ replugging, device indices move.
 - Actions are commanded in the dataset's raw units (degrees); the
   `use_degrees=True` default of `SOFollowerRobotConfig` matches the
   community-era datasets. If a rig was calibrated with the newer
-  [-100,100] convention, stats and robot units must agree — check
+  [-100,100] convention, stats and robot units must agree (the two
+  axes: `so101-joint-conventions.md`) — check
   `--check` output's state-stats line against a live joint readout.
 - Ctrl-C stops cleanly (disconnects, torque released per lerobot config).
 
