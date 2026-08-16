@@ -264,6 +264,7 @@ class SO101Sim:
         spawn_version: str = "v1",
         tint_band: str = "rig_gray",
         disk_appearance: str = "v1",
+        bracket_appearance: str = "v1",
     ) -> None:
         if render_style not in ("v0", "v1", "v2", "v3", "v4"):
             raise ValueError(
@@ -314,6 +315,11 @@ class SO101Sim:
                 f"disk_appearance {disk_appearance!r} not in ('v1', 'realcal')",
             )
         self.disk_appearance = disk_appearance
+        if bracket_appearance not in ("v1", "real"):
+            raise ValueError(
+                f"bracket_appearance {bracket_appearance!r} not in ('v1', 'real')",
+            )
+        self.bracket_appearance = bracket_appearance
         self.spawn_version = spawn_version
         self.tint_band = tint_band
         # Spawn-v2 (pre-reg 2026-08-16, finalized): disk uniform over
@@ -337,6 +343,8 @@ class SO101Sim:
             self.model = mujoco.MjModel.from_xml_path(str(SCENE_PATH))
         if disk_appearance == "realcal":
             _apply_disk_realcal(self.model)
+        if bracket_appearance == "real":
+            self._apply_bracket_real()
         self._widen_joint_limits()
         self._apply_servo_sysid()
         self.data = mujoco.MjData(self.model)
@@ -500,6 +508,35 @@ class SO101Sim:
             cam.quat[:] = (-0.24345, -0.05192, 0.02663, 0.96816)
             self.model.cam_sensorsize[cam.id] = 0.0
             cam.fovy[0] = 52.0
+
+    def _apply_bracket_real(self) -> None:
+        """bracket_appearance='real' (owner ask 2026-08-16 19:41Z): the
+        real rig's LEADER arm carries no camera bracket at all, and the
+        follower's bracket holds a camera module — the vendored mesh is
+        an empty ring the top view sees the table through. Render-only,
+        physics bit-identical: the leader's mount mesh moves to the
+        hidden collision group (its contact boxes were already invisible
+        and the parked leader never reaches the workspace), and the
+        follower's camera_box2 — the module-envelope collision box,
+        group-3 invisible in v1 — surfaces as the dark module body
+        filling the ring (no new geoms; groups and rgba carry no
+        physics). v1 default untouched (oracle in tests)."""
+        leader_body = self.model.body("leader-camera_mount").id
+        hidden = 0
+        for geom in range(self.model.ngeom):
+            if (
+                self.model.geom_bodyid[geom] == leader_body
+                and self.model.geom_type[geom] == mujoco.mjtGeom.mjGEOM_MESH
+            ):
+                self.model.geom_group[geom] = 3
+                hidden += 1
+        if hidden != 1:
+            raise RuntimeError(
+                f"leader-camera_mount: hid {hidden} mesh geoms, expected exactly 1",
+            )
+        box = self.model.geom("camera_box2")
+        self.model.geom_group[box.id] = 2
+        self.model.geom_rgba[box.id] = (0.08, 0.08, 0.09, 1.0)
 
     def _flip_camera_mount(self) -> None:
         """Menagerie mounts the wrist camera BRACKET mirrored, 180 deg

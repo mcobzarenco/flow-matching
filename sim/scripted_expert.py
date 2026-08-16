@@ -270,6 +270,12 @@ class ExpertState:
     # on a fresh approach: the dwell shifts the close pose and broke a
     # clean seed when applied unconditionally (measured, 08-15).
     descend_dwell: int = 0
+    # Retreat home glide (owner 2026-08-16 19:42Z): (start_deg[5],
+    # step_deg[5], ticks) — captured once when the home leg begins.
+    retreat_glide: tuple | None = None
+    # True once the episode's FIRST approach ends — the eased approach
+    # cap applies only before this (re-entries keep the global cap).
+    first_approach_done: bool = False
     trace: list[str] = field(default_factory=list)
 
 
@@ -311,6 +317,32 @@ class ScriptedExpert:
     #: to 40.0% via main-clock expiry), max commanded step 293°→10°.
     SLEW_ARM_DEG: float | None = 10.0
     SLEW_JAW_DEG: float | None = 12.0
+    #: Approach-leg eased cap (owner 2026-08-16 19:42Z: the reach
+    #: toward the boat is "still a bit too fast and janky"). Mechanism
+    #: kept, DEFAULT OFF — measured NO-GO as a drop-in (n=120: placed
+    #: 41.7% vs 58.3, first-approach-only variant 40.8%): the eased arm
+    #: moves quasi-statically, so the dynamic overshoot that dips the
+    #: pads under approach's 3 cm exit bar never happens — the arm
+    #: parks at the force-saturated static pose ~7 cm short (seed 1015:
+    #: err flat 7.1 cm, qvel 0.015, false jam-flip at t51), and
+    #: descend/close/lift degrade from the parked entry (pinch-miss
+    #: loops, empty lifts at the 200-tick timeout). A smooth approach
+    #: needs the exits redesigned for static poses (approach droop +
+    #: descend entry) — its own instrumented item, not a knob flip.
+    #:   rate_t = min(APPROACH_SLEW_DEG, EASE_START + EASE_PER_TICK * t)
+    APPROACH_SLEW_DEG: float | None = None
+    APPROACH_EASE_START: float = 1.5
+    APPROACH_EASE_PER_TICK: float = 0.5
+    #: Retreat home leg: glide instead of one-shot (owner 2026-08-16
+    #: 19:42Z: "the arm goes to the rest pose while extended and then
+    #: it folds once it got there"). Under the per-channel slew the
+    #: fold joints carry the LARGEST deltas, so they finish last —
+    #: arrive-extended-then-fold is the equal-rate clip's arrival
+    #: order, not a waypoint choice. The glide time-synchronizes the
+    #: leg: every joint steps delta_j / T with T set by the slowest
+    #: channel at SLEW_ARM_DEG, so the fold distributes along the
+    #: swing. Same leg duration by construction (T is unchanged).
+    RETREAT_GLIDE: bool = True
 
     def __init__(self, sim: SO101Sim) -> None:
         self.planner = ExpertPlanner(sim)
@@ -344,6 +376,8 @@ class ScriptedExpert:
         return np.concatenate([now + step, [np.rad2deg(jaw_rad)]])
 
     def _enter(self, phase: str) -> None:
+        if self.state.phase == "approach" and phase != "approach":
+            self.state.first_approach_done = True
         self.state.trace.append(f"{phase}@{self.state.ticks_in_phase}")
         self.state.phase = phase
         self.state.ticks_in_phase = 0
@@ -397,9 +431,19 @@ class ScriptedExpert:
                     ],
                 ),
             )
-        rate = np.array(
-            [self.SLEW_ARM_DEG or np.inf] * 5 + [self.SLEW_JAW_DEG or np.inf],
-        )
+        arm_rate = self.SLEW_ARM_DEG or np.inf
+        if (
+            self.state.phase == "approach"
+            and not self.state.first_approach_done
+            and self.SLEW_ARM_DEG is not None
+            and self.APPROACH_SLEW_DEG is not None
+        ):
+            arm_rate = min(
+                self.APPROACH_SLEW_DEG,
+                self.APPROACH_EASE_START
+                + self.APPROACH_EASE_PER_TICK * self.state.ticks_in_phase,
+            )
+        rate = np.array([arm_rate] * 5 + [self.SLEW_JAW_DEG or np.inf])
         out = self._last_cmd + np.clip(cmd_deg - self._last_cmd, -rate, rate)
         self._last_cmd = out
         return out
@@ -608,7 +652,23 @@ class ScriptedExpert:
             parked = self._arm_now(sim)
             parked[1] = parked[1] - np.deg2rad(30.0)
             return self._command(parked, JAW_OPEN_RAD)
-        return self._command(np.deg2rad(HOME_DEGREES[:5]), JAW_OPEN_RAD)
+        if self.SLEW_ARM_DEG is None or not self.RETREAT_GLIDE:
+            return self._command(np.deg2rad(HOME_DEGREES[:5]), JAW_OPEN_RAD)
+        # Fold-during-travel: time-synchronized joint-space glide to
+        # HOME (see RETREAT_GLIDE). Start from the last COMMAND so the
+        # recorded trace stays continuous (the slew stage seeds there).
+        if state.retreat_glide is None:
+            start = (
+                self._last_cmd[:5].copy()
+                if self._last_cmd is not None
+                else np.rad2deg(self._arm_now(sim))
+            )
+            delta = np.asarray(HOME_DEGREES[:5], dtype=float) - start
+            ticks = max(1, int(np.ceil(np.abs(delta).max() / self.SLEW_ARM_DEG)))
+            state.retreat_glide = (start, delta / ticks, ticks)
+        start, step, ticks = state.retreat_glide
+        k = min(state.ticks_in_phase - self.RETREAT_UP_TICKS, ticks)
+        return self._command(np.deg2rad(start + step * k), JAW_OPEN_RAD)
 
 
 def run_expert_episode(

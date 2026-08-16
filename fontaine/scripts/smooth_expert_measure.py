@@ -56,6 +56,8 @@ def _init_worker(cfg: dict) -> None:
     _W["cfg"] = cfg
     ScriptedExpert.SLEW_ARM_DEG = cfg["arm_slew"]
     ScriptedExpert.SLEW_JAW_DEG = cfg["jaw_slew"]
+    ScriptedExpert.APPROACH_SLEW_DEG = cfg["approach_slew"]
+    ScriptedExpert.RETREAT_GLIDE = cfg["retreat_glide"]
     _W["sim"] = SO101Sim(
         spawn_version=cfg["spawn_version"],
         tint_band=cfg["tint_band"],
@@ -174,6 +176,16 @@ def main() -> int:
     parser.add_argument("--tint-band", default="mix70")
     parser.add_argument("--workers", type=int, default=24)
     parser.add_argument("--out", type=Path, required=True)
+    # v1.2 knobs (owner 2026-08-16 19:42Z): approach-leg eased cap and
+    # the retreat home glide. Defaults mirror the class defaults
+    # (approach ease OFF — measured NO-GO, see ScriptedExpert); the
+    # v1.1 reference arm is --approach-slew none --retreat-glide off.
+    parser.add_argument("--approach-slew", type=_slew_arg, default="none")
+    parser.add_argument(
+        "--retreat-glide",
+        choices=("on", "off"),
+        default="on",
+    )
     args = parser.parse_args()
 
     start, stop = (int(x) for x in args.seeds.split(":"))
@@ -185,6 +197,8 @@ def main() -> int:
         "max_ticks": args.max_ticks,
         "spawn_version": args.spawn_version,
         "tint_band": args.tint_band,
+        "approach_slew": args.approach_slew,
+        "retreat_glide": args.retreat_glide == "on",
     }
 
     ctx = mp.get_context("spawn")

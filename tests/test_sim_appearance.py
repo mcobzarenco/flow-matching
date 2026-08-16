@@ -105,3 +105,37 @@ def test_torch_post_matches_numpy_reference() -> None:
             diff = np.abs(a - b)
             assert diff.max() <= 2, f"{name} seed {seed}: max diff {diff.max()}"
             assert (diff > 0).mean() < 0.05, f"{name} seed {seed}: widespread drift"
+
+
+def test_bracket_appearance_validated() -> None:
+    with pytest.raises(ValueError, match="bracket_appearance"):
+        SO101Sim(bracket_appearance="v2")
+
+
+def test_bracket_real_is_render_only() -> None:
+    # bracket_appearance='real' (owner 2026-08-16): leader bracket mesh
+    # hidden, follower camera_box2 surfaced dark — groups/rgba only, so
+    # the settled physics state must stay bit-identical to v1.
+    v1 = _physics_only(SO101Sim())
+    real = _physics_only(SO101Sim(bracket_appearance="real"))
+
+    mesh = [
+        g
+        for g in range(real.model.ngeom)
+        if real.model.geom_bodyid[g] == real.model.body("leader-camera_mount").id
+        and real.model.geom_type[g] == mujoco.mjtGeom.mjGEOM_MESH
+    ]
+    assert [real.model.geom_group[g] for g in mesh] == [3]
+    box_v1 = v1.model.geom("camera_box2")
+    box_real = real.model.geom("camera_box2")
+    assert v1.model.geom_group[box_v1.id] == 3  # v1 untouched
+    assert real.model.geom_group[box_real.id] == 2
+    assert tuple(real.model.geom_rgba[box_real.id]) == (0.08, 0.08, 0.09, 1.0)
+    # leader boxes stay hidden in both variants
+    for name in ("leader-camera_box1", "leader-camera_box2"):
+        assert real.model.geom_group[real.model.geom(name).id] == 3
+
+    for seed in (0, 3):
+        v1.reset(seed)
+        real.reset(seed)
+        assert np.array_equal(v1.data.qpos, real.data.qpos), f"seed {seed}"

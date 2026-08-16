@@ -105,6 +105,9 @@ def test_output_slew_bounds_every_command_step() -> None:
     sim = cast("Any", _SlewSim())
     expert = ScriptedExpert(sim)
     expert.SLEW_ARM_DEG, expert.SLEW_JAW_DEG = 6.0, 8.0
+    # The approach leg wears its own eased cap (v1.2, tested below) —
+    # exercise the GLOBAL stage from a loaded phase.
+    expert.state.phase = "traverse"
     start = np.rad2deg(
         np.concatenate(
             [
@@ -135,3 +138,82 @@ def test_output_slew_none_is_legacy_passthrough() -> None:
     expert.SLEW_ARM_DEG = expert.SLEW_JAW_DEG = None
     cmd = np.array([120.0, -90.0, 45.0, 10.0, -170.0, 41.7])
     np.testing.assert_array_equal(expert._smooth(sim, cmd), cmd)
+
+
+def test_approach_ease_in_caps_and_releases() -> None:
+    # v1.2 approach shaping (owner 2026-08-16 19:42Z): the approach leg
+    # rate starts at EASE_START and grows EASE_PER_TICK per tick up to
+    # APPROACH_SLEW_DEG — never the global cap mid-approach.
+    from typing import Any, cast
+
+    from sim.scripted_expert import ScriptedExpert
+
+    sim = cast("Any", _SlewSim())
+    expert = ScriptedExpert(sim)
+    expert.APPROACH_SLEW_DEG = 6.0  # mechanism kept, default None (NO-GO read)
+    assert expert.state.phase == "approach"
+    start = np.rad2deg(
+        np.concatenate(
+            [
+                sim.data.qpos[expert.planner.arm_qpos],
+                [float(sim.data.qpos[expert.planner.jaw_qpos])],
+            ],
+        ),
+    )
+    target = start + np.array([120.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+    prev = start
+    seen_rates = []
+    for tick in range(20):
+        expert.state.ticks_in_phase = tick
+        out = expert._smooth(sim, target)
+        step = float(np.abs(out - prev)[:5].max())
+        eased = min(
+            expert.APPROACH_SLEW_DEG,
+            expert.APPROACH_EASE_START + expert.APPROACH_EASE_PER_TICK * tick,
+        )
+        assert step <= eased + 1e-9
+        seen_rates.append(step)
+        prev = out
+    assert max(seen_rates) == expert.APPROACH_SLEW_DEG  # cap reached
+    assert seen_rates[0] == expert.APPROACH_EASE_START  # eased start
+
+
+def test_retreat_glide_synchronizes_arrival() -> None:
+    # v1.2 retreat glide: every joint arrives at HOME on the SAME tick
+    # (fold distributes along the swing), leg duration unchanged from
+    # the equal-rate clip (T = ceil(max|delta| / SLEW_ARM_DEG)).
+    from typing import Any, cast
+
+    from sim.scripted_expert import HOME_DEGREES, JAW_OPEN_RAD, ScriptedExpert
+
+    sim = cast("Any", _SlewSim())
+    # _plan's preamble reads the boat pose; the retreat branch itself
+    # never uses it — stub the two privileged reads.
+    sim.benchy_pose = lambda: (np.zeros(3), None)
+    sim._benchy_qpos = 0
+    expert = ScriptedExpert(sim)
+    state = expert.state
+    state.phase = "retreat"
+    state.ticks_in_phase = expert.RETREAT_UP_TICKS  # _plan advances to +1
+    pose = np.rad2deg(sim.data.qpos[expert.planner.arm_qpos])
+    offset = np.array([80.0, -50.0, 30.0, 5.0, 0.0])
+    expert._last_cmd = np.concatenate([pose + offset, [40.0]])
+
+    home = np.asarray(HOME_DEGREES[:5], dtype=float)
+    delta = home - expert._last_cmd[:5]
+    assert expert.SLEW_ARM_DEG is not None
+    ticks = int(np.ceil(np.abs(delta).max() / expert.SLEW_ARM_DEG))
+    outs = []
+    for _ in range(ticks + 3):
+        cmd = expert._plan(sim)
+        assert cmd[5] == pytest.approx(np.rad2deg(JAW_OPEN_RAD))
+        outs.append(cmd[:5])
+    # per-tick steps proportional to each joint's delta, all <= cap
+    first_step = outs[1] - outs[0]
+    np.testing.assert_allclose(first_step, delta / ticks, atol=1e-9)
+    assert float(np.abs(first_step).max()) <= expert.SLEW_ARM_DEG + 1e-9
+    # synchronized arrival exactly at T, then parked
+    np.testing.assert_allclose(outs[ticks - 1], home, atol=1e-9)
+    np.testing.assert_allclose(outs[-1], home, atol=1e-9)
+    before = outs[ticks - 2]
+    assert not np.allclose(before, home, atol=1e-6)
