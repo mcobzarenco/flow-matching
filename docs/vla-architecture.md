@@ -1503,7 +1503,61 @@ ensembling still awaits a Molmo2 KV tile path — the standing §8.13
 loose end); the phase-5 box gate remains PENDING-BOX (phase 5's, not
 this phase's); `materialize_joint_ar_view` still prunes with phase 8.
 
-**Phase 8 — conversion campaign + adoption.** Convert the real
+**Phase 8a — checkpoint schema v2: FULL IMPORT (design pinned
+2026-08-16, implementation next).** Supersedes v1's snapshot-mirror
+rule (D9's pristine form): initializing from a released HF checkpoint
+IMPORTS the model into our format wholesale — no HF layout knowledge
+survives in any load path; it lives only in the importers.
+
+- Layout: `metadata.json` + `backbone_text.safetensors` (text stack +
+  lm_head, OUR key names — translation happens ONCE at import; loads
+  become plain strict `load_state_dict`, no skip-prefixes) +
+  `backbone_vision.safetensors` (tower + connector — exactly the
+  `backbone_vision` LR group's members, so "frozen vision" ⇒ the file
+  hard-links instead of re-serializing, at conversion AND at every
+  training save) + `flow_decoder.safetensors`/`ar_decoder.safetensors`
+  (parameterful decoders only) + `prompt.safetensors` + `tokenizer/`
+  (the per-trunk consumed artifact files: molmo — `tokenizer.json`
+  alone; gemma — tokenizer.json + tokenizer_config.json +
+  processor_config.json + chat_template.jinja, the transformers-facing
+  set) + optional `optimizer.pt`. Nothing else: no remote-code `.py`,
+  no shard index, no `norm_stats.json` (metadata owns stats), no
+  embedded stale expert copies.
+- `metadata.json` schema 2: `backbone` carries `id` (provenance),
+  their `config.json` contents VERBATIM (parsed at load with the
+  existing `from_dict` — zero new parsers, the drift-proof
+  verbatim-carry trick), and per-part `text_trained`/`vision_trained`
+  flags (presence is never a signal).
+- Import audit, loud: the importer proves the key PARTITION — text
+  keys + vision keys + expert keys + known-skipped
+  (`rotary_emb.inv_freq`) exactly cover every shard key of the source;
+  an unclassified tensor refuses the import.
+- Dedup moves inside our world: extraction bytes are paid once per
+  imported artifact; frozen parts of every subsequent checkpoint
+  hard-link the parent's files (save-side keeps the last-written
+  per-part file and links while the part stays frozen — also removes
+  frozen parts from the async-save device→CPU snapshot). The HF cache
+  becomes deletable.
+- Loaders (`modelling/gemma4/loading.py`, `modelling/molmo2/loading.py`)
+  gain from-files entry points (config dict + per-part weight files +
+  tokenizer path); the dir-glob HF path survives only for the
+  importers and parity harnesses. Families' `from_checkpoint` reads v2
+  through the shared `sections.py` helpers (the phase-4 concentration
+  point — one change site, not six).
+- `convert_legacy` emits v2 (old trained `backbone.safetensors`
+  partitions into the per-part files with both flags conservatively
+  True; pristine trunks import from the resolved artifact);
+  `convert_molmoact2` imports the HF release directly. v1-format
+  directories are refused with a re-convert pointer (the few minted v1
+  artifacts re-derive from their legacy sources — tiny fixtures via
+  their builders, box conversions re-run in phase 8b).
+- GATES: `check.py`; all five loss oracles BITWISE (same tensors, same
+  dtypes — extraction is key-filtering, never value change); converter
+  tests reworked incl. the partition audit + per-part link semantics;
+  a fresh-run save→`load_vla` round-trip; re-derived tiny fixtures
+  prove the v1→v2 path preserves the anchors.
+
+**Phase 8b — conversion campaign + adoption.** Convert the real
 checkpoint inventory, verify each (recorded eval/loss numbers where
 they exist, else load + smoke predict + spec check), re-upload to HF
 hub (uploads before deletions; optimizer kept only for run-seeding
