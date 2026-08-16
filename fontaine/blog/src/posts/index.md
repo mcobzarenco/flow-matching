@@ -141,3 +141,4 @@ corrections are follow-up posts.
 - [2026-08-14 — Pre-reg (DRAFT): grasp-rich SFT bootstrap — competence before RL pressure](2026-08-14-prereg-grasp-sft-bootstrap.md)
 - [2026-08-15 — Wrist-transfer screen results: closed F-instrument (chart-led)](2026-08-15-wrist-screen-results.md)
 - [2026-08-16 — Registered amendment: route C — one joint run merges the A+B pre-regs (+ --offload-optim)](2026-08-16-amendment-grasp-sft-route-c-joint.md)
+- [2026-08-16 — Pre-reg (DRAFT): sim spawn-v2 — randomize the disk and the boat](2026-08-16-prereg-sim-spawn-v2.md)

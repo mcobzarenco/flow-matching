@@ -6,7 +6,7 @@
 
 **Depth call:** depth 2: grasp-sft-bootstrap (retrain arm owner-pending) + grpo-r2-post-sft (re-based per A2; token-sft arm item blocked owner-gated). merge-main-phase6 closed 19:4xZ 08-15.
 
-**19 open** (Live 0 · Queued 4 · Blocked 15 · Done 184)
+**18 open** (Live 0 · Queued 3 · Blocked 15 · Done 185)
 
 ## 🔴 Live (0)
 
@@ -14,7 +14,7 @@
 
 *(empty)*
 
-## 🟢 Queued (4)
+## 🟢 Queued (3)
 
 *ready — waiting on a window or a boundary*
 
@@ -32,25 +32,11 @@ GRPO R2 on the grasp-SFT policy (DRAFT pre-reg posted 08-15): fresh Decision-11 
 
 ---
 
-**`main-merge-rekeyed-train`** · `cpu`
-
-[no pre-reg: infra debt, oracle-gated merge] Merge main (32149df: train.py modularization + mechanism-qualified loss re-keying loss_action_flow/loss_action_ar/loss_narration, --narration-weight) into fontaine: reconcile --offload…
-
-**boundary:** Queued 09:50Z 08-16 at owner steering 09:19Z (message.txt attachment pinned the mapping: joint/flow {loss_action-&gt;loss_action_flow, loss_aux-&gt;loss_action_ar}; gemma/molmo2 AR {loss_action-&gt;loss_action_ar, loss_aux-&gt;loss_narration}). The completed joint run's jsonl predates the rename — leave as-is. My loss_ce_actions rename proposal WITHDRAWN (superseded). Do at next boundary/work session — promised in-channel 09:51Z.
-
-<details><summary>full record</summary>
-
-[no pre-reg: infra debt, oracle-gated merge] Merge main (32149df: train.py modularization + mechanism-qualified loss re-keying loss_action_flow/loss_action_ar/loss_narration, --narration-weight) into fontaine: reconcile --offload-optim wiring + bijou/offload_optim.py, re-run the 5-test bitwise offload oracle suite + check.py; update babysit anchors to new keys for FUTURE launches; add run-family-dependent read-time key mapping to overlay/read scripts (old jsonls keep historical keys per owner note).
-
-</details>
-
----
-
 **`sim-spawn-v2-randomization`** · `cpu`
 
 [pre-reg to be drafted as the item's first CPU slice: posts/2026-08-16-prereg-sim-spawn-v2.md
 
-**boundary:** Queued 09:50Z 08-16 at the owner steering. CPU slice executable now: pre-reg draft + spawn-v2 sampler + reachability probe harness (oracle-tested, no GPU). GPU slices (demo re-collect, retrain, eval) sequence AFTER the joint probe chain closes and behind any owner priority call — asked in-channel 09:50Z whether this outranks the token-legs report.
+**boundary:** Queued 09:50Z 08-16 at the owner steering. CPU slice executable now: pre-reg draft + spawn-v2 sampler + reachability probe harness (oracle-tested, no GPU). GPU slices (demo re-collect, retrain, eval) sequence AFTER the joint probe chain closes and behind any owner priority call — asked in-channel 09:50Z whether this outranks the token-legs report. || PRE-REG DRAFT LANDED 10:3xZ 08-16 (posts/2026-08-16-prereg-sim-spawn-v2.md): v1 pinned exactly (disk fixed (0.22,0.11) r=0.04, band 7.5x4.5cm), v2 design = disk uniform over measured-workspace mask W (stage-A IK residual + shoulder static-moment instrument, precomputed polar-grid mask) + boat full annulus with rejection (in-W, r_min = disk 0.04 + hull 0.03 + margin, parked-jaw keep-out, bounded acceptance w/ loud refusal); spawn_version param, v1 bit-compat oracle-guarded, registered protocol break; consequences table A'-D' priced (~10-12 GPU-h worst case); finalization pins = torque fraction, grid pitch, r_min/r_max, floor, A' band. NEXT CPU slice: sim/spawn_v2.py sampler + reachability probe + oracles (after pre-reg finalization or owner go). GPU slices still behind owner priority call (asked 09:50Z).
 
 <details><summary>full record</summary>
 
@@ -286,7 +272,7 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (184)
+## ✅ Done (185)
 
 *closed — the full record stays in each fold*
 
@@ -439,6 +425,20 @@ image-augment-sim2real: train-time photometric augmentation in bijou.train (owne
 <details><summary>full record</summary>
 
 image-augment-sim2real: train-time photometric augmentation in bijou.train (owner ask 13:09Z 08-15, Q2 reply 1538178752582787093): --image-augment flag applying brightness/contrast/saturation/hue jitter + gamma, Gaussian sensor noise, slight defocus blur, JPEG artifacts, small random crop/translate to camera frames at TRAIN time only (pi0/OpenVLA-class sim2real recipe); aug-off path oracle-pinned bitwise to today's pipeline; eval NEVER augmented. CPU-implementable (feature + oracles) any session; pre-reg the aug recipe params before any training arm uses it.
+
+</details>
+
+---
+
+**`main-merge-rekeyed-train`** · `cpu`
+
+[no pre-reg: infra debt, oracle-gated merge] Merge main (32149df: train.py modularization + mechanism-qualified loss re-keying loss_action_flow/loss_action_ar/loss_narration, --narration-weight) into fontaine: reconcile --offload…
+
+**boundary:** Queued 09:50Z 08-16 at owner steering 09:19Z (message.txt attachment pinned the mapping: joint/flow {loss_action-&gt;loss_action_flow, loss_aux-&gt;loss_action_ar}; gemma/molmo2 AR {loss_action-&gt;loss_action_ar, loss_aux-&gt;loss_narration}). The completed joint run's jsonl predates the rename — leave as-is. My loss_ce_actions rename proposal WITHDRAWN (superseded). Do at next boundary/work session — promised in-channel 09:51Z. || DONE 10:0xZ 08-16 (pulled forward at owner ask 09:58Z 'rebased on latest main?'): merge commit dbd7cc8 — train.py modify/delete resolved by porting the six --offload-optim hunks into bijou/train/{args,cli}.py (import, TrainArgs field, zero1 exclusivity, from_raw, parser, optimizer branch); offload oracle 5/5 bitwise, check.py 913 PASSED (pre-commit re-ran full gate); read-side: fontaine/scripts/loss_keys.py (run-family mapping per owner 09:19Z note), babysit.toml header note (new entries author anchors in new keys); no fontaine launch script used --aux-loss-weight; no live reader consumed old component keys (all read combined `loss`, unchanged). Pushed.
+
+<details><summary>full record</summary>
+
+[no pre-reg: infra debt, oracle-gated merge] Merge main (32149df: train.py modularization + mechanism-qualified loss re-keying loss_action_flow/loss_action_ar/loss_narration, --narration-weight) into fontaine: reconcile --offload-optim wiring + bijou/offload_optim.py, re-run the 5-test bitwise offload oracle suite + check.py; update babysit anchors to new keys for FUTURE launches; add run-family-dependent read-time key mapping to overlay/read scripts (old jsonls keep historical keys per owner note).
 
 </details>
 
