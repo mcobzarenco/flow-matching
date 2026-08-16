@@ -5,7 +5,7 @@ on the physical arm** (owner's laptop deployment; measured mean-of-10
 replan at ~576 ms with `--sample-draws 10`). This runbook covers the
 core path; flags added since it was written — `--sample-draws`,
 `--async-inference`, `--return-home`/`--return-home-seconds`,
-`--camera-kind name=kind`, `--generate [fields…]`,
+`--generate [fields…]`,
 `--outcome`/`--smoothness`/`--subgoal` conditioning, `--switch-blend`,
 `--offload-ple`, `--target-time`, `--control-fps`, `--noise-ticket`
 (fixed noise vector for every replan, npz `tickets [count, chunk,
@@ -91,10 +91,16 @@ replugging, device indices move.
 
 ## Things that matter (first-run checklist)
 
-- **Camera names are positional prompt slots.** Prompt order = SORTED
-  camera keys, so `--camera` names must sort like the training dataset's
-  keys. The owner's dataset uses `front`/`wrist` (in that sorted order);
-  swapping names silently swaps views in the prompt.
+- **`--camera` keys ARE semantic kinds** (`wrist/top/front/side/unknown`;
+  anything else is refused, duplicates too). The kind drives the
+  prompt's (kind, name) image order — matching training's kind-major
+  sort — and the tag kind-aware prompt formats render. Asserted kinds
+  are cross-checked against the `--stats-dataset`'s judged kinds
+  (`meta/camera_kinds.json`) with a loud warning on mismatch or
+  uncovered judged kinds; the asserted kinds always win. The owner's
+  rig: `--camera top=…` (the judge voted the scene camera kind `top`)
+  and `--camera wrist=…`. Swapped device paths still silently swap
+  views — the kind describes the device you attach it to.
 - **`--max-relative-target 20`** engages lerobot's per-tick joint-motion
   clamp. Keep it on until the policy is trusted; it damps large motions.
 - **`--flow-decoder-dtype bfloat16` fits the 8 GB laptop, measured**: on
@@ -193,18 +199,17 @@ actual step_002000 metadata (2026-08-16):
   `--sample-steps 10 --sample-method euler` to serve the recorded
   operating point.
 
-### Camera names for this checkpoint
+### Camera kinds for this checkpoint
 
-The molmoact2 prompt is POSITIONAL ("Image 1…Image 2"; camera kinds
-are ignored by this format), and images are ordered by sorted camera
-name. The fine-tune's dataset recorded `front` and `wrist` — so at
-training time Image 1 = front (scene view), Image 2 = wrist. The
-operator's `--camera top=… --camera wrist=…` naming works positionally
-(`top` also sorts before `wrist`), provided `top=` IS the scene
-camera; naming it `front=` instead matches the training keys exactly
-and removes the mental mapping. Swapped device paths silently swap
-views in the prompt — double-check with
-`uv run lerobot-find-cameras opencv`.
+The molmoact2 prompt is POSITIONAL ("Image 1…Image 2"; it renders no
+kind tags), and images are ordered by the (kind, name) sort — so the
+kinds you assert control the slots. The fine-tune's dataset recorded a
+scene camera (judged kind `top` on the rig data) and a wrist camera:
+Image 1 = scene, Image 2 = wrist. The operator's
+`--camera top=/dev/video6 --camera wrist=/dev/video4` is exactly right
+(`top` sorts before `wrist`), provided `/dev/video6` IS the scene
+camera — swapped device paths silently swap views in the prompt;
+double-check with `uv run lerobot-find-cameras opencv`.
 
 ### Per-replan gap arithmetic
 

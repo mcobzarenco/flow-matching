@@ -16,7 +16,6 @@ import pytest
 from bijou.data import DatasetStats
 from bijou.rollout_safety import (
     envelope_violations,
-    parse_camera_kind_overrides,
     require_clamp,
     resolve_camera_kinds,
     state_envelope,
@@ -24,7 +23,7 @@ from bijou.rollout_safety import (
 
 MEAN = (0.0, -10.0, 20.0, 5.0, 0.0, 50.0)
 STD = (10.0,) * 6
-CAMERAS = ["front", "wrist"]
+CAMERAS = ["top", "wrist"]
 
 
 def make_stats(*, quantiles: bool = True) -> DatasetStats:
@@ -160,86 +159,81 @@ def test_violations_catch_single_joint_and_nan() -> None:
     assert envelope_violations(state, envelope) == [2]
 
 
-# --- camera kinds ---
+# --- camera kinds (--camera keys ARE kinds; asserted, cross-checked) ---
 
 
-def test_overrides_parse_and_validate() -> None:
-    assert parse_camera_kind_overrides(["front=top"], CAMERAS) == {"front": "top"}
-    with pytest.raises(SystemExit, match="NAME=KIND"):
-        parse_camera_kind_overrides(["front"], CAMERAS)
-    with pytest.raises(SystemExit, match="not a --camera name"):
-        parse_camera_kind_overrides(["overhead=top"], CAMERAS)
+def test_kinds_off_vocabulary_key_is_refused() -> None:
     with pytest.raises(SystemExit, match="vocabulary"):
-        parse_camera_kind_overrides(["front=ceiling"], CAMERAS)
+        resolve_camera_kinds(["overhead", "wrist"], None)
 
 
-def test_kinds_mirror_stamped_dataset(tmp_path: Path) -> None:
-    # The documented wild case: a camera NAMED front judged kind top —
-    # rollout must use the judged kind, not the name.
-    dataset = write_rig_dataset(tmp_path)
-    kinds = resolve_camera_kinds(CAMERAS, {}, dataset)
-    assert kinds == {"front": "top", "wrist": "wrist"}
+def test_kinds_duplicate_key_is_refused() -> None:
+    with pytest.raises(SystemExit, match="more than once"):
+        resolve_camera_kinds(["wrist", "wrist"], None)
 
 
-def test_kinds_camera_missing_from_file_renders_unknown(tmp_path: Path) -> None:
-    dataset = write_rig_dataset(tmp_path, cameras={"front": "top"})
-    kinds = resolve_camera_kinds(CAMERAS, {}, dataset)
-    assert kinds == {"front": "top", "wrist": "unknown"}
+def test_kinds_asserted_without_dataset_are_silent(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    kinds = resolve_camera_kinds(CAMERAS, None)
+    assert kinds == {"top": "top", "wrist": "wrist"}
+    assert capsys.readouterr().out == ""
 
 
-def test_kinds_hash_mismatch_mirrors_training_unknown(tmp_path: Path) -> None:
-    # Training rendered unknown when the kinds file's hash mismatched
-    # the stamp; the rollout mirror must not fall back to names.
-    dataset = write_rig_dataset(tmp_path, kinds_hash="other")
-    kinds = resolve_camera_kinds(CAMERAS, {}, dataset)
-    assert kinds == {"front": "unknown", "wrist": "unknown"}
-
-
-def test_kinds_unstamped_dataset_mirrors_training_unknown(tmp_path: Path) -> None:
-    dataset = write_rig_dataset(tmp_path, stamp_hash=None)
-    kinds = resolve_camera_kinds(CAMERAS, {}, dataset)
-    assert kinds == {"front": "unknown", "wrist": "unknown"}
-
-
-def test_kinds_name_heuristic_without_dataset() -> None:
-    kinds = resolve_camera_kinds(["front", "cam9"], {}, None)
-    assert kinds == {"front": "front", "cam9": "unknown"}
-
-
-def test_kinds_override_wins_over_dataset(tmp_path: Path) -> None:
-    dataset = write_rig_dataset(tmp_path)
-    kinds = resolve_camera_kinds(CAMERAS, {"front": "side"}, dataset)
-    assert kinds == {"front": "side", "wrist": "wrist"}
-
-
-def test_kinds_fallback_notice_skipped_for_overridden_camera(
+def test_kinds_matching_judged_kinds_are_silent(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """A camera the kinds file does not know normally prints the loud
-    'rendering as unknown' notice — but not when an explicit
-    --camera-kind covers it: the override wins, so the notice would
-    describe a fallback that never happens."""
-    dataset = write_rig_dataset(tmp_path, cameras={"front": "top"})
-    kinds = resolve_camera_kinds(["front", "top"], {"top": "top"}, dataset)
-    assert kinds == {"front": "top", "top": "top"}
-    captured = capsys.readouterr()
-    assert "rendering as 'unknown'" not in captured.out
-    # The un-overridden miss still prints (loud fallback stays loud).
-    kinds = resolve_camera_kinds(["front", "top"], {}, dataset)
-    assert kinds == {"front": "top", "top": "unknown"}
-    assert "rendering as 'unknown'" in capsys.readouterr().out
+    # The documented wild case: the rig's scene camera is NAMED front
+    # but JUDGED top — kind-keyed cameras match the judgment by VALUE,
+    # so the operator's top=/wrist= agrees with front→top/wrist→wrist.
+    dataset = write_rig_dataset(tmp_path)
+    kinds = resolve_camera_kinds(CAMERAS, dataset)
+    assert kinds == {"top": "top", "wrist": "wrist"}
+    assert capsys.readouterr().out == ""
 
 
-def test_kinds_name_heuristic_warning_skipped_for_overridden_camera(
+def test_kinds_mismatch_warns_and_keeps_asserted(
+    tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    kinds = resolve_camera_kinds(["front", "cam9"], {"cam9": "side"}, None)
-    assert kinds == {"front": "front", "cam9": "side"}
-    assert "not in the semantic" not in capsys.readouterr().out
-    kinds = resolve_camera_kinds(["front", "cam9"], {}, None)
-    assert kinds == {"front": "front", "cam9": "unknown"}
-    assert "not in the semantic" in capsys.readouterr().out
+    """Asserted kinds always win; the warning names BOTH the asserted
+    kinds the dataset never judged and the judged kinds no camera
+    covers (the operator decides, informed)."""
+    dataset = write_rig_dataset(tmp_path)
+    kinds = resolve_camera_kinds(["front", "wrist"], dataset)
+    assert kinds == {"front": "front", "wrist": "wrist"}
+    warning = capsys.readouterr().out
+    assert "WARNING" in warning
+    assert "['front']" in warning  # asserted but never judged
+    assert "['top']" in warning  # judged but uncovered
+
+
+def test_kinds_hash_mismatch_counts_as_unstamped(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    # A kinds file whose hash mismatches the stamp was not what
+    # training rendered — same as no stamp: warn against 'unknown'.
+    dataset = write_rig_dataset(tmp_path, kinds_hash="other")
+    kinds = resolve_camera_kinds(CAMERAS, dataset)
+    assert kinds == {"top": "top", "wrist": "wrist"}
+    assert "no usable stamped kinds" in capsys.readouterr().out
+
+
+def test_kinds_unstamped_dataset_warns_only_for_non_unknown(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    dataset = write_rig_dataset(tmp_path, stamp_hash=None)
+    kinds = resolve_camera_kinds(CAMERAS, dataset)
+    assert kinds == {"top": "top", "wrist": "wrist"}
+    assert "no usable stamped kinds" in capsys.readouterr().out
+    # Asserting 'unknown' mirrors what unstamped training rendered —
+    # nothing to warn about.
+    kinds = resolve_camera_kinds(["unknown"], dataset)
+    assert kinds == {"unknown": "unknown"}
+    assert capsys.readouterr().out == ""
 
 
 def test_rollout_noise_keying_is_index_not_stable() -> None:

@@ -38,7 +38,7 @@ from bijou.data import DatasetStats
 from bijou.eval.policies import BijouPolicy
 from bijou.modelling.decoders.flow import SamplingMethod
 from bijou.rollout import SO_MOTORS, observation_to_item
-from bijou.rollout_safety import camera_kinds_from_names
+from bijou.rollout_safety import resolve_camera_kinds
 
 from . import OUTPUT_DIR
 from .so101_sim import CONTROL_HZ, SimObservation, SO101Sim
@@ -433,7 +433,10 @@ def sim_item(
         TASK,
         stats=stats,
         chunk_size=chunk_size,
-        camera_kinds=camera_kinds_from_names(SIM_CAMERAS),
+        # Kind-keyed like the rollout CLI (no dataset cross-check: the
+        # sim IS the data source); {top: top, wrist: wrist} after the
+        # vocabulary gate.
+        camera_kinds=resolve_camera_kinds(SIM_CAMERAS, None),
     )
     # Draw keying (GRPO signal probe): every policy-side stochastic
     # stream — stable-key flow noise AND the AR sample RNG — derives
