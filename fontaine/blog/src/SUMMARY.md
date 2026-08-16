@@ -312,3 +312,4 @@
   - [2026-08-15 — Pre-reg (DRAFT, owner-gated): token-SFT arm — measured competence for the discrete head, via bijou.train](posts/2026-08-15-prereg-grasp-sft-token-sft-arm.md)
   - [2026-08-16 — Registered amendment: route C — one joint run merges the A+B pre-regs (+ --offload-optim)](posts/2026-08-16-amendment-grasp-sft-route-c-joint.md)
   - [2026-08-16 — Pre-reg (DRAFT): sim spawn-v2 — randomize the disk and the boat](posts/2026-08-16-prereg-sim-spawn-v2.md)
+  - [2026-08-16 — Smoother demos v1.1: rate-bounded commands + the tail-budget artifact](posts/2026-08-16-smoother-demos-v11.md)

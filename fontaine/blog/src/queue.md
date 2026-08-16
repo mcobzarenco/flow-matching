@@ -6,7 +6,7 @@
 
 **Depth call:** depth 3 queued; demo-gen-sharded-a100 is P1 EXECUTE (new A100 box allocated 12:26:52Z, machine-is-yours); home-box gpu items stay blocked under the owner hold (ckpt-format change pending); spawn-v2 dataset constants approved-for-generation 12:21:03Z vs the posted SS5 table.
 
-**19 open** (Live 0 · Queued 1 · Blocked 18 · Done 189)
+**21 open** (Live 0 · Queued 2 · Blocked 19 · Done 191)
 
 ## 🔴 Live (0)
 
@@ -14,25 +14,55 @@
 
 *(empty)*
 
-## 🟢 Queued (1)
+## 🟢 Queued (2)
 
 *ready — waiting on a window or a boundary*
 
-**`expert-retreat-slew-gentle`** · `cpu`
+**`disk-retint-prep-cpu`** · `cpu`
 
-OWNER WORK ORDER 15:22:29Z 08-16 ('retreat a bit wild, slow it down, more natural; in-flight 5k fine'): slew-limit the ScriptedExpert retreat home leg (~2 deg/tick crawl like the carry phases, instead of the one-shot absolute HOM…
+Disk retint prep (CPU, flag-gated — activation owner-gated): implement the top-cam disk material recalibration behind a sim flag (target = measured real ratio ~1.8 disk/table luminance, warm hue, check side-wall shading term), re…
+
+**boundary:** Queued 18:1xZ 08-16. Executable now (local GPU free for renders). Output: flag + oracle + comparison strip + achieved-ratio number appended to the smoother-demos post; unblocks regen blocker (2) into a pure owner 👍.
 
 <details><summary>full record</summary>
 
-OWNER WORK ORDER 15:22:29Z 08-16 ('retreat a bit wild, slow it down, more natural; in-flight 5k fine'): slew-limit the ScriptedExpert retreat home leg (~2 deg/tick crawl like the carry phases, instead of the one-shot absolute HOME command the servos chase at full speed), keep the 25-tick up-and-back pull; re-measure kept% + parked% on ~120 seeds vs the 48.3% anchor. Protocol untouched; applies to v1.1/regens only. || FIRST PASS 16:4xZ 08-16 (work session, measured n=120 each, code REVERTED not landed): (a) _carry measured-pose slew home: kept 50.8% OK but parked 3% - servo-lag compounding crawls, tail budget expires; (b) feedforward 3deg/tick command ramp: parked 52-63% but kept COLLAPSED 25-33% vs 48.3 anchor - pan-first sequencing and up-leg variants did NOT recover it. LEADING HYPOTHESIS (uninstrumented): not boat knocks - episodes ending the 150-tick tail mid-motion fail success()'s still bar (max|qvel|&lt;0.5 includes ARM dofs), so any home leg slower than ~50 ticks demotes placed episodes. Next pass needs: per-episode fail attribution (boat moved vs still-bar), maybe a faster ramp (5-6 deg/tick), longer tail budget, or excluding arm dofs from the tail re-verify (protocol change, owner call).
+Disk retint prep (CPU, flag-gated — activation owner-gated): implement the top-cam disk material recalibration behind a sim flag (target = measured real ratio ~1.8 disk/table luminance, warm hue, check side-wall shading term), render before/after top composites at 3 disk positions + the real reference crop into a comparison strip, measure the achieved ratio with the segmentation instrument (/tmp probes -&gt; proper script). NO default change: v1 appearance stays bit-identical with the flag off (oracle), activation rides demo-gen-v1.1-regen after the owner sign-off on the 18:07Z proposal.
 
 </details>
 
 ---
 
-## 🟡 Blocked (18)
+**`grasp-sft-v1-endpoint-boundary`** · `cpu`
+
+grasp_sft_v1_joint endpoint boundary (run live since 17:49:48Z 08-16, 3000 steps, ETA ~21:1x-21:3xZ): on unit grasp-sft-v1 inactive + step 3000 saved
+
+**boundary:** Queued 18:1xZ 08-16 at launch. Runnable the moment the run completes; if the 240-min session dies first, the armed run_work_next tick chain picks it up. · [pre-reg](posts/2026-08-16-amendment-grasp-sft-route-c-joint.md)
+
+<details><summary>full record</summary>
+
+grasp_sft_v1_joint endpoint boundary (run live since 17:49:48Z 08-16, 3000 steps, ETA ~21:1x-21:3xZ): on unit grasp-sft-v1 inactive + step 3000 saved — (1) final eval read + per-dataset MAE breakdown table (the --eval-dataset-breakdown lines) to a chart-led report page; (2) checkpoint upload to fontaine-checkpoints (weights-only) same-session per standing rule; (3) sim100 rollout eval vs the route-C joint probe anchors (44/100 unseen flow; token leg vs R2 bar &gt;=20/100) — the primary competence read; (4) wandb link + consolidated post. Babysit entry grasp_sft_v1_joint carries liveness; this item owns the boundary work.
+
+</details>
+
+---
+
+## 🟡 Blocked (19)
 
 *waiting on a prerequisite, a boundary, or the owner*
+
+**`demo-gen-v1.1-regen`** · `gpu-a100`
+
+Demo-gen v1.1 regen on the box (owner 17:07Z: 'develop the next version of the demos with much smoother trajectories'): same sharded driver + protocol as v1 (spawn v2.1, mix70, 5k kept, seeds fresh stride) with the landed v1.1 ex…
+
+**boundary:** Queued 18:1xZ 08-16. On box-free + owner answers: rerun collect ladder (2-shard smoke merge oracle first), merge, quantile rewrite, upload as fontaine-grasp-demos-v1.1, card + visualizer link. GPU gate: 30 GPU-h (v1 used 16.9 at worse yield). · [pre-reg](posts/2026-08-16-prereg-sim-spawn-v2.md)
+
+<details><summary>full record</summary>
+
+Demo-gen v1.1 regen on the box (owner 17:07Z: 'develop the next version of the demos with much smoother trajectories'): same sharded driver + protocol as v1 (spawn v2.1, mix70, 5k kept, seeds fresh stride) with the landed v1.1 expert (slew 10/12 + tail 300, kept 54.2% measured -&gt; ~2h class instead of 2h07m at better yield). BLOCKED on: (1) box busy with grasp_sft_v1_joint until ~21:1x-21:3xZ 08-16; (2) owner sign-off on the measured disk retint (real/table ratio 1.78 vs sim 0.95 — proposal posted 18:07Z with numbers; instrument item DONE); (3) any further smoothness steering after they see the charts page.
+
+</details>
+
+---
 
 **`molmoact2-released-stats-rewrite`** · `cpu` · **⛔ owner hold**
 
@@ -282,9 +312,37 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (189)
+## ✅ Done (191)
 
 *closed — the full record stays in each fold*
+
+**`topcam-disk-contrast-instrument`** · `cpu`
+
+Top-cam disk visibility: measured real-vs-sim contrast read (feeds the owner's 17:07Z 'cylinder does not render' item + my 18:01Z option (b)): extract real rig top frames from ~/datasets/mcobzarenco/so101_pick_place_v2 (the plate…
+
+**boundary:** Queued 18:1xZ 08-16. Pure CPU/ffmpeg + numpy; executable now. Output: numbers + crops into the smoother-demos post or a follow-up, and the v1.1-regen item's blocker (2) resolves with the owner's answer. | DONE 18:0xZ 08-16 same session: real disk/table lum ratio 1.78 (241 vs 136, boundary grad 8.4, ~3.4k px, side wall + shadow) vs sim 0.95 (148 vs 156, grad 5.1, ~1.35k px) - the sim disk is DARKER than its surround, isoluminant camouflage. Mis-calibration CONFIRMED; retint proposal (target ~1.8 warm) posted 18:07Z, owner sign-off pending; folded into demo-gen-v1.1-regen blocker (2) and the smoother-demos post.
+
+<details><summary>full record</summary>
+
+Top-cam disk visibility: measured real-vs-sim contrast read (feeds the owner's 17:07Z 'cylinder does not render' item + my 18:01Z option (b)): extract real rig top frames from ~/datasets/mcobzarenco/so101_pick_place_v2 (the plate-mining source), locate the real wooden disk, measure its luminance/chroma contrast vs surrounding table; same measure on sim top composites (segmentation-masked, done: sim +20% lum, ~1.4k px). If the real disk is markedly more visible, the sim disk material is mis-calibrated -&gt; propose the retint with numbers + side-by-side crops for the owner call; if comparable, close as sim2real-faithful (no change).
+
+</details>
+
+---
+
+**`expert-retreat-slew-gentle`** · `cpu`
+
+OWNER WORK ORDER 15:22:29Z 08-16 ('retreat a bit wild, slow it down, more natural; in-flight 5k fine'): slew-limit the ScriptedExpert retreat home leg (~2 deg/tick crawl like the carry phases, instead of the one-shot absolute HOM…
+
+**boundary:**  | DONE 18:1xZ 08-16 work session (owner broadened it 16:53Z: 'smoother trajectories overall'): output-stage feedforward slew limiter landed on EVERY commanded channel (sim/scripted_expert.py SLEW_ARM_DEG 10 / SLEW_JAW_DEG 12, None=legacy; 2 oracles) + instrumented attribution harness fontaine/scripts/smooth_expert_measure.py. Measured n=120: 6deg/tick collapsed placed 59.2-&gt;40.0 (main-clock expiry, NOT physics); 10deg/tick recovers 58.3. ROOT CAUSE of the original kept collapse AND a v1 yield tax: success() fires mid-settle (no gripper-open term) so the 150-tick tail must cover settle+open+retreat; 33/71 placed expired mid-swing, 13 demoted by the still bar with the boat placed. Tail budget 150-&gt;300 landed (collector default): v1.1 = kept 54.2 vs 45.8 baseline / 48.3 anchor, parked 94.3, max step 293-&gt;10 deg/tick. Protocol untouched. Commits 0e77650+dbc0731, blog post 2026-08-16-smoother-demos-v11.md.
+
+<details><summary>full record</summary>
+
+OWNER WORK ORDER 15:22:29Z 08-16 ('retreat a bit wild, slow it down, more natural; in-flight 5k fine'): slew-limit the ScriptedExpert retreat home leg (~2 deg/tick crawl like the carry phases, instead of the one-shot absolute HOME command the servos chase at full speed), keep the 25-tick up-and-back pull; re-measure kept% + parked% on ~120 seeds vs the 48.3% anchor. Protocol untouched; applies to v1.1/regens only. || FIRST PASS 16:4xZ 08-16 (work session, measured n=120 each, code REVERTED not landed): (a) _carry measured-pose slew home: kept 50.8% OK but parked 3% - servo-lag compounding crawls, tail budget expires; (b) feedforward 3deg/tick command ramp: parked 52-63% but kept COLLAPSED 25-33% vs 48.3 anchor - pan-first sequencing and up-leg variants did NOT recover it. LEADING HYPOTHESIS (uninstrumented): not boat knocks - episodes ending the 150-tick tail mid-motion fail success()'s still bar (max|qvel|&lt;0.5 includes ARM dofs), so any home leg slower than ~50 ticks demotes placed episodes. Next pass needs: per-episode fail attribution (boat moved vs still-bar), maybe a faster ramp (5-6 deg/tick), longer tail budget, or excluding arm dofs from the tail re-verify (protocol change, owner call).
+
+</details>
+
+---
 
 **`train-eval-per-dataset-breakdown`** · `cpu`
 
