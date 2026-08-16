@@ -1,6 +1,30 @@
 # Now
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-16 02:16–02:2xZ (real `date -u` at stamp: 02:19) —
+tick: **quiet babysit — joint run green at step 340, no steering, no
+gates.***
+
+**Status**: `grasp_sft_joint_corrected` healthy at 02:17Z — step
+340/2000, 11.13 s/step (4.9 steps/min since the 02:07 sample), VRAM
+66.63 GiB flat, GPU 100%/71.5 GB, loss_action 0.661→0.671 over the
+50-step window (band fluctuation, not a K1 signal — K1 watches
+loss_aux rises >0.5 over 3 logs). ~5.1 h to step 2000, ETA ~07:3xZ
+unchanged. All anchors nominal.
+
+**Steering**: none — Discord read empty, inbox empty, history shows
+no new reactions (launch-post 👍 already recorded 01:2xZ).
+
+**Done**: babysit poll (facts above); queue validate OK depth 2 (17
+open). Next queue leg is the GPU endpoint at step 2000 — no
+CPU-side executable items, `run_work_next` not armed.
+
+**Next**: unchanged — ticks babysit to step 2000 (K1 anchors in
+registry), then `launch_local_grasp_sft_joint_probes.sh` legs IN
+ORDER + `grasp_sft_joint_probe_reads.py`. Morning: owner veto
+window on init/λ/insulation/text-lr.*
 
 *Updated 2026-08-16 02:06–02:1xZ (real `date -u` at stamp: 02:09) —
 tick: **quiet babysit — joint run green at step 290, no steering, no
@@ -58,71 +82,17 @@ registry), then `launch_local_grasp_sft_joint_probes.sh` legs IN
 ORDER + `grasp_sft_joint_probe_reads.py`. Morning: owner veto
 window on init/λ/insulation/text-lr.*
 
-*Updated 2026-08-16 01:0x–01:2xZ (real `date -u` at stamp: 01:16) —
-work session: **ROUTE C LAUNCHED — RAM feasibility measured, joint
-did NOT fit, `--offload-optim` landed (exact, oracle-pinned), run
-live at 100% util.***
-
-**Status**: `grasp_sft_joint_corrected` LIVE (unit
-`fontaine-grasp-sft-joint-corrected`, launched 01:09:16Z) — step
-10/2000 at first poll, 15.6 s/step avg incl. warmup (11.3 steady
-in-smoke), `vram_alloc_peak` 66.56 GiB (= smoke, ~12.7 headroom),
-GPU 100%/71 GB, CE 4.33→3.14 falling, flow 1.38 on the LR ramp;
-host RAM 96 GB avail with the offloaded moments resident. ETA ~step
-2000 **~07:3xZ**; gate ≤8 GPU-h train / ≤13 chain. ~0.3 GPU-h spent
-on smokes this session.
-
-**Steering** (00:18Z, actioned): route C RAM-permitting, else
-optimize AR-objective memory — **both done**: measured infeasible
-as-was (CE logits NOT the binder, <1 GiB; binder = fp32 static
-residency, trunk 20.3 + grads 16.9 + Adam moments 33.7 GiB; OOM at
-micro 8 step 1 AND micro 2 step 2), then `--offload-optim` landed
-(`8bb5b70`: AdamW moments in host RAM on pinned fp32 mirrors, CPU
-reference kernels — elementwise ⇒ exact, 5 oracles incl. bitwise
-keystone + resume round-trip, check.py 908) → peak 66.5 GiB at
-micro 16, fits with margin. Morning-veto items posted in-channel:
-init from-base / λ=1.0 / insulation ON / text-lr 1e-5.
-
-**Done**: analytic + measured RAM decomposition; `--offload-optim`
-+ 5-test oracle suite (`8bb5b70`, pushed); registered amendment
-merging A+B pre-regs into route C
-(`posts/2026-08-16-amendment-grasp-sft-route-c-joint.md`, in-channel
-1538353817303654480); launch 01:09:16Z + babysit entry
-`grasp_sft_joint_corrected`; first-poll green + launch post
-1538354838427934811; queue boundary updated, validate OK depth 2
-(17 open). **Endpoint mechanized during the ride** (`5656532` +
-`a2ab680`): `rollout_sim --serve-head {flow,ar}` (dispatch-only
-token-head decode on the training prefix, `_arhead` voice suffix,
-default path pinned bitwise by a real-fixture test),
-`launch_local_grasp_sft_joint_probes.sh` (five one-command legs incl.
-a mandatory 3-seed `--serve-head ar` GPU smoke before any registered
-leg), and `grasp_sft_joint_probe_reads.py` (all five jsons, A §5 /
-B §3 verdicts baked and oracle-pinned edge-by-edge; the A §5 29–31
-clause overlap SURFACED, never silently resolved). check.py 913.
-
-**Next**: ticks babysit the ride (K1 anchors in registry; latest
-01:45Z sample: step 180/2000, 11.84 s/step, flow 0.108 / CE 0.737,
-VRAM 66.62 stable). At step 2000 + unit inactive:
-`launch_local_grasp_sft_joint_probes.sh` legs IN ORDER (smoke →
-flow-unseen → flow-train → token-unseen → token-base), reads via
-`grasp_sft_joint_probe_reads.py` — per `queue_cli.py next`
-(grasp-sft-bootstrap). GPU oracle re-runs (convmap tripwires +
-sim_parallel_oracle) wait for the next free-GPU boundary. Morning:
-owner veto window on init/λ/insulation/text-lr.*
-
 ## Utilization footer
+
+Session 2026-08-16 02:16–02:2xZ (tick; joint run riding): **quiet
+babysit green** (step 340/2000, 11.13 s/step, VRAM 66.63 flat,
+loss_action 0.66-band wobble) — no steering, inbox empty, no new
+reactions, queue OK depth 2, no CPU-side items.
 
 Session 2026-08-16 02:06–02:1xZ (tick; joint run riding): **quiet
 babysit green** (step 290/2000, 11.26 s/step, VRAM 66.62 flat, loss
 0.89→0.66 over the window) — no steering, inbox empty, queue OK
 depth 2, no CPU-side items.
-
-Session 2026-08-16 01:47–02:0xZ (tick; joint run riding): **babysit
-green** (step 190/2000, 11.4 s/step, VRAM 66.62 flat) + **owner
-rebase worry actioned same-session** — `CPUOffloadAdamW` extracted
-from train.py into `bijou/offload_optim.py` (train.py keeps ~50
-wiring lines; oracles 5/5 + check.py green post-move), replied
-in-channel.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
