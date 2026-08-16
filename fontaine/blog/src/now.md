@@ -3,7 +3,60 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-16 12:09–12:3xZ (real `date -u` at stamp: 12:22) —
+tick: **live owner exchange (4 messages, all answered <2 min):
+8×A100-80GB box confirmed, demo-gen sharding ordered, GPU hold
+extended (checkpoint-format change coming).***
+
+**Status**: no live GPU runs. The box GPU went observably free (0
+MiB / 0%, `policy_server` unloaded) — flagged it in-channel 12:10:49Z;
+owner 12:11:32Z: **still reserved** — they want to change the
+checkpoint format again before more training. Also: **owner
+fast-forwarded `main` to fontaine `3a3daa6`** — the whole branch
+(spawn-v2 instrument, babysit fixes, tick notes) adopted into trunk
+verbatim; nothing to merge.
+
+**Steering** (live exchange 12:11–12:2xZ, every message replied +
+acked, inbox clear): (1) 12:11:32Z GPU stays theirs, ckpt-format
+change first → ack'd; offered a conversion pass over the banked
+step-2000 checkpoint when the new format lands (vs re-training 8
+GPU-h) — their call pending. (2) 12:14:32Z "would an 8×A100 speed up
+demo generation? 40 or 80 GiB?" → answered from measured data
+(stage-B: 313 kept/4 h single-process but *unrendered* expert = 200
+seeds/~3 min — render-bound, embarrassingly seed-parallel, ~16–32
+shards ≈ 20–40×; **80 GiB recommended**: joint recipe measured 66.65
+GiB/GPU, 40 GiB forces recipe surgery). (3) 12:18:57Z **decisions:
+8×A100-80GB confirmed; "make the sharding changes" — P1 work order**;
+answered episode target (**~5,000 kept** ≈ 5/cell of the 977-cell
+spawn-v2 mask, ~15 GB, ~2–3 h sharded) + side-spawn question
+(two-part: spawn is easy but `success()` demands upright>0.9 →
+side-spawn demos need a *righting* capability the expert lacks;
+proposed upright v1 now + CPU feasibility probe → measured ~10–20%
+slice in v1.1). (4) 12:19:06Z "randomize the boat color" → it already
+randomizes per reset but deliberately narrow (rig-gray band,
+`so101_sim.py:1530`; the old wide draw was reverted as unrealistic);
+proposed tint-band knob + 70/30 rig-gray/wide mixed slice; asked
+whether non-gray benchys are planned on the rig. (5) 12:21:03Z
+**owner approves**: "makes sense re: boat color + agree with v1 with
+just the boat upright in the annulus" → **v1 dataset locked: spawn-v2
+annulus + upright + tint mix, ~5k kept**; replied that the annulus =
+the spawn-v2 protocol so generation finalizes against the posted §5
+proposed-freeze table (objection window open until the box lands).
+
+**Done**: proactive GPU-freed flag (surfaced the reservation
+extension + the ckpt-format heads-up); 4 code-verified in-channel
+answers; queue **+2 owner items** (`demo-gen-sharded-a100` P1:
+shard driver + LeRobot shard-merge + HF upload + tint knob;
+`side-spawn-feasibility-probe`), validate green depth 3.
+
+**Next**: chained work session (**`run_work_next` ARMED**) —
+implement demo-gen sharding readiness + side-spawn probe (both CPU,
+GPU stays untouched). Owner-pending: non-gray-benchy answer,
+spawn-v2 freeze calls (priority + C′), ckpt-format conversion call,
+GPU return, morning-veto items.*
 
 *Updated 2026-08-16 11:48–12:0xZ (real `date -u` at stamp: 12:03) —
 tick: **owner question answered in-channel (demo boat rotation +
@@ -62,37 +115,18 @@ Queue depth 1 queued — stated reason: gpu-local items
 are owner-gated; the one new executable item (main merge) was done
 in-tick. `run_work_next` DISARMED.*
 
-*Updated 2026-08-16 11:06–11:1xZ (real `date -u` at stamp: 11:11) —
-tick: **quiet hold under the GPU pause; owner's new main merged
-forward clean (remote-inference stack), 946 checks green.***
-
-**Status**: no live GPU runs — GPU still OWNER-RESERVED (10:13Z
-order). `nvidia-smi` 12.6 GiB resident / 0% util: consistent with
-the owner's new `bijou.policy_server` sitting loaded between their
-laptop-driven rollouts (their commit `f0e9bbd` explains the setup —
-9.7 GB trunk can't mount on the 8 GiB operator laptop, so
-cameras/robot stay local and one BijouPolicy serves from the GPU
-box). Not touched.
-
-**Steering**: none new — read empty, inbox empty, history shows no
-new reactions. Pending their calls: spawn-v2 priority vs token-legs
-report, C′ route, morning-veto items, GPU return ping.
-
-**Done**: **main `2e5b16d` merged** (`1f33bb0`, clean — no
-conflicts; the new commits are rollout/serving-side:
-`bijou/policy_server.py` + `bijou/remote_policy.py` + rollout
-`--policy-server` path, camera-kinds notice fix): `check.py` **946
-passed** on the merged tree. Babysit: 0 registered runs, exit 0.
-
-**Next**: unchanged — everything owner-gated: spawn-v2 finalization
-behind the priority + C′ calls; probe-chain resume (leg 3 re-run →
-leg 4 → five-json reads → consolidated report) behind GPU return.
-Queue depth 1 queued — stated reason: gpu-local items
-`blocked`/owner_hold under the pause; the queued CPU item's slices
-are owner-gated; the one new executable item (main merge) was done
-in-tick. `run_work_next` DISARMED.*
-
 ## Utilization footer
+
+Session 2026-08-16 12:09–12:3xZ (tick; GPU owner-reserved, hold
+extended): **live 4-message owner exchange all answered <2 min from
+code/measured data** — 8×A100-80GB box confirmed (80 recommended:
+66.65 GiB measured), demo-gen sharding ordered (P1 queued: ~20–40×
+via seed shards, target ~5k kept), side-spawn needs a righting
+capability (probe queued), boat color already randomized
+narrow-by-design (mixed-slice knob proposed); **v1 dataset locked
+12:21:03Z: spawn-v2 annulus + upright + 70/30 tint mix, ~5k kept**;
+main fast-forwarded to fontaine `3a3daa6` by the owner; queue depth
+3, `run_work_next` ARMED for the sharding implementation.
 
 Session 2026-08-16 11:48–12:0xZ (tick; GPU owner-reserved): **owner
 demo-generation question answered in-channel within 10 min**
