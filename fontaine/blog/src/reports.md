@@ -876,6 +876,21 @@ the baseline the visual-matching lever must move.
   — per camera × metric, three groups; sim's tight blob at the real
   distribution's right tail is the whole story in one look
 
+## Grasp-SFT route C `fontaine_grasp_sft_joint_corrected` @2000 ([amendment](posts/2026-08-16-amendment-grasp-sft-route-c-joint.md) · [chain page](posts/2026-08-15-grasp-sft-chain-results.md))
+
+- [flow-head unseen-100 eval report](https://mcobzarenco-fontaine-reports.static.hf.space/eval__grasp_sft_joint_step2000__flow_unseen100.html)
+  — owner request 08:25Z 08-16: **44/100 successes** on unseen seeds
+  0–99 (euler-10) vs base 9 / corrupt-table stage-C 28 — A §5 verdict
+  **TABLE_FIX_POSITIVE** (44 > 28+3, overlap band moot); anchor bar,
+  per-seed spawn→final strip, 4-clip gallery, full table; rendered
+  08:5xZ 08-16 from the banked leg json
+- Remaining probe legs (flow-train memorization read, token-unseen vs
+  R2 bar ≥20, token-base anchor) land ~12:3xZ 08-16; consolidated
+  verdicts JSON `analysis__grasp_sft_joint_probes.json` + report to
+  follow
+- Weights: [`molmoact2_grasp_sft_joint_corrected_step2000`](https://huggingface.co/mcobzarenco/fontaine-checkpoints/tree/main/molmoact2_grasp_sft_joint_corrected_step2000)
+  (weights-only, corrected table baked)
+
 ## Cross-family analyses
 
 - [flow-vs-AR paired per-step read](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__flow_vs_ar_paired_k4l2.json)
