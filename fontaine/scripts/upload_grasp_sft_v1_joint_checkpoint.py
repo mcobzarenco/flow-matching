@@ -10,8 +10,10 @@ train_log.jsonl rides along as the run record (GRPO upload pattern).
 Checkpoint provenance: bijou.train --objective joint --joint-ce-weight
 1.0 --insulate-flow, --init-from the owner's re-converted
 molmoact2-so101-released (remap-stats v21-to-v30), 3 datasets / 4551
-train episodes / 1.49M frames, 3000 steps eff-96 on 8xA100, launched
-18:21:14Z 2026-08-16 (unit grasp-sft-v1b).
+train episodes / 1.49M frames, 3000 steps eff-96 on 8xA100; run 2 —
+--recompute-stats restart launched 21:14:48Z 2026-08-16 (unit
+grasp-sft-v1c, owner order 20:51Z; run 1b killed ~1900, saves archived
+_run1_remaponly).
 """
 
 from __future__ import annotations
