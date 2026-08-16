@@ -358,14 +358,14 @@ def convert(
         case VLAFamily.MOLMOACT2_AR:
             objective: dict[str, Any] = {"kind": "ar"}
         case VLAFamily.MOLMOACT2_JOINT:
-            # An IMPORT records the default continuation plan, not the
-            # release's (unknown) training mixture — printed so nobody
-            # mistakes it for a measured fact.
+            # An IMPORT records the default continuation plan for
+            # future --init-from runs, not a claim about how the
+            # release itself was trained — printed so nobody mistakes
+            # it for a measured fact.
             objective = {"kind": "joint", "ce_weight": 1.0, "insulate_flow": False}
             print(
                 "[convert] joint import: objective recorded as ce_weight=1.0, "
-                "insulate_flow=False (the DEFAULT continuation plan; the "
-                "release's own training mixture is not public)",
+                "insulate_flow=False (the DEFAULT continuation plan)",
             )
         case _:
             objective = {"kind": "flow"}
