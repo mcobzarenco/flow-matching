@@ -305,16 +305,16 @@ def test_loss_surface_sum_form_contract(tiny_model: MolmoAct2FlowVLA) -> None:
     contract on the trait surface."""
     batch = _batch(tiny_model)
     counts = tiny_model.loss_counts(batch)
-    assert set(counts) == {"action"}
-    assert int(counts["action"]) == 2 * _HORIZON
+    assert set(counts) == {"action_flow"}
+    assert int(counts["action_flow"]) == 2 * _HORIZON
     torch.manual_seed(11)  # the loss draws t/ε from the ambient stream
     report = tiny_model(batch, counts=counts)
     memory = _encode(tiny_model, batch, with_grad=False)
     torch.manual_seed(11)
     mean_form = molmo_flow_loss(tiny_model.flow_decoder, memory, batch)
-    action = report.components["action"]
+    action = report.components["action_flow"]
     objective = float(report.objective.detach())
-    assert int(action.count) == int(counts["action"])
+    assert int(action.count) == int(counts["action_flow"])
     assert objective == pytest.approx(
         float(action.sum.detach() / action.count),
         rel=1e-6,

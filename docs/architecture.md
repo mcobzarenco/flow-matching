@@ -556,7 +556,7 @@ components: `total = action + w·aux` with per-position mean CE split
 by the collator's aux mask — value lines are aux, BOA + block tokens
 action (`--aux-loss-weight`, default 0.5); aux is logged as a
 position-weighted mean (CE sum / token count, all-reduced), so
-sparsely-labeled corpora don't dilute `train/loss_aux` toward 0.
+sparsely-labeled corpora don't dilute `train/loss_narration` toward 0.
 
 **Decoding is fully scaffolded by the request**
 (`predict_chunk(generate=…)`, which must equal the request the
@@ -687,7 +687,7 @@ requested ⊆ labeled always) and the matching HEADERLESS value lines
   (`assemble_suffix`) builds one mixed suffix tensor in backbone id
   space (guarded: aux ids must sit below `block_base`) plus the
   aux-position mask the loss splits on.
-- **Metrics.** Component losses `train/loss_action` / `train/loss_aux`
+- **Metrics.** Component losses `train/loss_action_ar` / `train/loss_narration`
   (the aux mean is position-weighted across batches and ranks);
   in-run eval logs the all-trained-fields scaffolded decode as
   display-string columns (`aux_generated` vs `aux_label`, field names
@@ -798,7 +798,7 @@ resolvable from a planner/operator at inference (`rollout --subgoal`,
 or an explicit `item["condition_subgoal"]`); **anti-copy coupling**:
 when the subgoal rides the prompt, the aux draw EXCLUDES it from the
 request set — prompt-conditioning and prediction are exact
-complements, so `loss_aux` never trains or scores copying, and the
+complements, so `loss_narration` never trains or scores copying, and the
 self-conditioning loop (feed the generated subgoal into the next
 replan's prompt) stays a rollout-side option. **Outcome conditioning**
 (C1; `--condition-dropout` 0.1): hindsight labels from each
@@ -973,7 +973,7 @@ judge-suggested task rewrites (§4); `--condition-fields` /
 `--condition-dropout` / `--subgoal-dropout` (default off / 0.1 / 0.5)
 render prompt conditioning — subgoal hint + hindsight
 outcome/smoothness (§4). Train step returns
-component losses; `train/loss_action` + `train/loss_aux` log beside
+component losses; `train/loss_action_flow` + `train/loss_action_ar` log beside
 `train/loss` on aux runs (aux aggregates as CE-sum/token-count across
 the window and all ranks — a position-weighted mean, immune to the
 sparse-batch dilution a mean-of-means would suffer). Later additions
@@ -1088,7 +1088,9 @@ data, seed 0, batch 2:
 - `--objective ar --backbone-text-lr 1e-5`: **12.2254 / 12.3317**
 - `--objective joint --insulate-flow --backbone-text-lr 1e-5`:
   **13.6160 / 13.6621**, with the built-in cross-oracle: its
-  `loss_action` ≡ the flow anchors and `loss_aux` ≡ the ar anchors
+  `loss_action_flow` ≡ the flow anchors and `loss_action_ar` ≡ the ar
+  anchors (keys renamed 2026-08-16, mechanism-qualified: values did
+  not move; old runs' jsonls keep their historical keys)
   BITWISE, and total = flow + λ·CE exactly (λ = 1) — the KV-before-CE
   ordering and λ-composition proven inside the real trainer (recorded
   2026-08-14 at retirement phase-3 landing; the run also exercises the

@@ -85,13 +85,13 @@ def build_objective(
                 )
             return FlowObjective()
         case "gemma_ar" | "molmo2_ar":
-            return ARObjective(aux_loss_weight=args.aux_loss_weight)
+            return ARObjective(narration_weight=args.narration_weight)
         case "molmoact2_flow":
             return FlowObjective()
         case "molmoact2_ar":
             # The format-6 emission has no aux fields; the weight is the
             # payload's inert unit value (parse_ar_objective's default).
-            return ARObjective(aux_loss_weight=1.0)
+            return ARObjective(narration_weight=1.0)
         case "molmoact2_joint":
             return JointObjective(
                 ce_weight=args.joint_ce_weight,
@@ -116,7 +116,7 @@ def objective_to_json(
                 "shortcut_weight": objective.shortcut_weight,
             }
         case ARObjective():
-            return {"kind": "ar", "aux_loss_weight": objective.aux_loss_weight}
+            return {"kind": "ar", "narration_weight": objective.narration_weight}
         case JointObjective():
             return {
                 "kind": "joint",

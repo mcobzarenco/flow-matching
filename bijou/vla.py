@@ -111,7 +111,7 @@ class LossReport:
     ALL-REDUCED counts the loop passed to :meth:`VLA.forward` — its DDP
     gradient average equals the gradient of the global objective even
     under uneven per-rank counts. ``components`` are the chart series,
-    keyed by the family's own component names ("action", "aux", …) — a
+    keyed by the family's own component names ("action_flow", "action_ar", "narration") — a
     dict by design: the key set is family-dynamic but run-constant, and
     equals :meth:`VLA.loss_counts`' key set (the loop enforces this).
     Component sums are graph-connected (they are the objective's

@@ -900,7 +900,7 @@ def build_gemma_ar_decoder(
     config: ARDecoderConfig,
     text_config: Gemma4TextConfig,
     *,
-    aux_loss_weight: float = 1.0,
+    narration_weight: float = 1.0,
     device: DeviceLike = None,
     dtype: torch.dtype = torch.float32,
 ) -> GemmaARDecoder:
@@ -923,7 +923,7 @@ def build_gemma_ar_decoder(
         resolve_action_codec(config.tokenizer),
         tokenizer=text_tokenizer,
         aux_runtime=aux_runtime,
-        aux_loss_weight=aux_loss_weight,
+        narration_weight=narration_weight,
         device=device,
         dtype=dtype,
     )
@@ -934,7 +934,7 @@ def build_molmo2_ar_decoder(
     config: ARDecoderConfig,
     text_config: Molmo2TextConfig,
     *,
-    aux_loss_weight: float = 1.0,
+    narration_weight: float = 1.0,
     device: DeviceLike = None,
     dtype: torch.dtype = torch.float32,
 ) -> Molmo2ARDecoder:
@@ -966,7 +966,7 @@ def build_molmo2_ar_decoder(
         resolve_action_codec(config.tokenizer),
         tokenizer=tokenizer,
         aux_runtime=aux_runtime,
-        aux_loss_weight=aux_loss_weight,
+        narration_weight=narration_weight,
         newline_carrier_ids=carriers,
         device=device,
         dtype=dtype,

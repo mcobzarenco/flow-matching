@@ -39,13 +39,13 @@ def ar_loss_counts(
     batch: CollatedBatch[Any],
 ) -> dict[str, Tensor]:
     """The suffix objective's per-component counts (data-only, no
-    forward): CE action-target count under ``"action"``, plus the aux
-    value-line target count under ``"aux"`` iff the batch carries an
+    forward): CE action-target count under ``"action_ar"``, plus the
+    narration value-line target count under ``"narration"`` iff the batch carries an
     aux-augmented suffix (run-constant by collation)."""
     action_count, aux_count = ar_backbone_counts(decoder, batch)
-    counts = {"action": action_count}
+    counts = {"action_ar": action_count}
     if aux_count is not None:
-        counts["aux"] = aux_count
+        counts["narration"] = aux_count
     return counts
 
 
@@ -56,11 +56,11 @@ def ar_suffix_report[B: nn.Module, M: PrefixMemory](
     batch: CollatedBatch[Any],
     *,
     counts: dict[str, Tensor],
-    aux_loss_weight: float,
+    narration_weight: float,
 ) -> LossReport:
     """The suffix CE objective in two-phase form: sum-form losses over
     the ALL-REDUCED ``counts`` — objective = action_sum·W/action_count
-    (+ aux_loss_weight·aux_sum·W/max(aux_count, 1) when the run trains
+    (+ narration_weight·aux_sum·W/max(aux_count, 1) when the run trains
     value lines), whose DDP mean is the global token-weighted mean."""
     action_sum, action_count, aux_sum, aux_count = ar_backbone_loss_sums(
         backbone,
@@ -69,14 +69,14 @@ def ar_suffix_report[B: nn.Module, M: PrefixMemory](
         batch,
     )
     world = dist.get_world_size() if dist.is_initialized() else 1
-    objective = action_sum * world / counts["action"]
-    components = {"action": Loss(sum=action_sum, count=action_count)}
+    objective = action_sum * world / counts["action_ar"]
+    components = {"action_ar": Loss(sum=action_sum, count=action_count)}
     if aux_sum is not None:
         assert aux_count is not None  # the sums contract: aux rides as a pair
-        objective = objective + aux_loss_weight * (
-            aux_sum * world / counts["aux"].clamp(min=1)
+        objective = objective + narration_weight * (
+            aux_sum * world / counts["narration"].clamp(min=1)
         )
-        components["aux"] = Loss(sum=aux_sum, count=aux_count)
+        components["narration"] = Loss(sum=aux_sum, count=aux_count)
     return LossReport(objective=objective, components=components)
 
 

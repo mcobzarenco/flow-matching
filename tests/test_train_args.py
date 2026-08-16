@@ -250,7 +250,7 @@ def test_resume_ar_family_infers_implied_bracket() -> None:
     implicitly — resolution must infer True, not the recorded False."""
     info = _checkpoint(
         family=VLAFamily.GEMMA_AR,
-        objective={"kind": "ar", "aux_loss_weight": 1.0},
+        objective={"kind": "ar", "narration_weight": 1.0},
         fast_tokenizer="user/repo/tok_v2",
         # Real AR records carry the flow-only knobs at their defaults
         # (the parser refused anything else for non-flow).

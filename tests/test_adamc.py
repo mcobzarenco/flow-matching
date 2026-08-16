@@ -69,7 +69,7 @@ def bijou_model(tiny_checkpoint: Path) -> Molmo2ARVLA:
         backbone,
         encoder,
         decoder,
-        objective=ARObjective(aux_loss_weight=0.5),
+        objective=ARObjective(narration_weight=0.5),
         serving=ARServing(),
     )
     for parameter in backbone.parameters():

@@ -9,7 +9,7 @@ which owns ZERO parameters (trunk-native rows) — the trainable surface
 is the trunk itself.
 
 Objective: :class:`~bijou.models.objectives.ARObjective`; the format-6
-emission has no aux fields, so ``aux_loss_weight`` is inert and the
+emission has no aux fields, so ``narration_weight`` is inert and the
 objective is single-component CE."""
 
 from __future__ import annotations
@@ -179,7 +179,7 @@ class MolmoAct2ARVLA(ARVLA[MolmoAct2Inputs]):
                 memory,
                 batch,
                 counts=counts,
-                aux_loss_weight=self.objective.aux_loss_weight,
+                narration_weight=self.objective.narration_weight,
             )
 
     @override

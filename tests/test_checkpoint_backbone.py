@@ -157,7 +157,7 @@ def make_args(save_dir: Path) -> TrainArgs:
         snapflow_shortcut_weight=None,
         fast_tokenizer=None,
         aux_fields=None,
-        aux_loss_weight=0.5,
+        narration_weight=0.5,
         aux_dropout=0.0,
         field_dropout=0.0,
         aux_prompt_hash=None,

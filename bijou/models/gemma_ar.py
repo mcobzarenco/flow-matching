@@ -9,7 +9,7 @@ trainable surface is the FAST table patch; the trunk trains only when
 optimizer policy unfreezes it.
 
 Objective: :class:`~bijou.models.objectives.ARObjective` — next-token
-CE over the suffix; ``aux_loss_weight`` mixes the value-line CE when
+CE over the suffix; ``narration_weight`` mixes the value-line CE when
 the checkpoint trained aux fields (an aux-less checkpoint loads fine
 and simply has no ``"aux"`` component; its narration surface refuses
 requests at decode time, from its own trained-fields record)."""
@@ -146,7 +146,7 @@ class GemmaARVLA(ARVLA[GemmaInputs], NarratingVLA[GemmaInputs]):
                 memory,
                 batch,
                 counts=counts,
-                aux_loss_weight=self.objective.aux_loss_weight,
+                narration_weight=self.objective.narration_weight,
             )
 
     @override
@@ -296,7 +296,7 @@ class GemmaARVLA(ARVLA[GemmaInputs], NarratingVLA[GemmaInputs]):
             trunk_dir,
             config,
             backbone_config.text,
-            aux_loss_weight=objective.aux_loss_weight,
+            narration_weight=objective.narration_weight,
             device=device,
             dtype=torch.float32,
         )

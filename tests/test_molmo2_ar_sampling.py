@@ -185,7 +185,7 @@ def test_ar_predict_sampled_dispatches_molmo2(
         model,
         encoder,
         decoder,
-        objective=ARObjective(aux_loss_weight=1.0),
+        objective=ARObjective(narration_weight=1.0),
         serving=ARServing(),
     )
     sample = batch(loaded, tiny_inputs())

@@ -46,7 +46,7 @@ class GemmaARDecoder(ARSuffixDecoder[Gemma4Model, GemmaMemory]):
         *,
         tokenizer: TextTokenizer | None,
         aux_runtime: AuxRuntime | None = None,
-        aux_loss_weight: float = 1.0,
+        narration_weight: float = 1.0,
         device: DeviceLike = None,
         dtype: torch.dtype | None = None,
     ) -> None:
@@ -56,7 +56,7 @@ class GemmaARDecoder(ARSuffixDecoder[Gemma4Model, GemmaMemory]):
             tokenizer=tokenizer,
             opener_text=GENERATION_OPENER,
             aux_runtime=aux_runtime,
-            aux_loss_weight=aux_loss_weight,
+            narration_weight=narration_weight,
         )
         if config.suffix_format != SUFFIX_FORMAT:
             raise ValueError(

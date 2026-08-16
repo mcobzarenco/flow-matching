@@ -234,7 +234,7 @@ class TrainArgs:
     snapflow_shortcut_weight: float | None
     fast_tokenizer: str | None
     aux_fields: tuple[str, ...] | None
-    aux_loss_weight: float
+    narration_weight: float
     aux_dropout: float
     field_dropout: float
     aux_prompt_hash: str | None
@@ -549,9 +549,9 @@ class TrainArgs:
                 raise ValueError(
                     "--aux-fields cannot combine with --cameras/--max-cameras",
                 )
-        if self.aux_loss_weight <= 0:
+        if self.narration_weight <= 0:
             raise ValueError(
-                "--aux-loss-weight must be > 0 (omit --aux-fields to disable)",
+                "--narration-weight must be > 0 (omit --aux-fields to disable)",
             )
         for name, value in (
             ("--aux-dropout", self.aux_dropout),
@@ -905,7 +905,7 @@ class TrainArgs:
                 aux_fields=(
                     tuple(raw.aux_fields) if raw.aux_fields is not None else None
                 ),
-                aux_loss_weight=raw.aux_loss_weight,
+                narration_weight=raw.narration_weight,
                 aux_dropout=aux_dropout,
                 field_dropout=field_dropout,
                 aux_prompt_hash=raw.aux_prompt_hash,
@@ -1257,7 +1257,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "objective)",
     )
     parser.add_argument(
-        "--aux-loss-weight",
+        "--narration-weight",
         type=float,
         default=0.5,
         help="weight of the aux-text CE component (total = action + "

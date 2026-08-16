@@ -62,8 +62,8 @@ def test_prediction_structs_carry_their_trait_fields() -> None:
 
 def test_loss_report_shape() -> None:
     action = Loss(sum=torch.tensor(3.0), count=torch.tensor(6.0))
-    report = LossReport(objective=torch.tensor(0.5), components={"action": action})
-    assert report.components["action"].sum.item() == 3.0
+    report = LossReport(objective=torch.tensor(0.5), components={"action_flow": action})
+    assert report.components["action_flow"].sum.item() == 3.0
 
 
 def test_snapflow_objective_validates() -> None:
@@ -77,9 +77,9 @@ def test_snapflow_objective_validates() -> None:
 
 
 def test_ar_objective_validates() -> None:
-    ARObjective(aux_loss_weight=1.0)
-    with pytest.raises(ValueError, match="aux_loss_weight"):
-        ARObjective(aux_loss_weight=0.0)
+    ARObjective(narration_weight=1.0)
+    with pytest.raises(ValueError, match="narration_weight"):
+        ARObjective(narration_weight=0.0)
 
 
 def test_flow_objective_is_a_unit_variant() -> None:
@@ -138,7 +138,7 @@ class _StubVLA(FlowVLA[_StubInputs]):
 
     @override
     def loss_counts(self, batch: "CollatedBatch[_StubInputs]") -> dict[str, Tensor]:
-        return {"action": torch.tensor(4.0)}
+        return {"action_flow": torch.tensor(4.0)}
 
     @override
     def forward(
@@ -149,8 +149,8 @@ class _StubVLA(FlowVLA[_StubInputs]):
     ) -> LossReport:
         total = self.proj.weight.sum()
         return LossReport(
-            objective=total / counts["action"],
-            components={"action": Loss(sum=total, count=torch.tensor(4.0))},
+            objective=total / counts["action_flow"],
+            components={"action_flow": Loss(sum=total, count=torch.tensor(4.0))},
         )
 
     @override

@@ -191,8 +191,8 @@ def test_micro_slice_objectives_sum_to_full_batch(
         gemma_batch(202, chunk_size=GEMMA_CHUNK, with_tokens=False),
     ]
     counts = summed_loss_counts(family, halves)
-    assert int(counts["action"]) == sum(
-        int(family.loss_counts(half)["action"]) for half in halves
+    assert int(counts["action_flow"]) == sum(
+        int(family.loss_counts(half)["action_flow"]) for half in halves
     )
     torch.manual_seed(9)
     addends: list[torch.Tensor] = []
@@ -200,11 +200,11 @@ def test_micro_slice_objectives_sum_to_full_batch(
     for half in halves:
         report = family(half, counts=counts)
         addends.append(report.objective.detach())
-        component_sums.append(report.components["action"].sum.detach())
+        component_sums.append(report.components["action_flow"].sum.detach())
     # The addends divide by the GLOBAL count, so their sum is the
     # count-weighted whole: sum(sums) / global_count.
     total = torch.stack(addends).sum()
-    reconstructed = torch.stack(component_sums).sum() / counts["action"]
+    reconstructed = torch.stack(component_sums).sum() / counts["action_flow"]
     assert torch.allclose(total, reconstructed, atol=1e-6)
     # And a mismatched key set dies loudly at the loop's summation.
     with pytest.raises(SystemExit, match="run-constant"):

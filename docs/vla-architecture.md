@@ -891,6 +891,16 @@ adapt to assert exactly this.)
 - **head**: a shallow output projection only (`lm_head`, `fast_head`,
   `output_head_parameters`). Never a decoder-sized component.
 - **expert**: retired from identifiers; allowed in prose.
+- **Loss component keys are mechanism-qualified, in every family**:
+  `loss_action_flow` (flow-matching MSE), `loss_action_ar`
+  (discrete action-token CE), `loss_narration` (value-line text CE) —
+  one key means one quantity across all runs, so joint series overlay
+  single-head series. "narration" is the text surface's word
+  (`NarratingVLA`); "aux" survives only as the field vocabulary
+  (`AuxField`, `--aux-fields`); the mixing weight is
+  `narration_weight` (`--narration-weight`). Historical keys
+  (`loss_action`, `loss_aux`, `aux_loss_weight`) exist only in old
+  runs' jsonls and mean what they meant there.
 
 | Old | New |
 |---|---|

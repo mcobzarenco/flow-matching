@@ -117,7 +117,7 @@ class GemmaFlowVLA(FlowVLA[GemmaInputs]):
     def loss_counts(self, batch: CollatedBatch[GemmaInputs]) -> dict[str, Tensor]:
         # Every element of [B, chunk, action_dim] weighs equally.
         return {
-            "action": torch.tensor(
+            "action_flow": torch.tensor(
                 batch.actions.numel(),
                 device=batch.actions.device,
             ),
@@ -158,10 +158,10 @@ class GemmaFlowVLA(FlowVLA[GemmaInputs]):
         world = dist.get_world_size() if dist.is_initialized() else 1
         # Per-rank scalar whose DDP MEAN is the global objective:
         # sum_r · W / global_count.
-        objective = loss_sum * world / counts["action"]
+        objective = loss_sum * world / counts["action_flow"]
         return LossReport(
             objective=objective,
-            components={"action": Loss(sum=loss_sum, count=count)},
+            components={"action_flow": Loss(sum=loss_sum, count=count)},
         )
 
     @override

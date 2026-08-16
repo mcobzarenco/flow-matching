@@ -139,7 +139,7 @@ def gemma_train_args(**overrides: Any) -> dict[str, Any]:
         "time_conditioning": "additive",
         "target_time_embed": False,
         "fast_tokenizer": None,
-        "aux_loss_weight": 1.0,
+        "narration_weight": 1.0,
         "seed": 0,
     }
     args.update(overrides)

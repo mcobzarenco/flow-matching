@@ -932,7 +932,7 @@ def main() -> int:
                 f"@ {aux_decode_config.prompt_hash} "
                 f"(judges: {aux_decode_config.judge_model}), "
                 f"fields {list(args.aux_fields)}, loss weight "
-                f"{args.aux_loss_weight}, request dropout {args.aux_dropout}, "
+                f"{args.narration_weight}, request dropout {args.aux_dropout}, "
                 f"field dropout {args.field_dropout}",
                 flush=True,
             )
@@ -1454,7 +1454,7 @@ def main() -> int:
             action_codec,
             tokenizer=molmo2_text_tokenizer,
             aux_runtime=molmo2_aux_runtime,
-            aux_loss_weight=args.aux_loss_weight,
+            narration_weight=args.narration_weight,
             newline_carrier_ids=carriers,
             device=device,
             dtype=torch.float32,
@@ -1550,7 +1550,7 @@ def main() -> int:
             action_codec,
             tokenizer=text_tokenizer,
             aux_runtime=aux_runtime,
-            aux_loss_weight=args.aux_loss_weight,
+            narration_weight=args.narration_weight,
             device=device,
             dtype=torch.float32,
         )
@@ -2043,7 +2043,6 @@ def main() -> int:
     window: list[Tensor] = []
     window_component_sums: dict[str, list[Tensor]] = {}
     window_component_counts: dict[str, list[Tensor]] = {}
-    multi_component = False
     grad_norm = torch.zeros((), device=device)
     prefetcher = DevicePrefetcher(loader, device)
     epoch = 0
@@ -2142,7 +2141,6 @@ def main() -> int:
             scheduler.step()
             step += 1
             window.append(loss)
-            multi_component = len(step_sums) > 1
             for key, value in step_sums.items():
                 window_component_sums.setdefault(key, []).append(value)
                 window_component_counts.setdefault(key, []).append(
@@ -2216,17 +2214,17 @@ def main() -> int:
                             torch.cuda.memory_reserved(device) / 2**30,
                             2,
                         )
-                    if multi_component:
-                        # Component chart series keep the historical
-                        # names (loss_action, loss_aux); single-
-                        # component runs log "loss" alone, exactly as
-                        # before.
-                        for key, totals in component_totals.items():
-                            if float(totals[1]) > 0:
-                                record[f"loss_{key}"] = round(
-                                    float(totals[0] / totals[1]),
-                                    4,
-                                )
+                    # Component series log for EVERY family under
+                    # mechanism-qualified names (loss_action_flow,
+                    # loss_action_ar, loss_narration) so one key means
+                    # one quantity across runs and joint series overlay
+                    # single-head runs' series in the same chart.
+                    for key, totals in component_totals.items():
+                        if float(totals[1]) > 0:
+                            record[f"loss_{key}"] = round(
+                                float(totals[0] / totals[1]),
+                                4,
+                            )
                     if args.backbone_trained:
                         # Same cosine shape as the decoder group's,
                         # scaled to the backbone's base lr; the index

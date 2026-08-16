@@ -200,7 +200,7 @@ def test_ar_backbone_aux_sums_reconstruct_components() -> None:
     assert torch.allclose(action_sum / action_count, action, atol=1e-6)
     assert torch.allclose(sums_aux, aux_sum, atol=1e-6)
     assert torch.equal(sums_aux_count, aux_count)
-    reconstructed = action_sum / action_count + decoder.aux_loss_weight * (
+    reconstructed = action_sum / action_count + decoder.narration_weight * (
         sums_aux / sums_aux_count.clamp(min=1)
     )
     assert torch.allclose(reconstructed, total, atol=1e-6)
@@ -245,7 +245,7 @@ def test_chunked_gradient_matches_unchunked_ar_backbone_aux() -> None:
             row,
         )
         assert aux_sum is not None
-        share = action_sum / action_norm + decoder.aux_loss_weight * (
+        share = action_sum / action_norm + decoder.narration_weight * (
             aux_sum / aux_norm.clamp(min=1)
         )
         share.backward()

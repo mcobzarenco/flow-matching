@@ -295,7 +295,7 @@ def convert(
         case VLAFamily.GEMMA_AR | VLAFamily.MOLMO2_AR:
             objective = {
                 "kind": "ar",
-                "aux_loss_weight": float(raw_args.get("aux_loss_weight", 1.0)),
+                "narration_weight": float(raw_args.get("narration_weight", 1.0)),
             }
         case VLAFamily.MOLMOACT2_AR:
             objective = {"kind": "ar"}

@@ -157,14 +157,14 @@ class MolmoAct2JointVLA(ARVLA[MolmoAct2Inputs], FlowVLA[MolmoAct2Inputs]):
         return {
             # Flow normalizer = B·T positions (the per-position
             # valid-dim mean is the inner reduction).
-            "action": torch.tensor(
+            "action_flow": torch.tensor(
                 batch.actions.shape[0] * batch.actions.shape[1],
                 device=batch.actions.device,
             ),
-            # The CE branch's action-token count — logged under "aux"
+            # The CE branch's action-token count — logged as the "action_ar" component
             # (the joint arm's historical component convention: the CE
             # read is the pinned CE-health metric).
-            "aux": ce_count,
+            "action_ar": ce_count,
         }
 
     @override
@@ -203,14 +203,14 @@ class MolmoAct2JointVLA(ARVLA[MolmoAct2Inputs], FlowVLA[MolmoAct2Inputs]):
         world = dist.get_world_size() if dist.is_initialized() else 1
         # Per-rank scalar whose DDP MEAN is the global objective:
         # sum_r · W / global_count per term.
-        objective = flow_sum * world / counts["action"] + self.objective.ce_weight * (
-            ce_sum * world / counts["aux"]
-        )
+        objective = flow_sum * world / counts[
+            "action_flow"
+        ] + self.objective.ce_weight * (ce_sum * world / counts["action_ar"])
         return LossReport(
             objective=objective,
             components={
-                "action": Loss(sum=flow_sum, count=flow_count),
-                "aux": Loss(sum=ce_sum, count=ce_count),
+                "action_flow": Loss(sum=flow_sum, count=flow_count),
+                "action_ar": Loss(sum=ce_sum, count=ce_count),
             },
         )
 
