@@ -78,8 +78,10 @@ PRESETS: dict[str, dict] = {
         "h1": "Grasp-SFT v1 — joint step 3000, flow head on unseen seeds",
         "meta_html": (
             "Checkpoint <code>grasp_sft_v1_joint_8xa100/step_003000</code>"
-            " (5,000-demo corpus + pick_place ×4, eff-96, 8×A100, launched"
-            " 18:21:14Z 2026-08-16) · euler-10, execute-horizon 30, seeds 0–99,"
+            " (5,000-demo corpus + pick_place ×4, eff-96, 8×A100; run 2 —"
+            " <code>--recompute-stats</code> restart launched 21:14:48Z"
+            " 2026-08-16 on the owner's order, run 1b killed at ~1900) ·"
+            " euler-10, execute-horizon 30, seeds 0–99,"
             " 30 s episodes, sharded 4×25 (exact: triple-keyed noise) ·"
             " primary anchor: the probe checkpoint's <b>44/100</b>"
         ),
