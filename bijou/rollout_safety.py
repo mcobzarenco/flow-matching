@@ -248,22 +248,30 @@ def parse_camera_kind_overrides(
     return overrides
 
 
-def camera_kinds_from_names(names: Iterable[str]) -> dict[str, str]:
+def camera_kinds_from_names(
+    names: Iterable[str],
+    *,
+    overridden: set[str] | None = None,
+) -> dict[str, str]:
     """Per-camera semantic kinds from the operator's own camera names: a
     name inside the judge vocabulary IS its kind; anything else renders
     "unknown" (trained in-distribution via kind dropout) with a LOUD
-    warning — name cameras by viewpoint to give the model the signal."""
+    warning — name cameras by viewpoint to give the model the signal.
+    ``overridden`` names are exempt from the warning (an explicit
+    --camera-kind replaces the fallback, so the message would be
+    untrue)."""
     kinds: dict[str, str] = {}
     for name in names:
         if name in CAMERA_KINDS:
             kinds[name] = name
         else:
-            print(
-                f"WARNING: camera name {name!r} is not in the semantic "
-                f"kind vocabulary {sorted(CAMERA_KINDS)} — its prompt tag "
-                "renders as 'unknown'",
-                flush=True,
-            )
+            if overridden is None or name not in overridden:
+                print(
+                    f"WARNING: camera name {name!r} is not in the semantic "
+                    f"kind vocabulary {sorted(CAMERA_KINDS)} — its prompt tag "
+                    "renders as 'unknown'",
+                    flush=True,
+                )
             kinds[name] = "unknown"
     return kinds
 
@@ -281,7 +289,9 @@ def resolve_camera_kinds(
     (an unstamped or hash-mismatched dataset rendered its cameras
     "unknown" in training prompts, so the rollout mirror does too) →
     the name-is-kind heuristic, only when no dataset directory is
-    available."""
+    available. Fallback notices print only for cameras an override
+    does NOT cover — a loud message must describe what will actually
+    be rendered."""
     names = list(names)
     if stats_dataset is not None:
         repo_id = stats_dataset.name
@@ -289,7 +299,7 @@ def resolve_camera_kinds(
         trained = (
             camera_kinds_of(stats_dataset, repo_id, stamp) if stamp is not None else {}
         )
-        if not trained:
+        if not trained and any(name not in overrides for name in names):
             print(
                 f"[camera-kinds] {repo_id}: no stamped kinds file — training "
                 "rendered these cameras 'unknown'; mirroring that "
@@ -298,7 +308,7 @@ def resolve_camera_kinds(
             )
         kinds: dict[str, str] = {}
         for name in names:
-            if trained and name not in trained:
+            if trained and name not in trained and name not in overrides:
                 print(
                     f"[camera-kinds] camera {name!r} is not in the dataset's "
                     "kinds file — rendering as 'unknown' "
@@ -307,7 +317,7 @@ def resolve_camera_kinds(
                 )
             kinds[name] = trained.get(name, "unknown")
     else:
-        kinds = camera_kinds_from_names(names)
+        kinds = camera_kinds_from_names(names, overridden=set(overrides))
     kinds.update(overrides)
     return kinds
 
