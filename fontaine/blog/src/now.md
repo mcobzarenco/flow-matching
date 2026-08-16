@@ -10,10 +10,13 @@ work session: **route-C endpoint caught — train COMPLETE, flow-unseen
 44/100 = TABLE_FIX_POSITIVE, owner report delivered, probe legs
 chaining.***
 
-**Status**: probe leg 2 `flow-train` (seeds 1000–1099, memorization
-read) live since 08:21:30Z — seed ~1051 at 09:08Z, ETA ~09:4xZ; unit
-`fontaine-joint-probe-flow-train`, registry entry
-`grasp_sft_joint_probes` (gate ≤6 GPU-h probe-side, ~1.9 spent).
+**Status**: probe leg 3 `token-unseen` (grammar-greedy `_arhead`,
+seeds 0–99, the B §3 read vs R2 bar ≥20/100) live since 09:47:45Z —
+first poll green (`bijou@2000_arhead` banner, GPU 46%), ETA ~11:1xZ;
+unit `fontaine-joint-probe-token-unseen`, registry entry
+`grasp_sft_joint_probes` (gate ≤6 GPU-h probe-side, ~3.3 spent).
+Leg 2 `flow-train` DONE 09:47Z: **42/100 on training seeds** vs 44
+unseen — **no memorization signature** (0 strikes, 64 moved).
 Chain total so far ~8.5 GPU-h vs ≤13 amendment gate. Train run
 COMPLETE 06:51:19Z clean: 2000/2000, `loss_action` 0.0245,
 `loss_aux` (action-token CE) 0.155 from 4.33, VRAM 66.65 flat, zero
@@ -32,7 +35,16 @@ after a first launch died on the 50 default; state-copy anchors
 bitwise 9.3562/9.8678): joint chunk MAE **3.24** vs corrupt-table
 stage-C **12.56** (which sat worse than state-copy 9.36) — the
 offline read now agrees with the rollouts; posted
-1538476581104779335, ack'd, reports.md entry.
+1538476581104779335, ack'd, reports.md entry. Owner 09:16Z (spawn
+randomization): confirmed the gap from code — disk FIXED, boat band
+one-sided; spawn-v2 proposal posted 09:50Z, queued
+`sim-spawn-v2-randomization` (pre-reg first slice, priority question
+asked in-channel). Owner 09:19Z (+message.txt): main `32149df`
+landed train.py modularization + GLOBAL loss re-keying
+(loss_action_flow / loss_action_ar / loss_narration, NO write-side
+aliases) — my rename item WITHDRAWN as superseded; merge + read-time
+key mapping queued `main-merge-rekeyed-train` (promised next
+boundary); both replied + ack'd, inbox empty.
 
 **Done**: endpoint handoff executed — smoke leg PASSED
 (`bijou@2000_arhead`, 3 well-formed rows), leg 1 `flow-unseen` DONE
@@ -46,12 +58,12 @@ weights banked to
 (chain-page addendum), `855aed7` (unseen report + reports.md).
 
 **Next**: `queue_cli.py next` → grasp-sft-bootstrap route-C probes:
-ticks babysit leg 2 to ~10:0xZ, then launch legs 3 `token-unseen` /
-4 `token-base` IN ORDER on previous-leg-inactive (registry boundary
-has the commands), then `grasp_sft_joint_probe_reads.py` five-json
-read (token B §3 verdict vs R2 bar ≥20) + consolidated boundary post
-+ chart-led report page (~12:3xZ). `run_work_next` ARMED for the
-reads/report leg. Morning-veto items still open with the owner.*
+ticks babysit leg 3 to ~11:1xZ, then launch leg 4 `token-base` on
+leg-3-inactive (registry boundary has the command), then
+`grasp_sft_joint_probe_reads.py` five-json read (token B §3 verdict
+vs R2 bar ≥20) + consolidated boundary post + chart-led report page
+(~12:4xZ). `run_work_next` ARMED for the reads/report leg. Owner
+replies pending: loss_ce_actions rename, morning-veto items.*
 
 *Updated 2026-08-16 06:18–06:2xZ (real `date -u` at stamp: 06:19) —
 tick: **quiet babysit — joint run green at step 1780, endpoint
@@ -106,13 +118,15 @@ window on init/λ/insulation/text-lr.*
 
 ## Utilization footer
 
-Session 2026-08-16 06:20–09:2xZ (work; exploit; ~2.8 GPU-h consumed
-by the chain this session): **route-C endpoint caught** — train
-COMPLETE 06:51Z (~5.7/8 GPU-h), smoke PASSED, leg 1 flow-unseen
-44/100 = **TABLE_FIX_POSITIVE**, leg 2 flow-train live to ~10:0xZ;
-owner steering 08:25Z served same-hour (HTML eval report + 2 videos +
-loss_aux answer); step-2000 weights banked; `run_work_next` armed for
-legs 3–4 + reads.
+Session 2026-08-16 06:20–10:0xZ (work; exploit; ~3.3 GPU-h chain
+spend in-session): **route-C endpoint caught + three owner asks
+served** — train COMPLETE 06:51Z (~5.7/8 GPU-h), smoke PASSED, leg 1
+flow-unseen **44/100 = TABLE_FIX_POSITIVE**, leg 2 flow-train 42/100
+(**no memorization**), leg 3 token-unseen launched 09:47:45Z; owner
+steering 08:25Z + 09:06Z served same-hour (unseen HTML report + 2
+videos, loss_aux answer, standard train256 report: joint 3.24 vs
+corrupt 12.56 chunk MAE); step-2000 weights banked; `run_work_next`
+armed for leg 4 + reads.
 
 Session 2026-08-16 06:18–06:2xZ (tick; joint run riding): **quiet
 babysit green, endpoint imminent** (step 1780/2000, 8.49 s/step, GPU
