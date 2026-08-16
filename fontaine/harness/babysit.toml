@@ -8,7 +8,7 @@
 # anchors/kill rules in the new vocabulary; old runs' jsonls keep their
 # historical keys (read-time mapping: fontaine/scripts/loss_keys.py).
 
-no_live_runs_reason = "declared 13:4xZ 08-15 work session: grasp_sft_step2000_probe COMPLETE and pruned (train arm banked clean ~13:41Z, ~3.4/4.0 GPU-h; no-memorization read posted 1538180830470602903). GPU is OWNER-RESERVED (their 13:35Z message) — no launches until they free it; the corrected-table retrain is prepped + pre-registered (owner-gated), image-augment-sim2real queued CPU-side."
+no_live_runs_reason = "declared 10:2xZ 08-16: OWNER-RESERVED GPU (their 10:13:32Z message — local rollouts of the 2k policy); leg-3 token-unseen eval STOPPED on their order mid-seed-24, GPU verified free (0 MiB / 0%). GPU queue PAUSED until they hand it back; resume recipe in the pruned grasp_sft_joint_probes entry note below. CPU-side spawn-v2 instrument slice continues."
 
 
 # (no_live_runs_reason cleared 11:2xZ 08-13 — molmoact2_ar100 launched under the owner 11:07Z delegation; prior: "declared 01:1xZ 08-13 work session: grpo_signal_probe COMPLETE and pruned (re-scoped cells 1/2/5, both families clear, unit stopped 01:08:05Z at the cell-5 boundary). Local GPU idle; next GPU legs pend owner calls (v3-rerun unhold, cells 3/4 re-queue, phase-2 token-GRPO design first lands CPU-side).")
@@ -952,25 +952,42 @@ no_live_runs_reason = "declared 13:4xZ 08-15 work session: grasp_sft_step2000_pr
 # 07:0xZ (policy bijou@2000_arhead, 3 well-formed rows), probe legs
 # running per the entry below.
 
-[[run]]
-name = "grasp_sft_joint_probes"
-kind = "progress-log"
-host = "local"
-pgrep = "rollout_sim"
-pgrep_min = 1
-gpu_indices = [0]
-gpu_mem_min_mib = 4000
-log = "/home/ubuntu/eval__grasp_sft_joint_token_unseen.log"
-progress_re = "seed [0-9]+ replan [0-9]+"
-started_utc = "2026-08-16T09:47:45Z"
-gpu_hours_per_wall_hour = 1.0
-boundary = "route C joint endpoint probes (amendment SS4, posts/2026-08-16-amendment-grasp-sft-route-c-joint.md): smoke DONE 07:0xZ; leg 1 flow-unseen DONE 08:21Z — 44/100 unseen, A SS5 verdict TABLE_FIX_POSITIVE baked (vs base 9 / corrupt-28; posted 1538462820751114270); leg 2 flow-train DONE 09:47Z — 42/100 train seeds, NO memorization signature (vs 44 unseen; posted 1538484526651547658); (3) token-unseen LIVE since 09:47:45Z unit fontaine-joint-probe-token-unseen (B SS3 read vs R2 bar >=20/100), then (4) token-base, each ~1.3 GPU-h, one leg at a time detached via run_detached.sh (unit names fontaine-joint-probe-<leg>; log/started_utc fields here updated per launch). Owner-ask eval256 DONE 09:1xZ (unit fontaine-joint-eval256-r2, --chunk-size 30 matched): joint chunk MAE 3.24 vs corrupt-table stage-C 12.56, state-copy anchors bitwise 9.3562/9.8678; report on fontaine-reports (curl 200), posted 1538476581104779335, reports.md entry landed. When the active LEG unit goes inactive: launch the next leg; after ALL legs, reads via grasp_sft_joint_probe_reads.py (all five jsons, kept-split automatic, A SS5 / B SS3 verdicts baked); boundary post owns the final verdicts. Owner reply pending on the loss_aux->loss_ce_actions rename proposal (08:53Z) — do not land until answered"
-anchors = [
-    "flow legs anchor: base 9/100 unseen, corrupt-table 28/100 (the retired stage-C AE read); A SS5 verdict surface baked in reads script",
-    "token legs anchor: R2 bar >=20/100 unseen (grammar-greedy); token-base leg is the B SS3 default-run anchor on molmoact2_base_corrected_stats_v0_vla",
-    "gates: reset strikes == 0 everywhere; seeds exactly 0-99 (unseen) / 1000-1099 (train); reads script refuses otherwise",
-    "chain budget: train 5.7 + probes <=5.3 vs gate <=13 total (amendment); per-leg ~1.3 GPU-h class",
-]
-[[run.gates]]
-kind = "gpu_hours_max"
-value = 6.0
+
+# grasp_sft_joint_probes entry PAUSED 10:2xZ 08-16 — OWNER STEERING
+# 10:13:32Z: 'I need the GPU to do local rollouts of the 2k policy,
+# let's stop the eval and pause GPU queue until I give it back to
+# you.' Unit fontaine-joint-probe-token-unseen STOPPED mid-seed-24
+# (~24/100, ~0.5 GPU-h; deterministic grammar-greedy -> leg re-runs
+# from seed 0 on resume, partial json discarded; delete
+# outputs json for token_unseen before relaunch if present).
+# RESUME RECIPE when the owner returns the GPU: relaunch leg 3 via
+# the launch_local_grasp_sft_joint_probes.sh token-unseen leg
+# (run_detached.sh unit fontaine-joint-probe-token-unseen), restore
+# this entry (uncomment, fresh started_utc/log), then leg 4
+# token-base on leg-3-inactive, then grasp_sft_joint_probe_reads.py
+# five-json read + consolidated post + chart-led report page —
+# the boundary text inside the commented entry below has the full
+# state (legs 1-2 done, eval256 done).
+
+# [[run]]
+# name = "grasp_sft_joint_probes"
+# kind = "progress-log"
+# host = "local"
+# pgrep = "rollout_sim"
+# pgrep_min = 1
+# gpu_indices = [0]
+# gpu_mem_min_mib = 4000
+# log = "/home/ubuntu/eval__grasp_sft_joint_token_unseen.log"
+# progress_re = "seed [0-9]+ replan [0-9]+"
+# started_utc = "2026-08-16T09:47:45Z"
+# gpu_hours_per_wall_hour = 1.0
+# boundary = "route C joint endpoint probes (amendment SS4, posts/2026-08-16-amendment-grasp-sft-route-c-joint.md): smoke DONE 07:0xZ; leg 1 flow-unseen DONE 08:21Z — 44/100 unseen, A SS5 verdict TABLE_FIX_POSITIVE baked (vs base 9 / corrupt-28; posted 1538462820751114270); leg 2 flow-train DONE 09:47Z — 42/100 train seeds, NO memorization signature (vs 44 unseen; posted 1538484526651547658); (3) token-unseen LIVE since 09:47:45Z unit fontaine-joint-probe-token-unseen (B SS3 read vs R2 bar >=20/100), then (4) token-base, each ~1.3 GPU-h, one leg at a time detached via run_detached.sh (unit names fontaine-joint-probe-<leg>; log/started_utc fields here updated per launch). Owner-ask eval256 DONE 09:1xZ (unit fontaine-joint-eval256-r2, --chunk-size 30 matched): joint chunk MAE 3.24 vs corrupt-table stage-C 12.56, state-copy anchors bitwise 9.3562/9.8678; report on fontaine-reports (curl 200), posted 1538476581104779335, reports.md entry landed. When the active LEG unit goes inactive: launch the next leg; after ALL legs, reads via grasp_sft_joint_probe_reads.py (all five jsons, kept-split automatic, A SS5 / B SS3 verdicts baked); boundary post owns the final verdicts. Owner reply pending on the loss_aux->loss_ce_actions rename proposal (08:53Z) — do not land until answered"
+# anchors = [
+#     "flow legs anchor: base 9/100 unseen, corrupt-table 28/100 (the retired stage-C AE read); A SS5 verdict surface baked in reads script",
+#     "token legs anchor: R2 bar >=20/100 unseen (grammar-greedy); token-base leg is the B SS3 default-run anchor on molmoact2_base_corrected_stats_v0_vla",
+#     "gates: reset strikes == 0 everywhere; seeds exactly 0-99 (unseen) / 1000-1099 (train); reads script refuses otherwise",
+#     "chain budget: train 5.7 + probes <=5.3 vs gate <=13 total (amendment); per-leg ~1.3 GPU-h class",
+# ]
+# [[run.gates]]
+# kind = "gpu_hours_max"
+# value = 6.0
