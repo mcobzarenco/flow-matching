@@ -468,6 +468,12 @@ def validate(
             generator=generator,
             flow_probe_method=flow_probe_method,
         )
+        # The molmo_flow decoder returns CPU fp32 actions (its
+        # reference-parity unnormalize runs on host, §8.13) — score on
+        # the probe's device; no-op for decoders that stay on device.
+        # Measured crash: joint family, first in-train eval, all ranks
+        # (cuda vs cpu at the subtraction) 2026-08-16 18:08Z.
+        sampled = sampled.to(device)
         truth = batch.actions.float()
         valid = ~batch.action_is_pad
         error = (sampled - truth).abs()
