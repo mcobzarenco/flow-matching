@@ -297,7 +297,10 @@ def _remap_stats_v21_to_v30(stats: DatasetStats) -> DatasetStats:
     assert mapped.action_q01 is not None and mapped.action_q99 is not None
     assert mapped.state_q01 is not None and mapped.state_q99 is not None
     check_identity(
-        stats.action_q01, stats.action_q99, mapped.action_q01, mapped.action_q99
+        stats.action_q01,
+        stats.action_q99,
+        mapped.action_q01,
+        mapped.action_q99,
     )
     check_identity(stats.state_q01, stats.state_q99, mapped.state_q01, mapped.state_q99)
     for j, name in enumerate(

@@ -84,3 +84,54 @@ def test_eval_seed_refusal() -> None:
         run_expert_episode(None, 5)
     with pytest.raises(ValueError, match="frozen eval holdout"):
         run_expert_episode(None, DEMO_SEED_BASE - 1)
+
+
+class _SlewSim(ModelOnly):
+    """ModelOnly plus live data — the surface ``_smooth`` reads."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.data = mujoco.MjData(self.model)
+
+
+def test_output_slew_bounds_every_command_step() -> None:
+    # The output-stage limiter (owner 2026-08-16 16:53Z: smoother
+    # traces): commanded per-tick steps are rate-bounded, seeded from
+    # the measured pose, and converge to the requested target.
+    from typing import Any, cast
+
+    from sim.scripted_expert import ScriptedExpert
+
+    sim = cast("Any", _SlewSim())
+    expert = ScriptedExpert(sim)
+    expert.SLEW_ARM_DEG, expert.SLEW_JAW_DEG = 6.0, 8.0
+    start = np.rad2deg(
+        np.concatenate(
+            [
+                sim.data.qpos[expert.planner.arm_qpos],
+                [float(sim.data.qpos[expert.planner.jaw_qpos])],
+            ],
+        ),
+    )
+    target = start + np.array([90.0, -40.0, 3.0, 0.0, 200.0, 40.0])
+    prev = start
+    out = start
+    for _ in range(60):
+        out = expert._smooth(sim, target)
+        step = out - prev
+        assert float(np.abs(step[:5]).max()) <= 6.0 + 1e-9
+        assert abs(float(step[5])) <= 8.0 + 1e-9
+        prev = out
+    np.testing.assert_allclose(out, target, atol=1e-9)
+
+
+def test_output_slew_none_is_legacy_passthrough() -> None:
+    from typing import Any, cast
+
+    from sim.scripted_expert import ScriptedExpert
+
+    sim = cast("Any", _SlewSim())
+    expert = ScriptedExpert(sim)
+    expert.SLEW_ARM_DEG = expert.SLEW_JAW_DEG = None
+    cmd = np.array([120.0, -90.0, 45.0, 10.0, -170.0, 41.7])
+    np.testing.assert_array_equal(expert._smooth(sim, cmd), cmd)

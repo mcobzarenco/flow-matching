@@ -46,7 +46,6 @@ PICKUP_QPOS = np.array([0.0, 0.000382, 0.4735, 1.17717, 1.58437, 0.727663])
 JAW_OPEN_RAD = float(PICKUP_QPOS[5])
 JAW_CLOSED_RAD = 0.0  # the P4 pinch close target
 ARM_JOINTS = ("shoulder_pan", "shoulder_lift", "elbow_flex", "wrist_flex", "wrist_roll")
-MAX_STEP_DEG = 4.0  # per-tick joint-target slew (30 Hz)
 
 
 def _quat_yaw(qpos_quat: np.ndarray) -> float:
@@ -299,11 +298,22 @@ class ScriptedExpert:
     #: Retreat ticks spent pulling up-and-back before slewing to HOME
     #: (clears the released boat before the big joint-space swing).
     RETREAT_UP_TICKS = 25
+    #: Output-stage command slew (deg/tick), applied to EVERY action
+    #: the expert emits — the recorded action traces are the commanded
+    #: targets, and one-shot phase-boundary steps (lift −35°, the
+    #: retreat home swing) are what reads as "jumpy" in the visualizer
+    #: (owner 2026-08-16 16:53Z). Feedforward from the LAST COMMAND,
+    #: never the measured pose: slewing from the measured pose
+    #: compounds servo lag into a crawl (measured — parked 3%).
+    #: ``None`` disables the stage (legacy one-shot commands).
+    SLEW_ARM_DEG: float | None = 6.0
+    SLEW_JAW_DEG: float | None = 8.0
 
     def __init__(self, sim: SO101Sim) -> None:
         self.planner = ExpertPlanner(sim)
         self.state = ExpertState()
         self.disk = np.array([*sim.disk_center, 0.0])
+        self._last_cmd: np.ndarray | None = None
 
     def _arm_now(self, sim: SO101Sim) -> np.ndarray:
         return sim.data.qpos[self.planner.arm_qpos].copy()
@@ -367,7 +377,34 @@ class ScriptedExpert:
         self._enter("recover")
         return True
 
+    def _smooth(self, sim: SO101Sim, cmd_deg: np.ndarray) -> np.ndarray:
+        """Output-stage slew: clip each channel's per-tick step so the
+        COMMANDED trace is rate-bounded. Feedforward — the ramp
+        advances from the last command at a fixed rate whatever the
+        servos do — seeded from the measured pose on the first tick
+        (the episode starts with command = where the arm is)."""
+        if self.SLEW_ARM_DEG is None and self.SLEW_JAW_DEG is None:
+            return cmd_deg
+        if self._last_cmd is None:
+            self._last_cmd = np.rad2deg(
+                np.concatenate(
+                    [
+                        self._arm_now(sim),
+                        [float(sim.data.qpos[self.planner.jaw_qpos])],
+                    ],
+                ),
+            )
+        rate = np.array(
+            [self.SLEW_ARM_DEG or np.inf] * 5 + [self.SLEW_JAW_DEG or np.inf],
+        )
+        out = self._last_cmd + np.clip(cmd_deg - self._last_cmd, -rate, rate)
+        self._last_cmd = out
+        return out
+
     def action(self, sim: SO101Sim) -> np.ndarray:
+        return self._smooth(sim, self._plan(sim))
+
+    def _plan(self, sim: SO101Sim) -> np.ndarray:
         planner, state = self.planner, self.state
         state.ticks_in_phase += 1
         boat_pos, _ = sim.benchy_pose()

@@ -2,63 +2,49 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-16T14:29:16Z
+**Updated:** 2026-08-16T16:47:17Z
 
 **Depth call:** depth 3 queued; demo-gen-sharded-a100 is P1 EXECUTE (new A100 box allocated 12:26:52Z, machine-is-yours); home-box gpu items stay blocked under the owner hold (ckpt-format change pending); spawn-v2 dataset constants approved-for-generation 12:21:03Z vs the posted SS5 table.
 
-**20 open** (Live 1 · Queued 2 · Blocked 17 · Done 185)
+**19 open** (Live 0 · Queued 1 · Blocked 18 · Done 189)
 
-## 🔴 Live (1)
+## 🔴 Live (0)
 
 *running right now (GPU or owner-window)*
 
-**`demo-gen-sharded-a100`** · `gpu-a100`
+*(empty)*
 
-P1 EXECUTE (allocation landed 12:26:52Z 08-16: 'machine is all yours'
-
-**boundary:** LIVE demo-gen-v1c on 147.224.218.164 since 14:25:12Z 08-16: 96 shards x 8 GPUs, v2.1 + mix70 + retreat tail, target 5000 kept, seeds 10000+ stride 2000, ~2.5-3.5h ETA. On DONE (driver exit in logs/driver.log): merge (sim.merge_demo_shards --root ~/datasets/fontaine/grasp_demos_v1 --out .../merged), then upload_demo_dataset.py --repo mcobzarenco/fontaine-grasp-demos-v1 (public), then card post. babysit entry demo_gen_v1 registered. · [pre-reg](posts/2026-08-16-prereg-sim-spawn-v2.md)
-
-<details><summary>full record</summary>
-
-P1 EXECUTE (allocation landed 12:26:52Z 08-16: 'machine is all yours' — 8xA100-80GB box 147.224.218.164 provisioned-access, verified idle, 240 cores/1.77TB/19TB, SSH BatchMode green): demo-gen sharding readiness — (1) shard driver for sim.collect_demos: N processes, disjoint seed ranges, per-shard --out + resume state, EGL context per shard round-robined over GPUs; (2) LeRobot v3 shard-merge into one dataset (episode/frame reindex + meta/provenance union, kept-seed lists concatenated); (3) HF dataset upload path (hub repo fontaine/*, same huggingface_hub route as checkpoints); (4) benchy tint-band knob: rig-gray band (current) vs wide-hue, mixed-slice config (70/30 APPROVED 12:21:03Z); target ~5,000 kept episodes; spawn protocol = spawn-v2 annulus + upright, OWNER-APPROVED 12:21:03Z ('agree with v1 with just the boat upright in the annulus'); finalize against the posted SS5 proposed-freeze table, objection window open until the box lands. All CPU-implementable now; oracles: 2-shard smoke merge bit-identical to single-run on same seeds, upload dry-run. EXECUTION extension: provision the box (repo+uv+assets per checklist), measure per-EGL-context render throughput then size shard count (240 cores &gt;&gt; the 16-32 estimate), launch v1 generation (spawn-v2 annulus + upright +/-180 yaw, 70/30 tint mix, ~5k kept), HF upload + dataset card post. Long-running remote job: launch detached on the box (systemd-run --user or setsid+nohup over ssh), babysit.toml entry at launch. NOTE: class taxonomy has no entry for the new A100 box yet (validator: gpu-local/gpu-box/cpu) — carried as cpu; work session adds a class for 147.224.218.164 to queue_cli validation as part of provisioning.
-
-</details>
-
----
-
-## 🟢 Queued (2)
+## 🟢 Queued (1)
 
 *ready — waiting on a window or a boundary*
 
-**`sim-spawn-v2-randomization`** · `cpu`
+**`expert-retreat-slew-gentle`** · `cpu`
 
-[pre-reg to be drafted as the item's first CPU slice: posts/2026-08-16-prereg-sim-spawn-v2.md
-
-**boundary:** Queued 09:50Z 08-16 at the owner steering. CPU slice executable now: pre-reg draft + spawn-v2 sampler + reachability probe harness (oracle-tested, no GPU). GPU slices (demo re-collect, retrain, eval) sequence AFTER the joint probe chain closes and behind any owner priority call — asked in-channel 09:50Z whether this outranks the token-legs report. || PRE-REG DRAFT LANDED 10:3xZ 08-16 (posts/2026-08-16-prereg-sim-spawn-v2.md): v1 pinned exactly (disk fixed (0.22,0.11) r=0.04, band 7.5x4.5cm), v2 design = disk uniform over measured-workspace mask W (stage-A IK residual + shoulder static-moment instrument, precomputed polar-grid mask) + boat full annulus with rejection (in-W, r_min = disk 0.04 + hull 0.03 + margin, parked-jaw keep-out, bounded acceptance w/ loud refusal); spawn_version param, v1 bit-compat oracle-guarded, registered protocol break; consequences table A'-D' priced (~10-12 GPU-h worst case); finalization pins = torque fraction, grid pitch, r_min/r_max, floor, A' band. NEXT CPU slice: sim/spawn_v2.py sampler + reachability probe + oracles (after pre-reg finalization or owner go). GPU slices still behind owner priority call (asked 09:50Z). || CPU SLICE 2 LANDED 10:3xZ: sim/spawn_v2.py sampler (WorkspaceMask.from_probe residual+moment bars, area-uniform annulus, jaw keep-out, 200-draw loud refusal; DRAFT constants commented with sources) + tests/test_spawn_v2.py 5 oracles green; instrument v0 fields on the pre-reg page (chart, 425-cell mask, torque-not-binding finding) + measured sampler tail on the REAL mask (mean 7.2 attempts, max 194 of the 200 bar -&gt; mask clean + refusal bar freeze TOGETHER, recorded SS3.1). NOT wired into SO101Sim.reset - integration + v1 stream-compat guard land post-finalization. REMAINING: probe convergence margin + morphological clean, finalization post (constants freeze + objection window), then owner-gated GPU ladder A'-D'. || INSTRUMENT v1 + MASK CLEAN LANDED 10:5xZ: v0 ring-banding root-caused to solve_ik's 2mm SITE tol (sub-mm pad residuals were stopping luck) -&gt; probe re-solves at 0.2mm/120-iter LOCAL to the instrument (stage-A untouched); field now SOLID 1105 cells -&gt; cleaned() (one &gt;=5-of-8 pass + largest component; one pass deliberately, fixpoint erodes everything) 977 cells ~29x the v1 band; sampler tail on cleaned mask mean 2.4 / p99 10 / max 35 of the 200 bar (5000 eps) - tail GONE. 7 oracles green. Pre-reg SS3.1 rewritten with both instrument iterations + SS5 now a PROPOSED FREEZE TABLE (all constants measured). REMAINING: finalization post (freeze + objection window) BEHIND owner priority call + C' route; then wiring spawn_version into SO101Sim.reset (v1 bit-compat oracle) + GPU ladder A'-D' (owner-gated, GPU also owner-held).
+OWNER WORK ORDER 15:22:29Z 08-16 ('retreat a bit wild, slow it down, more natural; in-flight 5k fine'): slew-limit the ScriptedExpert retreat home leg (~2 deg/tick crawl like the carry phases, instead of the one-shot absolute HOM…
 
 <details><summary>full record</summary>
 
-[pre-reg to be drafted as the item's first CPU slice: posts/2026-08-16-prereg-sim-spawn-v2.md — REQUIRED before any sim change or GPU stage] Spawn-v2 randomization (owner steering 09:16Z 08-16: 'Both the disc and boat should be placed randomly'): disk random in reachable workspace + boat full annulus with min-separation / jaw-clearance / measured-IK-reachability rejection sampling (stage-A torque-wall envelope is the exclusion instrument, not hand bands). Registered change: demos re-collected under spawn-v2, scripted-expert stage-A validation re-run, current band-protocol reads stay frozen, spawn-v2 eval becomes the new primary.
+OWNER WORK ORDER 15:22:29Z 08-16 ('retreat a bit wild, slow it down, more natural; in-flight 5k fine'): slew-limit the ScriptedExpert retreat home leg (~2 deg/tick crawl like the carry phases, instead of the one-shot absolute HOME command the servos chase at full speed), keep the 25-tick up-and-back pull; re-measure kept% + parked% on ~120 seeds vs the 48.3% anchor. Protocol untouched; applies to v1.1/regens only. || FIRST PASS 16:4xZ 08-16 (work session, measured n=120 each, code REVERTED not landed): (a) _carry measured-pose slew home: kept 50.8% OK but parked 3% - servo-lag compounding crawls, tail budget expires; (b) feedforward 3deg/tick command ramp: parked 52-63% but kept COLLAPSED 25-33% vs 48.3 anchor - pan-first sequencing and up-leg variants did NOT recover it. LEADING HYPOTHESIS (uninstrumented): not boat knocks - episodes ending the 150-tick tail mid-motion fail success()'s still bar (max|qvel|&lt;0.5 includes ARM dofs), so any home leg slower than ~50 ticks demotes placed episodes. Next pass needs: per-episode fail attribution (boat moved vs still-bar), maybe a faster ramp (5-6 deg/tick), longer tail budget, or excluding arm dofs from the tail re-verify (protocol change, owner call).
 
 </details>
 
 ---
 
-**`side-spawn-feasibility-probe`** · `cpu`
-
-Side-spawn (capsized boat) feasibility probe (owner ask 12:18:57Z 08-16 'place the boat on the side'; accepted-with-design 12:19:52Z): unrendered CPU expert runs on side/rolled spawns (drop+settle reset extension)
-
-<details><summary>full record</summary>
-
-Side-spawn (capsized boat) feasibility probe (owner ask 12:18:57Z 08-16 'place the boat on the side'; accepted-with-design 12:19:52Z): unrendered CPU expert runs on side/rolled spawns (drop+settle reset extension) — measure what the current expert does vs the upright&gt;0.9 success oracle (so101_sim.py:1757, expected ~0), then design + prototype a righting maneuver (non-prehensile nudge or regrasp) and report its measured success rate BEFORE any dataset slice; if usable, side-spawns become a ~10-20% slice in a v1.1 dataset extension.
-
-</details>
-
----
-
-## 🟡 Blocked (17)
+## 🟡 Blocked (18)
 
 *waiting on a prerequisite, a boundary, or the owner*
+
+**`molmoact2-released-stats-rewrite`** · `cpu` · **⛔ owner hold**
+
+OWNER-TAKEN 15:30:26Z 08-16 ('I'll fix the different joint convention at conversion time and let you know'): PREREQ FOUND 15:3xZ 08-16 (measured): released so101 checkpoint's recorded q01/q99 stats table is in a different joint c…
+
+<details><summary>full record</summary>
+
+OWNER-TAKEN 15:30:26Z 08-16 ('I'll fix the different joint convention at conversion time and let you know'): PREREQ FOUND 15:3xZ 08-16 (measured): released so101 checkpoint's recorded q01/q99 stats table is in a different joint convention than ALL our v3.0 data (lift q01-q99 = 45-&gt;186 vs data -103-&gt;+29, non-overlapping) -- direct SFT would clamp-distort every frame (corrected-stats-table failure class, at conversion). Fix: recompute mean/std/q01/q99 from the SFT train mixture (demo-v1 + both rig sets) and write into the converted checkpoint's stats row (+ per-dataset rows if the tooling allows) before any launch; oracle: normalized-range coverage check over a sample of each dataset.
+
+</details>
+
+---
 
 **`grpo-r2-post-sft`** · `gpu-local` · **⛔ owner hold**
 
@@ -296,9 +282,21 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (185)
+## ✅ Done (189)
 
 *closed — the full record stays in each fold*
+
+**`train-eval-per-dataset-breakdown`** · `cpu`
+
+OWNER WORK ORDER 15:21:37Z 08-16: bijou.train eval flag reporting the eval MAE-chunk PER DATASET to wandb (breakdown keyed by each holdout item's repo id, riding the existing per-item MAE reduction in train/loop.py) plus a wandb…
+
+<details><summary>full record</summary>
+
+OWNER WORK ORDER 15:21:37Z 08-16: bijou.train eval flag reporting the eval MAE-chunk PER DATASET to wandb (breakdown keyed by each holdout item's repo id, riding the existing per-item MAE reduction in train/loop.py) plus a wandb table of eval-sample counts per dataset (how many of --eval-samples came from each repo). Lands with tests BEFORE the SFT pre-reg; the SFT command then runs --eval-every 250 --eval-samples 256 --holdout-episodes 0.1 (owner-specified).
+
+</details>
+
+---
 
 **`merge-main-phase7bce`** · `cpu`
 
@@ -463,6 +461,20 @@ image-augment-sim2real: train-time photometric augmentation in bijou.train (owne
 <details><summary>full record</summary>
 
 [no pre-reg: infra debt, oracle-gated merge] Merge main (32149df: train.py modularization + mechanism-qualified loss re-keying loss_action_flow/loss_action_ar/loss_narration, --narration-weight) into fontaine: reconcile --offload-optim wiring + bijou/offload_optim.py, re-run the 5-test bitwise offload oracle suite + check.py; update babysit anchors to new keys for FUTURE launches; add run-family-dependent read-time key mapping to overlay/read scripts (old jsonls keep historical keys per owner note).
+
+</details>
+
+---
+
+**`sim-spawn-v2-randomization`** · `cpu`
+
+[pre-reg to be drafted as the item's first CPU slice: posts/2026-08-16-prereg-sim-spawn-v2.md
+
+**boundary:** Queued 09:50Z 08-16 at the owner steering. CPU slice executable now: pre-reg draft + spawn-v2 sampler + reachability probe harness (oracle-tested, no GPU). GPU slices (demo re-collect, retrain, eval) sequence AFTER the joint probe chain closes and behind any owner priority call — asked in-channel 09:50Z whether this outranks the token-legs report. || PRE-REG DRAFT LANDED 10:3xZ 08-16 (posts/2026-08-16-prereg-sim-spawn-v2.md): v1 pinned exactly (disk fixed (0.22,0.11) r=0.04, band 7.5x4.5cm), v2 design = disk uniform over measured-workspace mask W (stage-A IK residual + shoulder static-moment instrument, precomputed polar-grid mask) + boat full annulus with rejection (in-W, r_min = disk 0.04 + hull 0.03 + margin, parked-jaw keep-out, bounded acceptance w/ loud refusal); spawn_version param, v1 bit-compat oracle-guarded, registered protocol break; consequences table A'-D' priced (~10-12 GPU-h worst case); finalization pins = torque fraction, grid pitch, r_min/r_max, floor, A' band. NEXT CPU slice: sim/spawn_v2.py sampler + reachability probe + oracles (after pre-reg finalization or owner go). GPU slices still behind owner priority call (asked 09:50Z). || CPU SLICE 2 LANDED 10:3xZ: sim/spawn_v2.py sampler (WorkspaceMask.from_probe residual+moment bars, area-uniform annulus, jaw keep-out, 200-draw loud refusal; DRAFT constants commented with sources) + tests/test_spawn_v2.py 5 oracles green; instrument v0 fields on the pre-reg page (chart, 425-cell mask, torque-not-binding finding) + measured sampler tail on the REAL mask (mean 7.2 attempts, max 194 of the 200 bar -&gt; mask clean + refusal bar freeze TOGETHER, recorded SS3.1). NOT wired into SO101Sim.reset - integration + v1 stream-compat guard land post-finalization. REMAINING: probe convergence margin + morphological clean, finalization post (constants freeze + objection window), then owner-gated GPU ladder A'-D'. || INSTRUMENT v1 + MASK CLEAN LANDED 10:5xZ: v0 ring-banding root-caused to solve_ik's 2mm SITE tol (sub-mm pad residuals were stopping luck) -&gt; probe re-solves at 0.2mm/120-iter LOCAL to the instrument (stage-A untouched); field now SOLID 1105 cells -&gt; cleaned() (one &gt;=5-of-8 pass + largest component; one pass deliberately, fixpoint erodes everything) 977 cells ~29x the v1 band; sampler tail on cleaned mask mean 2.4 / p99 10 / max 35 of the 200 bar (5000 eps) - tail GONE. 7 oracles green. Pre-reg SS3.1 rewritten with both instrument iterations + SS5 now a PROPOSED FREEZE TABLE (all constants measured). REMAINING: finalization post (freeze + objection window) BEHIND owner priority call + C' route; then wiring spawn_version into SO101Sim.reset (v1 bit-compat oracle) + GPU ladder A'-D' (owner-gated, GPU also owner-held). || GIT-AUDIT CLOSED 15:5xZ 08-16 (work session): every remaining bullet landed under demo-gen-sharded-a100 - finalization posted (prereg SS6 FINALIZED, frozen 977-cell mask committed), spawn_version wired into SO101Sim.reset w/ v1 bit-compat oracle, A' ladder RAN (19.8% FAIL -&gt; servo-saturation diagnosis -&gt; v2.1 amendment SS7, 53.8% n=400), v2.1 is the LIVE 5k generation protocol. Superseded, nothing left to execute.
+
+<details><summary>full record</summary>
+
+[pre-reg to be drafted as the item's first CPU slice: posts/2026-08-16-prereg-sim-spawn-v2.md — REQUIRED before any sim change or GPU stage] Spawn-v2 randomization (owner steering 09:16Z 08-16: 'Both the disc and boat should be placed randomly'): disk random in reachable workspace + boat full annulus with min-separation / jaw-clearance / measured-IK-reachability rejection sampling (stage-A torque-wall envelope is the exclusion instrument, not hand bands). Registered change: demos re-collected under spawn-v2, scripted-expert stage-A validation re-run, current band-protocol reads stay frozen, spawn-v2 eval becomes the new primary.
 
 </details>
 
@@ -2885,6 +2897,34 @@ Merge main phase 5c (f32ae89, 'rollout + GRPO + sim on the VLA traits (phase-5 l
 <details><summary>full record</summary>
 
 Merge main phase 5c (f32ae89, 'rollout + GRPO + sim on the VLA traits (phase-5 laptop close)', +401/-203 across 16 files: bijou/rollout.py, bijou/modelling/gemma4/loading.py, sim/rollout_sim.py + rollout_sim_parallel.py + convmap.py, tests/test_grpo_loop.py, tests/test_molmo_flow_integration.py, probes/probe_molmoact2_anchor_read.py, and OUR fontaine/scripts (convmap_tripwires.py, er60k_events_report.py, sim_parallel_oracle.py) touched upstream) into fontaine; re-run check.py; re-verify the seams our protocols depend on: (1) GRPO loop suite green post-merge - route B (token arm) feeds token-GRPO and R2 A2 activation reads through the discrete head, so the GRPO seam is now decision-relevant; (2) sim rollout oracles: convmap tripwires + sim_parallel_oracle re-run green after the upstream edits to our own scripts (diff-audit what upstream changed in fontaine/scripts and reconcile); (3) probe_molmoact2_anchor_read.py churn - re-run the gradflow/anchor probe oracle (loss 27.8546 exact anchor from 17:03Z); (4) both retrain arms full-parse green post-5c (frozen section-3 exact); (5) parents[2]-&gt;parents[3] bank_processor_goldens fix - landed upstream this phase or carry still stands; (6) rollout_so101 doc + bijou/rollout.py rework - note any CLI-surface moves for the eventual rig rollout path.
+
+</details>
+
+---
+
+**`side-spawn-feasibility-probe`** · `cpu`
+
+Side-spawn (capsized boat) feasibility probe (owner ask 12:18:57Z 08-16 'place the boat on the side'; accepted-with-design 12:19:52Z): unrendered CPU expert runs on side/rolled spawns (drop+settle reset extension)
+
+**boundary:** CLOSED 15:4xZ 08-16 work session: probe EXECUTED all 3 phases n=120 (commit a8973dd, report prereg §8): side rest stable 120/120; stock expert 0/120 (but pinch+carry works - 35% end within disk radius still lying); push-righting prototype 0/120 across 6 execution variants - boat SLIDES 6-7cm, peak upright 0.12, quasistatic push can't beat friction+rounded hull = measured NO-GO. Side spawns OUT of v1.1; next attempt = dynamic flick / wedge-lift / friction mat, each a new probe. Tool geometry banked: pad-space floor z~0.077, gripperframe site = jaw tip.
+
+<details><summary>full record</summary>
+
+Side-spawn (capsized boat) feasibility probe (owner ask 12:18:57Z 08-16 'place the boat on the side'; accepted-with-design 12:19:52Z): unrendered CPU expert runs on side/rolled spawns (drop+settle reset extension) — measure what the current expert does vs the upright&gt;0.9 success oracle (so101_sim.py:1757, expected ~0), then design + prototype a righting maneuver (non-prehensile nudge or regrasp) and report its measured success rate BEFORE any dataset slice; if usable, side-spawns become a ~10-20% slice in a v1.1 dataset extension.
+
+</details>
+
+---
+
+**`demo-gen-sharded-a100`** · `gpu-a100`
+
+P1 EXECUTE (allocation landed 12:26:52Z 08-16: 'machine is all yours'
+
+**boundary:** LIVE demo-gen-v1c on 147.224.218.164 since 14:25:12Z 08-16: 96 shards x 8 GPUs, v2.1 + mix70 + retreat tail, target 5000 kept, seeds 10000+ stride 2000, ~2.5-3.5h ETA. On DONE (driver exit in logs/driver.log): merge (sim.merge_demo_shards --root ~/datasets/fontaine/grasp_demos_v1 --out .../merged), then upload_demo_dataset.py --repo mcobzarenco/fontaine-grasp-demos-v1 (public), then card post. babysit entry demo_gen_v1 registered. || CLOSED 16:4xZ 08-16 work session, boundary EXECUTED same-session: driver DONE 16:32Z 5000/5000 kept (10,883 attempted 45.9% vs 48.3% anchor, 0 failed shards, 2h07m wall ~16.9/80 GPU-h); merge 96 shards -&gt; 5000 eps / 1,506,208 frames / 26 GiB (quantiles rewritten exact, provenance united); upload dry-run then PUBLIC push to mcobzarenco/fontaine-grasp-demos-v1 (API-verified private=false, page 200); card + LeRobot visualizer link in-channel 16:41Z + wall-clock correction 16:43Z. Box GPUs idle; SFT staged (command in-channel 16:39Z), blank = owner stats-corrected conversion. · [pre-reg](posts/2026-08-16-prereg-sim-spawn-v2.md)
+
+<details><summary>full record</summary>
+
+P1 EXECUTE (allocation landed 12:26:52Z 08-16: 'machine is all yours' — 8xA100-80GB box 147.224.218.164 provisioned-access, verified idle, 240 cores/1.77TB/19TB, SSH BatchMode green): demo-gen sharding readiness — (1) shard driver for sim.collect_demos: N processes, disjoint seed ranges, per-shard --out + resume state, EGL context per shard round-robined over GPUs; (2) LeRobot v3 shard-merge into one dataset (episode/frame reindex + meta/provenance union, kept-seed lists concatenated); (3) HF dataset upload path (hub repo fontaine/*, same huggingface_hub route as checkpoints); (4) benchy tint-band knob: rig-gray band (current) vs wide-hue, mixed-slice config (70/30 APPROVED 12:21:03Z); target ~5,000 kept episodes; spawn protocol = spawn-v2 annulus + upright, OWNER-APPROVED 12:21:03Z ('agree with v1 with just the boat upright in the annulus'); finalize against the posted SS5 proposed-freeze table, objection window open until the box lands. All CPU-implementable now; oracles: 2-shard smoke merge bit-identical to single-run on same seeds, upload dry-run. EXECUTION extension: provision the box (repo+uv+assets per checklist), measure per-EGL-context render throughput then size shard count (240 cores &gt;&gt; the 16-32 estimate), launch v1 generation (spawn-v2 annulus + upright +/-180 yaw, 70/30 tint mix, ~5k kept), HF upload + dataset card post. Long-running remote job: launch detached on the box (systemd-run --user or setsid+nohup over ssh), babysit.toml entry at launch. NOTE: class taxonomy has no entry for the new A100 box yet (validator: gpu-local/gpu-box/cpu) — carried as cpu; work session adds a class for 147.224.218.164 to queue_cli validation as part of provisioning.
 
 </details>
 
