@@ -127,3 +127,151 @@ replugging, device indices move.
   enough (drift between commanded tick and camera exposure).
 - Camera exposure/white balance vs the recordings (the fine-tune saw one
   lighting setup; big shifts degrade the vision conditioning).
+
+## Remote inference (policy server on a GPU box)
+
+For checkpoints that don't fit the 8 GiB laptop (molmoact2-class: the
+trunk alone is 9.7 GB), `python -m bijou.rollout --policy-server <url>`
+runs the SAME sync loop with inference on a remote
+`python -m bijou.policy_server`: cameras/robot stay local, each replan
+ships the observation as base64 JPEG over HTTP and blocks until the
+chunk comes back — the servos hold their last goal during the block,
+exactly the sync path's existing semantics with a longer freeze.
+Async/latency-hiding over the WAN is deliberately not implemented
+(`--async-inference` + `--policy-server` is refused at the parser).
+The transport is unauthenticated plain HTTP: the server binds loopback
+by default and the ONLY supported remote path is an SSH tunnel.
+
+### The commands (deployment target: fontaine_grasp_sft_joint_corrected)
+
+```sh
+# on the GPU box, in tmux:
+~/.local/bin/uv run python -m bijou.policy_server \
+    --checkpoint ~/checkpoints/finetune/fontaine_grasp_sft_joint_corrected/step_002000 \
+    --device cuda --flow-decoder-dtype bfloat16 --port 8143
+
+# on the laptop, terminal 1 (the tunnel — the only supported remote path):
+ssh -N -L 8143:localhost:8143 ubuntu@68.209.75.143
+
+# on the laptop, terminal 2 (note: no --checkpoint, no model dtype flags):
+uv run python -m bijou.rollout \
+    --policy-server http://localhost:8143 \
+    --stats-repo-id mcobzarenco/so101_pick_place_v2 \
+    --port /dev/ttyACM1 --robot-id follower0 \
+    --camera wrist=/dev/video4 --camera top=/dev/video6 \
+    --task "Pick up the toy boat and place it on the wooden disk." \
+    --max-relative-target 40 --duration 300
+```
+
+Add `--check` to terminal 2 first: it exercises one synthetic predict
+THROUGH the tunnel (spec fetch, JPEG encode, server inference, chunk
+decode) without touching the robot.
+
+Flag split under `--policy-server`: model-side flags
+(`--flow-decoder-dtype`, `--offload-ple`) and the noise `--seed` belong
+to the SERVER invocation and are refused by rollout, loudly, with the
+remedy. Decode knobs (`--sample-steps`, `--sample-method`,
+`--sample-draws`, `--generate`) stay on rollout and ride each request.
+`--stats-repo-id` keeps its exact local behavior: the server's `/spec`
+ships the checkpoint's per-dataset stats tables, the client resolves
+the repo id against them and ships the vectors in every request.
+
+Two checkpoint-specific facts for the commands above, read off the
+actual step_002000 metadata (2026-08-16):
+
+- **Stats table**: its `per_dataset_stats` contains ONLY
+  `fontaine/grasp_sft_demos_v0` (the sim-collected SFT demos it was
+  fine-tuned on) — `--stats-repo-id mcobzarenco/so101_pick_place_v2`
+  will be refused loudly ("not in the checkpoint's stats table (1
+  entries)"). Pass `--stats-repo-id fontaine/grasp_sft_demos_v0`, or
+  `--stats-dataset <local rig dataset dir>` if the rig should
+  normalize under its own recorded stats. Whether sim-frame stats are
+  right for the physical arm is an operator call — the envelope gate
+  will compare the first observation against whichever table you pick.
+- **Recorded serving point**: `euler-10`. Rollout's CLI defaults are
+  `heun-5` (unchanged, local and remote alike) — add
+  `--sample-steps 10 --sample-method euler` to serve the recorded
+  operating point.
+
+### Camera names for this checkpoint
+
+The molmoact2 prompt is POSITIONAL ("Image 1…Image 2"; camera kinds
+are ignored by this format), and images are ordered by sorted camera
+name. The fine-tune's dataset recorded `front` and `wrist` — so at
+training time Image 1 = front (scene view), Image 2 = wrist. The
+operator's `--camera top=… --camera wrist=…` naming works positionally
+(`top` also sorts before `wrist`), provided `top=` IS the scene
+camera; naming it `front=` instead matches the training keys exactly
+and removes the mental mapping. Swapped device paths silently swap
+views in the prompt — double-check with
+`uv run lerobot-find-cameras opencv`.
+
+### Per-replan gap arithmetic
+
+Each replan freezes the arm for:
+
+```
+gap ≈ RTT + upload(JPEGs) + server decode + inference + download(chunk)
+```
+
+- **JPEG upload**: measured with this repo's encoder (quality 95),
+  640x480 rig-like smooth frames are ~23 KiB JPEG → ~31 KiB base64
+  each (~62 KiB/request at two cameras; encode ~5 ms/frame CPU).
+  Synthetic NOISE frames are the worst case at ~353 KiB → ~470 KiB
+  each — the probe numbers below carry that inflation. On a 10 Mbit/s
+  uplink, two real frames ≈ 50 ms; the 30x6 float chunk coming back is
+  ~10 KiB.
+- **Inference**: the server's per-request log line and the response's
+  `timings` field (`decode_ms`/`infer_ms`/`total_ms`) report it —
+  measure, don't assume; rollout also prints the split per replan
+  (`server | infer … | wire+encode …`). Note `decode_ms` includes
+  reading the request body off the socket, so slow-uplink time lands
+  there.
+
+### Measured box numbers (2026-08-16, CPU-ONLY — GPU was occupied)
+
+Smoke run on the real step_002000 checkpoint on the H100 box, server
+on `--device cpu` with 16 OMP threads because another agent's GPU job
+was live (etiquette: never contend). Client on the dev laptop through
+a real `ssh -N -L` tunnel, two synthetic 640x480 noise frames +
+the checkpoint's recorded stats per request:
+
+- server RSS after load: **11.2 GiB** host RAM (bf16 trunk + bf16-cast
+  flow decoder; `backbone.safetensors` 9.7 GB + `flow_decoder.safetensors`
+  2.5 GB fp32 on disk — `optimizer.pt` is never read);
+- `GET /spec`: 6 ms loopback on the box; 282 ms through the tunnel
+  including client banner work (spec payload 2.5 KiB);
+- `/predict` through the tunnel: cold wall 5438 ms (server total 4942 =
+  decode 1016 + infer 3926), warm wall 6111 ms (total 5549 = decode
+  1913 + infer 3636). The ~1-2 s decode is the ~940 KiB noise-frame
+  upload crossing the home uplink; real frames cut that ~15x. The
+  ~3.6-3.9 s infer is euler-10 on CPU — **not deployment-
+  representative**; expect a few hundred ms on the H100 (unmeasured:
+  the GPU was busy). On CUDA the server prints its own
+  "GPU memory after load" line at startup — record startup VRAM and
+  warm `infer_ms` from there on the first GPU session.
+
+### Troubleshooting
+
+- **Timeout / connection refused**: rollout raises `SystemExit`
+  immediately (no silent retries; `--policy-server-timeout`, default
+  30 s). Check the tunnel terminal is still running, then the server
+  tmux on the box (`pgrep -af bijou.policy_server`); a first CUDA
+  predict pays kernel warmup — if it exceeds the timeout, raise
+  `--policy-server-timeout` for the first run.
+- **schema_version mismatch**: the client refuses at construction,
+  naming both versions — the box and laptop checkouts disagree about
+  the wire protocol; update the older side. A git-rev WARNING in the
+  banner is the early hint (rev "unknown" means the server runs from a
+  non-git scratch dir).
+- **Tunnel drops mid-rollout**: the next replan raises loudly and the
+  loop stops; the arm holds its last commanded position (and
+  `--return-home` still runs on the way out). Restart the tunnel and
+  rerun — the server keeps its loaded model; a client restart with
+  different cameras or options needs no server restart.
+- **Server-side OOM**: the server process dies (the request errors as
+  a connection failure client-side). Restart it with
+  `--flow-decoder-dtype bfloat16` (halves decoder memory), check
+  nothing else occupies the GPU (`nvidia-smi`), or fall back to
+  `--device cpu` to keep a slow-but-alive service. Requests themselves
+  never kill the server — bad inputs return structured 400s.

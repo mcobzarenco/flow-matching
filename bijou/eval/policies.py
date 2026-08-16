@@ -40,7 +40,7 @@ from torch import Tensor
 
 from ..annotations import ConditionField
 from ..checkpoint import read_metadata
-from ..data import DatasetStats
+from ..data import DatasetStats, PolicyInfo
 from ..loading import load_vla, molmo_flow_state_table, parse_prompt_config
 from ..modelling.aux_text import AuxField, AuxGeneration, subgoal_text
 from ..modelling.decoders.ar_suffix import ARSuffixDecoder
@@ -70,24 +70,6 @@ from ..vla import ARVLA, VLA, FlowVLA, NarratingVLA, VLAFamily, VLASpec
 from .molmo_norm import ItemMaps, MolmoNorm, fit_item_maps
 from .subgoal_scoring import ceiling_pick, eligible_indices, self_certainty_pick
 from .subgoal_swap import SubgoalSwapMap, SwapRecord
-
-
-@dataclasses.dataclass(frozen=True, slots=True)
-class PolicyInfo:
-    """The checkpoint facts eval/rollout/sim consumers read off
-    ``BijouPolicy.info``, parsed from the checkpoint's metadata.
-
-    ``normalization`` is the count-weighted aggregate over the training
-    datasets (molmo_flow's ONE global table rides here);
-    ``per_dataset_normalization`` the per-repo tables (keyed by repo id
-    — genuinely dynamic). ``condition_fields``/``generate_bracket`` are
-    the prompt-side facts inference collation must reproduce."""
-
-    chunk_size: int
-    normalization: DatasetStats
-    per_dataset_normalization: dict[str, DatasetStats]
-    condition_fields: tuple[str, ...]
-    generate_bracket: bool
 
 
 class ChunkPolicy(Protocol):

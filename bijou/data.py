@@ -198,6 +198,28 @@ class DatasetStats:
         return tensors
 
 
+@dataclass(frozen=True, slots=True)
+class PolicyInfo:
+    """The checkpoint facts eval/rollout/sim consumers read off a
+    policy's ``.info`` — parsed from the checkpoint's metadata by
+    ``bijou.eval.policies.BijouPolicy`` and from a policy server's
+    ``/spec`` by ``bijou.remote_policy.RemotePolicy`` (the shape lives
+    here, below both producers, so the remote client never imports the
+    model stack).
+
+    ``normalization`` is the count-weighted aggregate over the training
+    datasets (molmo_flow's ONE global table rides here);
+    ``per_dataset_normalization`` the per-repo tables (keyed by repo id
+    — genuinely dynamic). ``condition_fields``/``generate_bracket`` are
+    the prompt-side facts inference collation must reproduce."""
+
+    chunk_size: int
+    normalization: DatasetStats
+    per_dataset_normalization: dict[str, DatasetStats]
+    condition_fields: tuple[str, ...]
+    generate_bracket: bool
+
+
 class StatsAttachedDataset(torch.utils.data.Dataset[dict[str, Any]]):
     """Wraps one LeRobot dataset so every item carries its dataset's stats
     (per-dataset normalization: between-rig calibration offsets must not
