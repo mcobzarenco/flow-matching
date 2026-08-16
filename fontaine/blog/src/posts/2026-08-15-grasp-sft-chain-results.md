@@ -242,3 +242,29 @@ until the owner picks and frees the GPU (theirs since 13:35Z).
   (owner-gated) prices the difference.
 - Charts regenerate from banked JSONs only:
   `fontaine/scripts/grasp_sft_chain_charts.py`.
+
+## Addendum 2026-08-16 — route C taken; first verdict is in
+
+The owner picked **route C** at 00:18Z (GPU freed): one
+`--objective joint` run merging the A+B pre-regs, per the
+[registered amendment](2026-08-16-amendment-grasp-sft-route-c-joint.md)
+— `L_flow + 1.0·L_CE`, flow head **insulated** (flow grads into the
+trunk ≡ 0, so the merge preserves both parents' semantics), from-base
+with the **corrected** norm table, made to fit in VRAM by the new
+`--offload-optim` (AdamW moments in host RAM, bitwise-exact oracle).
+
+The run completed clean at 06:51Z — 2000 steps, ~5.7 GPU-h, flow
+`loss_action` 0.0245, CE `loss_aux` 0.155 from 4.33. Weights banked:
+`fontaine-checkpoints/molmoact2_grasp_sft_joint_corrected_step2000`.
+
+**Leg 1 of the endpoint probes (flow head, unseen seeds 0–99,
+euler-10) landed 08:21Z: 44/100 successes** — against the base's
+9/100 and the corrupt-table stage-C AE's 28/100. The A §5 verdict
+surface fires **TABLE_FIX_POSITIVE** outright (44 > 31, the
+conservative 28+3 clause), so the pre-registered overlap band at
+29–31 never comes into play: the corrected lineage becomes the SFT
+artifact. What the +16 doesn't yet separate is table fix vs the
+joint-CE trunk (the confound the amendment accepted going in);
+the remaining legs (flow-train memorization read, token-unseen vs
+the R2 bar ≥20, token-base anchor) close out by ~12:3xZ and the
+consolidated chart-led report follows.
