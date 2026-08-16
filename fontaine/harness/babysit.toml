@@ -1002,14 +1002,14 @@ gpu_indices = [0, 1, 2, 3, 4, 5, 6, 7]
 gpu_mem_min_mib = 40000
 log = "/home/ubuntu/sft_train.log"
 progress_re = '"step": [0-9]+'
-started_utc = "2026-08-16T18:21:14Z"
+started_utc = "2026-08-16T21:14:48Z"
 gpu_hours_per_wall_hour = 8.0
-boundary = "Grasp-SFT v1 joint, 8xA100 box (RELAUNCH 18:21:14Z unit grasp-sft-v1b; launch 1 17:49:48Z died at its FIRST EVAL step 250 18:08:59Z — molmo_flow predict_chunk returns CPU actions, validate() mixed cuda/cpu; fixed 2d6a2b3 sampled.to(device), ~2.5 GPU-h lost, no save existed. WATCH: step-250 eval passing = the fix validated first-real-run). Owner GO 17:07:47Z (eff-96 delta) + ASAP 17:29Z. 16:39Z consolidated command, --init-from owner reconverted molmoact2-so101-released (remap-stats v21-to-v30), 3000 steps, eval every 250 (--eval-dataset-breakdown per-dataset MAE), save every 500 async. Smoke 20-step GREEN 17:4xZ: VRAM peak 59.65/80 GiB, 3.8 s/step, banner 3 datasets/4551 train eps/1.49M frames (holdout 506), repeat x4 = 7.9%+0.81% share, loss 3.29->2.12. ETA ~3.2-3.5h stepping -> done ~21:4x-22:0xZ. On DONE: chained nothing auto - boundary work = final eval read + per-dataset MAE table + checkpoint upload (fontaine-checkpoints, weights-only) + sim100 rollout eval vs the joint-probe anchors (44/100 unseen flow, table-fix-positive) + report page. Watch first save ~step 500 for the async-save lines; wandb run grasp_sft_v1_joint_8xa100."
+boundary = "Grasp-SFT v1 joint RESTART with --recompute-stats, 8xA100 box (unit grasp-sft-v1c, launched 21:14:48Z 08-16 on the owner's 20:51:19Z order + attached note: the remapped release table leaves COVERAGE gaps — wrist_roll/wrist_flex saturate away from ground truth, pick_place_v2 eval MAE was RISING 16.0->18.4 while sim fell. Run 2 of the recipe: main 3a12c86 merged (8145237), same command/seed + --recompute-stats; smoke GREEN 21:0xZ rc=0, receipt verified: action wrist_roll -65.6/43.5 -> -157.2/157.2, wrist_flex 4.9/93.4 -> -52.4/95.0, lift lows -96.1 -> -124.8 with DESCENDING orientation preserved (the remap sign fix survives). History: run 1a died at first eval (2d6a2b3 fix), run 1b killed at step ~1900 by this order (~17.5 GPU-h spent, saves archived as _run1_remaponly, evals 14.53->13.62@1500 then 13.81@1750 uptick). 3000 steps, eval every 250 (--eval-dataset-breakdown), save every 500 async. ETA ~3.2-3.5h -> done ~00:3x-00:5xZ 08-17. On DONE: endpoint boundary = final eval + per-dataset MAE table + ckpt upload (weights-only) + sharded sim100 on the box (staged_endpoint scripts) vs probe anchors + report page + post. Wandb grasp_sft_v1_joint_8xa100 (new run id). WATCH eval-250 vs run-1's 14.53 (different normalization — MAE scale shifts with the wider table, compare per-dataset TRENDS not absolute)."
 anchors = [
-    "smoke facts: VRAM 59.65 GiB peak alloc / 61.7 reserved per rank; 3.8 s/step at eff-96; loss step10 3.29 step20 2.12",
-    "banner must read: 3 datasets, 4551 episodes, 1488068 frames, dims 6/6; repeat v2 x4 7.90% clean x4 0.81%; holdout 506 eps",
+    "smoke facts (recompute): VRAM 59.67 GiB peak / 61.7 reserved; ~4.0 s/step; loss step10 3.45 step20 2.22 (run-1 same-command: 3.29/2.12 — different normalization, not comparable)",
+    "banner must read: 3 datasets, 4551 episodes, 1488068 frames; recompute receipt rows action 0-5 + state 0-5; holdout 506 eps",
     "rollout anchor for the endpoint: route-C joint probe 44/100 unseen (flow), token leg vs R2 bar >=20/100",
-    "budget: ~27 GPU-h stepping vs the 80 gate (demo-gen used 16.9)",
+    "budget: run-2 ~27 GPU-h stepping vs its 40 gate; chain context: run-1 spent ~17.5 (owner-ordered kill), demo-gen 16.9, all vs the 80 project gate",
 ]
 [[run.gates]]
 kind = "gpu_hours_max"

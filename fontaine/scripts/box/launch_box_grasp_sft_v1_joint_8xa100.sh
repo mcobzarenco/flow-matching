@@ -14,6 +14,17 @@
 # peak at micro-16 + act-ckpt on one 80-GiB card; micro-12 is
 # strictly smaller). Fit smoke first per house rules:
 #   STEPS=20 SMOKE=1 bash launch_box_grasp_sft_v1_joint_8xa100.sh
+#
+# RESTART 2026-08-16 ~21:0xZ (owner order 20:51:19Z + attached
+# --recompute-stats note, main 3a12c86): run 1 (relaunch 18:21:14Z)
+# killed at ~step 1900 — the remapped release table leaves coverage
+# gaps (sim lift to -126 vs box floor -96; wrist_flex/wrist_roll used
+# far wider than the release data), wrist channels saturate away from
+# ground truth. --recompute-stats pools exact q01/q99 from OUR train
+# split (orientation from the source table, so the remap-fixed lift
+# sign survives). Same command/seed otherwise (seed policy: restart
+# with a fix = same seed). Run-1 saves moved aside as
+# ~/checkpoints/finetune/grasp_sft_v1_joint_8xa100_run1_remaponly.
 set -euo pipefail
 export PATH=/home/ubuntu/.local/bin:/usr/local/bin:/usr/bin:/bin
 export MALLOC_ARENA_MAX=2 MALLOC_MMAP_THRESHOLD_=131072
@@ -37,6 +48,7 @@ uv run torchrun --standalone --nproc-per-node=8 -m bijou.train \
   --dataset-repeat 'mcobzarenco/so101_pick_place*=4' \
   --init-from ~/checkpoints/molmoact2-so101-released \
   --objective joint --joint-ce-weight 1.0 --insulate-flow \
+  --recompute-stats \
   --flow-decoder-init inherit \
   --image-augment 0.8 \
   --decoder-lr 5e-5 --backbone-text-lr 1e-5 \

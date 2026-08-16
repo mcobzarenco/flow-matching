@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-16T20:12:33Z",
+ "updated_utc": "2026-08-16T21:15:35Z",
  "depth_reason": "depth 2 (endpoint boundary runnable at run completion ~21:5xZ; approach redesign owner-gated). Every other candidate remains owner-gated (disk composite exemption, v2.1 bands, ckpt-format, morning-veto) or box-gated.",
  "items": [
   {
@@ -1891,8 +1891,8 @@
    "status": "queued",
    "owner_hold": false,
    "prereg": "fontaine/blog/src/posts/2026-08-16-amendment-grasp-sft-route-c-joint.md",
-   "title": "grasp_sft_v1_joint endpoint boundary (run live since 17:49:48Z 08-16, 3000 steps, ETA ~21:1x-21:3xZ): on unit grasp-sft-v1 inactive + step 3000 saved \u2014 (1) final eval read + per-dataset MAE breakdown table (the --eval-dataset-breakdown lines) to a chart-led report page; (2) checkpoint upload to fontaine-checkpoints (weights-only) same-session per standing rule; (3) sim100 rollout eval vs the route-C joint probe anchors (44/100 unseen flow; token leg vs R2 bar >=20/100) \u2014 the primary competence read; (4) wandb link + consolidated post. Babysit entry grasp_sft_v1_joint carries liveness; this item owns the boundary work.",
-   "boundary": "Queued 18:1xZ 08-16 at launch. Runnable the moment the run completes; if the 240-min session dies first, the armed run_work_next tick chain picks it up."
+   "title": "grasp_sft_v1_joint endpoint boundary \u2014 RE-POINTED at run 2 (RESTART --recompute-stats, unit grasp-sft-v1c live since 21:14:48Z 08-16, owner order 20:51:19Z; run 1b killed at ~1900, saves archived _run1_remaponly): on unit inactive + step 3000 saved \u2014 (1) final eval read + per-dataset MAE breakdown table to the chart-led report page (grasp_sft_v1_endpoint_report.py, NOTE: wandb run id changes \u2014 update WANDB_RUN before --extract; absolute MAE not comparable to run 1, different normalization); (2) checkpoint upload (upload_grasp_sft_v1_joint_checkpoint.py ON the box, weights-only) same-session; (3) sharded sim100 on the box (staged_endpoint/eval_box_grasp_sft_v1_joint_sim100.sh smoke then full, merge_rollout_shards.py, reads vs probe anchors 44/100 flow / R2 bar >=20 token); (4) HTML report --preset v1endpoint + wandb link + consolidated post. ETA ~00:3x-00:5xZ 08-17.",
+   "boundary": "Queued 18:1xZ 08-16 at launch; re-pointed 21:1xZ after the owner-ordered restart. Runnable at run-2 completion; the armed run_work_next tick chain owns it if no session is live."
   },
   {
    "id": "topcam-disk-contrast-instrument",
