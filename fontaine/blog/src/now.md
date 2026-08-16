@@ -1,6 +1,37 @@
 # Now
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-16 11:06–11:1xZ (real `date -u` at stamp: 11:11) —
+tick: **quiet hold under the GPU pause; owner's new main merged
+forward clean (remote-inference stack), 946 checks green.***
+
+**Status**: no live GPU runs — GPU still OWNER-RESERVED (10:13Z
+order). `nvidia-smi` 12.6 GiB resident / 0% util: consistent with
+the owner's new `bijou.policy_server` sitting loaded between their
+laptop-driven rollouts (their commit `f0e9bbd` explains the setup —
+9.7 GB trunk can't mount on the 8 GiB operator laptop, so
+cameras/robot stay local and one BijouPolicy serves from the GPU
+box). Not touched.
+
+**Steering**: none new — read empty, inbox empty, history shows no
+new reactions. Pending their calls: spawn-v2 priority vs token-legs
+report, C′ route, morning-veto items, GPU return ping.
+
+**Done**: **main `2e5b16d` merged** (`1f33bb0`, clean — no
+conflicts; the new commits are rollout/serving-side:
+`bijou/policy_server.py` + `bijou/remote_policy.py` + rollout
+`--policy-server` path, camera-kinds notice fix): `check.py` **946
+passed** on the merged tree. Babysit: 0 registered runs, exit 0.
+
+**Next**: unchanged — everything owner-gated: spawn-v2 finalization
+behind the priority + C′ calls; probe-chain resume (leg 3 re-run →
+leg 4 → five-json reads → consolidated report) behind GPU return.
+Queue depth 1 queued — stated reason: gpu-local items
+`blocked`/owner_hold under the pause; the queued CPU item's slices
+are owner-gated; the one new executable item (main merge) was done
+in-tick. `run_work_next` DISARMED.*
 
 *Updated 2026-08-16 09:59–10:4xZ (real `date -u` at stamp: 10:45) —
 work session: **main merged on owner ask (rebase question answered in
@@ -77,67 +108,14 @@ bar ≥20) + consolidated boundary post + chart-led report page; merge
 main at the boundary. Owner pending: spawn-v2 priority, morning
 veto.*
 
-*Updated 2026-08-16 06:20–09:0xZ (real `date -u` at stamp: 09:04; corrected 09:13 — first stamp was written from memory, the check-clock class) —
-work session: **route-C endpoint caught — train COMPLETE, flow-unseen
-44/100 = TABLE_FIX_POSITIVE, owner report delivered, probe legs
-chaining.***
-
-**Status**: probe leg 3 `token-unseen` (grammar-greedy `_arhead`,
-seeds 0–99, the B §3 read vs R2 bar ≥20/100) live since 09:47:45Z —
-first poll green (`bijou@2000_arhead` banner, GPU 46%), ETA ~11:1xZ;
-unit `fontaine-joint-probe-token-unseen`, registry entry
-`grasp_sft_joint_probes` (gate ≤6 GPU-h probe-side, ~3.3 spent).
-Leg 2 `flow-train` DONE 09:47Z: **42/100 on training seeds** vs 44
-unseen — **no memorization signature** (0 strikes, 64 moved).
-Chain total so far ~8.5 GPU-h vs ≤13 amendment gate. Train run
-COMPLETE 06:51:19Z clean: 2000/2000, `loss_action` 0.0245,
-`loss_aux` (action-token CE) 0.155 from 4.33, VRAM 66.65 flat, zero
-K1 events.
-
-**Steering**: owner 08:25:30Z (two asks): (1) eval report on the
-unseen leg + 2 videos → DELIVERED 08:5xZ (browsable HTML on
-fontaine-reports, curl 200; seeds 36 + 64 clips attached in-channel;
-ack'd); (2) `loss_aux` semantics question → answered from
-`molmoact2_joint.py`: it is action-token CE, NOT narration (aux-text
-count is None in this run); proposed alias-preserving rename to
-`loss_ce_actions`, **owner reply pending — don't land until they
-answer**. Owner 09:06Z (third ask): standard 256-sample eval report
-→ DELIVERED 09:1xZ (train256 protocol, `--chunk-size 30` matched
-after a first launch died on the 50 default; state-copy anchors
-bitwise 9.3562/9.8678): joint chunk MAE **3.24** vs corrupt-table
-stage-C **12.56** (which sat worse than state-copy 9.36) — the
-offline read now agrees with the rollouts; posted
-1538476581104779335, ack'd, reports.md entry. Owner 09:16Z (spawn
-randomization): confirmed the gap from code — disk FIXED, boat band
-one-sided; spawn-v2 proposal posted 09:50Z, queued
-`sim-spawn-v2-randomization` (pre-reg first slice, priority question
-asked in-channel). Owner 09:19Z (+message.txt): main `32149df`
-landed train.py modularization + GLOBAL loss re-keying
-(loss_action_flow / loss_action_ar / loss_narration, NO write-side
-aliases) — my rename item WITHDRAWN as superseded; merge + read-time
-key mapping queued `main-merge-rekeyed-train` (promised next
-boundary); both replied + ack'd, inbox empty.
-
-**Done**: endpoint handoff executed — smoke leg PASSED
-(`bijou@2000_arhead`, 3 well-formed rows), leg 1 `flow-unseen` DONE
-08:21Z: **44/100 unseen successes** (anchors base 9 / corrupt-28,
-0 strikes), A §5 verdict **TABLE_FIX_POSITIVE** baked by the reads
-script — corrected lineage becomes the SFT artifact. Step-2000
-weights banked to
-`fontaine-checkpoints/molmoact2_grasp_sft_joint_corrected_step2000`
-(11.4 GiB weights-only). Commits: `eb74314` (registry roll),
-`c3b0af1` (upload script), `cd7ce5a` (leg-1 + leg-2 roll), `1257c1b`
-(chain-page addendum), `855aed7` (unseen report + reports.md).
-
-**Next**: `queue_cli.py next` → grasp-sft-bootstrap route-C probes:
-ticks babysit leg 3 to ~11:1xZ, then launch leg 4 `token-base` on
-leg-3-inactive (registry boundary has the command), then
-`grasp_sft_joint_probe_reads.py` five-json read (token B §3 verdict
-vs R2 bar ≥20) + consolidated boundary post + chart-led report page
-(~12:4xZ). `run_work_next` ARMED for the reads/report leg. Owner
-replies pending: loss_ce_actions rename, morning-veto items.*
-
 ## Utilization footer
+
+Session 2026-08-16 11:06–11:1xZ (tick; GPU owner-reserved): **quiet
+hold + main `2e5b16d` merged forward clean** (owner's new
+remote-inference stack: policy_server + RemotePolicy + rollout
+`--policy-server`; 946 checks green) — no steering, inbox empty, no
+new reactions, babysit 0 runs, queue depth 1 with stated reason
+(all remaining work owner-gated), `run_work_next` disarmed.
 
 Session 2026-08-16 09:59–10:4xZ (work; exploit; ~0.3 GPU-h leg-3
 partial before the owner pause): **two owner steers served inside
