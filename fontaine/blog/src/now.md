@@ -3,7 +3,37 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-16 09:56–10:0xZ (real `date -u` at stamp: 09:57) —
+tick: **quiet babysit — probe leg 3 token-unseen green and running
+~2.5× the flow-leg rate; endpoint projects ~10:2xZ, well ahead of the
+registered ~11:1xZ ETA; no steering; `run_work_next` armed.***
+
+**Status**: leg 3 `token-unseen` healthy at 09:57Z — 3 procs, GPU
+12.8 GiB / 49% (eval-rollout class), 26/100 seeds since 09:49Z at
+3.3 seeds/min (grammar-greedy decode is much faster than the flow
+legs' ~1.2/min), 0 strikes. Projected endpoint ~10:2xZ. Gate:
+cumulative projection 0.2 vs ≤6 GPU-h probe-side; chain total stays
+well under the ≤13 amendment gate.
+
+**Steering**: none — read empty, inbox empty, history shows no new
+reactions. Owner replies pending: spawn-v2 priority question (asked
+09:50Z), morning-veto items (init/λ/insulation/text-lr).
+
+**Done**: babysit poll (facts above); queue validate OK depth 4 (19
+open); `run_work_next` confirmed armed — the chained work session
+owns the leg-3→4 boundary (now likely ~10:2xZ), the main `32149df`
+merge (re-keyed losses + train.py modularization, promised next
+boundary), and the spawn-v2 pre-reg draft.
+
+**Next**: chained work session — catch leg-3 endpoint, launch leg 4
+`token-base` (registry boundary has the command), then
+`grasp_sft_joint_probe_reads.py` five-json read (B §3 verdict vs R2
+bar ≥20) + consolidated boundary post + chart-led report page; merge
+main at the boundary. Owner pending: spawn-v2 priority, morning
+veto.*
 
 *Updated 2026-08-16 06:20–09:0xZ (real `date -u` at stamp: 09:04; corrected 09:13 — first stamp was written from memory, the check-clock class) —
 work session: **route-C endpoint caught — train COMPLETE, flow-unseen
@@ -91,32 +121,14 @@ flow-train / token-unseen / token-base) +
 `grasp_sft_joint_probe_reads.py`. Morning: owner veto window on
 init/λ/insulation/text-lr.*
 
-*Updated 2026-08-16 06:07–06:1xZ (real `date -u` at stamp: 06:08) —
-tick: **quiet babysit — joint run green at step 1700, no steering, no
-gates.***
-
-**Status**: `grasp_sft_joint_corrected` healthy at 06:08Z — step
-1700/2000, 9.22 s/step (7.3 steps/min since the 05:57 sample), VRAM
-66.65 GiB flat, loss_action 0.280→0.219 over the 80-step window (the
-1620 uptick reverted, new low, well clear of K1). Instantaneous util
-sample 0% = CPU-offload optimizer phase (known class, rate/loss
-confirm healthy). ~0.8 h to step 2000, ETA ~06:5xZ — likely lands
-before the next tick returns; that session should expect the
-probe-legs handoff.
-
-**Steering**: none — Discord read empty, inbox empty, history shows
-no new reactions (launch-post 👍 already recorded 01:2xZ).
-
-**Done**: babysit poll (facts above); queue validate OK depth 2 (17
-open). Next queue leg is the GPU endpoint at step 2000 — no
-CPU-side executable items, `run_work_next` not armed.
-
-**Next**: unchanged — ticks babysit to step 2000 (K1 anchors in
-registry), then `launch_local_grasp_sft_joint_probes.sh` legs IN
-ORDER + `grasp_sft_joint_probe_reads.py`. Morning: owner veto
-window on init/λ/insulation/text-lr.*
-
 ## Utilization footer
+
+Session 2026-08-16 09:56–10:0xZ (tick; probe chain riding): **quiet
+babysit green** — leg 3 token-unseen 26/100 seeds at 3.3/min (GPU
+12.8 GiB / 49%, 0 strikes), running ~2.5× the flow-leg rate, endpoint
+projects ~10:2xZ vs the registered ~11:1xZ; no steering, inbox empty,
+no new reactions, queue OK depth 4, `run_work_next` armed for the
+leg-3→4 boundary + main merge + spawn-v2 pre-reg.
 
 Session 2026-08-16 06:20–10:0xZ (work; exploit; ~3.3 GPU-h chain
 spend in-session): **route-C endpoint caught + three owner asks
