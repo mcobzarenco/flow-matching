@@ -90,6 +90,40 @@ learned policies face). Oracles (all CPU): v1 bit-compat under
 constraint invariants on 10k draws (separation, keep-out, bounds,
 in-W); acceptance-floor refusal on a degenerate mask.
 
+### §3.1 Instrument v0 — first measured fields (added ~10:3xZ, same session)
+
+The probe ran (CPU, ~2 min; `reports/analysis__spawn_v2_reachability_v0.json`,
+head `6d01d14`): 1 cm Cartesian grid, 2196 cells, stage-A `solve_grasp`
+at GRASP_Z = 0.014 m with the pan pre-swung to each cell's bearing and
+a radially-facing hull.
+
+![Spawn-v2 reachability probe v0: IK-residual field and static shoulder-moment field](../img/spawn_v2/reachability_v0.png)
+
+Three facts the finalization constants will be cut from:
+
+1. **425 cells sit inside the 1 mm residual bar** (~425 cm² vs the v1
+   band's 34 cm² — a ~12× larger spawn field), an annular region from
+   near the base out to ~0.35 m, containing the v1 band (0.57 mm at
+   its center) and the v1 disk (0.31 mm) comfortably.
+2. **Static torque does not bind**: over the whole reachable field the
+   shoulder's static gravity moment peaks at 0.25 of the 3.478
+   force limit — the nullspace posture pull keeps solves out of the
+   straight-arm poses that saturated the servo in stage A. The torque
+   bound in W is a backstop, not the working constraint; the residual
+   bar does the work.
+3. **v0 caveat**: the <1 mm region shows ring-banding — cells where
+   the fixed-budget DLS iteration converges marginally flicker across
+   the bar. Before the mask freezes, the probe gets a convergence
+   margin (more iterations + a hysteresis band, plus a morphological
+   clean) so W is a solid region, not a speckle field. This is an
+   instrument artifact, not arm physics. Measured consequence on the
+   sampler (2000 episodes on the v0 mask): mean 7.2 boat attempts,
+   p99 45, **max 194 — one attempt shy of the 200-draw refusal bar**,
+   because disks drawn at speckled mask edges see a mostly-rejected
+   annulus. The mask clean and the refusal bar must be finalized
+   together, with the bar sitting well above the cleaned mask's
+   measured tail.
+
 ## §4 Registered consequences (the expensive part, priced)
 
 | stage | what | cost class |
