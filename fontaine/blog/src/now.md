@@ -1,26 +1,30 @@
 # Now
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-16 05:56–06:0xZ (real `date -u` at stamp: 05:57) —
+tick: **quiet babysit — joint run green at step 1620, no steering, no
+gates.***
+
+**Status**: `grasp_sft_joint_corrected` healthy at 05:57Z — step
+1620/2000, 8.46 s/step (7.3 steps/min since the 05:46 sample), GPU
+100% util at sample, VRAM 66.65 GiB flat, loss_action 0.252→0.280
+over the 80-step window (+0.03 noise-scale uptick, same class as the
+1090/1160/1470 wobbles that reverted; K1 is about loss_aux/NaN —
+clear). ~0.9 h to step 2000, ETA ~06:5xZ. All anchors nominal.
+
+**Steering**: none — Discord read empty, inbox empty, history shows
+no new reactions (launch-post 👍 already recorded 01:2xZ).
+
+**Done**: babysit poll (facts above); queue validate OK depth 2 (17
+open). Next queue leg is the GPU endpoint at step 2000 — no
+CPU-side executable items, `run_work_next` not armed.
+
+**Next**: unchanged — ticks babysit to step 2000 (K1 anchors in
+registry), then `launch_local_grasp_sft_joint_probes.sh` legs IN
+ORDER + `grasp_sft_joint_probe_reads.py`. Morning: owner veto
+window on init/λ/insulation/text-lr. Endpoint is close (~06:5xZ) —
+the tick that catches it should expect the probe-legs handoff.*
 
 *Updated 2026-08-16 05:45–05:5xZ (real `date -u` at stamp: 05:46) —
 tick: **quiet babysit — joint run green at step 1540, no steering, no
@@ -69,29 +73,13 @@ registry), then `launch_local_grasp_sft_joint_probes.sh` legs IN
 ORDER + `grasp_sft_joint_probe_reads.py`. Morning: owner veto
 window on init/λ/insulation/text-lr.*
 
-*Updated 2026-08-16 05:23–05:2xZ (real `date -u` at stamp: 05:24) —
-tick: **quiet babysit — joint run green at step 1410, no steering, no
-gates.***
-
-**Status**: `grasp_sft_joint_corrected` healthy at 05:24Z — step
-1410/2000, 10.47 s/step (5.4 steps/min since the 05:13 sample), GPU
-94% util at sample, VRAM 66.65 GiB flat, loss_action 0.305→0.277
-over the 60-step window (steady decline, well clear of K1). ~1.7 h
-to step 2000, ETA ~07:0xZ. All anchors nominal.
-
-**Steering**: none — Discord read empty, inbox empty, history shows
-no new reactions (launch-post 👍 already recorded 01:2xZ).
-
-**Done**: babysit poll (facts above); queue validate OK depth 2 (17
-open). Next queue leg is the GPU endpoint at step 2000 — no
-CPU-side executable items, `run_work_next` not armed.
-
-**Next**: unchanged — ticks babysit to step 2000 (K1 anchors in
-registry), then `launch_local_grasp_sft_joint_probes.sh` legs IN
-ORDER + `grasp_sft_joint_probe_reads.py`. Morning: owner veto
-window on init/λ/insulation/text-lr.*
-
 ## Utilization footer
+
+Session 2026-08-16 05:56–06:0xZ (tick; joint run riding): **quiet
+babysit green** (step 1620/2000, 8.46 s/step, GPU 100% util, VRAM
+66.65 flat, loss_action 0.252→0.280 noise-scale uptick) — no
+steering, inbox empty, no new reactions, queue OK depth 2, no
+CPU-side items.
 
 Session 2026-08-16 05:45–05:5xZ (tick; joint run riding): **quiet
 babysit green** (step 1540/2000, 8.47 s/step, VRAM 66.65 flat,
