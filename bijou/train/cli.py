@@ -88,10 +88,14 @@ from ..checkpoint import (
     tokenizer_manifest,
 )
 from ..data import (
+    DatasetStats,
     EpisodeSplit,
     LengthBucketedBatchSampler,
     StatsAttachedDataset,
+    fingerprints_v21_calibration,
+    oriented_like,
     parse_repeat_specs,
+    pooled_selection_stats,
     select_datasets,
     worker_init,
 )
@@ -552,6 +556,54 @@ def length_bucket_keys(
     return keys
 
 
+def _print_recomputed_stats(
+    old: DatasetStats,
+    new: DatasetStats,
+    *,
+    frames: int,
+    dataset_count: int,
+) -> None:
+    """The --recompute-stats receipt: old (init-from table) vs new
+    (exact pooled) per joint index, both rows."""
+    print(
+        f"[recompute-stats] exact pooled quantiles over {frames} train-"
+        f"split frames from {dataset_count} dataset(s); OLD = the "
+        "--init-from checkpoint's table, NEW = this run's:",
+        flush=True,
+    )
+    print(
+        f"  {'row':6s} {'idx':>3s} | {'old q01':>9s} -> {'q99':>9s} | "
+        f"{'new q01':>9s} -> {'q99':>9s} | {'old mean':>9s} {'new mean':>9s} | "
+        f"{'old std':>8s} {'new std':>8s}",
+        flush=True,
+    )
+    for row, old_vals, new_vals in (
+        (
+            "action",
+            (old.action_q01, old.action_q99, old.action_mean, old.action_std),
+            (new.action_q01, new.action_q99, new.action_mean, new.action_std),
+        ),
+        (
+            "state",
+            (old.state_q01, old.state_q99, old.state_mean, old.state_std),
+            (new.state_q01, new.state_q99, new.state_mean, new.state_std),
+        ),
+    ):
+        old_q01, old_q99, old_mean, old_std = old_vals
+        new_q01, new_q99, new_mean, new_std = new_vals
+        assert new_q01 is not None and new_q99 is not None
+        for j in range(len(new_mean)):
+            o01 = f"{old_q01[j]:9.2f}" if old_q01 is not None else "      (-)"
+            o99 = f"{old_q99[j]:9.2f}" if old_q99 is not None else "      (-)"
+            print(
+                f"  {row:6s} {j:3d} | {o01} -> {o99} | "
+                f"{new_q01[j]:9.2f} -> {new_q99[j]:9.2f} | "
+                f"{old_mean[j]:9.2f} {new_mean[j]:9.2f} | "
+                f"{old_std[j]:8.2f} {new_std[j]:8.2f}",
+                flush=True,
+            )
+
+
 def main() -> int:
     os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
     # Headless rendering for the eval plots regardless of DISPLAY (must be
@@ -862,6 +914,52 @@ def main() -> int:
         if args.fast_tokenizer is not None
         else None
     )
+    recompute_note: str | None = None
+    if args.recompute_stats:
+        assert source is not None and source_metadata is not None  # args guard
+        pooled_raw, pooled_frames = pooled_selection_stats(selection.datasets)
+        # Magnitudes from the run's data, ORIENTATION from the model's
+        # own table: a descending source pair (a convention-remapped
+        # sign-flipped joint) must stay descending, or the recompute
+        # would re-invert the normalized axis the remap fixed.
+        pooled = oriented_like(pooled_raw, source_metadata.stats)
+        if is_main:
+            _print_recomputed_stats(
+                source_metadata.stats,
+                pooled,
+                frames=pooled_frames,
+                dataset_count=len(selection.per_dataset_stats),
+            )
+            if fingerprints_v21_calibration(source_metadata.stats):
+                print(
+                    "[recompute-stats] WARNING: the source table fingerprints "
+                    "as v2.1-calibration degrees - recomputing onto v3.0 "
+                    "data re-centers the box but leaves shoulder_lift's "
+                    "LEARNED DIRECTION inverted (the sign flip survives "
+                    "normalization). The clean composition is --remap-stats "
+                    "v21-to-v30 at conversion first, recompute on top - "
+                    "docs/so101-joint-conventions.md",
+                    flush=True,
+                )
+        recompute_note = (
+            "global stats RECOMPUTED at launch: exact pooled quantiles over "
+            f"{pooled_frames} train-split frames of "
+            f"{sorted(selection.per_dataset_stats)}, oriented like the "
+            f"source table; the original table is the source checkpoint's "
+            f"({source})"
+        )
+        # Every rank computes the same table (exact pooled quantiles are
+        # deterministic and order-independent) - no artifact, no sync.
+        # Every downstream consumer reads source_metadata: the CE codec
+        # table, molmo_flow's clamp build, the state table, and the save
+        # side (which reads the tables back off the built model and
+        # records recompute_note) - one swap covers the run end to end.
+        source_metadata = dataclasses.replace(
+            source_metadata,
+            stats=pooled,
+            stats_note=recompute_note,
+        )
+
     # The molmoact2 ar/joint pathways tokenize CE targets through the
     # released codec under the ONE merged table (their shared-table
     # convention, and molmo_flow's clamp table — same row, one source of
@@ -2460,6 +2558,7 @@ def main() -> int:
                             backbone_config=trunk_config_json,
                             inherited_text_trained=inherited_text_trained,
                             inherited_vision_trained=inherited_vision_trained,
+                            stats_note=recompute_note,
                         )
                         # Captured now (copy_to_cpu doubles as a deep
                         # copy): a later scheduler.step() must not leak
@@ -2535,6 +2634,7 @@ def main() -> int:
                         inherited_text_trained=inherited_text_trained,
                         inherited_vision_trained=inherited_vision_trained,
                         tokenizer_files=tokenizer_files,
+                        stats_note=recompute_note,
                     )
                     print(f"saved {path}", flush=True)
                     # Frozen parts link this save's files from now on.

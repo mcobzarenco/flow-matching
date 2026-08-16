@@ -75,7 +75,7 @@ from .checkpoint import (
     validate_checkpoint,
 )
 from .checkpoint import write_checkpoint as write_vla_checkpoint
-from .data import DatasetStats
+from .data import SO10X_ELBOW, SO10X_LIFT, DatasetStats
 from .loading import (
     BackboneDepth,
     MolmoAct2PromptConfig,
@@ -205,11 +205,6 @@ def _round_up(value: int, multiple_of: int) -> int:
     return int(math.ceil(value / multiple_of) * multiple_of)
 
 
-# SO-10x joint order the remap map is defined over (lerobot feature
-# order; docs/so101-joint-conventions.md).
-_SO10X_LIFT, _SO10X_ELBOW = 1, 2
-
-
 def _remap_stats_v21_to_v30(stats: DatasetStats) -> DatasetStats:
     """Re-express a v2.1-calibration degrees table in v3.0-calibration
     degrees via the official lerobot PR#777 transform (shoulder_lift
@@ -241,8 +236,8 @@ def _remap_stats_v21_to_v30(stats: DatasetStats) -> DatasetStats:
                 "table predates quantiles",
             )
         for joint, index in (
-            ("shoulder_lift", _SO10X_LIFT),
-            ("elbow_flex", _SO10X_ELBOW),
+            ("shoulder_lift", SO10X_LIFT),
+            ("elbow_flex", SO10X_ELBOW),
         ):
             if not (q99[index] > 100.0 and q01[index] > -20.0):
                 raise SystemExit(

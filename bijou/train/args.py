@@ -214,6 +214,12 @@ class TrainArgs:
     # a frozen trunk (where it is a numerical no-op, kept for
     # provenance).
     insulate_flow: bool
+    # Replace the init-from checkpoint's global normalization table with
+    # exact pooled quantiles over the run's train datasets, oriented
+    # like the source table (molmoact2 families only — theirs is the
+    # decoder-owned-global scheme; per-dataset-normalizing families
+    # don't consume the global row at train time).
+    recompute_stats: bool
     self_attention_mode: str
     time_conditioning: str
     # SnapFlow φ_s target-time embedding on the flow decoder (implied by
@@ -481,6 +487,19 @@ class TrainArgs:
             # Deliberately NOT refused: --camera-kind-dropout (inert —
             # this format never renders kinds) and --instruction-augment
             # (task text renders; judge rewrites are format-compatible).
+            if self.recompute_stats:
+                if self.resume is not None:
+                    raise ValueError(
+                        "--recompute-stats is refused under --resume: the "
+                        "table is a locked fact of the run (it was derived "
+                        "and recorded at launch)",
+                    )
+                if self.init_from is None:
+                    raise ValueError(
+                        "--recompute-stats replaces an --init-from "
+                        "checkpoint's table — there is no source table on "
+                        "a fresh run",
+                    )
             if self.family == "molmoact2_ar" and self.insulate_flow:
                 raise ValueError(
                     "--insulate-flow is the flow KV seam; molmoact2_ar "
@@ -503,6 +522,13 @@ class TrainArgs:
                 "--insulate-flow is the molmo_flow KV seam; other families "
                 "have no insulable conditioning seam (the gemma flow "
                 "decoder trains against a frozen trunk)",
+            )
+        if self.recompute_stats and not self.family.startswith("molmoact2"):
+            raise ValueError(
+                "--recompute-stats is the molmoact2 families' "
+                "decoder-owned-GLOBAL normalization scheme; "
+                f"{self.family} normalizes per dataset at collate time "
+                "and does not consume the global row in training",
             )
         if self.family != "gemma_flow" and self.time_conditioning != "additive":
             raise ValueError(
@@ -908,6 +934,7 @@ class TrainArgs:
                 max_crops=arch["max_crops"],
                 stream_counts=arch["stream_counts"],
                 insulate_flow=raw.insulate_flow,
+                recompute_stats=raw.recompute_stats,
                 joint_ce_weight=(
                     raw.joint_ce_weight if raw.joint_ce_weight is not None else 1.0
                 ),
@@ -1178,6 +1205,21 @@ def _build_parser() -> argparse.ArgumentParser:
         "are exactly zero. molmoact2 families only (flow with a frozen "
         "trunk, or joint — the RL-then-refine recipe); irrelevant (and "
         "refused) elsewhere",
+    )
+    parser.add_argument(
+        "--recompute-stats",
+        action="store_true",
+        help="replace the --init-from checkpoint's global normalization "
+        "table with EXACT pooled q01/q99 (+mean/std) computed over the "
+        "run's train datasets (a columnar scan, no video), ORIENTED like "
+        "the source table per joint (a remapped table's sign-flipped "
+        "descending pairs stay descending — magnitudes from the data, "
+        "direction from the model). In-memory for the run; every saved "
+        "checkpoint records the recomputed tables + a stats_note naming "
+        "the datasets. molmoact2 families only; refused under --resume "
+        "(the table is then a locked run fact). Composes AFTER a "
+        "convention fix, never instead of one — "
+        "docs/so101-joint-conventions.md",
     )
     parser.add_argument(
         "--objective",
