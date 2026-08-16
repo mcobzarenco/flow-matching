@@ -1,8 +1,50 @@
 # Now
 
+*Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-16 09:59–10:4xZ (real `date -u` at stamp: 10:45) —
+work session: **main merged on owner ask (rebase question answered in
+the doing), GPU handed back mid-session on their 10:13Z order, and
+the spawn-v2 CPU ladder ran to its owner gate.***
 
+**Status**: no live GPU runs — **GPU OWNER-RESERVED since 10:13Z**
+(their local rollouts of the 2k policy). Leg 3 `token-unseen` was
+stopped on their order mid-seed-24 (~0.5 GPU-h; deterministic re-run,
+partial discarded), GPU verified freed (0 MiB / 0%). Resume recipe +
+full chain state in the pruned `grasp_sft_joint_probes` babysit.toml
+note (legs 1–2 banked: 44/100 TABLE_FIX_POSITIVE, 42/100 no-mem).
 
+**Steering**: owner 09:58Z "Are you rebased on latest main?" →
+answered + merge pulled forward (below), 👍'd. Owner 10:13Z "stop the
+eval and pause GPU queue" → executed within minutes (unit stopped,
+registry no-live-runs, gpu-local queue items owner_hold/blocked),
+replied + ack'd. Pending their call: spawn-v2 priority vs token-legs
+report, C′ route, morning-veto items (init/λ/insulation/text-lr).
+
+**Done**: (1) **main 32149df merged** (`dbd7cc8`): train.py→package
+conflict resolved by porting the six `--offload-optim` hunks into
+`bijou/train/{args,cli}.py`; offload oracle 5/5 bitwise, check.py 913
+green; read-side `fontaine/scripts/loss_keys.py` (owner-pinned
+run-family mapping) + babysit.toml new-keys note. (2) **babysit
+bare-count fix**: tick ETAs had been fabricated from the replan
+counter ("seed 15 replan 24" counted 24) — first-int-of-span fix,
+public correction posted. (3) **spawn-v2 CPU ladder complete to its
+owner gate**: pre-reg DRAFT posted (protocol break registered, v1
+stays frozen), reachability instrument v0→v1 (root cause: solve_ik's
+2 mm site tol made pad residuals stopping luck → 0.2 mm probe-local
+solve; solid 977-cell cleaned mask ~29× the v1 band; torque never
+>0.25 of limit), `sim/spawn_v2.py` sampler + 7 oracles (loud-refusal
+tail max 35/200, was 194), §5 now a measured proposed-freeze table;
+chart-led post in-channel. (4) Blog Space hit the 1 GB cap →
+squash + 48 stale LFS blobs purged (13.4 MB used now).
+
+**Next**: `queue_cli.py next` → everything is owner-gated: spawn-v2
+finalization (freeze table + objection window) behind the priority +
+C′ calls; probe-chain resume (leg 3 re-run → leg 4 → five-json reads
+→ consolidated report) behind GPU return. Queue depth 1 queued —
+stated reason: both gpu-local items are `blocked`/owner_hold under
+the GPU pause; the one queued CPU item's remaining slices are
+owner-gated. `run_work_next` DISARMED (no executable CPU work).*
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
@@ -95,33 +137,18 @@ vs R2 bar ≥20) + consolidated boundary post + chart-led report page
 (~12:4xZ). `run_work_next` ARMED for the reads/report leg. Owner
 replies pending: loss_ce_actions rename, morning-veto items.*
 
-*Updated 2026-08-16 06:18–06:2xZ (real `date -u` at stamp: 06:19) —
-tick: **quiet babysit — joint run green at step 1780, endpoint
-imminent, `run_work_next` ARMED for the probe-legs handoff.***
-
-**Status**: `grasp_sft_joint_corrected` healthy at 06:19Z — step
-1780/2000, 8.49 s/step (7.2 steps/min since the 06:08 sample), GPU
-100% util, VRAM 66.65 GiB flat, loss_action 0.219→0.177 over the
-80-step window (steady decline, new low, well clear of K1). ~0.5 h
-to step 2000, ETA ~06:5xZ — lands right at this tick's hard-kill
-boundary.
-
-**Steering**: none — Discord read empty, inbox empty, history shows
-no new reactions (launch-post 👍 already recorded 01:2xZ).
-
-**Done**: babysit poll (facts above); queue validate OK depth 2 (17
-open). **`run_work_next` armed** — the endpoint + five probe legs
-exceed a tick's 30-min cap, so the chained 4-h work session catches
-step 2000 and runs the handoff.
-
-**Next**: chained work session — wait out the last ~200 steps, then
-`launch_local_grasp_sft_joint_probes.sh` legs IN ORDER ((0) 3-seed
-`--serve-head ar` smoke REQUIRED FIRST, then flow-unseen /
-flow-train / token-unseen / token-base) +
-`grasp_sft_joint_probe_reads.py`. Morning: owner veto window on
-init/λ/insulation/text-lr.*
-
 ## Utilization footer
+
+Session 2026-08-16 09:59–10:4xZ (work; exploit; ~0.3 GPU-h leg-3
+partial before the owner pause): **two owner steers served inside
+minutes + the spawn-v2 CPU ladder run to its owner gate** — main
+32149df merged (`dbd7cc8`, offload ported, 913 green), GPU freed on
+the 10:13Z order (eval stopped, queue paused), babysit bare-count
+parse bug fixed + publicly corrected, spawn-v2 instrument v0→v1 +
+sampler + 7 oracles landed (977-cell solid mask, tail 35/200), §5
+proposed-freeze table posted; Space 1 GB cap cleared (squash + 48
+stale LFS blobs). `run_work_next` disarmed — all remaining work
+owner-gated.
 
 Session 2026-08-16 09:56–10:0xZ (tick; probe chain riding): **quiet
 babysit green** — leg 3 token-unseen 26/100 seeds at 3.3/min (GPU
