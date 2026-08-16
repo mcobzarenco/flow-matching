@@ -51,6 +51,7 @@ from .modelling.encoders.gemma4 import PROMPT_FORMAT, GemmaEncoder
 from .modelling.gemma4.config import Gemma4Config, Gemma4TextConfig, LayerType
 from .modelling.gemma4.loading import (
     load_model,
+    load_model_from_files,
     resolve_checkpoint_dir,
     truncate_backbone_state,
 )
@@ -71,6 +72,18 @@ class BackboneDepth(StrEnum):
     # The whole stack — the decoder-only path (prompt encode still stops
     # at the prefix; the suffix runs the KV-shared deep half).
     FULL = "full"
+
+
+@dataclass(frozen=True, slots=True)
+class BackboneFiles:
+    """A VLA checkpoint's per-part trunk weight files: ``text`` = the
+    text stack (+ untied lm_head on Molmo trunks), ``vision`` = tower +
+    connector — exactly the ``backbone_vision`` LR group's members.
+    Both carry OUR key names (translation happened once at import), so
+    every load is a plain strict ``load_state_dict``."""
+
+    text: Path
+    vision: Path
 
 
 @dataclass(frozen=True, slots=True)
@@ -694,9 +707,10 @@ def default_expert_config(
 
 
 def build_gemma_encoder(
-    checkpoint_dir: Path,
+    weights: Path | BackboneFiles,
     config: Gemma4Config,
     *,
+    tokenizer_dir: Path,
     exports: tuple[int, ...],
     max_soft_tokens: int,
     state_dim: int,
@@ -709,24 +723,44 @@ def build_gemma_encoder(
     """The Gemma backbone (frozen; truncated to its non-KV-shared layer
     prefix at the default PREFIX depth, whole stack at FULL) plus its
     prompt-side encoder strategy — the pair the composition root mounts.
-    The encoder's state_proj is freshly zero-initialized; checkpoint
-    loads overwrite it from prompt.safetensors."""
-    backbone = load_model(
-        checkpoint_dir,
-        device="cpu" if device is None else device,
-        dtype=dtype,
-        attn_backend=attn_backend,
-        truncate_layers=(
-            config.text.first_kv_shared_layer_idx
-            if depth is BackboneDepth.PREFIX
-            else None
-        ),
-        offload_ple=offload_ple,
+    ``weights`` is an HF-layout artifact directory (fresh runs and
+    importers — the translating dir-glob mount) or a VLA checkpoint's
+    per-part files (plain strict loads); ``tokenizer_dir`` feeds the
+    encoder's processor. The encoder's state_proj is freshly
+    zero-initialized; checkpoint loads overwrite it from
+    prompt.safetensors."""
+    truncate_layers = (
+        config.text.first_kv_shared_layer_idx if depth is BackboneDepth.PREFIX else None
     )
+    if isinstance(weights, BackboneFiles):
+        if offload_ple:
+            raise SystemExit(
+                "offload_ple is a serving mount knob of the HF-artifact "
+                "path; checkpoint loads park the PLE table post-mount "
+                "(to_device_with_ple_parked)",
+            )
+        backbone = load_model_from_files(
+            config,
+            text_file=weights.text,
+            vision_file=weights.vision,
+            device="cpu" if device is None else device,
+            dtype=dtype,
+            attn_backend=attn_backend,
+            truncate_layers=truncate_layers,
+        )
+    else:
+        backbone = load_model(
+            weights,
+            device="cpu" if device is None else device,
+            dtype=dtype,
+            attn_backend=attn_backend,
+            truncate_layers=truncate_layers,
+            offload_ple=offload_ple,
+        )
     encoder = GemmaEncoder(
         backbone.config,
         exports=exports,
-        processor_dir=str(checkpoint_dir),
+        processor_dir=str(tokenizer_dir),
         max_soft_tokens=max_soft_tokens,
         state_dim=state_dim,
         device=device,
@@ -739,10 +773,11 @@ def build_gemma_encoder(
 
 
 def build_gemma_flow_parts(
-    checkpoint_dir: Path,
+    weights: Path | BackboneFiles,
     config: Gemma4Config,
     expert_config: FlowDecoderConfig,
     *,
+    tokenizer_dir: Path,
     max_soft_tokens: int,
     device: DeviceLike = "cpu",
     dtype: torch.dtype | None = None,
@@ -751,7 +786,8 @@ def build_gemma_flow_parts(
 ) -> tuple[Gemma4Model, GemmaEncoder, FlowDecoder]:
     """The gemma-flow assembly: validate the cross-attention streams
     against the backbone's global prefix layers, mount the truncated
-    backbone + encoder pair, and build a freshly-initialized flow
+    backbone + encoder pair (``weights``/``tokenizer_dir`` as in
+    :func:`build_gemma_encoder`), and build a freshly-initialized flow
     decoder (checkpoint loads overwrite its weights)."""
     available = prefix_global_layers(config)
     for stream in expert_config.streams:
@@ -761,8 +797,9 @@ def build_gemma_flow_parts(
                 f"the backbone prefix (available: {available})",
             )
     backbone, encoder = build_gemma_encoder(
-        checkpoint_dir,
+        weights,
         config,
+        tokenizer_dir=tokenizer_dir,
         exports=expert_config.streams,
         max_soft_tokens=max_soft_tokens,
         state_dim=expert_config.state_dim,
@@ -856,47 +893,96 @@ def expert_config_from_architecture(
 # The LM head is tied to the token embeddings (one storage, two state-dict
 # keys): safetensors refuses aliased tensors, and Bijou never runs the head
 # anyway — excluded on save, allowed to be exactly the missing key on load.
+# Gemma-only: the Molmo2 head is untied and rides the text part for real.
 BACKBONE_UNSAVED_KEYS = frozenset({"lm_head.weight"})
 
 
-def load_backbone_state(backbone: nn.Module, checkpoint: Path) -> None:
-    """Load ``backbone.safetensors`` over an (already-built) backbone.
-    The file is materialized on CPU and streamed into the live
-    parameters by ``load_state_dict``'s copy semantics — loading it straight
-    to the target device would transiently hold a second full backbone
-    (~4.3 GB) next to the built one, which OOMed the 8 GiB laptop GPU at
-    rollout. The same copy semantics cast the bf16 snapshot into whatever
-    dtype the backbone was built with (bf16 for eval/rollout, fp32 masters
-    for a live-backbone continuation). Snapshots saved at FULL depth load
-    into truncated builds (stage-2: a flow prefix encoder inheriting an
+def split_gemma_backbone_state[T](
+    state: dict[str, T],
+) -> tuple[dict[str, T], dict[str, T]]:
+    """Partition a mounted :class:`Gemma4Model` state dict into the
+    checkpoint's (text, vision) part states: vision = ``vision_tower.*``
+    (exactly the ``backbone_vision`` LR group — ``embed_vision`` trains
+    under the TEXT lr and rides the text part), text = everything else
+    minus the tied lm_head alias (:data:`BACKBONE_UNSAVED_KEYS`).
+    Value-generic: callers split raw tensors or annotated entries."""
+    text: dict[str, T] = {}
+    vision: dict[str, T] = {}
+    for key, value in state.items():
+        if key.startswith("vision_tower."):
+            vision[key] = value
+        elif key not in BACKBONE_UNSAVED_KEYS:
+            text[key] = value
+    return text, vision
+
+
+def split_molmo2_backbone_state[T](
+    state: dict[str, T],
+) -> tuple[dict[str, T], dict[str, T]]:
+    """Partition a mounted :class:`Molmo2Model` state dict into the
+    checkpoint's (text, vision) part states — the wrapper's ``text.``/
+    ``vision.`` prefixes strip to the part files' submodule-level keys
+    (``transformer.*`` + the untied ``lm_head.weight``; tower +
+    connector). An unrecognized key is a wiring bug, refused by name.
+    Value-generic: callers split raw tensors or annotated entries."""
+    text: dict[str, T] = {}
+    vision: dict[str, T] = {}
+    for key, value in state.items():
+        if key.startswith("text."):
+            text[key.removeprefix("text.")] = value
+        elif key.startswith("vision."):
+            vision[key.removeprefix("vision.")] = value
+        else:
+            raise ValueError(
+                f"Molmo2Model state key {key!r} is neither text.* nor "
+                "vision.* — not a partitionable trunk state",
+            )
+    return text, vision
+
+
+def load_backbone_part_states(backbone: nn.Module, files: BackboneFiles) -> None:
+    """Load a checkpoint's per-part trunk files over an (already-built)
+    backbone — the stage-2 inheritance path (the family loaders mount
+    from files directly instead). The files are materialized on CPU and
+    streamed into the live parameters by ``load_state_dict``'s copy
+    semantics — loading straight to the target device would transiently
+    hold a second full backbone (~4.3 GB) next to the built one, which
+    OOMed the 8 GiB laptop GPU at rollout. The same copy semantics cast
+    bf16 part files into whatever dtype the backbone was built with
+    (bf16 for eval/rollout, fp32 masters for a live-backbone
+    continuation). Gemma text parts saved at FULL depth load into
+    truncated builds (stage-2: a flow prefix encoder inheriting an
     ar_backbone trunk): deeper layers are dropped and the packed
     per-layer-embedding tensors sliced to the kept layers — a no-op at
     matching depth."""
-    state = load_file(str(checkpoint / "backbone.safetensors"), device="cpu")
+    text = load_file(str(files.text), device="cpu")
+    vision = load_file(str(files.vision), device="cpu")
     if isinstance(backbone, Molmo2Model):
-        # Molmo2 snapshots are full-model (untied head included — its
-        # key is not the Gemma alias) and always full-depth; no
-        # truncation arm exists.
+        # Molmo2 parts are full-model (untied head included — its key
+        # is not the Gemma alias) and always full-depth; no truncation
+        # arm exists.
+        state = {f"text.{key}": value for key, value in text.items()}
+        state.update({f"vision.{key}": value for key, value in vision.items()})
         missing, unexpected = backbone.load_state_dict(state, strict=False)
         if missing or unexpected:
             raise SystemExit(
-                f"backbone.safetensors mismatch at {checkpoint}: "
+                f"backbone part files mismatch at {files.text.parent}: "
                 f"missing {list(missing)}, unexpected {list(unexpected)}",
             )
         return
     assert isinstance(backbone, Gemma4Model)  # the two trunk lineages
-    state = truncate_backbone_state(state, backbone.config)
+    state = truncate_backbone_state({**text, **vision}, backbone.config)
     missing, unexpected = backbone.load_state_dict(state, strict=False)
     problems = [name for name in missing if name not in BACKBONE_UNSAVED_KEYS]
     if problems or unexpected:
         raise SystemExit(
-            f"backbone.safetensors mismatch at {checkpoint}: "
+            f"backbone part files mismatch at {files.text.parent}: "
             f"missing {problems}, unexpected {list(unexpected)}",
         )
 
 
 def build_gemma_ar_decoder(
-    checkpoint_dir: Path,
+    tokenizer_dir: Path,
     config: ARDecoderConfig,
     text_config: Gemma4TextConfig,
     *,
@@ -904,13 +990,14 @@ def build_gemma_ar_decoder(
     device: DeviceLike = None,
     dtype: torch.dtype = torch.float32,
 ) -> GemmaARDecoder:
-    """Format-5 AR section → the Gemma suffix decoder: the backbone
-    checkpoint's own text tokenizer (the artifact the collator rendered
-    training text with — opener + value lines; format 5 always needs it
-    at construction), the aux decode runtime when the section trained
-    value lines, and the hub-routable codec resolution."""
+    """Format-5 AR section → the Gemma suffix decoder: the trunk's own
+    text tokenizer (the artifact the collator rendered training text
+    with — opener + value lines; format 5 always needs it at
+    construction — read from the checkpoint's tokenizer/ or an artifact
+    directory), the aux decode runtime when the section trained value
+    lines, and the hub-routable codec resolution."""
     text_tokenizer = transformers.AutoTokenizer.from_pretrained(
-        str(checkpoint_dir),
+        str(tokenizer_dir),
     )
     aux_runtime = (
         build_aux_runtime(config.aux, text_tokenizer)
@@ -930,7 +1017,7 @@ def build_gemma_ar_decoder(
 
 
 def build_molmo2_ar_decoder(
-    backbone_ref: str,
+    tokenizer_ref: str,
     config: ARDecoderConfig,
     text_config: Molmo2TextConfig,
     *,
@@ -939,10 +1026,11 @@ def build_molmo2_ar_decoder(
     dtype: torch.dtype = torch.float32,
 ) -> Molmo2ARDecoder:
     """Format-5 AR section → the Molmo2 suffix decoder: the trunk's own
-    ChatML tokenizer, the newline-carrier ban (Qwen merges ``…\\n``
-    pieces), the aux decode runtime when the section trained value
-    lines, and the hub-routable codec resolution."""
-    tokenizer = Molmo2TextTokenizer(backbone_ref)
+    ChatML tokenizer (``tokenizer.json`` in the checkpoint's tokenizer/
+    or an artifact directory), the newline-carrier ban (Qwen merges
+    ``…\\n`` pieces), the aux decode runtime when the section trained
+    value lines, and the hub-routable codec resolution."""
+    tokenizer = Molmo2TextTokenizer(tokenizer_ref)
     carriers = newline_carrier_ids(
         tokenizer,
         text_vocab_size=text_config.vocab_size,
@@ -1054,7 +1142,7 @@ def build_molmoact2_ar_decoder(
     config: ARDecoderConfig,
     prompt: MolmoAct2PromptConfig,
     text_config: Molmo2TextConfig,
-    backbone_ref: str,
+    tokenizer_ref: str,
 ) -> MolmoAct2ARDecoder:
     """Format-6 AR section → the discrete-head decoder: the
     action-mode refusal (BY NAME — the rig-ft exports are
@@ -1081,14 +1169,14 @@ def build_molmoact2_ar_decoder(
         config,
         text_config,
         codec,
-        tokenizer=Molmo2TextTokenizer(backbone_ref),
+        tokenizer=Molmo2TextTokenizer(tokenizer_ref),
     )
 
 
 def molmoact2_ar_config_from_flow_section(
     flow: MolmoFlowDecoderConfig,
     prompt: MolmoAct2PromptConfig,
-    backbone_ref: str,
+    tokenizer_ref: str,
     *,
     fast_tokenizer: str = MOLMOACT2_FAST_TOKENIZER_REF,
 ) -> ARDecoderConfig:
@@ -1111,11 +1199,11 @@ def molmoact2_ar_config_from_flow_section(
             "first-class consumer",
         )
     fast = MolmoAct2FastTokenizer.load(resolve_checkpoint_dir(fast_tokenizer))
-    backend = Molmo2TextTokenizer(backbone_ref).tokenizer
+    backend = Molmo2TextTokenizer(tokenizer_ref).tokenizer
     block_base = backend.token_to_id("<action_0>")
     if block_base is None:
         raise SystemExit(
-            f"{backbone_ref} tokenizer has no <action_0> — not a "
+            f"{tokenizer_ref} tokenizer has no <action_0> — not a "
             "MolmoAct2 'both'-mode vocabulary",
         )
     return ARDecoderConfig(

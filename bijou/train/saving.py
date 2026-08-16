@@ -6,10 +6,17 @@ save boundary (cheap and pure -- the copies are the boundary's values),
 while :func:`write_checkpoint` is CPU+disk only and therefore safe on
 the async saver's background thread (``bijou.async_save``);
 :func:`save_checkpoint` is the synchronous capture+write entry.
-Checkpoints are the VLA format (``bijou/checkpoint.py``):
+Checkpoints are the VLA format (``bijou/checkpoint.py``, schema 2):
 ``metadata.json`` + per-component safetensors + the always-present
-backbone (trained bf16 snapshot, the inherited adapted file, or a
-hard-linked pristine mirror).
+backbone PART files (``backbone_text``/``backbone_vision``) +
+``tokenizer/``.
+
+Frozen-part dedup: a part trained this run snapshots device→CPU (bf16
+params) at every boundary; a FROZEN part's file hard-links its source
+instead -- the init checkpoint's file for inherited trunks, the
+PREVIOUS save's file after a fresh run's first boundary serialized it
+once -- so frozen parts cost no snapshot time, no async-capture RAM
+and no disk beyond one copy per lineage.
 
 Also here: the payload derivations the metadata records --
 :func:`build_objective` (the family's objective payload from the
@@ -37,6 +44,7 @@ from ..modelling.encoders.gemma4 import PROMPT_FORMAT
 from ..modelling.encoders.molmo2 import MOLMO2_PROMPT_FORMAT
 from ..modelling.encoders.molmoact2 import MolmoAct2Encoder
 from ..modelling.gemma4.config import Gemma4Config
+from ..modelling.molmo2.model import Molmo2Model
 from ..models.gemma_ar import GemmaARVLA
 from ..models.gemma_flow import GemmaFlowVLA
 from ..models.molmo2_ar import Molmo2ARVLA
@@ -46,11 +54,12 @@ from ..models.molmoact2_joint import JointObjective, MolmoAct2JointVLA
 from ..models.objectives import ARObjective, FlowObjective, SnapflowObjective
 from ..models.serving import ARServing, FlowServing
 from ..sections import (
-    BACKBONE_UNSAVED_KEYS,
     BackboneDepth,
     GemmaPromptConfig,
     Molmo2PromptConfig,
     decoder_schema_dict,
+    split_gemma_backbone_state,
+    split_molmo2_backbone_state,
 )
 from ..vla import VLA
 from .args import AR_SUFFIX_FAMILIES, TrainArgs, train_args_record
@@ -260,32 +269,59 @@ class CheckpointTensors:
     async saver's background thread.
 
     ``components`` are the family's ``checkpoint_components()`` state
-    dicts; ``backbone`` is the toolkit's backbone argument — a bf16
-    snapshot dict when this run trains the trunk, the inherited
-    ``backbone.safetensors`` FILE when a frozen run inherited an adapted
-    trunk, or the pristine snapshot DIRECTORY to hard-link-mirror."""
+    dicts; ``backbone_text``/``backbone_vision`` are the toolkit's
+    per-part arguments — a bf16 snapshot dict when the part is trained
+    this run (or no file of it exists yet to link), else an existing
+    per-part FILE to hard-link (frozen parts leave the device→CPU
+    snapshot entirely). ``tokenizer_files`` name the tokenizer/ sources
+    to link (constant per run)."""
 
     components: dict[str, dict[str, Tensor]]
-    backbone: dict[str, Tensor] | Path
+    backbone_text: dict[str, Tensor] | Path
+    backbone_vision: dict[str, Tensor] | Path
+    tokenizer_files: dict[str, Path]
 
 
-def trained_backbone_snapshot(backbone: nn.Module) -> dict[str, Tensor]:
-    """The trained-trunk state for ``backbone.safetensors``: parameters
-    cast bf16 (the fp32 masters' precision beyond bf16 lives only in
-    optimizer.pt), buffers at native dtype (RoPE inv_freq tables are fp32
-    by design — bf16 would corrupt them). The copy+cast happens
-    HOST-side: a device-side cast would transiently allocate ~4.3 GB of
-    VRAM, an OOM at the ~79 GB/80 GB occupancy measured for the
-    live-backbone DDP config (A100, batch 32)."""
+@dataclass(frozen=True, slots=True)
+class BackbonePartSources:
+    """The frozen parts' link sources at the NEXT save boundary: the
+    init/resume source checkpoint's per-part files, re-pointed to each
+    new save's own files as boundaries pass (hard links — one inode per
+    frozen lineage). None = no file exists yet (a fresh run before its
+    first save): the first boundary serializes the part once and the
+    trainer re-points. Trained parts ignore their entry."""
+
+    text: Path | None
+    vision: Path | None
+
+
+def backbone_part_snapshot(backbone: nn.Module, *, vision: bool) -> dict[str, Tensor]:
+    """One backbone part's state for its per-part file (keys in the
+    file's part-local name space): parameters cast bf16 (the fp32
+    masters' precision beyond bf16 lives only in optimizer.pt), buffers
+    at native dtype (RoPE inv_freq tables are fp32 by design — bf16
+    would corrupt them). The copy+cast happens HOST-side: a device-side
+    cast would transiently allocate ~4.3 GB of VRAM, an OOM at the
+    ~79 GB/80 GB occupancy measured for the live-backbone DDP config
+    (A100, batch 32). Only the requested part is copied — frozen parts
+    never transit this path."""
     parameter_names = {name for name, _ in backbone.named_parameters()}
+    entries = {
+        name: (name in parameter_names, tensor)
+        for name, tensor in backbone.state_dict().items()
+    }
+    if isinstance(backbone, Molmo2Model):
+        text_entries, vision_entries = split_molmo2_backbone_state(entries)
+    else:
+        text_entries, vision_entries = split_gemma_backbone_state(entries)
+    selected = vision_entries if vision else text_entries
     return {
         name: (
             tensor.detach().cpu().to(torch.bfloat16)
-            if name in parameter_names
+            if is_parameter
             else tensor.detach().cpu()
         ).contiguous()
-        for name, tensor in backbone.state_dict().items()
-        if name not in BACKBONE_UNSAVED_KEYS
+        for name, (is_parameter, tensor) in selected.items()
     }
 
 
@@ -294,15 +330,16 @@ def capture_checkpoint_tensors(
     backbone: nn.Module,
     *,
     args: TrainArgs,
-    adapted_backbone_source: Path | None,
-    pristine_trunk_dir: Path,
+    part_sources: BackbonePartSources,
+    tokenizer_files: dict[str, Path],
 ) -> CheckpointTensors:
     """Device->CPU copies of every tensor the checkpoint serializes.
     ``copy=True`` even for CPU runs: the snapshot must not alias live
-    parameters the next optimizer step mutates. The backbone form
-    follows the D9 invariant: trained this run → bf16 snapshot dict;
-    inherited adapted (frozen) → the source file to link; pristine →
-    the mounted trunk directory to mirror."""
+    parameters the next optimizer step mutates. Per backbone part:
+    trained this run → bf16 snapshot dict; frozen with a known source
+    file → the Path to link (no copy — the slim async snapshot); frozen
+    with NO source yet (a fresh run's first boundary) → serialized once
+    from the module, after which the trainer re-points the source."""
     components = {
         name: {
             key: tensor.detach().to("cpu", copy=True).contiguous()
@@ -310,19 +347,22 @@ def capture_checkpoint_tensors(
         }
         for name, module in model.checkpoint_components().items()
     }
-    backbone_form: dict[str, Tensor] | Path
-    if args.backbone_trained:
-        backbone_form = trained_backbone_snapshot(backbone)
-    elif adapted_backbone_source is not None:
-        if not adapted_backbone_source.is_file():
-            raise FileNotFoundError(
-                f"inherited adapted-backbone source {adapted_backbone_source} "
-                "disappeared — every checkpoint of this run must carry it",
-            )
-        backbone_form = adapted_backbone_source
+    backbone_text: dict[str, Tensor] | Path
+    backbone_vision: dict[str, Tensor] | Path
+    if args.backbone_text_lr is not None or part_sources.text is None:
+        backbone_text = backbone_part_snapshot(backbone, vision=False)
     else:
-        backbone_form = pristine_trunk_dir
-    return CheckpointTensors(components=components, backbone=backbone_form)
+        backbone_text = part_sources.text
+    if args.backbone_vision_lr is not None or part_sources.vision is None:
+        backbone_vision = backbone_part_snapshot(backbone, vision=True)
+    else:
+        backbone_vision = part_sources.vision
+    return CheckpointTensors(
+        components=components,
+        backbone_text=backbone_text,
+        backbone_vision=backbone_vision,
+        tokenizer_files=tokenizer_files,
+    )
 
 
 def write_checkpoint(
@@ -360,7 +400,9 @@ def write_checkpoint(
             checkpoint_dir,
             metadata=metadata,
             components=tensors.components,
-            backbone=tensors.backbone,
+            backbone_text=tensors.backbone_text,
+            backbone_vision=tensors.backbone_vision,
+            tokenizer_files=tensors.tokenizer_files,
             optimizer=optimizer_scratch,
         )
     finally:
@@ -378,19 +420,23 @@ def save_checkpoint(
     optimizer: torch.optim.Optimizer,
     scheduler: torch.optim.lr_scheduler.LRScheduler,
     step: int,
-    adapted_backbone_source: Path | None,
-    pristine_trunk_dir: Path,
+    backbone_config: dict[str, Any],
+    part_sources: BackbonePartSources,
+    inherited_text_trained: bool,
+    inherited_vision_trained: bool,
+    tokenizer_files: dict[str, Path],
 ) -> Path:
     """Write one self-contained checkpoint directory (the synchronous
     entry: capture + write inline; the async path drives the same capture
     and writer from bijou.async_save).
 
-    Invariant (D9): the backbone is ALWAYS materialized —
-    ``backbone.safetensors`` when the trunk state differs from pristine
-    (trained this run, or inherited from an adapted checkpoint with the
-    unfreeze flags off — ``adapted_backbone_source``), else a
-    hard-linked ``backbone/`` mirror of the pristine snapshot;
-    ``metadata.backbone.trained`` records the fact explicitly."""
+    Invariant (D9, per part): both backbone part files are ALWAYS
+    materialized — a fresh bf16 snapshot when the part is trained this
+    run (or nothing exists to link yet), else a hard link of
+    ``part_sources``' file; ``metadata.backbone.text_trained``/
+    ``vision_trained`` record the facts explicitly (this run's LR flags
+    OR'd with the inherited flags — a frozen part inherited from an
+    adapted checkpoint stays trained)."""
     train_state = TrainState(
         optimizer=optimizer.state_dict(),
         scheduler=scheduler.state_dict(),
@@ -404,14 +450,16 @@ def save_checkpoint(
             normalizers=normalizers,
             per_dataset_stats=per_dataset_stats,
             step=step,
-            adapted_backbone_source=adapted_backbone_source,
+            backbone_config=backbone_config,
+            inherited_text_trained=inherited_text_trained,
+            inherited_vision_trained=inherited_vision_trained,
         ),
         tensors=capture_checkpoint_tensors(
             model,
             backbone,
             args=args,
-            adapted_backbone_source=adapted_backbone_source,
-            pristine_trunk_dir=pristine_trunk_dir,
+            part_sources=part_sources,
+            tokenizer_files=tokenizer_files,
         ),
         train_state_payload=train_state.to_payload(),
     )
@@ -424,7 +472,9 @@ def build_vla_metadata(
     normalizers: Normalizers,
     per_dataset_stats: dict[str, DatasetStats],
     step: int,
-    adapted_backbone_source: Path | None,
+    backbone_config: dict[str, Any],
+    inherited_text_trained: bool,
+    inherited_vision_trained: bool,
 ) -> VLAMetadata:
     """The checkpoint's ``metadata.json`` record. Cheap and pure — runs
     at capture time so the async writer holds no model references.
@@ -452,11 +502,11 @@ def build_vla_metadata(
         # Structural fact of the built model: a truncated backbone has
         # its KV-shared region cut away (truncated_config), a full one
         # keeps it — no plumbing to drift.
-        backbone_config = model.backbone.config
-        assert isinstance(backbone_config, Gemma4Config)
+        built_config = model.backbone.config
+        assert isinstance(built_config, Gemma4Config)
         depth = (
             BackboneDepth.FULL
-            if backbone_config.text.num_kv_shared_layers > 0
+            if built_config.text.num_kv_shared_layers > 0
             else BackboneDepth.PREFIX
         )
         if isinstance(model, GemmaFlowVLA):
@@ -575,7 +625,13 @@ def build_vla_metadata(
         action_dim=spec.action_dim,
         backbone_id=args.backbone,
         backbone_depth=depth.value,
-        backbone_trained=(args.backbone_trained or adapted_backbone_source is not None),
+        backbone_config=backbone_config,
+        backbone_text_trained=(
+            args.backbone_text_lr is not None or inherited_text_trained
+        ),
+        backbone_vision_trained=(
+            args.backbone_vision_lr is not None or inherited_vision_trained
+        ),
         objective=objective_to_json(build_objective(args)),
         serving=serving_to_json(model.serving),
         components=components,

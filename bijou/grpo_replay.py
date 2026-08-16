@@ -57,7 +57,7 @@ import numpy as np
 import torch
 from torch import Tensor
 
-from .checkpoint import backbone_directory, read_metadata
+from .checkpoint import read_metadata, tokenizer_directory
 from .data import DatasetStats
 from .fast.molmoact2 import QuantileStats, normalize_state
 from .loading import (
@@ -79,7 +79,7 @@ from .modelling.interface import (
     NormStats,
     PromptInputs,
 )
-from .modelling.molmo2.loading import load_config as load_molmo2_config
+from .modelling.molmo2.config import Molmo2Config
 from .models.molmoact2_ar import MolmoAct2ARVLA
 from .models.molmoact2_flow import MolmoAct2FlowVLA, molmoact2_prompt_of
 from .models.molmoact2_joint import MolmoAct2JointVLA
@@ -171,11 +171,11 @@ class MolmoAct2DiscreteStack:
                 dict(metadata.components["flow_decoder"]["config"]),
             )
             assert isinstance(section, MolmoFlowDecoderConfig)  # the family parsed it
-            trunk_dir = backbone_directory(checkpoint, metadata)
+            tokenizer_dir = tokenizer_directory(checkpoint)
             config = molmoact2_ar_config_from_flow_section(
                 section,
                 prompt,
-                str(trunk_dir),
+                str(tokenizer_dir),
                 fast_tokenizer=fast_tokenizer,
             )
             ar = MolmoAct2ARVLA(
@@ -184,8 +184,8 @@ class MolmoAct2DiscreteStack:
                 build_molmoact2_ar_decoder(
                     config,
                     prompt,
-                    load_molmo2_config(trunk_dir).text,
-                    str(trunk_dir),
+                    Molmo2Config.from_dict(metadata.backbone_config).text,
+                    str(tokenizer_dir),
                 ),
                 # Adapter construction facts, not checkpoint records:
                 # the AR read decodes greedily unless sampled (the unit

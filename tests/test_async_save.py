@@ -36,7 +36,12 @@ from typing import Any
 
 import pytest
 import torch
-from test_checkpoint_backbone import DIM, make_args, pristine_dir, tiny_model
+from test_checkpoint_backbone import (
+    DIM,
+    make_args,
+    tiny_cpu_model,
+    tokenizer_files_fixture,
+)
 from test_zero1 import WORLD, build_params, fake_grads, lr_lambda
 from torch.multiprocessing.spawn import spawn
 
@@ -46,6 +51,7 @@ from bijou.async_save import (
     copy_to_cpu,
 )
 from bijou.train import (
+    BackbonePartSources,
     Normalizer,
     Normalizers,
     TrainState,
@@ -187,16 +193,18 @@ def populated_optimizer(
 
 def test_async_checkpoint_directory_byte_identical(tmp_path: Path) -> None:
     """The full directory through the async machinery == the sync
-    ``save_checkpoint``, file by file (the pristine backbone/ mirror
-    hard-links the same inodes on both paths); the async
-    ``optimizer.pt`` round-trips through the resume loader."""
-    model = tiny_model()
+    ``save_checkpoint``, file by file (both serialize the fresh mount's
+    part files from identical captures); the async ``optimizer.pt``
+    round-trips through the resume loader."""
+    model = tiny_cpu_model(decoder_hidden=64, seed=0)
     args = make_args(tmp_path)
     optimizer, scheduler = populated_optimizer(model)
     normalizers = Normalizers(
         action=Normalizer(mean=torch.zeros(DIM), std=torch.ones(DIM)),
         state=Normalizer(mean=torch.zeros(DIM), std=torch.ones(DIM)),
     )
+    part_sources = BackbonePartSources(text=None, vision=None)
+    tokenizer_files = tokenizer_files_fixture(tmp_path)
     sync_dir = save_checkpoint(
         model,
         model.backbone,
@@ -206,8 +214,11 @@ def test_async_checkpoint_directory_byte_identical(tmp_path: Path) -> None:
         optimizer=optimizer,
         scheduler=scheduler,
         step=5,
-        adapted_backbone_source=None,
-        pristine_trunk_dir=pristine_dir(tmp_path),
+        backbone_config={"model_type": "gemma4"},
+        part_sources=part_sources,
+        inherited_text_trained=False,
+        inherited_vision_trained=False,
+        tokenizer_files=tokenizer_files,
     )
     sync_dir = sync_dir.rename(tmp_path / "sync")
 
@@ -216,8 +227,8 @@ def test_async_checkpoint_directory_byte_identical(tmp_path: Path) -> None:
         model,
         model.backbone,
         args=args,
-        adapted_backbone_source=None,
-        pristine_trunk_dir=pristine_dir(tmp_path),
+        part_sources=part_sources,
+        tokenizer_files=tokenizer_files,
     )
     metadata = build_vla_metadata(
         model,
@@ -225,7 +236,9 @@ def test_async_checkpoint_directory_byte_identical(tmp_path: Path) -> None:
         normalizers=normalizers,
         per_dataset_stats={},
         step=5,
-        adapted_backbone_source=None,
+        backbone_config={"model_type": "gemma4"},
+        inherited_text_trained=False,
+        inherited_vision_trained=False,
     )
     scheduler_state = copy_to_cpu(scheduler.state_dict())
     saver = AsyncCheckpointSaver(group=None, is_main=True, world_size=1, zero1=False)
@@ -250,7 +263,9 @@ def test_async_checkpoint_directory_byte_identical(tmp_path: Path) -> None:
     assert sync_files == async_files
     assert "optimizer.pt" in sync_files
     assert "flow_decoder.safetensors" in sync_files
-    assert "backbone" in sync_files  # the pristine mirror directory
+    assert "backbone_text.safetensors" in sync_files
+    assert "backbone_vision.safetensors" in sync_files
+    assert "tokenizer" in sync_files
     for name in sync_files:
         if (sync_dir / name).is_dir():
             assert sorted(p.name for p in (async_dir / name).iterdir()) == sorted(
@@ -275,7 +290,7 @@ def test_write_checkpoint_atomic_on_crash(
     """A crash mid-write publishes nothing: no ``step_*`` directory for
     the failed save (only ``.tmp`` debris), earlier checkpoints
     untouched."""
-    model = tiny_model()
+    model = tiny_cpu_model(decoder_hidden=64, seed=0)
     args = make_args(tmp_path)
     metadata = build_vla_metadata(
         model,
@@ -286,14 +301,16 @@ def test_write_checkpoint_atomic_on_crash(
         ),
         per_dataset_stats={},
         step=5,
-        adapted_backbone_source=None,
+        backbone_config={"model_type": "gemma4"},
+        inherited_text_trained=False,
+        inherited_vision_trained=False,
     )
     tensors = capture_checkpoint_tensors(
         model,
         model.backbone,
         args=args,
-        adapted_backbone_source=None,
-        pristine_trunk_dir=pristine_dir(tmp_path),
+        part_sources=BackbonePartSources(text=None, vision=None),
+        tokenizer_files=tokenizer_files_fixture(tmp_path),
     )
     payload = {"optimizer": {}, "scheduler": {}, "step": 5}
     first = write_checkpoint(

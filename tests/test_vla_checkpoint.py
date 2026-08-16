@@ -1,9 +1,11 @@
-"""Phase-3 gates: the VLA checkpoint toolkit (schema round-trip,
-atomic writes, the hard-link rule and its copy fallback,
-self-containment validation) and bijou.convert_legacy on a fabricated
-format-3 gemma-flow directory (family inference, weight-file linking,
-idempotence, --replace-stats). The molmoact2 conversion branches gate
-on the REAL tiny fixture in the phase-4 parity suite."""
+"""The VLA checkpoint toolkit at schema 2 (metadata round-trip, atomic
+writes, per-part backbone files with the hard-link dedup, the tokenizer
+manifest, self-containment validation) and bijou.convert_legacy on a
+fabricated format-3 gemma-flow directory (family inference, the trunk
+import with its partition audit, weight-file linking, idempotence,
+--replace-stats, the schema-1 refusal). The molmoact2 conversion
+branches gate on the tiny fixture in test_convert_molmoact2 and the
+train suites."""
 
 import errno
 import json
@@ -11,25 +13,24 @@ from pathlib import Path
 
 import pytest
 import torch
-from safetensors.torch import save_file
+from safetensors.torch import load_file, save_file
+from vla_fixtures import write_gemma_flow_legacy, write_gemma_trunk
 
 import bijou.checkpoint
 from bijou.checkpoint import (
+    BACKBONE_TEXT_FILENAME,
+    BACKBONE_VISION_FILENAME,
+    GEMMA_TOKENIZER_FILES,
+    MOLMO_TOKENIZER_FILES,
     VLAMetadata,
     link_or_copy,
     read_metadata,
+    tokenizer_manifest,
     validate_checkpoint,
     write_checkpoint,
 )
 from bijou.convert_legacy import convert
 from bijou.data import DatasetStats
-from bijou.loading import (
-    PROMPT_FORMAT,
-    FlowDecoderSection,
-    GemmaPromptConfig,
-)
-from bijou.modelling.decoders.flow import SelfAttentionMode, TimeConditioning
-from bijou.modelling.interface import SamplingMethod  # noqa: F401 — asserts import path
 from bijou.vla import VLAFamily
 
 ACTION_DIM = 6
@@ -59,7 +60,9 @@ def metadata(**overrides: object) -> VLAMetadata:
         "action_dim": ACTION_DIM,
         "backbone_id": "some/backbone",
         "backbone_depth": "prefix",
-        "backbone_trained": False,
+        "backbone_config": {"model_type": "gemma4", "text_config": {"k": 1}},
+        "backbone_text_trained": False,
+        "backbone_vision_trained": False,
         "objective": {"kind": "flow"},
         "serving": {"kind": "flow", "num_steps": 5, "method": "heun"},
         "components": {
@@ -77,12 +80,13 @@ def metadata(**overrides: object) -> VLAMetadata:
     return VLAMetadata(**fields)
 
 
-def snapshot_dir(tmp_path: Path) -> Path:
-    snapshot = tmp_path / "snapshot"
-    snapshot.mkdir()
-    (snapshot / "config.json").write_text("{}")
-    save_file({"w": torch.zeros(2)}, str(snapshot / "model.safetensors"))
-    return snapshot
+def tokenizer_source(tmp_path: Path) -> dict[str, Path]:
+    source = tmp_path / "tokenizer_source"
+    if not source.exists():
+        source.mkdir()
+        for name in GEMMA_TOKENIZER_FILES:
+            (source / name).write_text("{}")
+    return {name: source / name for name in GEMMA_TOKENIZER_FILES}
 
 
 def component_states() -> dict[str, dict[str, torch.Tensor]]:
@@ -92,77 +96,145 @@ def component_states() -> dict[str, dict[str, torch.Tensor]]:
     }
 
 
+def backbone_parts() -> tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]:
+    return (
+        {"language_model.embed_tokens.weight": torch.zeros(4, 2)},
+        {"vision_tower.patch.weight": torch.ones(2, 2)},
+    )
+
+
+def write_tiny_checkpoint(tmp_path: Path, **metadata_overrides: object) -> Path:
+    target = tmp_path / "ckpt"
+    text, vision = backbone_parts()
+    write_checkpoint(
+        target,
+        metadata=metadata(**metadata_overrides),
+        components=component_states(),
+        backbone_text=text,
+        backbone_vision=vision,
+        tokenizer_files=tokenizer_source(tmp_path),
+    )
+    return target
+
+
 def test_metadata_round_trip() -> None:
     meta = metadata()
     assert VLAMetadata.from_json_dict(meta.to_json_dict()) == meta
 
 
-def test_metadata_rejects_wrong_schema_version() -> None:
+def test_metadata_refuses_schema_1_with_reconvert_pointer() -> None:
+    payload = metadata().to_json_dict()
+    payload["schema_version"] = 1
+    with pytest.raises(SystemExit, match="re-convert"):
+        VLAMetadata.from_json_dict(payload)
+
+
+def test_metadata_rejects_unknown_schema_version() -> None:
     payload = metadata().to_json_dict()
     payload["schema_version"] = 99
     with pytest.raises(ValueError, match="schema_version"):
         VLAMetadata.from_json_dict(payload)
 
 
-def test_write_checkpoint_pristine_backbone_hard_links(tmp_path: Path) -> None:
-    snapshot = snapshot_dir(tmp_path)
-    target = tmp_path / "ckpt"
-    write_checkpoint(
-        target,
-        metadata=metadata(),
-        components=component_states(),
-        backbone=snapshot,
-    )
+def test_tokenizer_manifest_is_per_trunk() -> None:
+    assert tokenizer_manifest(VLAFamily.GEMMA_FLOW) == GEMMA_TOKENIZER_FILES
+    assert tokenizer_manifest(VLAFamily.GEMMA_AR) == GEMMA_TOKENIZER_FILES
+    for family in (
+        VLAFamily.MOLMO2_AR,
+        VLAFamily.MOLMOACT2_FLOW,
+        VLAFamily.MOLMOACT2_AR,
+        VLAFamily.MOLMOACT2_JOINT,
+    ):
+        assert tokenizer_manifest(family) == MOLMO_TOKENIZER_FILES
+
+
+def test_write_checkpoint_serializes_parts_and_tokenizer(tmp_path: Path) -> None:
+    target = write_tiny_checkpoint(tmp_path)
     meta = validate_checkpoint(target)
     assert meta.family is VLAFamily.GEMMA_FLOW
-    linked = target / "backbone" / "model.safetensors"
-    assert linked.exists()
-    assert linked.samefile(snapshot / "model.safetensors")
+    text, vision = backbone_parts()
+    assert torch.equal(
+        load_file(str(target / BACKBONE_TEXT_FILENAME))[
+            "language_model.embed_tokens.weight"
+        ],
+        text["language_model.embed_tokens.weight"],
+    )
+    assert torch.equal(
+        load_file(str(target / BACKBONE_VISION_FILENAME))["vision_tower.patch.weight"],
+        vision["vision_tower.patch.weight"],
+    )
+    for name in GEMMA_TOKENIZER_FILES:
+        linked = target / "tokenizer" / name
+        assert (
+            linked.stat().st_ino == (tmp_path / "tokenizer_source" / name).stat().st_ino
+        )
     assert not (target.parent / "ckpt.tmp").exists()
+
+
+def test_write_checkpoint_links_part_files(tmp_path: Path) -> None:
+    """The frozen-part dedup: a Path-form part hard-links its source —
+    conversion links the import, training saves link the previous."""
+    first = write_tiny_checkpoint(tmp_path)
+    second = tmp_path / "ckpt2"
+    write_checkpoint(
+        second,
+        metadata=metadata(),
+        components=component_states(),
+        backbone_text=first / BACKBONE_TEXT_FILENAME,
+        backbone_vision=first / BACKBONE_VISION_FILENAME,
+        tokenizer_files=tokenizer_source(tmp_path),
+    )
+    validate_checkpoint(second)
+    for filename in (BACKBONE_TEXT_FILENAME, BACKBONE_VISION_FILENAME):
+        assert (second / filename).stat().st_ino == (first / filename).stat().st_ino
 
 
 def test_write_checkpoint_refuses_existing_target(tmp_path: Path) -> None:
     target = tmp_path / "ckpt"
     target.mkdir()
+    text, vision = backbone_parts()
     with pytest.raises(SystemExit, match="refusing to overwrite"):
         write_checkpoint(
             target,
             metadata=metadata(),
             components=component_states(),
-            backbone=snapshot_dir(tmp_path),
+            backbone_text=text,
+            backbone_vision=vision,
+            tokenizer_files=tokenizer_source(tmp_path),
         )
 
 
 def test_write_checkpoint_refuses_component_mismatch(tmp_path: Path) -> None:
+    text, vision = backbone_parts()
     with pytest.raises(ValueError, match="component mismatch"):
         write_checkpoint(
             tmp_path / "ckpt",
             metadata=metadata(),
             components={"prompt": {"w": torch.zeros(1)}},  # flow_decoder missing
-            backbone=snapshot_dir(tmp_path),
-        )
-
-
-def test_write_checkpoint_refuses_backbone_form_contradiction(tmp_path: Path) -> None:
-    with pytest.raises(ValueError, match="contradicts"):
-        write_checkpoint(
-            tmp_path / "ckpt",
-            metadata=metadata(backbone_trained=True),
-            components=component_states(),
-            backbone=snapshot_dir(tmp_path),  # a directory, but trained=True
+            backbone_text=text,
+            backbone_vision=vision,
+            tokenizer_files=tokenizer_source(tmp_path),
         )
 
 
 def test_validate_rejects_stray_weight_file(tmp_path: Path) -> None:
-    target = tmp_path / "ckpt"
-    write_checkpoint(
-        target,
-        metadata=metadata(),
-        components=component_states(),
-        backbone=snapshot_dir(tmp_path),
-    )
+    target = write_tiny_checkpoint(tmp_path)
     save_file({"x": torch.zeros(1)}, str(target / "stray.safetensors"))
     with pytest.raises(SystemExit, match="undeclared weight files"):
+        validate_checkpoint(target)
+
+
+def test_validate_rejects_missing_tokenizer_manifest(tmp_path: Path) -> None:
+    target = write_tiny_checkpoint(tmp_path)
+    (target / "tokenizer" / "chat_template.jinja").unlink()
+    with pytest.raises(SystemExit, match=r"chat_template\.jinja"):
+        validate_checkpoint(target)
+
+
+def test_validate_rejects_missing_part_file(tmp_path: Path) -> None:
+    target = write_tiny_checkpoint(tmp_path)
+    (target / BACKBONE_VISION_FILENAME).unlink()
+    with pytest.raises(SystemExit, match="backbone_vision"):
         validate_checkpoint(target)
 
 
@@ -197,87 +269,86 @@ def test_link_falls_back_to_copy(
 # convert_legacy on a fabricated format-3 gemma-flow directory
 
 
-def legacy_checkpoint(tmp_path: Path) -> Path:
-    snapshot = snapshot_dir(tmp_path)
-    legacy = tmp_path / "legacy"
-    legacy.mkdir()
-    prompt = GemmaPromptConfig(
-        exports=(3,),
-        max_soft_tokens=8,
-        format=PROMPT_FORMAT,
-        state_dim=ACTION_DIM,
-        condition_fields=(),
-        generate_bracket=False,
-    )
-    decoder = FlowDecoderSection(
-        hidden_size=8,
-        num_attention_heads=2,
-        intermediate_size=16,
-        hidden_activation="gelu_pytorch_tanh",
-        rms_norm_eps=1e-6,
-        self_attention_mode=next(iter(SelfAttentionMode)),
-        self_attention_rope_theta=10000.0,
-        cross_attention_heads=2,
-        schedule=("kv3",),
-        action_dim=ACTION_DIM,
-        state_dim=ACTION_DIM,
-        chunk_size=5,
-        time_embed_dim=8,
-        time_conditioning=TimeConditioning.ADDITIVE,
-    )
-    config = {
-        "format": 3,
-        "backbone": {"id": str(snapshot), "depth": "prefix"},
-        "prompt": prompt.to_dict(),
-        "decoder": decoder.to_dict(),
-        "step": 2,
-        "train_args": {
-            "decoder": "flow",
-            "decoder_hidden": 8,
-            "decoder_heads": 2,
-            "decoder_intermediate": 16,
-            "decoder_cross_heads": 2,
-            "stream_counts": [1],
-            "self_attention_mode": next(iter(SelfAttentionMode)).value,
-            "chunk_size": 5,
-            "max_soft_tokens": 8,
-            "seed": 0,
-        },
-        "normalization": stats().state_dict(),
-        "per_dataset_normalization": {"repo/a": stats().state_dict()},
-    }
-    (legacy / "bijou_config.json").write_text(json.dumps(config))
-    save_file({"proj.weight": torch.ones(2, 2)}, str(legacy / "expert.safetensors"))
-    save_file(
-        {"state_proj.weight": torch.zeros(2, 2)},
-        str(legacy / "prompt.safetensors"),
-    )
+@pytest.fixture(scope="module")
+def gemma_pair(tmp_path_factory: pytest.TempPathFactory) -> tuple[Path, Path]:
+    root = tmp_path_factory.mktemp("convert-gemma")
+    trunk = write_gemma_trunk(root / "trunk")
+    # The gemma tokenizer manifest: the hermetic trunk carries stub
+    # processor files (vla_fixtures) so conversion is self-contained.
+    legacy = write_gemma_flow_legacy(root / "legacy", trunk)
     (legacy / "optimizer.pt").write_bytes(b"opt")
-    return legacy
+    return trunk, legacy
 
 
-def test_convert_gemma_flow(tmp_path: Path) -> None:
-    legacy = legacy_checkpoint(tmp_path)
+def test_convert_gemma_flow(gemma_pair: tuple[Path, Path], tmp_path: Path) -> None:
+    trunk, legacy = gemma_pair
     converted = tmp_path / "converted"
     meta = convert(legacy, converted)
     assert meta.family is VLAFamily.GEMMA_FLOW
-    assert meta.chunk_size == 5
+    assert meta.chunk_size == 10
     assert meta.action_dim == ACTION_DIM
-    assert meta.backbone_trained is False
+    # Pristine trunk: imported wholesale, both flags False, the
+    # artifact's config carried VERBATIM.
+    assert meta.backbone_text_trained is False
+    assert meta.backbone_vision_trained is False
+    assert meta.backbone_config == json.loads((trunk / "config.json").read_text())
     assert meta.serving == {"kind": "flow", "num_steps": 5, "method": "heun"}
     assert meta.components["flow_decoder"]["config"]["kind"] == "flow"
     validate_checkpoint(converted)
-    # weight files are hard links to the source, never rewrites
+    # Component weight files are hard links to the source, never rewrites.
     assert (converted / "flow_decoder.safetensors").samefile(
         legacy / "expert.safetensors",
     )
     assert (converted / "prompt.safetensors").samefile(legacy / "prompt.safetensors")
     assert (converted / "optimizer.pt").exists()
-    assert (converted / "backbone" / "model.safetensors").exists()
+    # The trunk import: per-part files carrying our key names, and the
+    # tokenizer manifest linked from the artifact.
+    text = load_file(str(converted / BACKBONE_TEXT_FILENAME), device="cpu")
+    vision = load_file(str(converted / BACKBONE_VISION_FILENAME), device="cpu")
+    assert all(key.startswith(("language_model.", "embed_vision.")) for key in text)
+    assert all(key.startswith("vision_tower.") for key in vision)
+    source = load_file(str(trunk / "model.safetensors"), device="cpu")
+    key = "language_model.embed_tokens.weight"
+    assert torch.equal(text[key], source[f"model.{key}"])
+    assert (converted / "tokenizer" / "tokenizer.json").samefile(
+        trunk / "tokenizer.json",
+    )
 
 
-def test_convert_is_idempotent(tmp_path: Path) -> None:
-    legacy = legacy_checkpoint(tmp_path)
+def test_convert_trained_trunk_partitions_the_legacy_file(
+    gemma_pair: tuple[Path, Path],
+    tmp_path: Path,
+) -> None:
+    """A legacy backbone.safetensors splits into the per-part files with
+    both flags conservatively True (the legacy format recorded one
+    fact for the whole trunk)."""
+    import shutil
+
+    _trunk, legacy = gemma_pair
+    trained = tmp_path / "legacy_trained"
+    shutil.copytree(legacy, trained)
+    snapshot = {
+        "language_model.embed_tokens.weight": torch.randn(4, 2),
+        "vision_tower.patch.weight": torch.randn(2, 2),
+    }
+    save_file(snapshot, str(trained / "backbone.safetensors"))
+    meta = convert(trained, tmp_path / "converted")
+    assert meta.backbone_text_trained is True
+    assert meta.backbone_vision_trained is True
+    text = load_file(str(tmp_path / "converted" / BACKBONE_TEXT_FILENAME))
+    vision = load_file(str(tmp_path / "converted" / BACKBONE_VISION_FILENAME))
+    assert torch.equal(
+        text["language_model.embed_tokens.weight"],
+        snapshot["language_model.embed_tokens.weight"],
+    )
+    assert torch.equal(
+        vision["vision_tower.patch.weight"],
+        snapshot["vision_tower.patch.weight"],
+    )
+
+
+def test_convert_is_idempotent(gemma_pair: tuple[Path, Path], tmp_path: Path) -> None:
+    _, legacy = gemma_pair
     first = tmp_path / "one"
     second = tmp_path / "two"
     convert(legacy, first)
@@ -285,12 +356,17 @@ def test_convert_is_idempotent(tmp_path: Path) -> None:
     assert (first / "metadata.json").read_bytes() == (
         second / "metadata.json"
     ).read_bytes()
-    for name in ("flow_decoder.safetensors", "prompt.safetensors"):
+    for name in (
+        "flow_decoder.safetensors",
+        "prompt.safetensors",
+        BACKBONE_TEXT_FILENAME,
+        BACKBONE_VISION_FILENAME,
+    ):
         assert (first / name).read_bytes() == (second / name).read_bytes()
 
 
-def test_convert_replace_stats(tmp_path: Path) -> None:
-    legacy = legacy_checkpoint(tmp_path)
+def test_convert_replace_stats(gemma_pair: tuple[Path, Path], tmp_path: Path) -> None:
+    _, legacy = gemma_pair
     replacement = stats().state_dict()
     replacement["action"]["mean"] = [42.0] * ACTION_DIM
     table = tmp_path / "table.json"
@@ -299,14 +375,32 @@ def test_convert_replace_stats(tmp_path: Path) -> None:
     assert meta.stats.action_mean == (42.0,) * ACTION_DIM
     assert meta.stats_note is not None
     assert "REPLACED" in meta.stats_note
-    # per-dataset tables stay untouched
-    assert meta.per_dataset_stats["repo/a"].action_mean == (0.0,) * ACTION_DIM
 
 
-def test_convert_refuses_pre_format_3(tmp_path: Path) -> None:
-    legacy = legacy_checkpoint(tmp_path)
-    config = json.loads((legacy / "bijou_config.json").read_text())
+def test_convert_refuses_pre_format_3(
+    gemma_pair: tuple[Path, Path],
+    tmp_path: Path,
+) -> None:
+    import shutil
+
+    _, legacy = gemma_pair
+    old = tmp_path / "legacy_old"
+    shutil.copytree(legacy, old)
+    config = json.loads((old / "bijou_config.json").read_text())
     config["format"] = 2
-    (legacy / "bijou_config.json").write_text(json.dumps(config))
+    (old / "bijou_config.json").write_text(json.dumps(config))
     with pytest.raises(SystemExit, match="format 2"):
-        convert(legacy, tmp_path / "converted")
+        convert(old, tmp_path / "converted")
+
+
+def test_convert_refuses_vla_directories(
+    gemma_pair: tuple[Path, Path],
+    tmp_path: Path,
+) -> None:
+    """A VLA-format source (schema 1 OR 2) is not a legacy checkpoint —
+    schema-1 artifacts re-convert from their original sources."""
+    _, legacy = gemma_pair
+    converted = tmp_path / "converted"
+    convert(legacy, converted)
+    with pytest.raises(SystemExit, match="re-convert"):
+        convert(converted, tmp_path / "again")

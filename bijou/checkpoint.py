@@ -1,24 +1,45 @@
 """The VLA checkpoint format — schema and IO toolkit.
 
-A VLA checkpoint is a SELF-CONTAINED directory:
+A VLA checkpoint is a SELF-CONTAINED directory (schema 2 — the full
+import: no HF-layout knowledge in any load path):
 
 ```
 checkpoint/
-  metadata.json             # VLAMetadata (schema_version, family, …)
-  backbone.safetensors      # trained trunk state (backbone.trained)
-  backbone/                 # OR: hard-linked mirror of the pristine
-                            #   artifact snapshot (config, tokenizer,
-                            #   weight shards — loadable as a local dir)
-  <component>.safetensors   # one per family-declared component
-  optimizer.pt              # optional (run-seeding checkpoints)
+  metadata.json               # VLAMetadata (schema_version 2, family, …)
+  backbone_text.safetensors   # text stack (+ untied lm_head), OUR keys
+  backbone_vision.safetensors # vision tower + connector — exactly the
+                              #   backbone_vision LR group's members
+  <component>.safetensors     # one per family-declared component
+  tokenizer/                  # the per-trunk consumed artifact files
+  optimizer.pt                # optional (run-seeding checkpoints)
 ```
 
-Self-containment without disk cost: a pristine trunk is materialized
-by hard-linking every file of the resolved artifact snapshot into
-``backbone/`` (same filesystem: ~zero bytes; cross-device falls back
-to a loud copy). Loading a checkpoint never touches the hub or the HF
-cache — ``backbone/`` IS a local model directory. Presence is not a
-signal: ``backbone.trained`` in the metadata is the explicit fact.
+Key translation from released HF layouts happens ONCE, at import
+(``bijou.convert_legacy``, ``bijou.convert_molmoact2``, the trunk
+importers in ``bijou.modelling.*.loading``); every load of these files
+is a plain strict ``load_state_dict``. The backbone part files are
+ALWAYS present. Presence is not a signal: ``backbone.text_trained`` /
+``backbone.vision_trained`` in the metadata are the explicit facts —
+a frozen part's file is byte-identical to its parent's and is
+HARD-LINKED from it (conversion links the import; every training save
+links the previous save while the part stays frozen), so dedup lives
+inside our world and the HF cache is deletable.
+
+``metadata.json``'s ``backbone.config`` carries the source artifact's
+``config.json`` contents VERBATIM — families parse it at load with the
+existing ``Gemma4Config.from_dict``/``Molmo2Config.from_dict``, so no
+second config parser can drift. ``backbone.id`` is provenance;
+``backbone.depth`` records the depth the part files were saved at
+(``full``, or the gemma ``prefix`` mount — what the text file's layer
+set contains).
+
+``tokenizer/`` carries exactly the files the trunk's collators and
+decoders read (:func:`tokenizer_manifest`): Molmo-trunk families read
+``tokenizer.json`` alone; Gemma families read the transformers-facing
+set (tokenizer.json, tokenizer_config.json, processor_config.json,
+chat_template.jinja — verified sufficient for
+``AutoProcessor``/``AutoTokenizer.from_pretrained`` on a bare
+directory).
 
 Transfer caveat: local ``rsync`` needs ``-H`` to preserve hard links;
 without it the copy is correct but fully materialized.
@@ -47,11 +68,42 @@ from safetensors.torch import save_file
 from torch import Tensor
 
 from .data import DatasetStats
-from .modelling.gemma4.loading import resolve_checkpoint_dir
+from .sections import BackboneFiles
 from .vla import VLAFamily
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 METADATA_FILENAME = "metadata.json"
+BACKBONE_TEXT_FILENAME = "backbone_text.safetensors"
+BACKBONE_VISION_FILENAME = "backbone_vision.safetensors"
+TOKENIZER_DIRNAME = "tokenizer"
+
+# The transformers-facing artifact set the Gemma prompt path reads
+# (AutoProcessor/AutoTokenizer.from_pretrained on the bare directory —
+# verified sufficient standalone, no config.json needed).
+GEMMA_TOKENIZER_FILES = (
+    "tokenizer.json",
+    "tokenizer_config.json",
+    "processor_config.json",
+    "chat_template.jinja",
+)
+# The Molmo trunks tokenize natively through the tokenizers backend.
+MOLMO_TOKENIZER_FILES = ("tokenizer.json",)
+
+
+def tokenizer_manifest(family: VLAFamily) -> tuple[str, ...]:
+    """The tokenizer/ files a family's collators and decoders consume —
+    the required minimum a checkpoint must carry (extra files are
+    tolerated; missing ones fail validation)."""
+    match family:
+        case VLAFamily.GEMMA_FLOW | VLAFamily.GEMMA_AR:
+            return GEMMA_TOKENIZER_FILES
+        case (
+            VLAFamily.MOLMO2_AR
+            | VLAFamily.MOLMOACT2_FLOW
+            | VLAFamily.MOLMOACT2_AR
+            | VLAFamily.MOLMOACT2_JOINT
+        ):
+            return MOLMO_TOKENIZER_FILES
 
 
 @dataclass(frozen=True, slots=True)
@@ -59,10 +111,15 @@ class VLAMetadata:
     """``metadata.json``, both directions (validating parse on the way
     in, explicit serialization on the way out).
 
-    ``train_args`` is the run's full CLI record, verbatim provenance;
-    ``stats`` is the count-weighted aggregate normalization table and
-    ``per_dataset_stats`` the per-repo tables (keyed by repo id —
-    genuinely dynamic); ``stats_note`` records a stats REPLACEMENT
+    ``backbone_config`` is the source artifact's ``config.json``
+    contents verbatim (parsed at load with the trunk's own
+    ``from_dict``); ``backbone_text_trained``/``backbone_vision_trained``
+    are the explicit per-part facts (True = the part's weights differ
+    from the pristine artifact — trained in some run, this one or an
+    ancestor). ``train_args`` is the run's full CLI record, verbatim
+    provenance; ``stats`` is the count-weighted aggregate normalization
+    table and ``per_dataset_stats`` the per-repo tables (keyed by repo
+    id — genuinely dynamic); ``stats_note`` records a stats REPLACEMENT
     (the ``--replace-stats`` conversion op) so a substituted table is
     never mistaken for a trained-with one."""
 
@@ -71,7 +128,9 @@ class VLAMetadata:
     action_dim: int
     backbone_id: str
     backbone_depth: str
-    backbone_trained: bool
+    backbone_config: dict[str, Any]
+    backbone_text_trained: bool
+    backbone_vision_trained: bool
     objective: dict[str, Any]
     serving: dict[str, Any]
     # name → {"config": {…}, "weights": bool} (module docstring)
@@ -91,7 +150,9 @@ class VLAMetadata:
             "backbone": {
                 "id": self.backbone_id,
                 "depth": self.backbone_depth,
-                "trained": self.backbone_trained,
+                "config": self.backbone_config,
+                "text_trained": self.backbone_text_trained,
+                "vision_trained": self.backbone_vision_trained,
             },
             "objective": self.objective,
             "serving": self.serving,
@@ -110,6 +171,13 @@ class VLAMetadata:
     @classmethod
     def from_json_dict(cls, data: dict[str, Any]) -> VLAMetadata:
         version = data.get("schema_version")
+        if version == 1:
+            raise SystemExit(
+                "checkpoint schema_version 1 — the snapshot-mirror era; "
+                "re-convert from the original source (bijou.convert_legacy "
+                "on the legacy directory, or bijou.convert_molmoact2 on "
+                "the HF release)",
+            )
         if version != SCHEMA_VERSION:
             raise ValueError(
                 f"checkpoint schema_version {version!r} != supported "
@@ -131,7 +199,9 @@ class VLAMetadata:
             action_dim=int(spec["action_dim"]),
             backbone_id=str(backbone["id"]),
             backbone_depth=str(backbone["depth"]),
-            backbone_trained=bool(backbone["trained"]),
+            backbone_config=dict(backbone["config"]),
+            backbone_text_trained=bool(backbone["text_trained"]),
+            backbone_vision_trained=bool(backbone["vision_trained"]),
             objective=dict(data["objective"]),
             serving=dict(data["serving"]),
             components={k: dict(v) for k, v in data["components"].items()},
@@ -163,22 +233,20 @@ def read_metadata(checkpoint: Path) -> VLAMetadata:
     return VLAMetadata.from_json_dict(json.loads(path.read_text()))
 
 
-def backbone_directory(checkpoint: Path, metadata: VLAMetadata) -> Path:
-    """The directory a checkpoint's trunk mounts from. Pristine trunk:
-    the checkpoint's own ``backbone/`` snapshot mirror (self-containment
-    — config, tokenizer/processor files and weight shards all local).
-    Trained trunk: the recorded ARTIFACT directory supplies the
-    architecture and tokenizer/processor files, and the checkpoint's
-    ``backbone.safetensors`` overwrites the mounted weights."""
-    if metadata.backbone_trained:
-        return resolve_checkpoint_dir(metadata.backbone_id)
-    mirror = checkpoint / "backbone"
-    if not mirror.is_dir():
-        raise SystemExit(
-            f"{checkpoint}: pristine backbone but no backbone/ snapshot "
-            "mirror — the directory is not self-contained",
-        )
-    return mirror
+def backbone_files(checkpoint: Path) -> BackboneFiles:
+    """The checkpoint's per-part trunk weight files (the from-files
+    loaders' input — plain strict loads of OUR key names)."""
+    return BackboneFiles(
+        text=checkpoint / BACKBONE_TEXT_FILENAME,
+        vision=checkpoint / BACKBONE_VISION_FILENAME,
+    )
+
+
+def tokenizer_directory(checkpoint: Path) -> Path:
+    """The checkpoint's tokenizer/ directory — the collators' and
+    decoders' processor/tokenizer source (self-containment: loading
+    never touches the hub or the HF cache)."""
+    return checkpoint / TOKENIZER_DIRNAME
 
 
 def link_or_copy(source: Path, destination: Path) -> None:
@@ -198,30 +266,16 @@ def link_or_copy(source: Path, destination: Path) -> None:
         shutil.copy2(real, destination)
 
 
-def mirror_backbone_snapshot(snapshot: Path, destination: Path) -> None:
-    """Hard-link every file of a pristine artifact snapshot directory
-    into ``destination`` (recursively) — the checkpoint's ``backbone/``
-    is then loadable as a local model directory with ~zero disk cost."""
-    if not snapshot.is_dir():
-        raise ValueError(
-            f"pristine backbone source {snapshot} is not a directory — "
-            "expected the resolved artifact snapshot",
-        )
-    destination.mkdir(parents=True)
-    for path in sorted(snapshot.rglob("*")):
-        relative = path.relative_to(snapshot)
-        if path.is_dir():
-            (destination / relative).mkdir(parents=True, exist_ok=True)
-        elif path.is_file():
-            link_or_copy(path, destination / relative)
-
-
 def validate_checkpoint(checkpoint: Path) -> VLAMetadata:
-    """The self-containment check: metadata parses, every declared
-    component has its weight file, the backbone is materialized in the
-    form the metadata claims, and no undeclared weight file is present
-    (a stray file is a wiring bug, never ignorable)."""
+    """The self-containment check: metadata parses, both backbone part
+    files are present, every declared component has its weight file,
+    the tokenizer/ directory carries the family's manifest, and no
+    undeclared weight file is present (a stray file is a wiring bug,
+    never ignorable)."""
     metadata = read_metadata(checkpoint)
+    for filename in (BACKBONE_TEXT_FILENAME, BACKBONE_VISION_FILENAME):
+        if not (checkpoint / filename).is_file():
+            raise SystemExit(f"{checkpoint}: no {filename} — not self-contained")
     missing = [
         name
         for name, record in metadata.components.items()
@@ -231,29 +285,31 @@ def validate_checkpoint(checkpoint: Path) -> VLAMetadata:
         raise SystemExit(
             f"{checkpoint}: declared components missing weight files: {missing}",
         )
-    if metadata.backbone_trained:
-        if not (checkpoint / "backbone.safetensors").is_file():
-            raise SystemExit(
-                f"{checkpoint}: backbone.trained but no backbone.safetensors",
-            )
-    elif not (checkpoint / "backbone").is_dir():
+    tokenizer_dir = checkpoint / TOKENIZER_DIRNAME
+    absent = [
+        name
+        for name in tokenizer_manifest(metadata.family)
+        if not (tokenizer_dir / name).is_file()
+    ]
+    if absent:
         raise SystemExit(
-            f"{checkpoint}: pristine backbone but no backbone/ snapshot "
-            "mirror — the directory is not self-contained",
+            f"{checkpoint}: tokenizer/ is missing {absent} — the "
+            f"{metadata.family.value} prompt path reads these files; the "
+            "directory is not self-contained",
         )
     declared = {
         f"{name}.safetensors"
         for name, record in metadata.components.items()
         if record["weights"]
     }
-    if metadata.backbone_trained:
-        declared.add("backbone.safetensors")
+    declared.add(BACKBONE_TEXT_FILENAME)
+    declared.add(BACKBONE_VISION_FILENAME)
     stray = [p.name for p in checkpoint.glob("*.safetensors") if p.name not in declared]
     if stray:
         raise SystemExit(
             f"{checkpoint}: undeclared weight files {stray} — every "
-            "*.safetensors must be a declared component (or the trained "
-            "backbone)",
+            "*.safetensors must be a declared component (or a backbone "
+            "part file)",
         )
     return metadata
 
@@ -263,7 +319,9 @@ def write_checkpoint(
     *,
     metadata: VLAMetadata,
     components: dict[str, dict[str, Tensor]],
-    backbone: Path | dict[str, Tensor],
+    backbone_text: dict[str, Tensor] | Path,
+    backbone_vision: dict[str, Tensor] | Path,
+    tokenizer_files: dict[str, Path],
     component_files: dict[str, Path] | None = None,
     optimizer: Path | None = None,
 ) -> None:
@@ -275,11 +333,13 @@ def write_checkpoint(
     optionally maps a component to an EXISTING safetensors file to
     hard-link instead (the conversion path — content-identical files
     never rewrite). Together they must cover exactly the metadata's
-    ``weights: true`` components. ``backbone`` is a trained state dict
-    or an existing trained-state FILE to link (``backbone_trained``
-    must be True), or the pristine snapshot DIRECTORY to mirror (must
-    be False) — the metadata flag and the argument form are
-    cross-checked, loudly."""
+    ``weights: true`` components. ``backbone_text``/``backbone_vision``
+    are each a state dict to serialize (a part trained this run, or a
+    fresh run's first serialization of a frozen part) or an existing
+    per-part FILE to hard-link (the frozen-part dedup: conversion links
+    the import, training saves link the previous save).
+    ``tokenizer_files`` maps tokenizer/ names to source files to link —
+    at least the family's :func:`tokenizer_manifest`."""
     if directory.exists():
         raise SystemExit(f"refusing to overwrite existing checkpoint {directory}")
     weighted = {
@@ -290,14 +350,6 @@ def write_checkpoint(
             f"component mismatch: weights for "
             f"{sorted(set(components) | set(component_files or {}))} vs "
             f"metadata declaring {sorted(weighted)} (weights: true)",
-        )
-    backbone_is_trained_form = isinstance(backbone, dict) or backbone.is_file()
-    if backbone_is_trained_form != metadata.backbone_trained:
-        raise ValueError(
-            "backbone argument form contradicts metadata.backbone_trained "
-            f"({metadata.backbone_trained}): a trained backbone is a state "
-            "dict or safetensors file, a pristine one is the snapshot "
-            "directory",
         )
     staging = directory.parent / (directory.name + ".tmp")
     if staging.exists():
@@ -310,12 +362,18 @@ def write_checkpoint(
         save_file(state, str(staging / f"{name}.safetensors"))
     for name, source in (component_files or {}).items():
         link_or_copy(source, staging / f"{name}.safetensors")
-    if isinstance(backbone, dict):
-        save_file(backbone, str(staging / "backbone.safetensors"))
-    elif backbone.is_file():
-        link_or_copy(backbone, staging / "backbone.safetensors")
-    else:
-        mirror_backbone_snapshot(backbone, staging / "backbone")
+    for filename, part in (
+        (BACKBONE_TEXT_FILENAME, backbone_text),
+        (BACKBONE_VISION_FILENAME, backbone_vision),
+    ):
+        if isinstance(part, dict):
+            save_file(part, str(staging / filename))
+        else:
+            link_or_copy(part, staging / filename)
+    tokenizer_dir = staging / TOKENIZER_DIRNAME
+    tokenizer_dir.mkdir()
+    for name, source in tokenizer_files.items():
+        link_or_copy(source, tokenizer_dir / name)
     if optimizer is not None:
         link_or_copy(optimizer, staging / "optimizer.pt")
     validate_checkpoint(staging)

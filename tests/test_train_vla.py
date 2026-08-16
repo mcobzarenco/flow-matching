@@ -21,11 +21,16 @@ from test_checkpoint_backbone import make_args
 from torch import nn
 from vla_fixtures import gemma_batch, write_gemma_flow_legacy, write_gemma_trunk
 
-from bijou.checkpoint import read_metadata, validate_checkpoint
+from bijou.checkpoint import (
+    read_metadata,
+    tokenizer_directory,
+    validate_checkpoint,
+)
 from bijou.convert_legacy import convert
 from bijou.loading import load_vla
 from bijou.models.gemma_flow import GemmaFlowVLA
 from bijou.train import (
+    BackbonePartSources,
     Normalizer,
     Normalizers,
     load_family_weights,
@@ -134,8 +139,10 @@ def test_save_round_trips_through_load_vla(
 ) -> None:
     family, converted = gemma_flow_converted
     args = make_args(tmp_path)
+    source_metadata = read_metadata(converted)
     optimizer = torch.optim.AdamW(family.flow_decoder.parameters(), lr=1e-4)
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lambda _: 1.0)
+    tokenizer_dir = tokenizer_directory(converted)
     saved = save_checkpoint(
         family,
         family.backbone,
@@ -148,11 +155,17 @@ def test_save_round_trips_through_load_vla(
         optimizer=optimizer,
         scheduler=scheduler,
         step=7,
-        adapted_backbone_source=None,
-        # The mounted trunk directory IS the pristine source — exactly
-        # what main() threads through (here: the converted checkpoint's
-        # own hard-linked mirror).
-        pristine_trunk_dir=converted / "backbone",
+        # Exactly what main() threads through under --init-from: the
+        # source checkpoint's verbatim config, its part files as the
+        # frozen link sources, its inherited flags and its tokenizer/.
+        backbone_config=source_metadata.backbone_config,
+        part_sources=BackbonePartSources(
+            text=converted / "backbone_text.safetensors",
+            vision=converted / "backbone_vision.safetensors",
+        ),
+        inherited_text_trained=source_metadata.backbone_text_trained,
+        inherited_vision_trained=source_metadata.backbone_vision_trained,
+        tokenizer_files={path.name: path for path in sorted(tokenizer_dir.iterdir())},
     )
     metadata = validate_checkpoint(saved)
     assert metadata.step == 7
@@ -160,7 +173,12 @@ def test_save_round_trips_through_load_vla(
     assert metadata.objective == {"kind": "flow"}
     assert metadata.serving == {"kind": "flow", "num_steps": 5, "method": "heun"}
     assert metadata.train_args["family"] == "gemma_flow"
+    assert metadata.backbone_config == source_metadata.backbone_config
     assert (saved / "optimizer.pt").exists()
+    # Frozen run: both part files hard-link the source checkpoint's.
+    assert (saved / "backbone_text.safetensors").samefile(
+        converted / "backbone_text.safetensors",
+    )
 
     reloaded = load_vla(saved, device="cpu", dtype=torch.float32)
     assert isinstance(reloaded, GemmaFlowVLA)

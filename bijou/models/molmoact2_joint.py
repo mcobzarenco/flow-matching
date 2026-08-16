@@ -323,7 +323,7 @@ class MolmoAct2JointVLA(ARVLA[MolmoAct2Inputs], FlowVLA[MolmoAct2Inputs]):
                 "not molmoact2_joint — load through bijou.loading.load_vla",
             )
         prompt = molmoact2_prompt_of(metadata)
-        backbone, encoder, trunk_dir = load_molmoact2_backbone(
+        backbone, encoder, tokenizer_dir = load_molmoact2_backbone(
             checkpoint,
             metadata,
             prompt,
@@ -338,7 +338,7 @@ class MolmoAct2JointVLA(ARVLA[MolmoAct2Inputs], FlowVLA[MolmoAct2Inputs]):
         ar_decoder = build_molmoact2_ar_component(
             metadata,
             prompt,
-            trunk_dir,
+            tokenizer_dir,
             "ar_decoder",
         )
         model = cls(

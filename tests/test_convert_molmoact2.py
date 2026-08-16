@@ -311,7 +311,12 @@ def test_happy_path_round_trips(source_dir: Path, tmp_path: Path) -> None:
     metadata = validate_checkpoint(out)
     assert metadata.family is VLAFamily.MOLMOACT2_FLOW
     assert metadata.backbone_id == "user/tiny-hf"
-    assert metadata.backbone_trained is False
+    assert metadata.backbone_text_trained is False
+    assert metadata.backbone_vision_trained is False
+    # Their config.json contents, verbatim.
+    assert metadata.backbone_config == json.loads(
+        (source_dir / "config.json").read_text(),
+    )
     assert metadata.step == 0
     assert metadata.objective == {"kind": "flow"}
     assert metadata.serving == {"kind": "flow", "num_steps": 10, "method": "euler"}
@@ -378,6 +383,27 @@ def test_expert_bytes_verbatim_and_names_match_port(
     assert set(written) == module_names
 
 
+def test_unclassified_source_key_refuses_import(
+    source_dir: Path,
+    tmp_path: Path,
+) -> None:
+    """The import audit: a source tensor that is neither text, vision,
+    expert nor known-skipped refuses the whole conversion by name — a
+    layout drift can never silently drop weights."""
+    import shutil
+
+    from safetensors.torch import save_file
+
+    drifted = tmp_path / "drifted"
+    shutil.copytree(source_dir, drifted)
+    save_file(
+        {"model.depth_tower.weight": torch.zeros(2)},
+        str(drifted / "extra.safetensors"),
+    )
+    with pytest.raises(SystemExit, match="depth_tower"):
+        _convert(drifted, tmp_path / "converted")
+
+
 def test_deterministic_and_refuses_overwrite(
     source_dir: Path,
     tmp_path: Path,
@@ -403,7 +429,7 @@ def test_from_checkpoint_assembles_molmo_flow(
 ) -> None:
     """The family assembly end-to-end on the tiny converted checkpoint
     (self-contained: the trunk mounts from the checkpoint's own
-    backbone/ mirror, no hub access): decoder built + configured off
+    per-part files, no hub access): decoder built + configured off
     the recorded sections, expert weights byte-equal the source, compat
     tensors injected, encoder carries the prompt facts, q01/q99 table
     on the decoder buffers."""

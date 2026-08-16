@@ -43,6 +43,7 @@ from .sections import (
     MOLMOACT2_FAST_TOKENIZER_REF,
     BackboneConfig,
     BackboneDepth,
+    BackboneFiles,
     DecoderKind,
     FlowDecoderSection,
     GemmaPromptConfig,
@@ -62,13 +63,15 @@ from .sections import (
     default_expert_config,
     expert_config_from_architecture,
     flow_decoder_config_from_expert,
-    load_backbone_state,
+    load_backbone_part_states,
     molmoact2_ar_config_from_flow_section,
     molmoact2_fresh_flow_section,
     parse_decoder_config,
     parse_prompt_config,
     prefix_global_layers,
     resolve_action_codec,
+    split_gemma_backbone_state,
+    split_molmo2_backbone_state,
 )
 from .vla import VLA, VLAFamily
 
@@ -80,6 +83,7 @@ __all__ = [
     "ARDecoderConfig",
     "BackboneConfig",
     "BackboneDepth",
+    "BackboneFiles",
     "CheckpointTrainArgs",
     "DecoderKind",
     "FlowDecoderSection",
@@ -100,7 +104,7 @@ __all__ = [
     "default_expert_config",
     "expert_config_from_architecture",
     "flow_decoder_config_from_expert",
-    "load_backbone_state",
+    "load_backbone_part_states",
     "load_vla",
     "molmo_flow_state_table",
     "molmoact2_ar_config_from_flow_section",
@@ -110,6 +114,8 @@ __all__ = [
     "prefix_global_layers",
     "resolve_action_codec",
     "resolve_checkpoint_dir",
+    "split_gemma_backbone_state",
+    "split_molmo2_backbone_state",
 ]
 
 
