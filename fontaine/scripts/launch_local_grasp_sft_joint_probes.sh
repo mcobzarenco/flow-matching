@@ -21,10 +21,11 @@
 #  - state/table: the checkpoint's baked table IS the corrected table
 #    (init from molmoact2_base_corrected_stats_v0_vla) — rig-identity,
 #    no shim, same as every B-D read.
-# Reads: fontaine/scripts/grasp_sft_step2000_probe_reads.py consumes
-# unseen/train flow jsons (kept-subset split automatic); token reads
-# are success-count primaries straight off the json rows (R2 bar
-# >= 20/100). Anchors: flow base 9 / corrupt-table-28; token R1-B
+# Reads: fontaine/scripts/grasp_sft_joint_probe_reads.py (oracle-
+# tested, tests/test_joint_probe_reads.py) consumes all five jsons
+# tolerant of missing legs — kept-split automatic, serve_head
+# provenance guarded, A SS5 / B SS3 verdicts baked (the 29-31 clause
+# overlap in A SS5 is SURFACED, the boundary post owns that call). Anchors: flow base 9 / corrupt-table-28; token R1-B
 # floor context 2/20 (different protocol, record-only).
 set -euo pipefail
 export PATH=/home/ubuntu/.local/bin:/usr/local/bin:/usr/bin:/bin
