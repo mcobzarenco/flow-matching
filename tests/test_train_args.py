@@ -564,3 +564,49 @@ def test_paths_and_policy_flags_stay_cli_owned() -> None:
     assert args.rewarmup_steps == 1000
     assert args.decoder_lr == 5e-5
     assert args.train_data == (Path("other_box_path"),)
+
+
+def test_recompute_stats_scoping() -> None:
+    """--recompute-stats: molmoact2 families with --init-from only —
+    refused under --resume (locked run fact), on fresh runs (no source
+    table), and on per-dataset-normalizing families."""
+    molmoact2 = _checkpoint(
+        family=VLAFamily.MOLMOACT2_JOINT,
+        backbone="allenai/MolmoAct2-SO100_101",
+        decoder="molmo_flow",
+        chunk_size=30,
+        time_conditioning=TimeConditioning.ADDITIVE,
+        self_attention_mode=SelfAttentionMode.BIDIRECTIONAL,
+        objective={"kind": "joint", "ce_weight": 1.0, "insulate_flow": False},
+    )
+    args = _parse(
+        [
+            "--init-from",
+            "ckpt",
+            "--recompute-stats",
+            "--backbone-text-lr",
+            "1e-5",
+            "--save-dir",
+            "out",
+        ],
+        molmoact2,
+    )
+    assert args.recompute_stats is True
+    with pytest.raises(SystemExit):
+        _parse(
+            [
+                "--resume",
+                "ckpt",
+                "--recompute-stats",
+                "--backbone-text-lr",
+                "1e-5",
+                "--save-dir",
+                "out",
+            ],
+            molmoact2,
+        )
+    with pytest.raises(SystemExit):
+        _parse(
+            ["--init-from", "ckpt", "--recompute-stats", "--save-dir", "out"],
+            _checkpoint(),  # gemma_flow: per-dataset normalization
+        )

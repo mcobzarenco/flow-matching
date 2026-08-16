@@ -22,6 +22,7 @@ Gemma prompt strategy in ``bijou.modelling.encoders.gemma4``.
 
 from __future__ import annotations
 
+import dataclasses
 import json
 import math
 import random
@@ -34,6 +35,7 @@ from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any, override
 
+import numpy as np
 import torch
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
 from torch import Tensor
@@ -218,6 +220,131 @@ class PolicyInfo:
     per_dataset_normalization: dict[str, DatasetStats]
     condition_fields: tuple[str, ...]
     generate_bracket: bool
+
+
+# SO-10x joint indices the convention helpers key on (lerobot feature
+# order; docs/so101-joint-conventions.md).
+SO10X_LIFT, SO10X_ELBOW = 1, 2
+
+
+def fingerprints_v21_calibration(stats: DatasetStats) -> bool:
+    """True when the ACTION row's lift/elbow boxes sit high-positive —
+    the v2.1-calibration fingerprint (docs/so101-joint-conventions.md
+    §4). Consumers: the conversion remap's refusal (inverted) and
+    train's --recompute-stats warning."""
+    q01, q99 = stats.action_q01, stats.action_q99
+    if q01 is None or q99 is None or len(q01) != 6:
+        return False
+    return all(
+        q99[index] > 100.0 and q01[index] > -20.0 for index in (SO10X_LIFT, SO10X_ELBOW)
+    )
+
+
+def oriented_like(pooled: DatasetStats, reference: DatasetStats) -> DatasetStats:
+    """Return ``pooled`` with each quantile PAIR's orientation matching
+    the reference table's, per joint and per row: a descending reference
+    pair (q01 > q99) marks a sign-flipped joint of a convention-remapped
+    table, and a recomputed table must keep that orientation or the
+    normalized axis inverts relative to everything the model learned —
+    magnitudes come from the pooled data, direction from the model's
+    own table. Ascending reference pairs (and rows the reference lacks)
+    pass the pooled values through unchanged."""
+
+    def orient(
+        values: tuple[tuple[float, ...] | None, tuple[float, ...] | None],
+        ref: tuple[tuple[float, ...] | None, tuple[float, ...] | None],
+    ) -> tuple[tuple[float, ...] | None, tuple[float, ...] | None]:
+        pooled_q01, pooled_q99 = values
+        ref_q01, ref_q99 = ref
+        if (
+            pooled_q01 is None
+            or pooled_q99 is None
+            or ref_q01 is None
+            or ref_q99 is None
+        ):
+            return values
+        low = list(pooled_q01)
+        high = list(pooled_q99)
+        for j, (a, b) in enumerate(zip(ref_q01, ref_q99, strict=True)):
+            if a > b:
+                low[j], high[j] = high[j], low[j]
+        return tuple(low), tuple(high)
+
+    action_q01, action_q99 = orient(
+        (pooled.action_q01, pooled.action_q99),
+        (reference.action_q01, reference.action_q99),
+    )
+    state_q01, state_q99 = orient(
+        (pooled.state_q01, pooled.state_q99),
+        (reference.state_q01, reference.state_q99),
+    )
+    return dataclasses.replace(
+        pooled,
+        action_q01=action_q01,
+        action_q99=action_q99,
+        state_q01=state_q01,
+        state_q99=state_q99,
+    )
+
+
+def pooled_quantile_stats(
+    action_rows: np.ndarray,
+    state_rows: np.ndarray,
+) -> DatasetStats:
+    """Exact pooled statistics over concatenated feature rows — the
+    correct global table for a mixture (per-dataset quantiles do NOT
+    compose; see :func:`bijou.train.saving.aggregate_stats`'s note).
+    float64 throughout; ``np.quantile`` linear interpolation (lerobot's
+    own per-dataset convention).
+
+    Shapes:
+    - ``action_rows``: [N, action_dim] raw units
+    - ``state_rows``: [N, state_dim] raw units
+    """
+    action = np.asarray(action_rows, dtype=np.float64)
+    state = np.asarray(state_rows, dtype=np.float64)
+    if action.ndim != 2 or state.ndim != 2 or len(action) == 0:
+        raise ValueError(
+            f"pooled stats need non-empty [N, D] rows, got action "
+            f"{action.shape}, state {state.shape}",
+        )
+    a_q = np.quantile(action, [0.01, 0.99], axis=0)
+    s_q = np.quantile(state, [0.01, 0.99], axis=0)
+    return DatasetStats(
+        action_mean=tuple(action.mean(axis=0).tolist()),
+        action_std=tuple(action.std(axis=0).tolist()),
+        state_mean=tuple(state.mean(axis=0).tolist()),
+        state_std=tuple(state.std(axis=0).tolist()),
+        action_q01=tuple(a_q[0].tolist()),
+        action_q99=tuple(a_q[1].tolist()),
+        state_q01=tuple(s_q[0].tolist()),
+        state_q99=tuple(s_q[1].tolist()),
+    )
+
+
+def pooled_selection_stats(
+    datasets: Sequence[StatsAttachedDataset],
+) -> tuple[DatasetStats, int]:
+    """Pool the action/state parquet columns of every (episode-filtered)
+    selected dataset and compute exact global stats — a columnar scan
+    that never touches video: ~N×D float32 per row, a few MB at our
+    scales. Returns (stats, pooled frame count). Respects the train
+    split: each dataset's ``hf_dataset`` is the filtered view."""
+    actions: list[np.ndarray] = []
+    states: list[np.ndarray] = []
+    for sub in datasets:
+        table = sub.dataset.hf_dataset.with_format(
+            "numpy",
+            columns=["action", "observation.state"],
+        )
+        actions.append(np.asarray(table["action"], dtype=np.float64))
+        states.append(np.asarray(table["observation.state"], dtype=np.float64))
+    pooled_actions = np.concatenate(actions, axis=0)
+    pooled_states = np.concatenate(states, axis=0)
+    return (
+        pooled_quantile_stats(pooled_actions, pooled_states),
+        len(pooled_actions),
+    )
 
 
 class StatsAttachedDataset(torch.utils.data.Dataset[dict[str, Any]]):

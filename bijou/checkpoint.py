@@ -57,6 +57,7 @@ names on the write side.
 
 from __future__ import annotations
 
+import dataclasses
 import json
 import os
 import shutil
@@ -436,3 +437,45 @@ def describe(checkpoint: Path) -> str:
     if metadata.stats_note is not None:
         lines.append(f"  stats_note: {metadata.stats_note}")
     return "\n".join(lines)
+
+
+def derive_with_stats(
+    source: Path,
+    destination: Path,
+    *,
+    stats: DatasetStats,
+    stats_note: str,
+) -> VLAMetadata:
+    """Materialize a stats-substituted SIBLING of a checkpoint: every
+    weight file, part file and tokenizer file HARD-LINKED from the
+    source (~zero bytes), ``metadata.json`` rewritten with the new
+    aggregate table and note. ``optimizer.pt`` is deliberately not
+    carried (an init source never consumes it; a resumed run uses its
+    own). Atomic like every checkpoint write; the destination is
+    immutable once published."""
+    metadata = read_metadata(source)
+    derived = dataclasses.replace(metadata, stats=stats, stats_note=stats_note)
+    if destination.exists():
+        raise SystemExit(f"refusing to overwrite existing checkpoint {destination}")
+    staging = destination.parent / (destination.name + ".tmp")
+    if staging.exists():
+        shutil.rmtree(staging)
+    staging.mkdir(parents=True)
+    (staging / METADATA_FILENAME).write_text(
+        json.dumps(derived.to_json_dict(), indent=2) + "\n",
+    )
+    for name, record in metadata.components.items():
+        if record["weights"]:
+            link_or_copy(
+                source / f"{name}.safetensors",
+                staging / f"{name}.safetensors",
+            )
+    for part in ("backbone_text", "backbone_vision"):
+        link_or_copy(source / f"{part}.safetensors", staging / f"{part}.safetensors")
+    tokenizer_source = source / "tokenizer"
+    (staging / "tokenizer").mkdir()
+    for path in sorted(tokenizer_source.iterdir()):
+        link_or_copy(path, staging / "tokenizer" / path.name)
+    validate_checkpoint(staging)
+    staging.rename(destination)
+    return derived

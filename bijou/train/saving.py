@@ -425,6 +425,7 @@ def save_checkpoint(
     inherited_text_trained: bool,
     inherited_vision_trained: bool,
     tokenizer_files: dict[str, Path],
+    stats_note: str | None = None,
 ) -> Path:
     """Write one self-contained checkpoint directory (the synchronous
     entry: capture + write inline; the async path drives the same capture
@@ -453,6 +454,7 @@ def save_checkpoint(
             backbone_config=backbone_config,
             inherited_text_trained=inherited_text_trained,
             inherited_vision_trained=inherited_vision_trained,
+            stats_note=stats_note,
         ),
         tensors=capture_checkpoint_tensors(
             model,
@@ -475,9 +477,13 @@ def build_vla_metadata(
     backbone_config: dict[str, Any],
     inherited_text_trained: bool,
     inherited_vision_trained: bool,
+    stats_note: str | None = None,
 ) -> VLAMetadata:
     """The checkpoint's ``metadata.json`` record. Cheap and pure — runs
     at capture time so the async writer holds no model references.
+
+    ``stats_note`` records table lineage (--recompute-stats) on every
+    checkpoint of the run.
 
     Component records (name → config + weights flag) come from the
     concrete family: WEIGHTED components mirror
@@ -640,5 +646,8 @@ def build_vla_metadata(
         per_dataset_stats=per_dataset_stats,
         train_args=train_args_record(args),
         step=step,
-        stats_note=None,
+        # --recompute-stats lineage rides every checkpoint of the run:
+        # the written tables are the recomputed ones (read back off the
+        # model above), and the note says where they came from.
+        stats_note=stats_note,
     )
