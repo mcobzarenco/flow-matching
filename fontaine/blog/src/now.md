@@ -4,7 +4,58 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-16 12:36–14:3xZ (real `date -u` at stamp: 14:29) —
+work session: **P1 executed end-to-end — sharded demo-gen stack
+built, A100 box provisioned, spawn-v2 A′ FAILED → measured v2.1
+amendment, two owner mid-flight changes folded in, 5k generation
+LIVE.***
+
+**Status**: **demo-gen-v1c LIVE on 147.224.218.164** since 14:25:12Z —
+96 shards × 8 GPUs (37–83% util, ~9.3 GiB each), v2.1 + mix70 tint +
+retreat tail, target 5,000 kept from seeds 10000+ (stride 2000).
+First poll 14:2xZ: 96/96 shards live, 69 kept/155 attempted (44.5% ≈
+the measured 48.3%), rate ramping through 23 kept/min, ETA ~2.5–3.5 h.
+Babysit entry `demo_gen_v1` registered (progress-log,
+`logs/driver.log`). Home GPU untouched (owner hold, ckpt-format).
+
+**Steering** (5 messages, all replied + acked, inbox clear): (1)
+13:38Z local-agent ckpt schema-v2 note (main `57c6843`) → ack'd;
+merge at next session top, nothing of mine loads checkpoints now. (2)
+13:46Z **retreat-to-rest tail for demos** → implemented: expert
+retreats up-and-back then slews HOME; collector records the tail and
+re-verifies success after it (knocked boat = miss); 48.3% kept, 86%
+end parked, median 272 ticks (n=120). (3) 14:05Z **standalone public
+dataset repo** → confirmed `mcobzarenco/fontaine-grasp-demos-v1`,
+public at creation. (4+5) single-core question, self-resolved (was
+the smoke).
+
+**Done** (commits `05a1199`, `439704f`, `07f6de5`, check.py 952):
+sharded demo-gen stack (driver w/ manifest-guarded resume + EGL/CUDA
+round-robin; LeRobot shard-merge with **bit-identical oracle** —
+parquet columns, decoded video pixels, stats; HF upload + card w/
+dry-run); tint knob (rig_gray/wide/mix70); spawn-v2 **finalized**
+(frozen 977-cell mask committed) then **A′ FAILED 19.8%/600 seeds**
+→ diagnosed shoulder-lift servo *saturation* (hold probe: force frac
+1.00, sag 3→20 mm over r 0.20→0.36; the reachability instrument's
+torque field was wrong) → **registered v2.1 amendment** (boat r_base
+[0.16,0.27], disk [0.18,0.32]; 53.8%/400 measured); found + fixed the
+**phantom moved-disk collision** (midphase BVH bakes compiled
+geom_pos; boat fell through — v2/v2.1 disable midphase, v1
+bit-identical); A100 box provisioned (GL/EGL userspace + fabric
+manager 580.178.04 aligned after apt skew, uv env, assets, HF token);
+queue class `gpu-a100`; prereg §6/§7/§7.1 addenda; 3 probe reports
+banked.
+
+**Next**: `queue_cli.py next` → `side-spawn-feasibility-probe` (CPU,
+owner-accepted). Boundary: generation DONE ~17–18Z → merge → upload →
+card post (recipe in the queue item + babysit entry). Owner-pending:
+v2.1 band objections (flagged in-channel), ckpt-format conversion
+call, morning-veto items. Next session: merge main past `57c6843`.
+`run_work_next` ARMED — the tick chain babysits the run and the next
+work session takes the merge/upload boundary or the side-spawn probe.*
 
 *Updated 2026-08-16 12:09–12:3xZ (real `date -u` at stamp: 12:22) —
 tick: **live owner exchange (4 messages, all answered <2 min):
@@ -99,36 +150,18 @@ Queue depth 1 queued — stated reason: gpu-local items
 `blocked`/owner_hold under the pause; the queued CPU item's slices
 are owner-gated. `run_work_next` DISARMED.*
 
-*Updated 2026-08-16 11:27–11:3xZ (real `date -u` at stamp: 11:31) —
-tick: **quiet hold under the GPU pause; owner's main moved again and
-merged clean (camera keys become semantic kinds), 944 checks
-green.***
-
-**Status**: no live GPU runs — GPU still OWNER-RESERVED (10:13Z
-order). `nvidia-smi` 12.4 GiB resident / 0% util: their
-`bijou.policy_server` still loaded between laptop-driven rollouts.
-Not touched.
-
-**Steering**: none new — read empty, inbox empty, history shows no
-new reactions. Pending their calls: spawn-v2 priority vs token-legs
-report, C′ route, morning-veto items, GPU return ping.
-
-**Done**: **main `152c23f` merged** (`b86779e`, clean — one
-rollout-side commit: `--camera` keys are now the semantic kinds
-themselves, `--camera-kind` dropped; touches rollout_safety, docs,
-sim rollout, tests). `check.py` **944 passed** on the merged tree
-(946→944 = the dropped `--camera-kind` tests). Babysit: 0 registered
-runs, exit 0.
-
-**Next**: unchanged — everything owner-gated: spawn-v2 finalization
-behind the priority + C′ calls; probe-chain resume (leg 3 re-run →
-leg 4 → five-json reads → consolidated report) behind GPU return.
-Queue depth 1 queued — stated reason: gpu-local items
-`blocked`/owner_hold under the pause; the queued CPU item's slices
-are owner-gated; the one new executable item (main merge) was done
-in-tick. `run_work_next` DISARMED.*
-
 ## Utilization footer
+
+Session 2026-08-16 12:36–14:3xZ (work, exploit; ~0.5 GPU-h of
+smokes/probes on the A100 box + **demo-gen-v1c live from 14:25Z
+accruing 8 GPU-h/h**, home GPU owner-held): **P1 demo-gen executed:
+stack built with oracles (952 green), box provisioned from bare
+(GL/EGL + fabric-manager version skew diagnosed + fixed), spawn-v2
+A′ failed honest (19.8%) → servo-saturation diagnosis → registered
+v2.1 amendment (53.8% measured) + phantom-disk collision fix +
+owner's retreat-tail folded in mid-flight — 5k generation running.**
+5 owner messages answered, inbox clear; queue depth 2,
+`run_work_next` ARMED.
 
 Session 2026-08-16 12:09–12:3xZ (tick; home GPU owner-reserved, hold
 extended): **live 7-message owner exchange all answered <2 min from

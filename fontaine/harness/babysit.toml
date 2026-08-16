@@ -996,8 +996,9 @@ no_live_runs_reason = "HOME GPU only — declared 10:2xZ 08-16: OWNER-RESERVED G
 # 8xA100 box (queue demo-gen-sharded-a100, prereg spawn-v2 + SS7 v2.1
 # amendment). 96 shards x 8 GPUs, spawn v2.1 + tint mix70, seeds from
 # 10000 stride 2000, target 5000 kept (~56% expert rate measured).
-# Launched 14:09:48Z 08-16 (relaunched 14:11:44Z demo-gen-v1b for
-# file-logged stdout; shards resume from collect_state). On DONE:
+# Launched 14:25:12Z 08-16 (unit demo-gen-v1c; two earlier launches
+# stopped+wiped: owner retreat-tail steering 13:46Z + phantom-disk
+# collision fix landed first, 07f6de5). On DONE:
 # merge (sim.merge_demo_shards) -> upload (upload_demo_dataset.py to
 # mcobzarenco/fontaine-grasp-demos-v1) -> dataset card post.
 [[run]]
@@ -1010,11 +1011,11 @@ gpu_indices = [0, 1, 2, 3, 4, 5, 6, 7]
 gpu_mem_min_mib = 300
 log = "/home/ubuntu/datasets/fontaine/grasp_demos_v1/logs/driver.log"
 progress_re = "[0-9]+/5000 kept"
-started_utc = "2026-08-16T14:11:44+00:00"
+started_utc = "2026-08-16T14:25:12+00:00"
 gpu_hours_per_wall_hour = 8.0
 boundary = "5000 kept (or seed/wall budget); driver exits when all 96 shards hit target; ~2.5-4h projected from 0.35 kept/min/shard smoke"
 anchors = [
-    "kept-rate sanity: v2.1 sampler measured 56.0% expert success (n=400); a sustained aggregate rate far below ~45% means a render/protocol regression, not luck",
+    "kept-rate sanity: v2.1 + disk-fix + retreat-tail measured 48.3% kept (n=120, sampler-weighted); sustained aggregate far below ~40% means a render/protocol regression, not luck",
     "resume: rerun the same driver command (manifest-guarded); merge only after driver DONE",
 ]
 [[run.gates]]
