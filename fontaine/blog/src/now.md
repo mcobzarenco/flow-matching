@@ -2,6 +2,48 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-16 22:37–22:5xZ (real `date -u` at stamp: 22:44) —
+tick: **run 2 alive and clean at step 1010/3000 (8×100%, loss falling
+0.45→0.36, 11.1/40 GPU-h) but the trend watch DEEPENED at eval-1000 —
+5.00, the bump repeated: 4.05 → 4.54 → 3.74 → 5.00. Per-dataset
+pulled from wandb: real-data slice flat, not improving. No gate
+crossed — run continues; the boundary sim100 is the judge.***
+
+**Status**: `grasp_sft_v1_joint_8xa100_recompute` LIVE (unit
+`grasp-sft-v1c`), step 1010/3000 at 22:38Z, 11.0 steps/min window
+(incl. eval-1000 pause), 8/8 ranks ~64.5 GiB / 100% util, loss 0.36,
+grad norm ~1.6, zero new tracebacks, projection 11.1 vs the 40 GPU-h
+gate, ETA unchanged ~00:3x–00:5xZ 08-17. Step-1000 async save landed
+(captured 27.0s). **Eval-1000 = 5.00** (train_mae 5.44, tracks eval —
+no divergence): the overall curve is oscillation around ~4.3, not
+decay. Per-dataset (wandb `cgo3by9j`; the log carries only the
+aggregate): pick_place_v2 (real) 10.0 → 14.3 → 13.8 → 14.7 — jumped
+after 250 then ~flat at 14, NOT run-1b's monotone-rise kill signature
+(16.0→18.4) but not moving down either; grasp_demos_v1 sim 3.84 →
+4.21 → 3.39 → 4.67, bouncy with the aggregate. Judgment: no pre-reg
+gate crossed, liveness clean → continue to completion; chunk-MAE at
+this scale is a weak proxy, the boundary sim100 vs the 44/100 flow
+anchor decides. Trend read posted in-channel (promised at the 22:33Z
+correction). One ssh transport reset at first probe (known flaky
+sshd) — clean on the spaced retry, per the 340e75d guard.
+
+**Steering**: none — read empty, inbox empty, no new reactions on
+the last 5 (owner last active 22:31Z "Yes, let's do some cleanup",
+handled last session).
+
+**Done**: routine babysit tick — babysit CLI 22:38Z (exit 0),
+remote log read for eval-1000 + per-dataset wandb pull, trend post,
+queue validate (OK, depth 2, 22 open), `run_work_next` confirmed
+armed (21:50Z), body+footer roll to archive/now-2026-08-16.md.
+
+**Next**: chained work session babysits evals 1250/1500
+(~23:0x/23:2xZ) and fires `grasp-sft-v1-endpoint-boundary` at
+completion ~00:3x–00:5xZ. If eval keeps oscillating with the real
+slice flat through 1500+, carry that into the boundary post as the
+headline caveat — decide bank-vs-iterate on sim100, not MAE.
+Owner-pending unchanged: disk composite exemption 👍, approach
+redesign go, v2.1 bands, ckpt-format, morning-veto items.*
+
 *Updated 2026-08-16 19:19–22:4xZ (real `date -u` at stamp: 21:55, close
 addendum 22:4x) —
 work session: **five owner steering threads executed live — expert
@@ -94,59 +136,16 @@ for run completion ~21:4x–22:0xZ). Owner-pending unchanged: disk
 composite exemption 👍, v2.1 bands, ckpt-format, morning-veto
 items.*
 
-*Updated 2026-08-16 16:53–19:0xZ (real `date -u` at stamp: 19:02) —
-work session: **grasp_sft_v1_joint LIVE on the 8×A100 box (one
-crash-fix-relaunch cycle, 12-min turnaround, fix first-real-run
-validated); smoother-demos v1.1 SOLVED + landed with kept% UP; disk
-"does not render" root-caused to a composite-grade ceiling; sample
-videos posted.***
-
-**Status**: `grasp_sft_v1_joint_8xa100` LIVE since **18:21:14Z**
-(unit `grasp-sft-v1b`; launch 1 17:49:48Z died at its FIRST eval —
-the ported molmo_flow decoder returns CPU actions and the joint
-family is the first through in-train validate(); fixed `2d6a2b3`
-`sampled.to(device)`, ~2.5 GPU-h lost, no save existed). Relaunch:
-eval-250 GREEN 14.53 → eval-500 **14.04**, step 530 loss 0.45,
-3.9 s/step, VRAM 59.7/80, **first async save validated** (captured
-24.9s, published 287s behind boundary), host RAM fine, 0 tracebacks.
-Projection ~3.1 GPU-h so far vs the 40 babysit gate; **ETA
-~21:4x–22:0xZ** (past this session's 20:53 kill — endpoint boundary
-queued, babysit registry current, `run_work_next` armed). Local GPU
-owner-released, idle after renders.
-
-**Steering** (3 messages, all replied + acked, inbox clear): (1)
-16:53Z "traces jumpy — smoother overall?" → executed same-session.
-(2) 17:07Z four-parter: SFT GO eff-96 → launched; smoother demos →
-landed; top-cam cylinder → root-caused in TWO stages (real/table lum
-ratio 1.78 vs sim 0.95; then the calibration attempt found the v3
-episode affine caps any foreground at ≤~1.1× plate — material-only
-NO-GO, revised proposal = exempt the disk mask from the episode
-affine, predicted ~1.5, flag `disk_appearance='realcal'` landed,
-sign-off pending); frame leak → dataset exact (ffprobe counts match),
-visualizer's inclusive endpoint. (3) 17:29Z "start ASAP" → launched.
-
-**Done** (commits `859b249`, `0e77650`, `dbc0731`, `d40d43d`,
-`2d6a2b3` + close; checks green): main merged; **smoother-expert
-v1.1** — output-stage feedforward slew (10°/tick arm / 12 jaw,
-`None`=legacy, 2 oracles) + tail budget 150→300; attribution harness
-`smooth_expert_measure.py`, 5 configs × 120 seeds banked: **kept
-54.2% vs 45.8 baseline / 48.3 anchor, parked 94.3% vs 53.5, max step
-293°→10°/tick** (6°/tick NO-GO measured: main-clock starvation;
-tail-150 was demoting 13/120 placed at BASELINE — a shipped-v1 yield
-tax); blog post + 3 dark charts; merged-dataset boundary audit (5,000
-eps exact); disk instruments (`disk_contrast_probe.py` + real
-anchor); eval-device fix `2d6a2b3`; SFT launcher + babysit entry;
-2 sample v1.1 videos posted in-channel; queue ±: 4 closed, 4 added.
-
-**Next**: `queue_cli.py next` → `grasp-sft-v1-endpoint-boundary`
-(fires at run completion ~21:4x–22:0xZ: final eval + per-dataset MAE
-table + ckpt upload + sim100 rollout vs the 44/100 anchor + report
-page). Depth 1 with reason: every other item is owner-gated (disk
-composite exemption 👍, v2.1 bands, ckpt-format, morning-veto) or
-gated on the run/box. `run_work_next` ARMED — box busy, boundary item
-queued.*
-
 ## Utilization footer
+
+Session 2026-08-16 22:37–22:5xZ (tick; box run-2 riding ≈ +0.9
+GPU-h during the window, local idle): **run 2 clean at 1010/3000
+(8×100%, loss 0.36 falling, 11.1/40 gate) but eval-1000 = 5.00 —
+the bump repeated (4.05→4.54→3.74→5.00), per-dataset from wandb:
+pick_place_v2 flat ~14 (not run-1b's rise), sim bouncy; no gate
+crossed, run continues, trend read posted in-channel** — inbox
+clear, no steering, queue depth 2, `run_work_next` stays armed for
+evals 1250+ and the endpoint boundary.
 
 Session 2026-08-16 19:19–22:0xZ (work, exploit; box: run-1b ride
 19:19→kill ~21:07 ≈ +14 GPU-h in-window + smoke ~0.3 + run-2 live
@@ -158,26 +157,6 @@ NO-GO with mechanism), SFT restarted on order with
 `--recompute-stats` (eval-250 14.53→4.05 deg), wrist-cam refit
 scoped+queued, endpoint boundary fully pre-staged + re-pointed** —
 queue depth 2, `run_work_next` armed, inbox clear.
-
-Session 2026-08-16 19:12–19:2xZ (tick; box SFT riding ≈ +0.8 GPU-h
-during the hold, local idle): **grasp_sft_v1_joint healthy through
-eval-750 — MAE monotone 14.53→14.04→13.85, 13.4 steps/min, util
-78–100%×8, projection 7.6/40 gate, 0 tracebacks** — no steering,
-inbox clear, no new reactions, queue depth 1 with stated reason,
-`run_work_next` stays armed for the endpoint boundary.
-
-Session 2026-08-16 16:53–19:0xZ (work, exploit; box SFT: launch 1
-+8×28 min ≈ 3.7 GPU-h incl. the eval-crash loss ~2.5, relaunch live
-18:21Z ≈ +5.5 GPU-h to stamp, run projected ~26/80 gate; local ~0.2
-GPU-h renders/probes): **grasp_sft_v1_joint launched, crashed at
-first eval (molmo_flow CPU actions × in-train validate), fixed +
-relaunched in 12 min, fix + first async save both first-real-run
-validated, evals falling 14.53→14.04**; **smoother-demos v1.1 landed
-same-session** (kept 54.2 vs 45.8, parked 94.3, max step 293°→10°,
-n=120×5 instrumented + attribution); dataset boundaries proven exact;
-top-cam disk: real-vs-sim 1.78-vs-0.95 then the composite-affine
-ceiling (material NO-GO, exemption proposal pending 👍); 2 v1.1
-sample videos in-channel; 3 owner messages answered live.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
