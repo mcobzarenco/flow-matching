@@ -439,11 +439,15 @@ def check_progress_log(
         if m:
             done, total = int(m.group(1)), int(m.group(2))
     if done is None:
-        # step-style logs match progress_re but carry no N/M total
+        # step-style logs match progress_re but carry no N/M total. The
+        # tail section holds grep -oE spans of progress_re itself, so the
+        # FIRST integer is the progress counter; trailing integers are
+        # per-item detail ("seed 15 replan 24" counted 24, not 15 — the
+        # fabricated 3.3 seeds/min tick read of 08-16 09:57Z).
         for ln in sections.get(SENTINEL_TAIL, []):
             nums = re.findall(r"\d+", ln)
             if nums:
-                done = int(nums[-1])
+                done = int(nums[0])
     if done is None:
         report.alive = False
         report.add("  LIVENESS FAILURE: no progress line parsed from log")
