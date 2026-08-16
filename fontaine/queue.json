@@ -1,6 +1,6 @@
 {
- "updated_utc": "2026-08-16T16:47:17Z",
- "depth_reason": "depth 3 queued; demo-gen-sharded-a100 is P1 EXECUTE (new A100 box allocated 12:26:52Z, machine-is-yours); home-box gpu items stay blocked under the owner hold (ckpt-format change pending); spawn-v2 dataset constants approved-for-generation 12:21:03Z vs the posted SS5 table.",
+ "updated_utc": "2026-08-16T20:12:33Z",
+ "depth_reason": "depth 2 (endpoint boundary runnable at run completion ~21:5xZ; approach redesign owner-gated). Every other candidate remains owner-gated (disk composite exemption, v2.1 bands, ckpt-format, morning-veto) or box-gated.",
  "items": [
   {
    "id": "demo-gen-sharded-a100",
@@ -1920,6 +1920,15 @@
    "prereg": null,
    "title": "v1.1 sample videos for the owner eyeball (pre-regen evidence): re-render 2 kept episodes with the landed v1.1 expert (slew 10/12 + tail 300) through the production collector render path (v2.1+mix70), encode top+wrist side-by-side mp4s (<10MB bot cap), post with --attach so the owner can judge the smoothness in-channel before green-lighting the 30-GPU-h regen. Local GPU (owner-released), ~10 min.",
    "boundary": "Queued 18:4xZ 08-16. | DONE 18:4xZ 08-16 same slice: seeds 1005 + 1002 (both kept under v1.1) rendered via the production path, top+wrist side-by-side mp4s posted in-channel with --attach (ids 1538620093930405899, 1538620098313453699)."
+  },
+  {
+   "id": "expert-approach-quasistatic-redesign",
+   "class": "cpu",
+   "status": "blocked",
+   "owner_hold": true,
+   "prereg": null,
+   "title": "Approach-leg smoothing done right (owner ask 19:42Z 08-16, drop-in ease measured NO-GO 41.7/40.8 vs 58.3 placed n=120 \u2014 quasi-static arm never trips the momentum-tuned exits; diagnosis banked in scripted_expert.py APPROACH_SLEW_DEG comment + fontaine/notes/smooth_v12*.json): redesign approach/descend for static poses \u2014 approach droop feedback (descend's settle-measure-correct pattern, own clip), exit on command-converged + corrected static err, descend entry from parked pose re-tuned (close/lift degraded from parked entry: pinch-miss loops, empty lifts). Instrument: smooth_expert_measure.py (knobs landed: --approach-slew/--retreat-glide), bar = yield-neutral vs 58.3/54.2/94.3 with approach visibly eased; sample videos for the owner eyeball. OWNER-GATED: proposed in-channel 20:1xZ 08-16 (msg 1538641510281519134), awaits their go.",
+   "boundary": "Queued 20:1xZ 08-16 at the steering slice close."
   }
  ],
  "updated": "2026-08-16T16:47:17Z"
