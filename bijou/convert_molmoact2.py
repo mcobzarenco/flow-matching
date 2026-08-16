@@ -6,7 +6,9 @@ checkpoint directory (``bijou/checkpoint.py``) once, and everything
 downstream (`--init-from`, eval, rollout) consumes it like any other
 checkpoint:
 
-- ``metadata.json`` (schema 2): family ``molmoact2_flow``, prompt
+- ``metadata.json`` (schema 2): family per ``--family`` (flow, ar or
+  joint — the release trained BOTH heads; rig-ft 'continuous' exports
+  refuse ar/joint), prompt
   component (``MolmoAct2PromptConfig``: their template facts, discrete
   state, the ``action_mode`` mask flavor — load-bearing for the expert
   weights; parameterless — ``weights: false``), flow_decoder component
@@ -81,6 +83,11 @@ from .modelling.encoders.molmoact2_processing import (
 )
 from .modelling.gemma4.loading import resolve_checkpoint_dir
 from .modelling.molmo2.loading import import_backbone_state
+from .sections import (
+    MOLMOACT2_FAST_TOKENIZER_REF,
+    ar_backbone_config_to_dict,
+    molmoact2_ar_config_from_flow_section,
+)
 from .vla import VLAFamily
 
 
@@ -198,6 +205,8 @@ def convert(
     norm_tag: str,
     backbone_ref: str | None,
     norm_stats_from: str | None = None,
+    family: VLAFamily = VLAFamily.MOLMOACT2_FLOW,
+    fast_tokenizer: str = MOLMOACT2_FAST_TOKENIZER_REF,
 ) -> Path:
     """Materialize the VLA checkpoint; returns ``out``. Deterministic
     (same source -> content-identical output; an existing ``out`` is
@@ -309,8 +318,59 @@ def convert(
         "expert_sha256": expert_sha256,
         "converter": "bijou.convert_molmoact2",
     }
+    if family not in (
+        VLAFamily.MOLMOACT2_FLOW,
+        VLAFamily.MOLMOACT2_AR,
+        VLAFamily.MOLMOACT2_JOINT,
+    ):
+        raise SystemExit(f"--family {family.value} is not a MolmoAct2 family")
+    if family is not VLAFamily.MOLMOACT2_FLOW and prompt_config.action_mode != "both":
+        raise SystemExit(
+            f"--family {family.value} needs a checkpoint whose discrete head "
+            f"trained (action_mode='both'); this export records "
+            f"{prompt_config.action_mode!r} — its <action_*> rows were never "
+            "trained (the rig-ft 'continuous' class), so an AR/joint import "
+            "would serve an untrained head",
+        )
+    components: dict[str, Any] = {
+        # The prompt side owns zero parameters — config-only.
+        "prompt": {"config": prompt_config.to_dict(), "weights": False},
+        # The expert weights are release-trained; every family carries
+        # them (the AR family keeps them as inherited provenance — its
+        # own decoder is parameterless, trunk-native rows).
+        "flow_decoder": {"config": decoder_config.to_dict(), "weights": True},
+    }
+    if family is not VLAFamily.MOLMOACT2_FLOW:
+        # The anchor verification inside this helper reads the REAL
+        # source tokenizer (token_to_id on <action_*>), so it takes the
+        # source directory, never the provenance ref.
+        ar_config = molmoact2_ar_config_from_flow_section(
+            decoder_config,
+            prompt_config,
+            str(source_dir),
+            fast_tokenizer=fast_tokenizer,
+        )
+        components["ar_decoder"] = {
+            "config": ar_backbone_config_to_dict(ar_config),
+            "weights": False,
+        }
+    match family:
+        case VLAFamily.MOLMOACT2_AR:
+            objective: dict[str, Any] = {"kind": "ar"}
+        case VLAFamily.MOLMOACT2_JOINT:
+            # An IMPORT records the default continuation plan, not the
+            # release's (unknown) training mixture — printed so nobody
+            # mistakes it for a measured fact.
+            objective = {"kind": "joint", "ce_weight": 1.0, "insulate_flow": False}
+            print(
+                "[convert] joint import: objective recorded as ce_weight=1.0, "
+                "insulate_flow=False (the DEFAULT continuation plan; the "
+                "release's own training mixture is not public)",
+            )
+        case _:
+            objective = {"kind": "flow"}
     metadata = VLAMetadata(
-        family=VLAFamily.MOLMOACT2_FLOW,
+        family=family,
         chunk_size=decoder_config.action_horizon,
         action_dim=real_action_dim,
         backbone_id=str(recorded_backbone),
@@ -318,17 +378,13 @@ def convert(
         backbone_config=config,
         backbone_text_trained=False,
         backbone_vision_trained=False,
-        objective={"kind": "flow"},
+        objective=objective,
         serving={
             "kind": "flow",
             "num_steps": decoder_config.num_flow_steps,
             "method": "euler",
         },
-        components={
-            # The prompt side owns zero parameters — config-only.
-            "prompt": {"config": prompt_config.to_dict(), "weights": False},
-            "flow_decoder": {"config": decoder_config.to_dict(), "weights": True},
-        },
+        components=components,
         artifacts={},
         stats=stats,
         per_dataset_stats={},
@@ -349,7 +405,7 @@ def convert(
         backbone_vision=imported.vision,
         tokenizer_files={
             name: source_dir / name
-            for name in tokenizer_manifest(VLAFamily.MOLMOACT2_FLOW)
+            for name in tokenizer_manifest(family)
         },
     )
 
@@ -358,7 +414,7 @@ def convert(
     # written expert bytes reproduce the source digest.
     validate_checkpoint(out)
     reread = read_metadata(out)
-    if reread.family is not VLAFamily.MOLMOACT2_FLOW:
+    if reread.family is not family:
         raise SystemExit("round-trip failed: recorded family mismatch")
     with safe_open(
         out / "flow_decoder.safetensors",
@@ -369,7 +425,7 @@ def convert(
     if _tensor_digest(written) != expert_sha256:
         raise SystemExit("round-trip failed: written expert bytes differ from source")
     print(
-        f"converted {source} [{norm_tag}] -> {out}: "
+        f"converted {source} [{norm_tag}] -> {out} as {family.value}: "
         f"{len(expert)} expert tensors "
         f"(sha256 {expert_sha256[:16]}...), "
         f"decoder {decoder_config.num_layers}x{decoder_config.hidden_size} "
@@ -402,6 +458,25 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         required=True,
         help="output bijou checkpoint directory (created if absent)",
+    )
+    parser.add_argument(
+        "--family",
+        choices=[
+            VLAFamily.MOLMOACT2_FLOW.value,
+            VLAFamily.MOLMOACT2_AR.value,
+            VLAFamily.MOLMOACT2_JOINT.value,
+        ],
+        default=VLAFamily.MOLMOACT2_FLOW.value,
+        help="which trained surface(s) the import serves: the release "
+        "trained BOTH heads (action_mode='both'), so flow, ar and joint "
+        "are all faithful; rig-ft 'continuous' exports refuse ar/joint "
+        "(their discrete head never trained)",
+    )
+    parser.add_argument(
+        "--fast-tokenizer",
+        default=MOLMOACT2_FAST_TOKENIZER_REF,
+        help="FAST tokenizer artifact ref recorded in the ar_decoder "
+        "config (ar/joint families only)",
     )
     parser.add_argument(
         "--norm-tag",
@@ -437,6 +512,8 @@ def main() -> None:
         norm_tag=args.norm_tag,
         backbone_ref=args.backbone_ref,
         norm_stats_from=args.norm_stats_from,
+        family=VLAFamily(args.family),
+        fast_tokenizer=args.fast_tokenizer,
     )
 
 
