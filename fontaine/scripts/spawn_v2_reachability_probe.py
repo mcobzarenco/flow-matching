@@ -32,12 +32,52 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).parents[2]))
 
-from sim.scripted_expert import PICKUP_QPOS, ExpertPlanner, ScriptedExpert
+from sim.scripted_expert import (
+    JAW_OPEN_RAD,
+    PICKUP_QPOS,
+    ExpertPlanner,
+    ScriptedExpert,
+)
 from sim.so101_sim import SERVO_SYSID, SO101Sim
 
 GRID_X = (0.05, 0.40)
 GRID_Y = (-0.20, 0.40)
 PITCH = 0.01  # m
+
+
+def solve_grasp_tight(
+    planner: ExpertPlanner,
+    target: np.ndarray,
+    boat_yaw: float,
+    seed_rad: np.ndarray,
+    *,
+    rounds: int = 3,
+) -> tuple[np.ndarray, float]:
+    """The stage-A grasp solve with an instrument-grade tolerance —
+    ``ExpertPlanner.solve_grasp`` stops at solve_ik's 2 mm SITE
+    tolerance, so whether a cell's pad residual lands under 1 mm is
+    stopping luck, not reachability (the v0 ring-banding). Same
+    alternation (roll align + wrist-locked pad IK), tol 0.2 mm and a
+    doubled iteration budget, LOCAL to the probe: stage-A behavior is
+    frozen, the instrument only measures harder."""
+    arm = seed_rad.copy()
+    arm[3] = seed_rad[3]
+    for _ in range(rounds):
+        arm = planner.align_wrist_roll(arm, boat_yaw, rounds=1)
+        for _ in range(2):
+            mid = planner.grasp_point(arm, JAW_OPEN_RAD)
+            site = planner.scratch.site_xpos[planner.site_id].copy()
+            arm, _ = planner.solve_ik(
+                target - (mid - site),
+                arm,
+                free_dofs=4,
+                tol=2e-4,
+                iters=120,
+            )
+    residual = float(
+        np.linalg.norm(target - planner.grasp_point(arm, JAW_OPEN_RAD)),
+    )
+    return arm, residual
 
 
 def probe_cell(
@@ -54,7 +94,7 @@ def probe_cell(
     # Radially-facing hull: jaw axis lands along the bearing (the yaw
     # class the pan-arc traverse produces at every carry endpoint).
     target = np.array([x, y, ScriptedExpert.GRASP_Z])
-    arm, residual = planner.solve_grasp(target, bearing, seed)
+    arm, residual = solve_grasp_tight(planner, target, bearing, seed)
     scratch.qpos[:] = 0.0
     scratch.qvel[:] = 0.0
     scratch.qpos[planner.arm_qpos] = arm

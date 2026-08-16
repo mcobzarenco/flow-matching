@@ -75,6 +75,47 @@ class WorkspaceMask:
     def contains(self, x: float, y: float) -> bool:
         return (round(x / self.pitch), round(y / self.pitch)) in self.cells
 
+    def cleaned(self, *, min_neighbors: int = 5) -> WorkspaceMask:
+        """Morphological clean (pre-reg §3.1's v0-caveat fix): drop
+        cells with fewer than ``min_neighbors`` of their 8 neighbors in
+        W (speckle and ragged edge — the marginal-convergence cells
+        whose annulus is mostly rejected, the measured 194/200 tail),
+        then keep only the largest 4-connected component so W is one
+        solid region. ONE filter pass, deliberately — iterating to
+        fixpoint erodes any finite region to nothing (every pass
+        manufactures fresh sub-threshold corners)."""
+        cells = {
+            (i, j)
+            for (i, j) in self.cells
+            if sum(
+                (i + di, j + dj) in self.cells
+                for di in (-1, 0, 1)
+                for dj in (-1, 0, 1)
+                if (di, dj) != (0, 0)
+            )
+            >= min_neighbors
+        }
+        if not cells:
+            raise ValueError("workspace mask empty after morphological clean")
+        components: list[set[tuple[int, int]]] = []
+        todo = set(cells)
+        while todo:
+            frontier = [todo.pop()]
+            comp = set(frontier)
+            while frontier:
+                i, j = frontier.pop()
+                for di, dj in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    n = (i + di, j + dj)
+                    if n in todo:
+                        todo.remove(n)
+                        comp.add(n)
+                        frontier.append(n)
+            components.append(comp)
+        return WorkspaceMask(
+            pitch=self.pitch,
+            cells=frozenset(max(components, key=len)),
+        )
+
     def sample(self, rng: np.random.Generator) -> tuple[float, float]:
         """Uniform over W: a uniform cell, then uniform jitter inside
         it (jitter stays within the drawn cell, so the point is in W

@@ -107,3 +107,29 @@ def test_degenerate_mask_refuses(tmp_path: Path) -> None:
     mask = WorkspaceMask.from_probe(probe_json(tmp_path, [cell(0.20, 0.10, 5e-4)]))
     with pytest.raises(RuntimeError, match="acceptance degenerate"):
         draw_spawn_v2(mask, np.random.default_rng(0))
+
+
+def test_cleaned_drops_speckle_keeps_block(tmp_path: Path) -> None:
+    # A solid block plus one isolated speckle cell and one 1-cell spur:
+    # the clean must drop both and keep the block intact.
+    cells = [
+        cell(float(x), float(y), 5e-4)
+        for x in np.arange(0.10, 0.20 + PITCH / 2, PITCH)
+        for y in np.arange(0.00, 0.10 + PITCH / 2, PITCH)
+    ]
+    cells.append(cell(0.35, 0.30, 5e-4))  # speckle
+    cells.append(cell(0.10, 0.15, 5e-4))  # detached spur
+    raw = WorkspaceMask.from_probe(probe_json(tmp_path, cells))
+    cleaned = raw.cleaned()
+    assert not cleaned.contains(0.35, 0.30)
+    assert not cleaned.contains(0.10, 0.15)
+    assert cleaned.contains(0.15, 0.05)
+    # interior shrinks only at the rim: the block's interior survives
+    assert len(cleaned.cells) >= len(raw.cells) - 2 - 4 * 11
+
+
+def test_cleaned_all_speckle_refuses(tmp_path: Path) -> None:
+    cells = [cell(0.10, 0.00, 5e-4), cell(0.30, 0.30, 5e-4)]
+    raw = WorkspaceMask.from_probe(probe_json(tmp_path, cells))
+    with pytest.raises(ValueError, match="empty after morphological clean"):
+        raw.cleaned()

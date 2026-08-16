@@ -92,37 +92,43 @@ in-W); acceptance-floor refusal on a degenerate mask.
 
 ### §3.1 Instrument v0 — first measured fields (added ~10:3xZ, same session)
 
-The probe ran (CPU, ~2 min; `reports/analysis__spawn_v2_reachability_v0.json`,
-head `6d01d14`): 1 cm Cartesian grid, 2196 cells, stage-A `solve_grasp`
-at GRASP_Z = 0.014 m with the pan pre-swung to each cell's bearing and
-a radially-facing hull.
+The probe ran (CPU, ~2–4 min; `reports/analysis__spawn_v2_reachability_v0.json`):
+1 cm Cartesian grid, 2196 cells, the stage-A grasp solve at
+GRASP_Z = 0.014 m with the pan pre-swung to each cell's bearing and a
+radially-facing hull. The instrument took two iterations to get honest,
+and the interim readings are kept here because they shaped the design:
 
-![Spawn-v2 reachability probe v0: IK-residual field and static shoulder-moment field](../img/spawn_v2/reachability_v0.png)
+- **v0** used `ExpertPlanner.solve_grasp` as-is and read 425 cells
+  under the 1 mm bar — but arranged in ring-bands. On that speckled
+  mask the sampler's measured tail hit **194 of the 200-draw refusal
+  bar** (mean 7.2 attempts over 2000 episodes): edge disks saw a
+  mostly-rejected annulus. A morphological clean then collapsed the
+  bands to 66 cells and the sampler *correctly refused outright* —
+  the loud-refusal design did its job and flagged the instrument.
+- **Root cause**: `solve_ik` stops at its 2 mm SITE tolerance, so
+  whether a cell's *pad* residual lands under 1 mm was stopping luck,
+  not reachability. The rings were a solver artifact, not arm physics.
+- **v1** re-solves with an instrument-grade tolerance (0.2 mm, doubled
+  iteration budget, local to the probe — stage-A behavior untouched).
 
-Three facts the finalization constants will be cut from:
+![Spawn-v2 reachability probe: IK-residual field and static shoulder-moment field](../img/spawn_v2/reachability_v0.png)
 
-1. **425 cells sit inside the 1 mm residual bar** (~425 cm² vs the v1
-   band's 34 cm² — a ~12× larger spawn field), an annular region from
-   near the base out to ~0.35 m, containing the v1 band (0.57 mm at
-   its center) and the v1 disk (0.31 mm) comfortably.
+The v1 facts the finalization constants will be cut from:
+
+1. **1105 cells sit inside the 1 mm residual bar**, and the
+   one-pass neighbor clean + largest-component step leaves a **solid
+   977-cell region (~977 cm² vs the v1 band's 34 cm² — ~29×)**,
+   containing the v1 band and disk comfortably. On the cleaned mask
+   the sampler measures mean 2.4 boat attempts, p99 10, **max 35** of
+   the 200-draw refusal bar over 5000 episodes — the tail is gone.
 2. **Static torque does not bind**: over the whole reachable field the
    shoulder's static gravity moment peaks at 0.25 of the 3.478
    force limit — the nullspace posture pull keeps solves out of the
    straight-arm poses that saturated the servo in stage A. The torque
    bound in W is a backstop, not the working constraint; the residual
    bar does the work.
-3. **v0 caveat**: the <1 mm region shows ring-banding — cells where
-   the fixed-budget DLS iteration converges marginally flicker across
-   the bar. Before the mask freezes, the probe gets a convergence
-   margin (more iterations + a hysteresis band, plus a morphological
-   clean) so W is a solid region, not a speckle field. This is an
-   instrument artifact, not arm physics. Measured consequence on the
-   sampler (2000 episodes on the v0 mask): mean 7.2 boat attempts,
-   p99 45, **max 194 — one attempt shy of the 200-draw refusal bar**,
-   because disks drawn at speckled mask edges see a mostly-rejected
-   annulus. The mask clean and the refusal bar must be finalized
-   together, with the bar sitting well above the cleaned mask's
-   measured tail.
+3. The sampler (`sim/spawn_v2.py`, 7 CPU oracles) is standalone —
+   `SO101Sim.reset` is untouched until this pre-reg finalizes.
 
 ## §4 Registered consequences (the expensive part, priced)
 
@@ -140,11 +146,23 @@ re-validation, not a formality — if it fails its gate, the expert
 gets ONE registered robustness amendment (the v1 ladder's precedent)
 before any F-verdict.
 
-## §5 What finalization must pin (open in this draft)
+## §5 What finalization must pin — with proposed values (measured, not yet frozen)
 
-The torque-fraction bound and grid pitch defining W; r_min margin,
-r_max, keep-out radius, acceptance floor N/rate; A′ seed band + gate
-arithmetic; whether B′–D′ inherit the stage-B/C frozen recipes
-verbatim or re-open any knob (default: verbatim). Owner calls that
-sequence it: priority vs the token-legs report (asked 09:50Z), and
-the C′ route choice.
+From the v1 instrument, the freeze candidates now have numbers
+(`sim/spawn_v2.py` DRAFT constants, sources commented at each):
+
+| constant | proposed | source |
+|---|---|---|
+| W residual bar | 1 mm under the tight-tol solve (0.2 mm / 120 iters) | §3.1 v1 |
+| W torque bound | 0.5 of forcerange (backstop; measured max 0.25) | §3.1 |
+| mask clean | one ≥5-of-8-neighbors pass + largest 4-connected component | §3.1 (one pass only — iterating erodes any finite region) |
+| r_min | 0.08 m (disk 0.04 + hull 0.03 + 0.01 margin) | v1 band arithmetic |
+| r_max | 0.19 m (~2× the v1 mean start distance) | phase-clock budget |
+| jaw keep-out | 0.04 m around (0.155, 0) | v1's measured ~4% failure |
+| refusal bar | 200 draws (measured max on cleaned mask: 35) | §3.1 v1 |
+
+Still genuinely open: A′ seed band + gate arithmetic; whether B′–D′
+inherit the stage-B/C frozen recipes verbatim or re-open any knob
+(default: verbatim). Finalization = a registered post freezing this
+table + the objection window, after the owner's two calls: priority
+vs the token-legs report (asked 09:50Z), and the C′ route choice.
