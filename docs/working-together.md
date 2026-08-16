@@ -213,8 +213,10 @@ Run through this before every launch; each line is a past incident.
   artifact versions are permanently coupled; never mix.
 - **Checkpoint directories are self-contained**: loading one must
   reconstruct the trained model with no reference to any other
-  directory (`backbone.safetensors` present iff the trunk differs from
-  pristine — trained *or inherited*).
+  directory (both backbone part files + tokenizer/ always present;
+  `backbone.text_trained`/`vision_trained` are the explicit facts —
+  presence is never a signal; frozen parts hard-link their parent's
+  files, so `rsync -H` on local transfers).
 - Models record what they trained with (tokenizer ref, per-dataset
   stats); artifacts carry their own fit/fidelity reports.
 - Uploads before deletions. `optimizer.pt` is kept for checkpoints that

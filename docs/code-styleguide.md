@@ -82,9 +82,10 @@ cited, and the doc-cited `probe_rollout_vram.py` is lost outright
 - **One word per concept: the pretrained trunk network (Gemma or
   Molmo2) is the `backbone`** — in
   both senses (the pretrained artifact: `--backbone`,
-  `BackboneConfig.id`, `backbone.safetensors`; and the mounted module:
-  `model.backbone`, `backbone_text`/`backbone_vision` groups,
-  `backbone_trained`). "Trunk" is allowed in prose as an informal
+  `backbone_text.safetensors`/`backbone_vision.safetensors`; and the
+  mounted module: `model.backbone`, `backbone_text`/`backbone_vision`
+  groups, `backbone_text_trained`/`backbone_vision_trained`). "Trunk"
+  is allowed in prose as an informal
   synonym but never in identifiers or schema keys. (Added 2026-08-01:
   the seam refactor briefly introduced a two-sense trunk/backbone
   convention; it produced `trunk.backbone` in the metadata and was

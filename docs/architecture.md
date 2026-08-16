@@ -126,8 +126,9 @@ trainable-group routing (`param_groups`: decoder / backbone_text /
 backbone_vision).
 Naming: **backbone** is the one identifier for the pretrained trunk
 network (Gemma-4 or Molmo2) — the artifact (`--backbone`,
-`BackboneConfig.id`, `backbone.safetensors`) and the mounted module
-(`model.backbone`) alike; "trunk" survives only as informal prose.
+`backbone_text.safetensors`/`backbone_vision.safetensors`) and the
+mounted module (`model.backbone`) alike; "trunk" survives only as
+informal prose.
 
 The diagram below shows the Gemma composition; Molmo2 is analogous
 with a full-depth prefix (no truncation point exists — Qwen3 layers
@@ -1008,25 +1009,27 @@ dropped 2026-08-03 as visually redundant) — and
 rows — the constrained value in the MAIN decode; the separate
 likelihood probe dissolved with request conditioning).
 
-**Checkpoint schema** (`loading.py` dataclasses): `expert.safetensors` +
-`bijou_config.json` (format 3: role-sectioned — `backbone` {id,
-depth: prefix|full}, `prompt` {kind, exports, max_soft_tokens},
-`decoder` = the tagged config with stream-name schedules; ar_backbone's
-records the tokenizer artifact ref, block placement, `suffix_format`
-and the `aux` provenance record (§2.4; absent keys parse as format 1 /
-no aux) — plus per-dataset + aggregate stats, train args, step);
-`optimizer.pt` for lossless `--resume`; and `backbone.safetensors`
-(bf16 trunk snapshot) **iff the checkpoint's trunk differs from pristine
-HF — trained in-run OR inherited frozen from an adapted `--init-from`**
-(the inherited file is hardlinked/copied, byte-identical; conditioning
-on trained-in-this-run-only once shipped fine-tunes that silently loaded
-the pristine trunk — the invariant is test-gated). Directories are
-self-contained: loading one must need no other directory. Format-1/2
-checkpoints: pre-format-3 prompts and pre-format-5 ar_backbone
-suffixes are REFUSED at load (2026-08-03, no back-compat — their
-parameter sets no longer exist: state_proj moved prompt-side, mode
-tables deleted); schema parsing is guarded by state-dict key fixtures
-and section tests. `--init-from` = warm
+**Checkpoint schema** (`bijou/checkpoint.py`, schema_version 2 — the
+full-import format, docs/vla-architecture.md §7): `metadata.json`
+(family, spec, the backbone section {id, depth, their config.json
+VERBATIM, per-part `text_trained`/`vision_trained` flags}, objective +
+serving tagged dicts, component configs as the tagged section dicts,
+per-dataset + aggregate stats, train args, step) +
+`backbone_text.safetensors`/`backbone_vision.safetensors` (ALWAYS
+present, our key names — strict loads; a frozen part hard-links its
+parent, a trained part is a fresh bf16 snapshot per save; the vision
+file is exactly the `backbone_vision` LR group's members, and
+conditioning on trained-in-this-run-only once shipped fine-tunes that
+silently loaded the pristine trunk — the per-part flags are the
+test-gated invariant) + per-component safetensors
+(`prompt`/`flow_decoder`/`ar_decoder` where parameterful) +
+`tokenizer/` (the per-trunk consumed artifact files) + `optimizer.pt`
+for lossless `--resume`. Directories are self-contained: loading one
+never touches the hub, the HF cache or any other directory. Legacy
+`bijou_config.json` directories convert via `bijou.convert_legacy`
+(format 3 only; the frozen reader and the legacy layout live there);
+schema-1 VLA directories are refused with a re-convert pointer.
+`--init-from` = warm
 start (decoder config-guarded, loud SystemExit — except the data-side
 format keys {aux}, which may differ with a printed note: enabling aux
 on an aux-less format-5 base
@@ -1662,7 +1665,8 @@ sharpest at the tower output, so adaptation is needed *downstream*).
 localize the bottleneck in the text stack's use of visual tokens, not the
 expert; π0/SmolVLA both train their trunks. **Numerics/plumbing.** fp32
 masters + bf16 autocast; the family forward + single DDP wrap
-(static_graph); `backbone.safetensors` rides in the checkpoint; frozen
+(static_graph); the trained trunk parts ride the checkpoint's
+`backbone_text`/`backbone_vision` files; frozen
 path stays byte-identical (oracle exact).
 **Status/finding.** With the flow objective, text-lr 2e-5 from cont45k
 was a modest monotone win (§7 legacy ledger). With the **AR CE
