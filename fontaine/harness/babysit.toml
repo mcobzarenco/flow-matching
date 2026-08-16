@@ -992,6 +992,29 @@
 # kind = "gpu_hours_max"
 # value = 6.0
 
+[[run]]
+name = "grasp_sft_v1_joint"
+kind = "progress-log"
+host = "ubuntu@147.224.218.164"
+pgrep = "bijou.train"
+pgrep_min = 8
+gpu_indices = [0, 1, 2, 3, 4, 5, 6, 7]
+gpu_mem_min_mib = 40000
+log = "/home/ubuntu/sft_train.log"
+progress_re = '"step": [0-9]+'
+started_utc = "2026-08-16T17:49:48Z"
+gpu_hours_per_wall_hour = 8.0
+boundary = "Grasp-SFT v1 joint, 8xA100 box: owner GO 17:07:47Z (eff-96 delta) + ASAP 17:29Z. 16:39Z consolidated command, --init-from owner reconverted molmoact2-so101-released (remap-stats v21-to-v30), 3000 steps, eval every 250 (--eval-dataset-breakdown per-dataset MAE), save every 500 async. Smoke 20-step GREEN 17:4xZ: VRAM peak 59.65/80 GiB, 3.8 s/step, banner 3 datasets/4551 train eps/1.49M frames (holdout 506), repeat x4 = 7.9%+0.81% share, loss 3.29->2.12. ETA ~3.2-3.5h stepping -> done ~21:1x-21:3xZ. On DONE: chained nothing auto - boundary work = final eval read + per-dataset MAE table + checkpoint upload (fontaine-checkpoints, weights-only) + sim100 rollout eval vs the joint-probe anchors (44/100 unseen flow, table-fix-positive) + report page. Watch first save ~step 500 for the async-save lines; wandb run grasp_sft_v1_joint_8xa100."
+anchors = [
+    "smoke facts: VRAM 59.65 GiB peak alloc / 61.7 reserved per rank; 3.8 s/step at eff-96; loss step10 3.29 step20 2.12",
+    "banner must read: 3 datasets, 4551 episodes, 1488068 frames, dims 6/6; repeat v2 x4 7.90% clean x4 0.81%; holdout 506 eps",
+    "rollout anchor for the endpoint: route-C joint probe 44/100 unseen (flow), token leg vs R2 bar >=20/100",
+    "budget: ~27 GPU-h stepping vs the 80 gate (demo-gen used 16.9)",
+]
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 40.0
+
 # demo_gen_v1 entry PRUNED 16:4xZ 08-16 work session — COMPLETE and
 # boundary EXECUTED same-session: driver DONE 16:32Z, 5000/5000 kept
 # (10,883 attempted = 45.9% vs 48.3% anchor), 0 failed shards, 2h07m
@@ -1002,4 +1025,4 @@
 # next box job is the SFT run (staged; blank = owner's stats-corrected
 # checkpoint conversion, their 15:30:26Z take).
 
-no_live_runs_reason = "declared 16:4xZ 08-16: demo_gen_v1 COMPLETE + boundary executed (dataset public); home GPU owner-reserved (ckpt-format), A100 box idle awaiting the SFT launch blank (owner stats-corrected conversion, 15:30:26Z)."
+# no_live_runs_reason cleared 17:49Z 08-16: grasp_sft_v1_joint LIVE on the box.

@@ -104,7 +104,7 @@ EpisodeSource = Callable[[int], DemoEpisode]
 def expert_episode_source(
     sim: SO101Sim,
     max_ticks: int = 600,
-    retreat_tail_ticks: int = 150,
+    retreat_tail_ticks: int = 300,
 ) -> EpisodeSource:
     """Episode source with the post-success retreat tail (owner
     steering 2026-08-16 13:46Z): after ``sim.success()`` fires, keep
@@ -112,7 +112,16 @@ def expert_episode_source(
     policy learns to withdraw without knocking the placed boat over.
     The tail ends when the arm is at home and quiet (or the tail
     budget trips), and success is RE-verified after it — a retreat
-    that knocks the boat off the disk demotes the episode to a miss."""
+    that knocks the boat off the disk demotes the episode to a miss.
+
+    Budget 300 (was 150 for v1): success() can fire mid-settle with
+    the boat still gripped, so the tail must cover settle+open+retreat
+    — at 150, 33 of 71 placed episodes (n=120 instrument read
+    2026-08-16) expired mid-home-swing and the stillness re-verify
+    demoted 13 of them with the boat perfectly placed. At 300 the
+    artifact drops to 3/120 and parked%-of-placed rises 53.5→94.4
+    (fontaine/notes/smooth_base_tail300.json); fast episodes still
+    exit early at parked+quiet, so their recordings are unchanged."""
 
     def run(seed: int) -> DemoEpisode:
         obs = sim.reset(seed)

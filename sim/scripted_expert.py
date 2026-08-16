@@ -306,8 +306,11 @@ class ScriptedExpert:
     #: never the measured pose: slewing from the measured pose
     #: compounds servo lag into a crawl (measured — parked 3%).
     #: ``None`` disables the stage (legacy one-shot commands).
-    SLEW_ARM_DEG: float | None = 6.0
-    SLEW_JAW_DEG: float | None = 8.0
+    #: 10/12 measured n=120 (fontaine/notes/smooth_slew10_tail300.json):
+    #: placed 58.3% vs baseline 59.2% (recovered — 6°/tick collapsed it
+    #: to 40.0% via main-clock expiry), max commanded step 293°→10°.
+    SLEW_ARM_DEG: float | None = 10.0
+    SLEW_JAW_DEG: float | None = 12.0
 
     def __init__(self, sim: SO101Sim) -> None:
         self.planner = ExpertPlanner(sim)
