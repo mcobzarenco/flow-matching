@@ -201,8 +201,7 @@ def test_retreat_glide_synchronizes_arrival() -> None:
 
     home = np.asarray(HOME_DEGREES[:5], dtype=float)
     delta = home - expert._last_cmd[:5]
-    assert expert.SLEW_ARM_DEG is not None
-    ticks = int(np.ceil(np.abs(delta).max() / expert.SLEW_ARM_DEG))
+    ticks = int(np.ceil(np.abs(delta).max() / expert.RETREAT_SLEW_DEG))
     outs = []
     for _ in range(ticks + 3):
         cmd = expert._plan(sim)
@@ -211,7 +210,7 @@ def test_retreat_glide_synchronizes_arrival() -> None:
     # per-tick steps proportional to each joint's delta, all <= cap
     first_step = outs[1] - outs[0]
     np.testing.assert_allclose(first_step, delta / ticks, atol=1e-9)
-    assert float(np.abs(first_step).max()) <= expert.SLEW_ARM_DEG + 1e-9
+    assert float(np.abs(first_step).max()) <= expert.RETREAT_SLEW_DEG + 1e-9
     # synchronized arrival exactly at T, then parked
     np.testing.assert_allclose(outs[ticks - 1], home, atol=1e-9)
     np.testing.assert_allclose(outs[-1], home, atol=1e-9)

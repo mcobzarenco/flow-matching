@@ -340,9 +340,20 @@ class ScriptedExpert:
     #: arrive-extended-then-fold is the equal-rate clip's arrival
     #: order, not a waypoint choice. The glide time-synchronizes the
     #: leg: every joint steps delta_j / T with T set by the slowest
-    #: channel at SLEW_ARM_DEG, so the fold distributes along the
-    #: swing. Same leg duration by construction (T is unchanged).
+    #: channel at RETREAT_SLEW_DEG, so the fold distributes along the
+    #: swing.
     RETREAT_GLIDE: bool = True
+    #: Retreat-phase rate (owner 2026-08-16 20:26Z: at the global
+    #: 10°/tick the glide lasts ~9 ticks / 0.3 s — synchronized but
+    #: unreadable; "make the retreat 2x slower"). Half the global cap,
+    #: applied to the whole retreat (up-leg + glide) — post-success
+    #: only, paid from the 300-tick tail, re-measured n=120.
+    RETREAT_SLEW_DEG: float = 5.0
+    #: Lower-phase stop bar (owner 2026-08-16 20:24Z: a pass at 2.9 cm
+    #: parks the boat at the disk edge where the wrist camera barely
+    #: sees it). Was 0.03 — the radial trim now keeps working to
+    #: 1.5 cm of the disk center before settle takes over.
+    PLACE_CENTER_BAR: float = 0.015
 
     def __init__(self, sim: SO101Sim) -> None:
         self.planner = ExpertPlanner(sim)
@@ -432,6 +443,8 @@ class ScriptedExpert:
                 ),
             )
         arm_rate = self.SLEW_ARM_DEG or np.inf
+        if self.state.phase == "retreat" and self.SLEW_ARM_DEG is not None:
+            arm_rate = self.RETREAT_SLEW_DEG
         if (
             self.state.phase == "approach"
             and not self.state.first_approach_done
@@ -609,7 +622,9 @@ class ScriptedExpert:
                 self._arm_now(sim),
                 free_dofs=3,
             )
-            boat_placed = float(np.hypot(*(boat_pos[:2] - self.disk[:2]))) < 0.03
+            boat_placed = (
+                float(np.hypot(*(boat_pos[:2] - self.disk[:2]))) < self.PLACE_CENTER_BAR
+            )
             if boat_placed or timeout:
                 self._enter("settle")
             return self._carry(sim, arm, JAW_CLOSED_RAD, rate_deg=2.0)
@@ -664,7 +679,7 @@ class ScriptedExpert:
                 else np.rad2deg(self._arm_now(sim))
             )
             delta = np.asarray(HOME_DEGREES[:5], dtype=float) - start
-            ticks = max(1, int(np.ceil(np.abs(delta).max() / self.SLEW_ARM_DEG)))
+            ticks = max(1, int(np.ceil(np.abs(delta).max() / self.RETREAT_SLEW_DEG)))
             state.retreat_glide = (start, delta / ticks, ticks)
         start, step, ticks = state.retreat_glide
         k = min(state.ticks_in_phase - self.RETREAT_UP_TICKS, ticks)

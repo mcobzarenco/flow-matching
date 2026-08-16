@@ -104,7 +104,7 @@ EpisodeSource = Callable[[int], DemoEpisode]
 def expert_episode_source(
     sim: SO101Sim,
     max_ticks: int = 600,
-    retreat_tail_ticks: int = 300,
+    retreat_tail_ticks: int = 450,
 ) -> EpisodeSource:
     """Episode source with the post-success retreat tail (owner
     steering 2026-08-16 13:46Z): after ``sim.success()`` fires, keep
@@ -114,14 +114,18 @@ def expert_episode_source(
     budget trips), and success is RE-verified after it — a retreat
     that knocks the boat off the disk demotes the episode to a miss.
 
-    Budget 300 (was 150 for v1): success() can fire mid-settle with
-    the boat still gripped, so the tail must cover settle+open+retreat
-    — at 150, 33 of 71 placed episodes (n=120 instrument read
-    2026-08-16) expired mid-home-swing and the stillness re-verify
-    demoted 13 of them with the boat perfectly placed. At 300 the
-    artifact drops to 3/120 and parked%-of-placed rises 53.5→94.4
-    (fontaine/notes/smooth_base_tail300.json); fast episodes still
-    exit early at parked+quiet, so their recordings are unchanged."""
+    Budget 450 (was 150 for v1, 300 for v1.1): success() can fire
+    mid-settle with the boat still gripped, so the tail must cover
+    settle+open+retreat — at 150, 33 of 71 placed episodes (n=120
+    instrument read 2026-08-16) expired mid-home-swing and the
+    stillness re-verify demoted 13 of them with the boat perfectly
+    placed; 300 fixed that for the 10°/tick retreat
+    (fontaine/notes/smooth_base_tail300.json). The v1.3 changes
+    (owner 20:2xZ 08-16: retreat at 5°/tick + the 1.5 cm place-center
+    bar) re-overflowed it — 27/69 budget hits, kept 54.2→35.0,
+    still-bar-arm 22 — and 450 restores the margin: budget hits 1,
+    still-bar-arm 1, parked 98.6% (smooth_v13_tail450.json). Fast
+    episodes still exit early at parked+quiet, recordings unchanged."""
 
     def run(seed: int) -> DemoEpisode:
         obs = sim.reset(seed)
