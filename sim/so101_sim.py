@@ -1524,10 +1524,24 @@ class SO101Sim:
             )
         return spec.compile()
 
-    def reset(self, seed: int, appearance_seed: int | None = None) -> SimObservation:
+    def reset(
+        self,
+        seed: int,
+        appearance_seed: int | None = None,
+        *,
+        boat_start: str = "upright",
+    ) -> SimObservation:
         """Home the arm, place benchy at a seeded pose, randomize
         appearance (benchy tint, lighting), settle physics until
         contacts are quiet.
+
+        ``boat_start`` (side-spawn feasibility probe, owner ask
+        2026-08-16 12:18:57Z): ``"upright"`` is the historical path,
+        draw-for-draw and bit-identical. ``"side"`` rolls the boat
+        ±90° about its hull axis (sign drawn from the spawn stream
+        AFTER every upright-mode draw, so seed → upright pose is
+        unchanged), drops it from 3 cm and triples the settle so it
+        comes to rest on its hull side before the episode starts.
 
         The arm settles FIRST, with the benchy parked outside its sweep
         (mj_resetData lays the arm out over the workspace, and driving up
@@ -1575,7 +1589,21 @@ class SO101Sim:
             x = rng.uniform(*SPAWN_X)
             y = rng.uniform(*SPAWN_Y)
             yaw = rng.uniform(-np.pi, np.pi)
-        quat = (np.cos(yaw / 2), 0.0, 0.0, np.sin(yaw / 2))
+        quat = np.array([np.cos(yaw / 2), 0.0, 0.0, np.sin(yaw / 2)])
+        drop_z = 0.001
+        if boat_start == "side":
+            # Roll ±90° about the hull's long axis (body x), composed
+            # AFTER yaw: q = q_yaw ⊗ q_roll. The sign draw is the last
+            # spawn-stream draw, so upright-mode streams are untouched.
+            sign = 1.0 if rng.uniform() < 0.5 else -1.0
+            half = sign * np.pi / 4
+            roll = np.array([np.cos(half), np.sin(half), 0.0, 0.0])
+            composed = np.zeros(4)
+            mujoco.mju_mulQuat(composed, quat, roll)
+            quat = composed
+            drop_z = 0.03
+        elif boat_start != "upright":
+            raise ValueError(f"unknown boat_start {boat_start!r}")
         self.reset_spawn_xy: tuple[float, float] = (float(x), float(y))
 
         self._draw_benchy_tint(looks)
@@ -1605,11 +1633,11 @@ class SO101Sim:
 
         # Now place the benchy at its seeded pose and let it settle onto
         # the table (spawned 1 mm up, at rest within a few steps).
-        self.data.qpos[adr : adr + 3] = (x, y, 0.001)
+        self.data.qpos[adr : adr + 3] = (x, y, drop_z)
         self.data.qpos[adr + 3 : adr + 7] = quat
         vadr = self.model.joint("benchy_free").dofadr[0]
         self.data.qvel[vadr : vadr + 6] = 0.0
-        self._settle_counting_strikes(30)
+        self._settle_counting_strikes(90 if boat_start == "side" else 30)
         return self.observe()
 
     def _draw_benchy_tint(self, looks: np.random.Generator) -> None:

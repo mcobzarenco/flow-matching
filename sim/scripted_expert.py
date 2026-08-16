@@ -578,6 +578,7 @@ def run_expert_episode(
     max_ticks: int = 600,
     render: bool = False,
     on_obs: Callable[[Any], None] | None = None,
+    reset_kwargs: dict[str, Any] | None = None,
 ) -> dict[str, object]:
     """One privileged episode: reset, run the expert to the clock,
     return the outcome row. ``render=False`` steps physics without
@@ -597,7 +598,7 @@ def run_expert_episode(
         )
     if on_obs is not None and not render:
         raise ValueError("on_obs needs render=True — no frames otherwise")
-    obs = sim.reset(seed)
+    obs = sim.reset(seed, **(reset_kwargs or {}))
     if on_obs is not None:
         on_obs(obs)
     expert = ScriptedExpert(sim)
