@@ -96,7 +96,10 @@ This document is the deep reference for the model and training system
 as they exist, the measured results that shaped them (§7), and the
 directions under evaluation (§8). Per-module contracts live in
 docstrings; code conventions in `code-styleguide.md`;
-collaboration/operating conventions in `working-together.md`.
+collaboration/operating conventions in `working-together.md`; the
+SO-10x joint-convention axes (calibration v2.1/v3.0 × `use_degrees` —
+a standing footgun for stats tables, conversions and sims) in
+`so101-joint-conventions.md`.
 Transient state (in-flight runs, machine inventory, the queue) lives
 in wandb, the HF hub, and `reports/` — not in docs.
 
@@ -2176,7 +2179,8 @@ Euler-10, 2 cameras, sync loop) — a validation mode, not a control
 mode (~1 s of motion per replan at chunk 30). Deploying the released
 checkpoint on a post-PR#777-calibrated arm (lerobot ≥ 0.5) requires
 `--joint-frame v30-to-v21`: the global q01/q99 table bakes in the
-pre-0.5 degrees frame, so rollout remaps state/actions at the robot
+v2.1-era calibration (zeros/directions; both conventions are degrees
+here — `so101-joint-conventions.md`), so rollout remaps state/actions at the robot
 boundary and gates the first observation against the checkpoint's own
 state band in model frame (docs/rollout_so101.md). Horizon 30 vs 50
 makes matched-window reporting a first-class eval flag. Checkpoint schema grows (new kind,

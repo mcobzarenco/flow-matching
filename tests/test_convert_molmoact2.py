@@ -36,6 +36,8 @@ from safetensors.torch import save_file
 
 from bijou.checkpoint import read_metadata, validate_checkpoint
 from bijou.convert_molmoact2 import convert
+from bijou.data import DatasetStats
+from bijou.fast.molmoact2 import QuantileStats, normalize_state, unnormalize_action
 from bijou.loading import (
     CheckpointTrainArgs,
     MolmoAct2PromptConfig,
@@ -47,6 +49,7 @@ from bijou.loading import (
 from bijou.modelling.decoders.molmo_flow import MolmoFlowConfig
 from bijou.models.molmoact2_flow import MolmoAct2FlowVLA
 from bijou.models.molmoact2_joint import MolmoAct2JointVLA
+from bijou.rollout_safety import JointFrameTransform
 from bijou.testing import TINY_MOLMOACT2_VOCAB
 from bijou.vla import VLAFamily
 
@@ -599,4 +602,127 @@ def test_family_joint_refuses_continuous_exports(
             norm_tag="tiny_tag",
             backbone_ref="user/tiny-hf",
             family=VLAFamily.MOLMOACT2_JOINT,
+        )
+
+
+# ---------------------------------------------------------------------------
+# --remap-stats v21-to-v30
+
+V21_ACTION = {
+    "mean": [3.3, 125.8, 120.2, 55.9, -11.5, 11.3],
+    "std": [10.0, 20.0, 20.0, 15.0, 15.0, 8.0],
+    "q01": [-42.1, 45.2, 35.4, 4.9, -65.6, -0.3],
+    "q99": [48.6, 186.1, 173.6, 93.4, 43.5, 44.8],
+    "count": [100] * 6,
+}
+
+
+def v21_source(source_dir: Path, tmp_path: Path) -> Path:
+    """The fabricated release with a v2.1-fingerprinting stats table
+    (the real released table's shape: lift/elbow boxes high-positive)."""
+    import shutil
+
+    source = tmp_path / "v21_source"
+    shutil.copytree(source_dir, source)
+    payload = json.loads((source / "norm_stats.json").read_text())
+    tag = payload["metadata_by_tag"]["tiny_tag"]
+    tag["action_stats"] = dict(V21_ACTION)
+    tag["state_stats"] = dict(V21_ACTION)
+    (source / "norm_stats.json").write_text(json.dumps(payload))
+    return source
+
+
+def test_remap_stats_v21_to_v30(source_dir: Path, tmp_path: Path) -> None:
+    source = v21_source(source_dir, tmp_path)
+    out = convert(
+        str(source),
+        tmp_path / "remapped",
+        norm_tag="tiny_tag",
+        backbone_ref="user/tiny-hf",
+        remap_stats="v21-to-v30",
+    )
+    meta = read_metadata(out)
+    frame = JointFrameTransform.lerobot_v30_to_v21()
+    stats = meta.stats
+    assert stats.action_q01 is not None and stats.action_q99 is not None
+    # shoulder_lift (index 1): 90 − x, DESCENDING pair carries the flip
+    assert stats.action_q01[1] == pytest.approx(90.0 - 45.2)
+    assert stats.action_q99[1] == pytest.approx(90.0 - 186.1)
+    assert stats.action_q01[1] > stats.action_q99[1]
+    # elbow_flex (index 2): x − 90, ascending
+    assert stats.action_q01[2] == pytest.approx(35.4 - 90.0)
+    assert stats.action_q99[2] == pytest.approx(173.6 - 90.0)
+    # identity joints untouched; std untouched everywhere
+    assert stats.action_q01[0] == pytest.approx(-42.1)
+    assert stats.action_std == tuple(V21_ACTION["std"])
+    assert stats.action_mean[1] == pytest.approx(90.0 - 125.8)
+    # state row mapped identically
+    assert stats.state_q99 is not None
+    assert stats.state_q99[1] == pytest.approx(90.0 - 186.1)
+    # provenance: note + the original table preserved and exact
+    assert meta.stats_note is not None and "remapped v2.1" in meta.stats_note
+    original = DatasetStats.from_state_dict(
+        meta.train_args["converted_from"]["original_stats"],
+    )
+    assert original.action_q99 == tuple(V21_ACTION["q99"])
+    validate_checkpoint(out)
+    # the model between the two normalization boundaries is identical
+    # bytes, so torch-path equivalence at both boundaries IS the
+    # end-to-end decode-equivalence claim: normalize_state(x_v3, mapped)
+    # == normalize_state(A(x_v3), original) on the way in, and
+    # unnormalize_action(v, mapped) == A⁻¹(unnormalize_action(v,
+    # original)) on the way out.
+    mapped_q = _quantile_stats_pair(stats)
+    orig_q = _quantile_stats_pair(original)
+    torch.manual_seed(0)
+    x_v3 = torch.rand(64, 6) * 200.0 - 100.0
+    signs = torch.tensor(frame.signs)
+    offsets = torch.tensor(frame.offsets)
+    x_v21 = x_v3 * signs + offsets
+    torch.testing.assert_close(
+        normalize_state(x_v3, mapped_q),
+        normalize_state(x_v21, orig_q),
+        atol=1e-5,
+        rtol=1e-5,
+    )
+    v = torch.rand(64, 6) * 2.0 - 1.0
+    raw_mapped = unnormalize_action(v, mapped_q)
+    raw_orig = unnormalize_action(v, orig_q)
+    torch.testing.assert_close(
+        raw_mapped,
+        (raw_orig - offsets) * signs,
+        atol=1e-4,
+        rtol=1e-5,
+    )
+
+
+def _quantile_stats_pair(stats: DatasetStats) -> QuantileStats:
+    assert stats.action_q01 is not None and stats.action_q99 is not None
+    return QuantileStats(
+        q01=torch.tensor(stats.action_q01, dtype=torch.float32),
+        q99=torch.tensor(stats.action_q99, dtype=torch.float32),
+    )
+
+
+def test_remap_stats_refuses_non_v21_tables(source_dir: Path, tmp_path: Path) -> None:
+    # the default fabricated table (±3 boxes) does not fingerprint v2.1
+    with pytest.raises(SystemExit, match="fingerprint"):
+        convert(
+            str(source_dir),
+            tmp_path / "remapped",
+            norm_tag="tiny_tag",
+            backbone_ref="user/tiny-hf",
+            remap_stats="v21-to-v30",
+        )
+
+
+def test_remap_stats_excludes_norm_stats_from(source_dir: Path, tmp_path: Path) -> None:
+    with pytest.raises(SystemExit, match="mutually exclusive"):
+        convert(
+            str(source_dir),
+            tmp_path / "remapped",
+            norm_tag="tiny_tag",
+            backbone_ref="user/tiny-hf",
+            norm_stats_from=str(source_dir),
+            remap_stats="v21-to-v30",
         )

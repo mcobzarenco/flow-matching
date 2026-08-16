@@ -229,6 +229,19 @@ def read_metadata(checkpoint: Path) -> VLAMetadata:
                 "convert it first: python -m bijou.convert_legacy "
                 f"{checkpoint} <new-dir>",
             )
+        if (checkpoint / "config.json").exists() and any(
+            checkpoint.glob("*.safetensors"),
+        ):
+            # A raw HF-layout export: importing is a deliberate
+            # once-per-artifact step (audited key partition, recorded
+            # provenance/family/stats choices), never done on the fly.
+            raise SystemExit(
+                f"{checkpoint} looks like a raw HF checkpoint (config.json "
+                "+ safetensors, no metadata.json) — import it once: "
+                f"python -m bijou.convert_molmoact2 --source {checkpoint} "
+                "--out <new-dir> [--family ...] (MolmoAct2 exports), then "
+                "point --init-from/--checkpoint at the imported directory",
+            )
         raise SystemExit(f"{checkpoint} has no {METADATA_FILENAME}")
     return VLAMetadata.from_json_dict(json.loads(path.read_text()))
 

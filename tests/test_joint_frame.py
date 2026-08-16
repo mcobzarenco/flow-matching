@@ -156,3 +156,27 @@ def test_observation_to_item_maps_state_into_model_frame() -> None:
         camera_kinds={},
     )
     assert raw["observation.state"].tolist() == pytest.approx(RIG_HOME)
+
+
+def test_state_envelope_tolerates_descending_quantile_pairs() -> None:
+    """A v2.1→v3.0-remapped table stores sign-flipped joints as
+    DESCENDING q01>q99 pairs; the plausibility band must be
+    orientation-free (lo < hi per joint regardless)."""
+    from bijou.data import DatasetStats
+    from bijou.rollout_safety import state_envelope
+
+    stats = DatasetStats(
+        action_mean=(0.0,) * 6,
+        action_std=(1.0,) * 6,
+        state_mean=(0.0, -35.8, 30.2, 50.0, -11.0, 11.0),
+        state_std=(1.0,) * 6,
+        action_q01=None,
+        action_q99=None,
+        state_q01=(-42.1, 44.8, -54.6, 4.9, -65.6, -0.3),
+        state_q99=(48.6, -96.1, 83.6, 93.4, 43.5, 44.8),
+    )
+    lo, hi = state_envelope(stats, expected_dim=6)
+    for a, b in zip(lo, hi, strict=True):
+        assert a < b
+    # the flipped joint's band spans its min/max regardless of storage order
+    assert lo[1] < -96.1 and hi[1] > 44.8

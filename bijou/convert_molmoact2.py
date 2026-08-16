@@ -6,6 +6,11 @@ checkpoint directory (``bijou/checkpoint.py``) once, and everything
 downstream (`--init-from`, eval, rollout) consumes it like any other
 checkpoint:
 
+The recorded stats table is in the RELEASE'S joint convention
+(v2.1-era degrees) — consuming it against v3.0-calibrated data clamps
+elbow/lift and inverts lift's direction; the two convention axes and
+the remap story live in ``docs/so101-joint-conventions.md``.
+
 - ``metadata.json`` (schema 2): family per ``--family`` (flow, ar or
   joint — the release trained BOTH heads; rig-ft 'continuous' exports
   refuse ar/joint), prompt
@@ -53,6 +58,7 @@ export directory.
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import hashlib
 import json
 import math
@@ -83,6 +89,7 @@ from .modelling.encoders.molmoact2_processing import (
 )
 from .modelling.gemma4.loading import resolve_checkpoint_dir
 from .modelling.molmo2.loading import import_backbone_state
+from .rollout_safety import JointFrameTransform
 from .sections import (
     MOLMOACT2_FAST_TOKENIZER_REF,
     ar_backbone_config_to_dict,
@@ -198,6 +205,121 @@ def _round_up(value: int, multiple_of: int) -> int:
     return int(math.ceil(value / multiple_of) * multiple_of)
 
 
+# SO-10x joint order the remap map is defined over (lerobot feature
+# order; docs/so101-joint-conventions.md).
+_SO10X_LIFT, _SO10X_ELBOW = 1, 2
+
+
+def _remap_stats_v21_to_v30(stats: DatasetStats) -> DatasetStats:
+    """Re-express a v2.1-calibration degrees table in v3.0-calibration
+    degrees via the official lerobot PR#777 transform (shoulder_lift
+    90−x, elbow_flex x−90, identity elsewhere — the literals live in
+    :meth:`JointFrameTransform.lerobot_v30_to_v21`, one home).
+
+    Quantile normalization is affine, so the mapped table reproduces
+    the model's normalized stream EXACTLY on v3.0 data — sign flips
+    included: the flipped joint lands as a DESCENDING q01>q99 pair,
+    which the normalized-space clamp carries transparently. Verified
+    per call by a float64 identity check across both rows.
+
+    Refuses tables that don't fingerprint as v2.1 (already-v3.0 or
+    already-remapped — the mint-time double-remap guard) and non-6-dim
+    tables (the map is SO-10x-specific)."""
+    if len(stats.action_mean) != 6 or len(stats.state_mean) != 6:
+        raise SystemExit(
+            f"--remap-stats v21-to-v30 is the 6-joint SO-10x map; the table "
+            f"is action {len(stats.action_mean)}-dim / state "
+            f"{len(stats.state_mean)}-dim",
+        )
+    for row_name, q01, q99 in (
+        ("action", stats.action_q01, stats.action_q99),
+        ("state", stats.state_q01, stats.state_q99),
+    ):
+        if q01 is None or q99 is None:
+            raise SystemExit(
+                f"--remap-stats needs q01/q99 on the {row_name} row — this "
+                "table predates quantiles",
+            )
+        for joint, index in (
+            ("shoulder_lift", _SO10X_LIFT),
+            ("elbow_flex", _SO10X_ELBOW),
+        ):
+            if not (q99[index] > 100.0 and q01[index] > -20.0):
+                raise SystemExit(
+                    f"{row_name} row does not fingerprint as v2.1-calibration "
+                    f"degrees ({joint} q01→q99 = {q01[index]:.1f}→"
+                    f"{q99[index]:.1f}; v2.1 boxes sit high-positive — "
+                    "docs/so101-joint-conventions.md §4). Already v3.0, "
+                    "already remapped, or the wrong --norm-tag — refusing a "
+                    "double remap",
+                )
+    inverse = JointFrameTransform.lerobot_v30_to_v21()
+
+    def check_identity(
+        original_q01: tuple[float, ...],
+        original_q99: tuple[float, ...],
+        mapped_q01: tuple[float, ...],
+        mapped_q99: tuple[float, ...],
+    ) -> None:
+        # float64 identity: normalize(x_v3, mapped) == normalize(A(x_v3),
+        # original) on a grid spanning each joint's mapped box.
+        for j in range(6):
+            lo, hi = sorted((mapped_q01[j], mapped_q99[j]))
+            for k in range(17):
+                x = lo + (hi - lo) * k / 16.0
+                x21 = inverse.signs[j] * x + inverse.offsets[j]
+                n_mapped = (
+                    2.0 * (x - mapped_q01[j]) / (mapped_q99[j] - mapped_q01[j]) - 1.0
+                )
+                n_orig = (
+                    2.0 * (x21 - original_q01[j]) / (original_q99[j] - original_q01[j])
+                    - 1.0
+                )
+                if abs(n_mapped - n_orig) > 1e-9:
+                    raise SystemExit(
+                        f"remap identity check FAILED on joint {j} at x={x}: "
+                        f"{n_mapped} != {n_orig} — refusing to mint a table "
+                        "that changes the model's normalized stream",
+                    )
+
+    assert stats.action_q01 is not None and stats.action_q99 is not None
+    assert stats.state_q01 is not None and stats.state_q99 is not None
+    mapped = dataclasses.replace(
+        stats,
+        action_mean=inverse.values_to_arm(stats.action_mean),
+        action_q01=inverse.values_to_arm(stats.action_q01),
+        action_q99=inverse.values_to_arm(stats.action_q99),
+        state_mean=inverse.values_to_arm(stats.state_mean),
+        state_q01=inverse.values_to_arm(stats.state_q01),
+        state_q99=inverse.values_to_arm(stats.state_q99),
+        # std is direction-free (|sign| = 1): unchanged.
+    )
+    assert mapped.action_q01 is not None and mapped.action_q99 is not None
+    assert mapped.state_q01 is not None and mapped.state_q99 is not None
+    check_identity(
+        stats.action_q01, stats.action_q99, mapped.action_q01, mapped.action_q99
+    )
+    check_identity(stats.state_q01, stats.state_q99, mapped.state_q01, mapped.state_q99)
+    for j, name in enumerate(
+        (
+            "shoulder_pan",
+            "shoulder_lift",
+            "elbow_flex",
+            "wrist_flex",
+            "wrist_roll",
+            "gripper",
+        ),
+    ):
+        descending = mapped.action_q01[j] > mapped.action_q99[j]
+        print(
+            f"[convert] remap {name:14s} action q01→q99 "
+            f"{stats.action_q01[j]:8.2f}→{stats.action_q99[j]:8.2f} (v2.1) "
+            f"=> {mapped.action_q01[j]:8.2f}→{mapped.action_q99[j]:8.2f} "
+            f"(v3.0){' [descending: sign flip]' if descending else ''}",
+        )
+    return mapped
+
+
 def convert(
     source: str,
     out: Path,
@@ -205,6 +327,7 @@ def convert(
     norm_tag: str,
     backbone_ref: str | None,
     norm_stats_from: str | None = None,
+    remap_stats: str | None = None,
     family: VLAFamily = VLAFamily.MOLMOACT2_FLOW,
     fast_tokenizer: str = MOLMOACT2_FAST_TOKENIZER_REF,
 ) -> Path:
@@ -299,7 +422,19 @@ def convert(
         f"skipped {list(imported.skipped)}",
     )
     expert_sha256 = _tensor_digest(expert)
+    if remap_stats is not None and norm_stats_from is not None:
+        raise SystemExit(
+            "--remap-stats and --norm-stats-from are mutually exclusive: "
+            "one TRANSFORMS the recorded table (same normalized stream, "
+            "v3.0 coordinates), the other REPLACES it (a different space "
+            "the model must adapt to) — pick the fix you mean",
+        )
+    if remap_stats is not None and remap_stats != "v21-to-v30":
+        raise SystemExit(f"unknown --remap-stats {remap_stats!r}")
     stats = _dataset_stats(tag, real_action_dim)
+    original_stats = stats if remap_stats is not None else None
+    if remap_stats is not None:
+        stats = _remap_stats_v21_to_v30(stats)
     train_args = _synthesized_train_args(decoder_config)
     train_args["converted_from"] = {
         "source": str(source),
@@ -312,6 +447,14 @@ def convert(
         **(
             {"norm_stats_from": str(norm_stats_from)}
             if norm_stats_from is not None
+            else {}
+        ),
+        **(
+            {
+                "remap_stats": remap_stats,
+                "original_stats": original_stats.state_dict(),
+            }
+            if original_stats is not None
             else {}
         ),
         "expert_tensors": len(expert),
@@ -358,14 +501,14 @@ def convert(
         case VLAFamily.MOLMOACT2_AR:
             objective: dict[str, Any] = {"kind": "ar"}
         case VLAFamily.MOLMOACT2_JOINT:
-            # An IMPORT records the default continuation plan, not the
-            # release's (unknown) training mixture — printed so nobody
-            # mistakes it for a measured fact.
+            # An IMPORT records the default continuation plan for
+            # future --init-from runs, not a claim about how the
+            # release itself was trained — printed so nobody mistakes
+            # it for a measured fact.
             objective = {"kind": "joint", "ce_weight": 1.0, "insulate_flow": False}
             print(
                 "[convert] joint import: objective recorded as ce_weight=1.0, "
-                "insulate_flow=False (the DEFAULT continuation plan; the "
-                "release's own training mixture is not public)",
+                "insulate_flow=False (the DEFAULT continuation plan)",
             )
         case _:
             objective = {"kind": "flow"}
@@ -394,7 +537,14 @@ def convert(
             f"norm table loaded from {norm_stats_from} (their fine-tune "
             "table-recompute semantics)"
             if norm_stats_from is not None
-            else None
+            else (
+                "quantiles remapped v2.1→v3.0 (official lerobot PR#777: "
+                "shoulder_lift 90−x, elbow_flex x−90; "
+                "docs/so101-joint-conventions.md; original table in "
+                "converted_from.original_stats)"
+                if remap_stats is not None
+                else None
+            )
         ),
     )
     write_vla_checkpoint(
@@ -490,6 +640,21 @@ def parse_args() -> argparse.Namespace:
         "never resolves it)",
     )
     parser.add_argument(
+        "--remap-stats",
+        choices=["v21-to-v30"],
+        default=None,
+        help="re-express the recorded quantile table in the v3.0 "
+        "calibration via the official lerobot PR#777 transform "
+        "(shoulder_lift 90−x sign flip, elbow_flex −90; identity "
+        "elsewhere — docs/so101-joint-conventions.md). The model's "
+        "normalized stream is preserved EXACTLY (verified per "
+        "conversion), so nothing is relearned; sign-flipped joints "
+        "store descending q01>q99 pairs by design. Default: table "
+        "carried verbatim. Mutually exclusive with --norm-stats-from; "
+        "a remapped checkpoint deploys with --joint-frame rig (one "
+        "convention fix, never stacked)",
+    )
+    parser.add_argument(
         "--norm-stats-from",
         default=None,
         help="load the q01/q99 tables (norm_stats.json, selected by "
@@ -511,6 +676,7 @@ def main() -> None:
         norm_tag=args.norm_tag,
         backbone_ref=args.backbone_ref,
         norm_stats_from=args.norm_stats_from,
+        remap_stats=args.remap_stats,
         family=VLAFamily(args.family),
         fast_tokenizer=args.fast_tokenizer,
     )

@@ -11,6 +11,8 @@ back through ``A⁻¹`` on the way out (both directions ride
 ``bijou.eval.molmo_norm.AffineMap`` — the box's own machinery, so the
 fitted map is directly comparable with its panel snaps).
 
+The convention axes themselves (calibration v2.1/v3.0 ×
+``use_degrees``) are documented in ``docs/so101-joint-conventions.md``.
 The fit is ``fit_convention_map`` on the seam table vs the model table.
 Its midpoint gate was designed for panel datasets and can under-translate
 a joint whose seam midpoint sits just inside the padded box while most of

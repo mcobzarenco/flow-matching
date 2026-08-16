@@ -404,3 +404,12 @@ def test_convert_refuses_vla_directories(
     convert(legacy, converted)
     with pytest.raises(SystemExit, match="re-convert"):
         convert(converted, tmp_path / "again")
+
+
+def test_read_metadata_names_the_importer_on_raw_hf_dirs(tmp_path: Path) -> None:
+    raw = tmp_path / "hf_export"
+    raw.mkdir()
+    (raw / "config.json").write_text("{}")
+    save_file({"w": torch.zeros(1)}, str(raw / "model.safetensors"))
+    with pytest.raises(SystemExit, match="convert_molmoact2"):
+        read_metadata(raw)

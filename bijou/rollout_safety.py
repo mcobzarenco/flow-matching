@@ -176,6 +176,22 @@ class JointFrameTransform:
         offsets = torch.tensor(self.offsets, dtype=chunk.dtype, device=chunk.device)
         return (chunk - offsets) * signs
 
+    def values_to_arm(self, values: Sequence[float]) -> tuple[float, ...]:
+        """The model→arm inverse on a plain per-joint vector — the same
+        map :meth:`chunk_to_arm` applies to action rows, for consumers
+        that transform TABLES rather than tensors (the conversion-time
+        quantile remap: mapped = (recorded − offset) · sign, exact
+        because signs are ±1). Length must match the joint count."""
+        return tuple(
+            (value - offset) * sign
+            for value, offset, sign in zip(
+                values,
+                self.offsets,
+                self.signs,
+                strict=True,
+            )
+        )
+
 
 def state_envelope(
     stats: DatasetStats,
@@ -200,7 +216,16 @@ def state_envelope(
             "(different embodiment?)",
         )
     if stats.state_q01 is not None and stats.state_q99 is not None:
-        band_lo, band_hi = stats.state_q01, stats.state_q99
+        # Per-joint min/max: a v2.1→v3.0-remapped table stores its
+        # sign-flipped joints as DESCENDING q01>q99 pairs (the flip is
+        # the table's, not the band's — docs/so101-joint-conventions.md);
+        # the plausibility band is orientation-free.
+        band_lo = tuple(
+            min(a, b) for a, b in zip(stats.state_q01, stats.state_q99, strict=True)
+        )
+        band_hi = tuple(
+            max(a, b) for a, b in zip(stats.state_q01, stats.state_q99, strict=True)
+        )
     else:
         band_lo = tuple(
             m - 3.0 * s for m, s in zip(stats.state_mean, stats.state_std, strict=True)
