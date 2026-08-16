@@ -8,7 +8,7 @@
 # anchors/kill rules in the new vocabulary; old runs' jsonls keep their
 # historical keys (read-time mapping: fontaine/scripts/loss_keys.py).
 
-no_live_runs_reason = "HOME GPU only — declared 10:2xZ 08-16: OWNER-RESERVED GPU (their 10:13:32Z message — local rollouts of the 2k policy); leg-3 token-unseen eval STOPPED on their order mid-seed-24, GPU verified free (0 MiB / 0%). GPU queue PAUSED until they hand it back; resume recipe in the pruned grasp_sft_joint_probes entry note below. CPU-side spawn-v2 instrument slice continues."
+# (no_live_runs_reason cleared 14:25Z 08-16 — demo_gen_v1 launched on the A100 box; prior: HOME-GPU-only declaration of 10:2xZ 08-16.)
 
 
 # (no_live_runs_reason cleared 11:2xZ 08-13 — molmoact2_ar100 launched under the owner 11:07Z delegation; prior: "declared 01:1xZ 08-13 work session: grpo_signal_probe COMPLETE and pruned (re-scoped cells 1/2/5, both families clear, unit stopped 01:08:05Z at the cell-5 boundary). Local GPU idle; next GPU legs pend owner calls (v3-rerun unhold, cells 3/4 re-queue, phase-2 token-GRPO design first lands CPU-side).")
@@ -992,32 +992,14 @@ no_live_runs_reason = "HOME GPU only — declared 10:2xZ 08-16: OWNER-RESERVED G
 # kind = "gpu_hours_max"
 # value = 6.0
 
-# demo_gen_v1: the v1 5k demo dataset generation on the owner-allocated
-# 8xA100 box (queue demo-gen-sharded-a100, prereg spawn-v2 + SS7 v2.1
-# amendment). 96 shards x 8 GPUs, spawn v2.1 + tint mix70, seeds from
-# 10000 stride 2000, target 5000 kept (~56% expert rate measured).
-# Launched 14:25:12Z 08-16 (unit demo-gen-v1c; two earlier launches
-# stopped+wiped: owner retreat-tail steering 13:46Z + phantom-disk
-# collision fix landed first, 07f6de5). On DONE:
-# merge (sim.merge_demo_shards) -> upload (upload_demo_dataset.py to
-# mcobzarenco/fontaine-grasp-demos-v1) -> dataset card post.
-[[run]]
-name = "demo_gen_v1"
-kind = "progress-log"
-host = "147.224.218.164"
-pgrep = "collect_demos_sharded"
-pgrep_min = 1
-gpu_indices = [0, 1, 2, 3, 4, 5, 6, 7]
-gpu_mem_min_mib = 300
-log = "/home/ubuntu/datasets/fontaine/grasp_demos_v1/logs/driver.log"
-progress_re = "[0-9]+/5000 kept"
-started_utc = "2026-08-16T14:25:12+00:00"
-gpu_hours_per_wall_hour = 8.0
-boundary = "5000 kept (or seed/wall budget); driver exits when all 96 shards hit target; ~2.5-4h projected from 0.35 kept/min/shard smoke"
-anchors = [
-    "kept-rate sanity: v2.1 + disk-fix + retreat-tail measured 48.3% kept (n=120, sampler-weighted); sustained aggregate far below ~40% means a render/protocol regression, not luck",
-    "resume: rerun the same driver command (manifest-guarded); merge only after driver DONE",
-]
-[[run.gates]]
-kind = "gpu_hours_max"
-value = 80.0
+# demo_gen_v1 entry PRUNED 16:4xZ 08-16 work session — COMPLETE and
+# boundary EXECUTED same-session: driver DONE 16:32Z, 5000/5000 kept
+# (10,883 attempted = 45.9% vs 48.3% anchor), 0 failed shards, 2h07m
+# wall ~16.9/80 GPU-h. Merged (5000 eps / 1,506,208 frames / 26 GiB,
+# quantiles rewritten exact, provenance united), uploaded PUBLIC to
+# mcobzarenco/fontaine-grasp-demos-v1 (verified 200 + private=false),
+# card + visualizer link posted in-channel 16:41Z. Box GPUs now IDLE —
+# next box job is the SFT run (staged; blank = owner's stats-corrected
+# checkpoint conversion, their 15:30:26Z take).
+
+no_live_runs_reason = "declared 16:4xZ 08-16: demo_gen_v1 COMPLETE + boundary executed (dataset public); home GPU owner-reserved (ckpt-format), A100 box idle awaiting the SFT launch blank (owner stats-corrected conversion, 15:30:26Z)."

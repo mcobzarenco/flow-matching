@@ -5,7 +5,62 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-16 14:38–16:5xZ (real `date -u` at stamp: 16:43) —
+work session: **v1 DATASET SHIPPED — 5,000/5,000 kept, merged, PUBLIC
+on HF with card + visualizer link; SFT staged end-to-end; side-spawn
+probe closed as measured NO-GO; 7 owner messages answered live.***
+
+**Status**: no live runs — demo-gen-v1c **COMPLETE 16:32Z**: 5,000/5,000
+kept (10,883 attempted = 45.9% vs the 48.3% anchor), 0 failed shards,
+2h07m wall ≈ **16.9 of the 80 GPU-h gate**; boundary executed
+same-session (merge → 5,000 eps / 1,506,208 frames / 26 GiB, quantile
+rewrite + provenance union; dry-run then public upload; card 16:41Z).
+Dataset: **https://huggingface.co/datasets/mcobzarenco/fontaine-grasp-demos-v1**.
+A100 box now idle awaiting the SFT launch; home GPU owner-held
+(ckpt-format). Babysit registry empty.
+
+**Steering** (7 owner messages, all replied + acked, inbox clear): (1)
+14:57Z rebase-on-main + released-ckpt training plan → main merged
+(`3a38a17`, 968→975 checks), their converted ckpt validated (schema 2,
+joint, 20.3 GiB). (2) 15:05Z SFT spec (rig datasets in the mix, image
+aug, joint + KI, vision frozen, batch question) → full command proposed
+from measured route-C numbers (eff-128 = 16×8, ~57/80 GiB per rank).
+(3) 15:10Z random success video → seed 130051 re-rendered locally
+(exact 242-tick/2.2 cm match to the shard log), posted. (4) 15:13Z
+v2.1-vs-v3.0 joint conventions → all three datasets verified v3.0 raw
+degrees, ranges overlap. (5) 15:21Z per-dataset normalization
+question + eval work order → **owner was right, my claim corrected**
+(molmoact2 normalization is decoder-owned q01/q99 from the ckpt) and
+that check surfaced a REAL blocker: the released ckpt's table is a
+different joint convention (lift 45→186 vs our −103→+29) — direct SFT
+would clamp-distort; owner took the conversion-time fix 15:30Z. Eval
+work order EXECUTED: `--eval-dataset-breakdown` landed (`d642f7b`).
+(6) 15:22Z retreat-too-wild → queued; first pass measured + reverted
+(findings in the queue item). (7) 16:18Z consolidated command → posted
+16:39Z with the one blank (their stats-corrected conversion).
+
+**Done** (commits `3a38a17`, `a8973dd`, `d642f7b`, checks 975): main
+merge (ckpt schema-v2 stack); **side-spawn probe CLOSED as measured
+NO-GO** (prereg §8: side rest 120/120, stock expert 0/120 but
+pinch+carry works, righting 0/120 across 6 push variants — the boat
+slides 6–7 cm, never rolls; tool facts banked: pad-space floor z≈0.077,
+gripperframe site = jaw tip); `reset(boat_start="side")` extension +
+oracles; `--eval-dataset-breakdown` (per-dataset MAE lines + counts
+table, 4 oracles); **v1 dataset generated + merged + published** with
+card; queue audit (spawn-v2-randomization closed as superseded);
+babysit entry pruned with clock-checked stamps (one wall-clock slip
+caught + corrected in-channel 16:43Z).
+
+**Next**: `queue_cli.py next` → `expert-retreat-slew-gentle` (CPU;
+first-pass findings recorded: ramped home leg collapses kept% via the
+success still-bar, needs instrumented attribution). Then the SFT
+pre-reg once the owner's stats-corrected conversion lands
+(owner-pending, 15:30Z). Owner-pending: v2.1 band objections,
+ckpt-format conversion call, morning-veto items. `run_work_next`
+ARMED — box idle + CPU queue non-empty.*
 
 *Updated 2026-08-16 14:34–14:4xZ (real `date -u` at stamp: 14:37) —
 tick: **demo-gen-v1c babysit GREEN — 96/96 shards live, kept ratio
@@ -87,72 +142,19 @@ call, morning-veto items. Next session: merge main past `57c6843`.
 `run_work_next` ARMED — the tick chain babysits the run and the next
 work session takes the merge/upload boundary or the side-spawn probe.*
 
-*Updated 2026-08-16 12:09–12:3xZ (real `date -u` at stamp: 12:22) —
-tick: **live owner exchange (4 messages, all answered <2 min):
-8×A100-80GB box confirmed, demo-gen sharding ordered, GPU hold
-extended (checkpoint-format change coming).***
-
-**Status**: no live GPU runs. The box GPU went observably free (0
-MiB / 0%, `policy_server` unloaded) — flagged it in-channel 12:10:49Z;
-owner 12:11:32Z: **still reserved** — they want to change the
-checkpoint format again before more training. Also: **owner
-fast-forwarded `main` to fontaine `3a3daa6`** — the whole branch
-(spawn-v2 instrument, babysit fixes, tick notes) adopted into trunk
-verbatim; nothing to merge.
-
-**Steering** (live exchange 12:11–12:2xZ, every message replied +
-acked, inbox clear): (1) 12:11:32Z GPU stays theirs, ckpt-format
-change first → ack'd; offered a conversion pass over the banked
-step-2000 checkpoint when the new format lands (vs re-training 8
-GPU-h) — their call pending. (2) 12:14:32Z "would an 8×A100 speed up
-demo generation? 40 or 80 GiB?" → answered from measured data
-(stage-B: 313 kept/4 h single-process but *unrendered* expert = 200
-seeds/~3 min — render-bound, embarrassingly seed-parallel, ~16–32
-shards ≈ 20–40×; **80 GiB recommended**: joint recipe measured 66.65
-GiB/GPU, 40 GiB forces recipe surgery). (3) 12:18:57Z **decisions:
-8×A100-80GB confirmed; "make the sharding changes" — P1 work order**;
-answered episode target (**~5,000 kept** ≈ 5/cell of the 977-cell
-spawn-v2 mask, ~15 GB, ~2–3 h sharded) + side-spawn question
-(two-part: spawn is easy but `success()` demands upright>0.9 →
-side-spawn demos need a *righting* capability the expert lacks;
-proposed upright v1 now + CPU feasibility probe → measured ~10–20%
-slice in v1.1). (4) 12:19:06Z "randomize the boat color" → it already
-randomizes per reset but deliberately narrow (rig-gray band,
-`so101_sim.py:1530`; the old wide draw was reverted as unrealistic);
-proposed tint-band knob + 70/30 rig-gray/wide mixed slice; asked
-whether non-gray benchys are planned on the rig. (5) 12:21:03Z
-**owner approves**: "makes sense re: boat color + agree with v1 with
-just the boat upright in the annulus" → **v1 dataset locked: spawn-v2
-annulus + upright + tint mix, ~5k kept**; replied that the annulus =
-the spawn-v2 protocol so generation finalizes against the posted §5
-proposed-freeze table (objection window open until the box lands).
-(6) 12:25:56Z **the box landed already**: access provisioned to
-`ubuntu@147.224.218.164` — 8× A100-SXM4-80GB; I verified read-only
-from here (BatchMode SSH green, 8 GPUs idle 0 MiB, **240 cores /
-1.77 TB RAM / 19 TB disk**), asked provision-now-vs-hold. (7)
-12:26:52Z **full allocation**: "we should get started on generating
-the demo datasets there too, machine is all yours" → execution plan
-posted (sharding code w/ bit-identical merge oracle → provision →
-measure per-EGL throughput, size shards → v1 5k generation → HF
-upload + dataset card).
-
-**Done**: proactive GPU-freed flag (surfaced the reservation
-extension + the ckpt-format heads-up); 4 code-verified in-channel
-answers; queue **+2 owner items** (`demo-gen-sharded-a100` P1:
-shard driver + LeRobot shard-merge + HF upload + tint knob;
-`side-spawn-feasibility-probe`), validate green depth 3.
-
-**Next**: chained work session (**`run_work_next` ARMED**) — P1
-EXECUTE `demo-gen-sharded-a100`: shard driver + merge + HF-upload
-code with oracles, provision the A100 box, launch v1 generation
-(detached, babysit-registered), upload + card post; then the
-side-spawn righting probe. Home-box GPU stays untouched (owner hold,
-ckpt-format change pending). Owner-pending: ckpt-format conversion
-call, spawn-v2 §5 objection window, C′ route, morning-veto items.
-Note for the work session: queue class taxonomy needs an entry for
-the new box (validator only knows gpu-local/gpu-box/cpu).*
-
 ## Utilization footer
+
+Session 2026-08-16 14:38–16:5xZ (work, exploit; box demo-gen rode to
+completion ≈ +14.4 GPU-h this session's share of the 16.9 total, home
+GPU owner-held): **v1 dataset SHIPPED same-session — 5,000/5,000 kept
+45.9%, 0 failed shards, merged 1.5M frames, public on HF with card +
+visualizer link, 16.9/80 GPU-h**; side-spawn probe executed to a
+measured NO-GO (6 righting variants, 0/120 — boat slides, never
+rolls) + prereg §8 report; `--eval-dataset-breakdown` landed with
+oracles; main merged; released-ckpt stats-table convention mismatch
+FOUND (would clamp-distort SFT) → owner took the conversion fix; 7
+owner messages answered live incl. a corrected claim of mine; queue
+±: +3 owner items, 3 closed (probe, demo-gen, stale spawn-v2 parent).
 
 Session 2026-08-16 12:36–14:3xZ (work, exploit; ~0.5 GPU-h of
 smokes/probes on the A100 box + **demo-gen-v1c live from 14:25Z

@@ -1,15 +1,15 @@
 {
- "updated_utc": "2026-08-16T15:34:06Z",
+ "updated_utc": "2026-08-16T16:42:46Z",
  "depth_reason": "depth 3 queued; demo-gen-sharded-a100 is P1 EXECUTE (new A100 box allocated 12:26:52Z, machine-is-yours); home-box gpu items stay blocked under the owner hold (ckpt-format change pending); spawn-v2 dataset constants approved-for-generation 12:21:03Z vs the posted SS5 table.",
  "items": [
   {
    "id": "demo-gen-sharded-a100",
    "class": "gpu-a100",
-   "status": "live",
+   "status": "done",
    "owner_hold": false,
    "prereg": "fontaine/blog/src/posts/2026-08-16-prereg-sim-spawn-v2.md",
    "title": "P1 EXECUTE (allocation landed 12:26:52Z 08-16: 'machine is all yours' \u2014 8xA100-80GB box 147.224.218.164 provisioned-access, verified idle, 240 cores/1.77TB/19TB, SSH BatchMode green): demo-gen sharding readiness \u2014 (1) shard driver for sim.collect_demos: N processes, disjoint seed ranges, per-shard --out + resume state, EGL context per shard round-robined over GPUs; (2) LeRobot v3 shard-merge into one dataset (episode/frame reindex + meta/provenance union, kept-seed lists concatenated); (3) HF dataset upload path (hub repo fontaine/*, same huggingface_hub route as checkpoints); (4) benchy tint-band knob: rig-gray band (current) vs wide-hue, mixed-slice config (70/30 APPROVED 12:21:03Z); target ~5,000 kept episodes; spawn protocol = spawn-v2 annulus + upright, OWNER-APPROVED 12:21:03Z ('agree with v1 with just the boat upright in the annulus'); finalize against the posted SS5 proposed-freeze table, objection window open until the box lands. All CPU-implementable now; oracles: 2-shard smoke merge bit-identical to single-run on same seeds, upload dry-run. EXECUTION extension: provision the box (repo+uv+assets per checklist), measure per-EGL-context render throughput then size shard count (240 cores >> the 16-32 estimate), launch v1 generation (spawn-v2 annulus + upright +/-180 yaw, 70/30 tint mix, ~5k kept), HF upload + dataset card post. Long-running remote job: launch detached on the box (systemd-run --user or setsid+nohup over ssh), babysit.toml entry at launch. NOTE: class taxonomy has no entry for the new A100 box yet (validator: gpu-local/gpu-box/cpu) \u2014 carried as cpu; work session adds a class for 147.224.218.164 to queue_cli validation as part of provisioning.",
-   "boundary": "LIVE demo-gen-v1c on 147.224.218.164 since 14:25:12Z 08-16: 96 shards x 8 GPUs, v2.1 + mix70 + retreat tail, target 5000 kept, seeds 10000+ stride 2000, ~2.5-3.5h ETA. On DONE (driver exit in logs/driver.log): merge (sim.merge_demo_shards --root ~/datasets/fontaine/grasp_demos_v1 --out .../merged), then upload_demo_dataset.py --repo mcobzarenco/fontaine-grasp-demos-v1 (public), then card post. babysit entry demo_gen_v1 registered."
+   "boundary": "LIVE demo-gen-v1c on 147.224.218.164 since 14:25:12Z 08-16: 96 shards x 8 GPUs, v2.1 + mix70 + retreat tail, target 5000 kept, seeds 10000+ stride 2000, ~2.5-3.5h ETA. On DONE (driver exit in logs/driver.log): merge (sim.merge_demo_shards --root ~/datasets/fontaine/grasp_demos_v1 --out .../merged), then upload_demo_dataset.py --repo mcobzarenco/fontaine-grasp-demos-v1 (public), then card post. babysit entry demo_gen_v1 registered. || CLOSED 16:4xZ 08-16 work session, boundary EXECUTED same-session: driver DONE 16:32Z 5000/5000 kept (10,883 attempted 45.9% vs 48.3% anchor, 0 failed shards, 2h07m wall ~16.9/80 GPU-h); merge 96 shards -> 5000 eps / 1,506,208 frames / 26 GiB (quantiles rewritten exact, provenance united); upload dry-run then PUBLIC push to mcobzarenco/fontaine-grasp-demos-v1 (API-verified private=false, page 200); card + LeRobot visualizer link in-channel 16:41Z + wall-clock correction 16:43Z. Box GPUs idle; SFT staged (command in-channel 16:39Z), blank = owner stats-corrected conversion."
   },
   {
    "id": "side-spawn-feasibility-probe",
@@ -1864,7 +1864,7 @@
    "status": "queued",
    "owner_hold": false,
    "prereg": null,
-   "title": "OWNER WORK ORDER 15:22:29Z 08-16 ('retreat a bit wild, slow it down, more natural; in-flight 5k fine'): slew-limit the ScriptedExpert retreat home leg (~2 deg/tick crawl like the carry phases, instead of the one-shot absolute HOME command the servos chase at full speed), keep the 25-tick up-and-back pull; re-measure kept% + parked% on ~120 seeds vs the 48.3% anchor. Protocol untouched; applies to v1.1/regens only."
+   "title": "OWNER WORK ORDER 15:22:29Z 08-16 ('retreat a bit wild, slow it down, more natural; in-flight 5k fine'): slew-limit the ScriptedExpert retreat home leg (~2 deg/tick crawl like the carry phases, instead of the one-shot absolute HOME command the servos chase at full speed), keep the 25-tick up-and-back pull; re-measure kept% + parked% on ~120 seeds vs the 48.3% anchor. Protocol untouched; applies to v1.1/regens only. || FIRST PASS 16:4xZ 08-16 (work session, measured n=120 each, code REVERTED not landed): (a) _carry measured-pose slew home: kept 50.8% OK but parked 3% - servo-lag compounding crawls, tail budget expires; (b) feedforward 3deg/tick command ramp: parked 52-63% but kept COLLAPSED 25-33% vs 48.3 anchor - pan-first sequencing and up-leg variants did NOT recover it. LEADING HYPOTHESIS (uninstrumented): not boat knocks - episodes ending the 150-tick tail mid-motion fail success()'s still bar (max|qvel|<0.5 includes ARM dofs), so any home leg slower than ~50 ticks demotes placed episodes. Next pass needs: per-episode fail attribution (boat moved vs still-bar), maybe a faster ramp (5-6 deg/tick), longer tail budget, or excluding arm dofs from the tail re-verify (protocol change, owner call)."
   },
   {
    "id": "molmoact2-released-stats-rewrite",
@@ -1875,5 +1875,5 @@
    "title": "OWNER-TAKEN 15:30:26Z 08-16 ('I'll fix the different joint convention at conversion time and let you know'): PREREQ FOUND 15:3xZ 08-16 (measured): released so101 checkpoint's recorded q01/q99 stats table is in a different joint convention than ALL our v3.0 data (lift q01-q99 = 45->186 vs data -103->+29, non-overlapping) -- direct SFT would clamp-distort every frame (corrected-stats-table failure class, at conversion). Fix: recompute mean/std/q01/q99 from the SFT train mixture (demo-v1 + both rig sets) and write into the converted checkpoint's stats row (+ per-dataset rows if the tooling allows) before any launch; oracle: normalized-range coverage check over a sample of each dataset."
   }
  ],
- "updated": "2026-08-16T15:34:06Z"
+ "updated": "2026-08-16T16:42:46Z"
 }
