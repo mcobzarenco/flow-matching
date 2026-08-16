@@ -1,13 +1,16 @@
 """Spawn-v2 sampler — disk and boat both placed randomly (pre-reg
-DRAFT posts/2026-08-16-prereg-sim-spawn-v2.md §2; owner steering
-2026-08-16 09:16Z).
+posts/2026-08-16-prereg-sim-spawn-v2.md §2; owner steering 2026-08-16
+09:16Z).
 
-STANDALONE until the pre-reg finalizes: nothing here is wired into
-``SO101Sim.reset`` — the ``spawn_version="v2"`` integration (and the
-registered v1 stream-compat guard) lands only once the DRAFT constants
-below freeze. Until then this module is the sampler the oracles pin,
-sampling from the measured workspace mask the reachability probe
-emits (fontaine/scripts/spawn_v2_reachability_probe.py).
+FINALIZED 2026-08-16: the §5 table below is frozen at its proposed
+(measured) values — owner approved the v1-dataset protocol built on it
+12:21:03Z ("agree with v1 with just the boat upright in the annulus")
+and the registered objection window ("flag it before the box lands")
+closed with the A100 box landing 12:25:56Z, no objections. The
+workspace mask W is committed as ``sim/spawn_v2_mask.json`` (977
+cells, the §3.1 v1 instrument read); ``SO101Sim(spawn_version="v2")``
+consumes this sampler, and ``spawn_version="v1"`` reproduces the v1
+draw order bit-identically (oracle-guarded).
 
 Draw order (one RNG, fixed): disk cell, disk jitter, then per-attempt
 boat (r, theta), then yaw — the order is part of the protocol (seed ->
@@ -22,8 +25,8 @@ from pathlib import Path
 
 import numpy as np
 
-# DRAFT constants — candidates recorded in the pre-reg, FROZEN at
-# finalization (§5). Sources: residual bar = the probe's 1 mm class
+# FROZEN constants (pre-reg §5, finalized 2026-08-16 — see module
+# docstring). Sources: residual bar = the probe's 1 mm class
 # (425/2196 cells); moment bound = backstop at 2x the measured max
 # 0.25; r_min = disk radius 0.04 + hull half-length 0.03 + 0.01
 # margin (the v1 band's measured clearance); r_max caps the traverse
@@ -42,6 +45,9 @@ JAW_KEEPOUT = 0.04
 # floor semantics freeze at finalization with the other constants.
 ACCEPT_PROBE_N = 200
 MAX_DRAWS = 10_000
+
+
+MASK_PATH = Path(__file__).parent / "spawn_v2_mask.json"
 
 
 @dataclass(frozen=True)
@@ -71,6 +77,24 @@ class WorkspaceMask:
         if not cells:
             raise ValueError(f"empty workspace mask from {probe_json}")
         return cls(pitch=pitch, cells=cells)
+
+    @classmethod
+    def frozen(cls) -> WorkspaceMask:
+        """The FINALIZED workspace W — the committed 977-cell asset,
+        already cleaned (never re-clean it: the one-pass rule). The
+        cell count is pinned so a drifted asset refuses instead of
+        silently changing the protocol."""
+        data = json.loads(MASK_PATH.read_text())
+        mask = cls(
+            pitch=float(data["pitch"]),
+            cells=frozenset((int(i), int(j)) for i, j in data["cells"]),
+        )
+        if len(mask.cells) != int(data["n_cells"]) or len(mask.cells) != 977:
+            raise ValueError(
+                f"frozen spawn-v2 mask drifted: {len(mask.cells)} cells "
+                f"(asset says {data['n_cells']}, protocol froze 977)",
+            )
+        return mask
 
     def contains(self, x: float, y: float) -> bool:
         return (round(x / self.pitch), round(y / self.pitch)) in self.cells

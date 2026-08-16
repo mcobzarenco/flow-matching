@@ -7,7 +7,8 @@ now.md's head entry — every session re-narrated it, ticks eyeballed
 actually had a posted pre-reg. A mis-transcribed queue line in one
 mega-paragraph silently became the next session's ground truth.
 
-Schema per item: `id`, `title`, `class` (gpu-local / gpu-box / cpu),
+Schema per item: `id`, `title`, `class` (gpu-local / gpu-box /
+gpu-a100 [8xA100-80GB 147.224.218.164, allocated 2026-08-16] / cpu),
 `status` (queued / blocked / live / done), `prereg` (repo-relative
 post path — may be null only for cpu items), `owner_hold` (bool),
 `boundary` (free-text notes). Top level: `updated_utc`,
@@ -44,7 +45,7 @@ from typing import Any
 REPO = Path(__file__).resolve().parents[2]
 QUEUE = REPO / "fontaine" / "queue.json"
 
-CLASSES = ("gpu-local", "gpu-box", "cpu")
+CLASSES = ("gpu-local", "gpu-box", "gpu-a100", "cpu")
 STATUSES = ("queued", "blocked", "live", "done")
 REQUIRED_KEYS = ("id", "title", "class", "status", "prereg", "owner_hold")
 MIN_DEPTH = 2

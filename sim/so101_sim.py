@@ -241,6 +241,8 @@ class SO101Sim:
         arm_photometrics: str | None = None,
         mount_material: str | None = None,
         arm_texture: str | None = None,
+        spawn_version: str = "v1",
+        tint_band: str = "rig_gray",
     ) -> None:
         if render_style not in ("v0", "v1", "v2", "v3", "v4"):
             raise ValueError(
@@ -278,6 +280,23 @@ class SO101Sim:
             raise ValueError(
                 f"arm_texture={arm_texture!r} needs the composite path (v3/v4)",
             )
+        if spawn_version not in ("v1", "v2"):
+            raise ValueError(f"spawn_version {spawn_version!r} not in ('v1', 'v2')")
+        if tint_band not in ("rig_gray", "wide", "mix70"):
+            raise ValueError(
+                f"tint_band {tint_band!r} not in ('rig_gray', 'wide', 'mix70')",
+            )
+        self.spawn_version = spawn_version
+        self.tint_band = tint_band
+        # Spawn-v2 (pre-reg 2026-08-16, finalized): disk uniform over
+        # the frozen 977-cell workspace mask, boat in the annulus
+        # around it. Loaded eagerly so a drifted mask asset refuses at
+        # construction, not mid-collection.
+        self._spawn_mask = None
+        if spawn_version == "v2":
+            from .spawn_v2 import WorkspaceMask
+
+            self._spawn_mask = WorkspaceMask.frozen()
         self.arm_photometrics = arm_photometrics
         self.mount_material = mount_material
         self.arm_texture = arm_texture
@@ -328,6 +347,7 @@ class SO101Sim:
         # Disk geometry from the model - the XML is the single source of
         # truth (a hardcoded copy here once drifted from it).
         disk = self.model.geom("disk")
+        self._disk_geom_id = disk.id
         self.disk_center: tuple[float, float] = (float(disk.pos[0]), float(disk.pos[1]))
         self.disk_radius: float = float(disk.size[0])
         self._recolor_arm()
@@ -1518,21 +1538,31 @@ class SO101Sim:
         )
         mujoco.mj_resetData(self.model, self.data)
 
-        x = rng.uniform(*SPAWN_X)
-        y = rng.uniform(*SPAWN_Y)
-        yaw = rng.uniform(-np.pi, np.pi)
+        if self.spawn_version == "v2":
+            # Spawn-v2 (finalized pre-reg 2026-08-16): disk uniform
+            # over the frozen workspace mask, boat in the annulus
+            # around it, full-range yaw — all on the spawn stream, in
+            # the sampler's pinned draw order. The disk is a static
+            # geom: moved on the MODEL, picked up by physics/render at
+            # the settle steps; success() and the expert read the live
+            # ``disk_center``.
+            from .spawn_v2 import draw_spawn_v2
+
+            assert self._spawn_mask is not None  # loaded at construction
+            spawn = draw_spawn_v2(self._spawn_mask, rng)
+            self.reset_spawn_v2 = spawn
+            self.model.geom_pos[self._disk_geom_id][:2] = spawn.disk_xy
+            self.disk_center = (float(spawn.disk_xy[0]), float(spawn.disk_xy[1]))
+            x, y = spawn.boat_xy
+            yaw = spawn.boat_yaw
+        else:
+            x = rng.uniform(*SPAWN_X)
+            y = rng.uniform(*SPAWN_Y)
+            yaw = rng.uniform(-np.pi, np.pi)
         quat = (np.cos(yaw / 2), 0.0, 0.0, np.sin(yaw / 2))
         self.reset_spawn_xy: tuple[float, float] = (float(x), float(y))
 
-        # Benchy tint: the real print is a consistent light gray; keep a
-        # narrow band around it with a mild per-channel cast (the old
-        # wide color draw made the boat a random-colored outlier).
-        base = looks.uniform(0.72, 0.92)
-        rgba = np.append(
-            np.clip(base + looks.uniform(-0.06, 0.04, size=3), 0.05, 1.0),
-            1.0,
-        )
-        self.model.mat_rgba[self._benchy_mat] = rgba
+        self._draw_benchy_tint(looks)
         self._jitter_appearance(looks)
         # Sensor-noise stream for this episode: seeded from the
         # appearance stream, fresh draw every observe().
@@ -1565,6 +1595,46 @@ class SO101Sim:
         self.data.qvel[vadr : vadr + 6] = 0.0
         self._settle_counting_strikes(30)
         return self.observe()
+
+    def _draw_benchy_tint(self, looks: np.random.Generator) -> None:
+        """Benchy tint from the appearance stream, per ``tint_band``
+        (dataset-gen knob, owner-approved 2026-08-16 12:21:03Z):
+
+        - ``rig_gray`` (default): the real print is a consistent light
+          gray; a narrow band around it with a mild per-channel cast
+          (the old wide color draw made the boat a random-colored
+          outlier). Draw-for-draw identical to the pre-knob behavior.
+        - ``wide``: full-hue HSV draw — color-invariance insurance for
+          non-gray prints.
+        - ``mix70``: 70% rig_gray / 30% wide per reset (band selector
+          drawn first, then that band's draws).
+
+        Only the DEFAULT band is stream-compatible with history; the
+        spawn stream is untouched by all bands, so seed -> pose stays
+        bit-identical across every tint mode."""
+        band = self.tint_band
+        if band == "mix70":
+            band = "wide" if looks.uniform() < 0.30 else "rig_gray"
+        self.reset_tint_band = band
+        if band == "rig_gray":
+            base = looks.uniform(0.72, 0.92)
+            rgb = np.clip(base + looks.uniform(-0.06, 0.04, size=3), 0.05, 1.0)
+        else:
+            hue = looks.uniform(0.0, 6.0)  # hue sector in [0, 6)
+            sat = looks.uniform(0.25, 0.9)
+            val = looks.uniform(0.35, 0.95)
+            chroma = val * sat
+            second = chroma * (1.0 - abs(hue % 2.0 - 1.0))
+            sector = [
+                (chroma, second, 0.0),
+                (second, chroma, 0.0),
+                (0.0, chroma, second),
+                (0.0, second, chroma),
+                (second, 0.0, chroma),
+                (chroma, 0.0, second),
+            ][int(hue)]
+            rgb = np.array(sector) + (val - chroma)
+        self.model.mat_rgba[self._benchy_mat] = np.append(rgb, 1.0)
 
     def _jitter_appearance(self, rng: np.random.Generator) -> None:
         """Per-reset lighting/tone variation, matched to the real frames'

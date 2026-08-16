@@ -186,18 +186,18 @@ def rewrite_quantile_stats(root: Path) -> dict[str, list[float]]:
     return fixed
 
 
-def open_dataset(root: Path):  # noqa: ANN201 — lerobot type, import deferred
+def open_dataset(root: Path, repo_id: str = REPO_ID):  # noqa: ANN201 — lerobot type
     """Create the dataset, or resume an existing collection at root."""
     from lerobot.datasets.lerobot_dataset import LeRobotDataset
 
     if _state_path(root).exists():
-        return LeRobotDataset.resume(REPO_ID, root=root)
+        return LeRobotDataset.resume(repo_id, root=root)
     if root.exists() and any(root.iterdir()):
         raise SystemExit(
             f"ABORT: {root} exists without collect_state.json — not a "
             "resumable collection; refusing to overwrite",
         )
-    return LeRobotDataset.create(REPO_ID, fps=FPS, features=FEATURES, root=root)
+    return LeRobotDataset.create(repo_id, fps=FPS, features=FEATURES, root=root)
 
 
 def collect(
@@ -208,6 +208,8 @@ def collect(
     seed_start: int = DEMO_SEED_BASE,
     max_seeds: int = 2000,
     max_wall_s: float = 4 * 3600,
+    repo_id: str = REPO_ID,
+    extra_provenance: dict[str, Any] | None = None,
     log: Callable[[str], None] = print,
 ) -> dict[str, Any]:
     """Run episodes until ``target_kept`` successes are written (or a
@@ -217,7 +219,7 @@ def collect(
             f"seed_start {seed_start} is inside the frozen eval holdout — "
             f"demo seeds begin at {DEMO_SEED_BASE} (pre-reg §3)",
         )
-    dataset = open_dataset(root)
+    dataset = open_dataset(root, repo_id)
     kept_seeds: list[int] = []
     next_seed = seed_start
     attempted = 0
@@ -284,6 +286,7 @@ def collect(
         "prereg": "posts/2026-08-14-prereg-grasp-sft-bootstrap.md",
         "substrate": "SO101Sim() production defaults; front <- sim top camera",
         "success_definition": "sim100 harness success_tick machinery (sim.success)",
+        **(extra_provenance or {}),
     }
     _provenance_path(root).parent.mkdir(parents=True, exist_ok=True)
     _provenance_path(root).write_text(json.dumps(summary, indent=2) + "\n")
@@ -302,9 +305,16 @@ def main() -> int:
     parser.add_argument("--max-seeds", type=int, default=2000)
     parser.add_argument("--max-wall-hours", type=float, default=4.0)
     parser.add_argument("--max-ticks", type=int, default=600)
+    parser.add_argument("--repo-id", default=REPO_ID)
+    parser.add_argument("--spawn-version", choices=("v1", "v2"), default="v1")
+    parser.add_argument(
+        "--tint-band",
+        choices=("rig_gray", "wide", "mix70"),
+        default="rig_gray",
+    )
     args = parser.parse_args()
 
-    sim = SO101Sim()
+    sim = SO101Sim(spawn_version=args.spawn_version, tint_band=args.tint_band)
     collect(
         args.out.expanduser(),
         expert_episode_source(sim, max_ticks=args.max_ticks),
@@ -312,6 +322,14 @@ def main() -> int:
         seed_start=args.seed_start,
         max_seeds=args.max_seeds,
         max_wall_s=args.max_wall_hours * 3600,
+        repo_id=args.repo_id,
+        extra_provenance={
+            "spawn_version": args.spawn_version,
+            "tint_band": args.tint_band,
+            "spawn_v2_prereg": "posts/2026-08-16-prereg-sim-spawn-v2.md"
+            if args.spawn_version == "v2"
+            else None,
+        },
     )
     return 0
 

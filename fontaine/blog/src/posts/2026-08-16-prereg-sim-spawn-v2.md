@@ -166,3 +166,33 @@ inherit the stage-B/C frozen recipes verbatim or re-open any knob
 (default: verbatim). Finalization = a registered post freezing this
 table + the objection window, after the owner's two calls: priority
 vs the token-legs report (asked 09:50Z), and the C′ route choice.
+
+## §6 FINALIZED (2026-08-16, same day)
+
+The §5 table is **frozen at its proposed values, unchanged**. Chain of
+record: owner approved the v1-dataset protocol built on this table
+12:21:03Z ("agree with v1 with just the boat upright in the annulus");
+the objection window was set in-channel 12:22:14Z as "flag it before
+the box lands"; the A100 box landed 12:25:56Z with no objection —
+window closed. What landed with the freeze:
+
+- **W is committed data**: `sim/spawn_v2_mask.json` — the 977-cell
+  cleaned mask from the §3.1 v1 instrument read, loaded by
+  `WorkspaceMask.frozen()` with the cell count pinned (a drifted asset
+  refuses at sim construction).
+- **Integration**: `SO101Sim(spawn_version="v2")` — disk uniform over
+  W (a static geom moved on the model each reset; `success()` and the
+  scripted expert read the live `disk_center`), boat via the annulus
+  sampler, all on the spawn stream in the sampler's pinned draw order.
+  `spawn_version="v1"` (the default) is **bit-identical to the
+  pre-change code** — verified qpos-digest-equal against the pre-change
+  tree at reset, and the existing appearance/spawn-stream oracles all
+  pass unchanged (check.py 950).
+- **Measured, not assumed**: a disk drawn at the worst case — directly
+  on the parked-jaw keep-out center (0.155, 0) — makes **zero contacts**
+  with the homed arm (the parked gripper sits ~10 cm up; the disk is
+  12 mm tall), so the boat keep-out needs no disk twin.
+- **Sequencing note**: A′ (expert re-validation under spawn-v2) merges
+  into the v1 dataset generation itself — the sharded collection
+  measures the expert's spawn-v2 success rate on thousands of seeds as
+  it generates; the first-shards read is the go/no-go telemetry.
