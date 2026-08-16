@@ -239,3 +239,29 @@ instrument, not the expert, is the culprit:
   either a stronger shoulder (hardware) or a non-prehensile/regrasp
   strategy (the side-spawn righting probe's territory — same skill
   family, queued).
+
+### §7.1 Disk-collision fix + retreat tail (same day, pre-launch)
+
+Two more changes landed before generation started, both measured:
+
+1. **The moved disk was a phantom.** The disk is a world-body geom and
+   MuJoCo builds the world's midphase BVH at compile time — a disk
+   moved via ``geom_pos`` keeps *colliding* at its compiled location
+   while rendering at the new one (measured: boat rest z 0.0002
+   through the moved disk vs 0.0122 on it). Every v2/v2.1 read above
+   therefore scored success against transient release states, not
+   stable rests; the *grasp-side* findings (boat-radius cliff, servo
+   saturation) are disk-independent and stand. Fix: the midphase is
+   disabled for the moving-disk protocols only (v1 keeps default
+   physics, bit-compat oracle still green). Re-measured v2.1 field:
+   **53.8% (n=400)** with genuine on-disk rests — statistically the
+   same rate, now meaning what it claims.
+2. **Post-success retreat tail** (owner steering 13:46Z): demos now
+   record the expert retreating to the HOME rest pose after success —
+   up-and-back 25 ticks, then a slew to home (the servo parks ~6° shy
+   under gravity; ≤10° = parked). Success is re-verified after the
+   tail, so a retreat that knocks the boat demotes the episode to a
+   miss. Measured on 120 seeds: **48.3% kept** (vs 53.8% without the
+   tail requirement), 86% of kept episodes end parked (the rest end
+   quiet mid-return at the 150-tick tail budget, still successes);
+   median kept episode 272 ticks (~9 s).

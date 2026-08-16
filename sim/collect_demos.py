@@ -45,7 +45,7 @@ from typing import Any
 import numpy as np
 
 from .scripted_expert import DEMO_SEED_BASE, ScriptedExpert
-from .so101_sim import SO101Sim
+from .so101_sim import HOME_DEGREES, SO101Sim
 
 REPO_ID = "fontaine/grasp_sft_demos_v0"
 FPS = 30
@@ -101,13 +101,27 @@ class DemoEpisode:
 EpisodeSource = Callable[[int], DemoEpisode]
 
 
-def expert_episode_source(sim: SO101Sim, max_ticks: int = 600) -> EpisodeSource:
+def expert_episode_source(
+    sim: SO101Sim,
+    max_ticks: int = 600,
+    retreat_tail_ticks: int = 150,
+) -> EpisodeSource:
+    """Episode source with the post-success retreat tail (owner
+    steering 2026-08-16 13:46Z): after ``sim.success()`` fires, keep
+    recording while the expert returns to the HOME rest pose, so the
+    policy learns to withdraw without knocking the placed boat over.
+    The tail ends when the arm is at home and quiet (or the tail
+    budget trips), and success is RE-verified after it — a retreat
+    that knocks the boat off the disk demotes the episode to a miss."""
+
     def run(seed: int) -> DemoEpisode:
         obs = sim.reset(seed)
         expert = ScriptedExpert(sim)
         frames: list[DemoFrame] = []
         tick = 0
-        for tick in range(max_ticks):  # noqa: B007 — returned count
+
+        def record_and_step() -> None:
+            nonlocal obs
             action = expert.action(sim)
             frames.append(
                 DemoFrame(
@@ -118,11 +132,30 @@ def expert_episode_source(sim: SO101Sim, max_ticks: int = 600) -> EpisodeSource:
                 ),
             )
             obs = sim.step(action)
+
+        for tick in range(max_ticks):  # noqa: B007 — returned count
+            record_and_step()
             if sim.success():
                 break
+        placed = bool(sim.success())
+        if placed:
+            home_rad = np.deg2rad(HOME_DEGREES[:5])
+            arm_qpos = sim._joint_qpos[:5]
+            for _ in range(retreat_tail_ticks):
+                record_and_step()
+                tick += 1
+                # 10 deg: the position servo plateaus ~6 deg short of
+                # the commanded home under gravity (measured) — that
+                # sag IS the parked pose.
+                at_home = float(
+                    np.max(np.abs(sim.data.qpos[arm_qpos] - home_rad)),
+                ) < np.deg2rad(10.0)
+                quiet = float(np.abs(sim.data.qvel).max()) < 0.05
+                if at_home and quiet:
+                    break
         return DemoEpisode(
             seed=seed,
-            success=bool(sim.success()),
+            success=placed and bool(sim.success()),
             frames=frames,
             ticks=tick + 1,
             final_disk_cm=sim.benchy_disk_distance() * 100,
@@ -326,6 +359,8 @@ def main() -> int:
         extra_provenance={
             "spawn_version": args.spawn_version,
             "tint_band": args.tint_band,
+            "retreat_tail": "post-success retreat to HOME recorded; success "
+            "re-verified after the tail (owner steering 2026-08-16 13:46Z)",
             "spawn_v2_prereg": "posts/2026-08-16-prereg-sim-spawn-v2.md"
             if args.spawn_version == "v2"
             else None,

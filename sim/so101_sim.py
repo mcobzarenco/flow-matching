@@ -352,6 +352,15 @@ class SO101Sim:
         self._disk_geom_id = disk.id
         self.disk_center: tuple[float, float] = (float(disk.pos[0]), float(disk.pos[1]))
         self.disk_radius: float = float(disk.size[0])
+        if self.spawn_version in ("v2", "v2.1"):
+            # The disk is a world-body geom, and MuJoCo builds the
+            # world's midphase BVH at COMPILE time — a disk moved via
+            # geom_pos keeps colliding at its compiled location only
+            # (measured: boat falls THROUGH the moved disk, rest z
+            # 0.0002 vs 0.0122 fixed). Disable the midphase for the
+            # moving-disk protocols; v1 keeps default physics so the
+            # banked v1 stream stays bit-identical.
+            self.model.opt.disableflags |= int(mujoco.mjtDisableBit.mjDSBL_MIDPHASE)
         self._recolor_arm()
         if arm_photometrics == "v1":
             self._grade_arm_photometrics()

@@ -32,7 +32,7 @@ from typing import Any
 import mujoco
 import numpy as np
 
-from .so101_sim import PHYSICS_STEPS_PER_TICK, SO101Sim
+from .so101_sim import HOME_DEGREES, PHYSICS_STEPS_PER_TICK, SO101Sim
 
 #: First legal demo seed — everything below is the frozen sim100
 #: eval holdout (pre-reg §3: eval seeds NEVER appear in demos).
@@ -296,6 +296,9 @@ class ScriptedExpert:
     #: spawn band (boat r_base ≤ ~0.27); a class attr so the spawn-v2
     #: robustness probe can sweep it against far-radius shoulder sag.
     DROOP_CLIP = 0.04
+    #: Retreat ticks spent pulling up-and-back before slewing to HOME
+    #: (clears the released boat before the big joint-space swing).
+    RETREAT_UP_TICKS = 25
 
     def __init__(self, sim: SO101Sim) -> None:
         self.planner = ExpertPlanner(sim)
@@ -555,13 +558,17 @@ class ScriptedExpert:
                 self._enter("retreat")
             return self._command(self._arm_now(sim), JAW_OPEN_RAD)
 
-        # retreat: pull UP AND BACK in joint space (an IK swing back
-        # through the drop point re-contacts the released boat and tips
-        # it — measured). Then ride out the clock (sim.success wants
-        # the boat unheld, still, on the disk).
-        parked = self._arm_now(sim)
-        parked[1] = parked[1] - np.deg2rad(30.0)
-        return self._command(parked, JAW_OPEN_RAD)
+        # retreat: pull UP AND BACK in joint space first (an IK swing
+        # back through the drop point re-contacts the released boat and
+        # tips it — measured), then return to the HOME rest pose (owner
+        # steering 2026-08-16 13:46Z: demos end with the arm parked and
+        # the boat left standing on the disk — the collector records
+        # this tail and re-verifies success after it).
+        if state.ticks_in_phase <= self.RETREAT_UP_TICKS:
+            parked = self._arm_now(sim)
+            parked[1] = parked[1] - np.deg2rad(30.0)
+            return self._command(parked, JAW_OPEN_RAD)
+        return self._command(np.deg2rad(HOME_DEGREES[:5]), JAW_OPEN_RAD)
 
 
 def run_expert_episode(

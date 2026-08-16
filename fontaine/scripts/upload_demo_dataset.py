@@ -109,7 +109,9 @@ def main() -> int:
         return 0
 
     (root / "README.md").write_text(card)
-    api.create_repo(args.repo, repo_type="dataset", exist_ok=True)
+    # Public standalone repo — the owner browses it with the HF LeRobot
+    # visualizer (steering 2026-08-16 14:05:56Z).
+    api.create_repo(args.repo, repo_type="dataset", exist_ok=True, private=False)
     api.upload_large_folder(
         repo_id=args.repo,
         repo_type="dataset",
