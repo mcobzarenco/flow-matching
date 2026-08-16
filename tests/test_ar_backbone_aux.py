@@ -68,7 +68,7 @@ def build_with_aux() -> tuple[Gemma4Model, GemmaARDecoder]:
         loaded,
         tokenizer=CharTokenizer(),
         aux_runtime=build_aux_runtime(aux_config(), CharTokenizer()),
-        aux_loss_weight=0.5,
+        narration_weight=0.5,
         device="cpu",
         dtype=torch.float32,
     )

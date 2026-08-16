@@ -282,7 +282,7 @@ class ARSuffixDecoder[B: nn.Module, M: PrefixMemory](nn.Module, abc.ABC):
         tokenizer: TextTokenizer | None,
         opener_text: str,
         aux_runtime: AuxRuntime | None = None,
-        aux_loss_weight: float = 1.0,
+        narration_weight: float = 1.0,
         newline_carrier_ids: frozenset[int] = frozenset(),
     ) -> None:
         super().__init__()
@@ -298,7 +298,7 @@ class ARSuffixDecoder[B: nn.Module, M: PrefixMemory](nn.Module, abc.ABC):
             )
         self.tokenizer: TextTokenizer = tokenizer
         self.aux_runtime = aux_runtime
-        self.aux_loss_weight = aux_loss_weight
+        self.narration_weight = narration_weight
         self.newline_carrier_ids = newline_carrier_ids
         # Cumulative value-budget exhaustions (decode health metric).
         self.fallback_count = 0
@@ -1070,7 +1070,7 @@ def ar_backbone_losses[B: nn.Module, M: PrefixMemory](
     are IGNOREd except the last, whose target is content[0]: the first
     value token, or BOA on ``[generate|actions]`` rows. Component
     split: ``action`` = mean CE over action targets incl. BOA
-    (pretrain scale); total = action + aux_loss_weight * (aux_sum /
+    (pretrain scale); total = action + narration_weight * (aux_sum /
     aux_count) — batch-mean semantics, 0-safe when a batch has no
     labeled sample.
     """
@@ -1095,7 +1095,7 @@ def ar_backbone_losses[B: nn.Module, M: PrefixMemory](
     action = elementwise[action_positions].sum() / action_positions.sum().clamp(min=1)
     aux_count = aux_positions.sum()
     aux_sum = elementwise[aux_positions].sum()
-    total = action + decoder.aux_loss_weight * (aux_sum / aux_count.clamp(min=1))
+    total = action + decoder.narration_weight * (aux_sum / aux_count.clamp(min=1))
     return total, action, aux_sum, aux_count
 
 

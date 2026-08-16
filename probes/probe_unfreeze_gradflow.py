@@ -204,7 +204,7 @@ def build_ar_backbone(args: ProbeArgs) -> GemmaARVLA:
         backbone,
         encoder,
         decoder,
-        objective=ARObjective(aux_loss_weight=1.0),
+        objective=ARObjective(narration_weight=1.0),
         serving=ARServing(),
     )
     probe_unfreeze(model, args)

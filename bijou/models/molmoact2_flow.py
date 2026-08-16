@@ -178,7 +178,7 @@ class MolmoAct2FlowVLA(FlowVLA[MolmoAct2Inputs]):
         # Position count B·T (the per-position valid-dim mean is the
         # inner reduction — molmo_flow_loss_sums' contract).
         return {
-            "action": torch.tensor(
+            "action_flow": torch.tensor(
                 batch.actions.shape[0] * batch.actions.shape[1],
                 device=batch.actions.device,
             ),
@@ -207,10 +207,10 @@ class MolmoAct2FlowVLA(FlowVLA[MolmoAct2Inputs]):
             )
         loss_sum, count = molmo_flow_loss_sums(self.flow_decoder, memory, batch)
         world = dist.get_world_size() if dist.is_initialized() else 1
-        objective = loss_sum * world / counts["action"]
+        objective = loss_sum * world / counts["action_flow"]
         return LossReport(
             objective=objective,
-            components={"action": Loss(sum=loss_sum, count=count)},
+            components={"action_flow": Loss(sum=loss_sum, count=count)},
         )
 
     @override

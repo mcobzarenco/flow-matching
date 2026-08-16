@@ -1,5 +1,12 @@
 # Babysit run registry (#21 P1). One entry per LIVE run; update at
 # launch time, prune at completion. Schema: fontaine/scripts/babysit.py.
+#
+# LOSS KEYS (main 32149df, merged 08-16): runs launched after the merge
+# write mechanism-qualified component keys — loss_action_flow (flow MSE),
+# loss_action_ar (action-token CE), loss_narration (text CE); combined
+# `loss` unchanged. NO write-side aliases: author NEW entries' curve
+# anchors/kill rules in the new vocabulary; old runs' jsonls keep their
+# historical keys (read-time mapping: fontaine/scripts/loss_keys.py).
 
 no_live_runs_reason = "declared 13:4xZ 08-15 work session: grasp_sft_step2000_probe COMPLETE and pruned (train arm banked clean ~13:41Z, ~3.4/4.0 GPU-h; no-memorization read posted 1538180830470602903). GPU is OWNER-RESERVED (their 13:35Z message) — no launches until they free it; the corrected-table retrain is prepped + pre-registered (owner-gated), image-augment-sim2real queued CPU-side."
 

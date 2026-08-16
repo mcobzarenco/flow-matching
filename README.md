@@ -140,7 +140,7 @@ Conventions: `docs/code-styleguide.md`.
 | `bijou/sections.py` | checkpoint section schemas (tagged config dicts) + section → module builders |
 | `bijou/checkpoint.py` | the self-contained VLA checkpoint format (metadata.json + per-component safetensors) |
 | `bijou/convert_legacy.py` | legacy `bijou_config.json` → VLA-format converter (the one home of the legacy layout) |
-| `bijou/train.py` | training CLI: DDP, ZeRO-1, chunked backward, activation checkpointing, component LRs, AdamW/AdamC, warm start/resume, sharded MAE probes, wandb |
+| `bijou/train/` | training CLI: DDP, ZeRO-1, chunked backward, activation checkpointing, component LRs, AdamW/AdamC, warm start/resume, sharded MAE probes, wandb |
 | `bijou/async_save.py` | asynchronous checkpoint serialization (background gather/write, byte-identical to sync) |
 | `bijou/eval/` | eval CLI: seeded frame sampling, baselines, sampled multi-draw decoding, HTML reports |
 | `bijou/judge/` | LLM judging pipeline (episode verdicts, camera kinds, instruction rewrites, frame labels) |

@@ -87,6 +87,20 @@ inherit the scar tissue without the scars.
   over ssh break; `$(...)` is forbidden in local tool calls), with
   local copies in gitignored `outputs/`. The header documents intent,
   settings, expectations, and the follow-up commands.
+- **No shell-substitution characters in generated one-liners — an
+  UNCLOSED one hangs the terminal forever, silently.** Backticks,
+  `$(...)`, `${VAR}` are banned outright; the deadly form is a stray
+  backtick or quote inside a long pasted string (a grep pattern
+  quoting markdown code spans, a multi-paragraph commit message): the
+  shell sits at a continuation prompt awaiting the closing character,
+  which reads as a hung command until someone checks htop. Literal
+  searches use single-quoted `grep -F` (or the editor's search
+  tools); multi-step text surgery goes through `python3 - <<'PYEOF'`
+  heredocs; long commit messages avoid backticks. **Sub-agent briefs
+  must carry this warning verbatim** — agents do not inherit the
+  operator's scar tissue. (Added 2026-08-16: two sub-agents hung in
+  one session, 45 min and ∼10 min, both at long-text steps — one grep
+  pattern, one commit message.)
 - **Liveness is `pgrep` (with the `[b]racket` trick — `pgrep -f`
   self-matches the ssh command carrying the pattern) or GPU memory,
   never a log tail**: an OOM-killed fit read as "still running" from

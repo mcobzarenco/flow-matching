@@ -62,17 +62,17 @@ class SnapflowObjective:
 @dataclass(frozen=True, slots=True)
 class ARObjective:
     """Next-token CE over the suffix (value lines where the family
-    narrates, then the action block). ``aux_loss_weight`` mixes the
+    narrates, then the action block). ``narration_weight`` mixes the
     value-line CE against the action-block CE; families without a text
     surface validate that their construction carries no aux fields for
     it to weight."""
 
-    aux_loss_weight: float
+    narration_weight: float
 
     def __post_init__(self) -> None:
-        if not self.aux_loss_weight > 0:
+        if not self.narration_weight > 0:
             raise ValueError(
-                f"aux_loss_weight must be > 0, got {self.aux_loss_weight} — "
+                f"narration_weight must be > 0, got {self.narration_weight} — "
                 "training aux fields at weight 0 is not 'no aux'; drop the "
                 "aux fields from the run instead",
             )
@@ -80,11 +80,11 @@ class ARObjective:
 
 def parse_ar_objective(data: dict[str, Any]) -> ARObjective:
     """The AR families' payload from the metadata's tagged dict.
-    ``aux_loss_weight`` defaults to 1.0 when unrecorded (families
+    ``narration_weight`` defaults to 1.0 when unrecorded (families
     without a text surface have nothing for it to weight)."""
     kind = data.get("kind")
     if kind != "ar":
         raise SystemExit(
             f"objective kind {kind!r} is not the suffix-CE objective ('ar')",
         )
-    return ARObjective(aux_loss_weight=float(data.get("aux_loss_weight", 1.0)))
+    return ARObjective(narration_weight=float(data.get("narration_weight", 1.0)))

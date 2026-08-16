@@ -191,7 +191,7 @@ class MolmoAct2DiscreteStack:
                 # the AR read decodes greedily unless sampled (the unit
                 # ARServing) and format 6 has no aux for the weight to
                 # mix — both inert for serving and replay.
-                objective=ARObjective(aux_loss_weight=1.0),
+                objective=ARObjective(narration_weight=1.0),
                 serving=ARServing(),
             )
             ar.eval()

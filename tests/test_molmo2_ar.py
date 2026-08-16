@@ -345,7 +345,7 @@ def test_loss_targets_and_frozen_split(
         model,
         encoder,
         decoder,
-        objective=ARObjective(aux_loss_weight=1.0),
+        objective=ARObjective(narration_weight=1.0),
         serving=ARServing(),
     )
     for parameter in encoder.param_groups(model)["text"]:

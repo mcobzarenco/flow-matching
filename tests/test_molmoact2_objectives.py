@@ -249,7 +249,7 @@ def test_decision5_ordering_and_lambda_composition(
     shared cache — the decision-5 ordering made observable through the
     family's own kernels in its forward's op order. And total =
     flow + λ·CE exactly. (End-to-end on real collation, the joint
-    ORACLE's cross-check pins the same fact: loss_action ≡ the flow
+    ORACLE's cross-check pins the same fact: loss_action_flow ≡ the flow
     anchor bitwise.)"""
     model = joint_model(tiny_checkpoint, trunk, insulate=False)
     raw, sequences = action_rows()

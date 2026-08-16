@@ -128,7 +128,7 @@ class Molmo2ARDecoder(ARSuffixDecoder[Molmo2Model, Molmo2Memory]):
         *,
         tokenizer: TextTokenizer | None,
         aux_runtime: AuxRuntime | None = None,
-        aux_loss_weight: float = 1.0,
+        narration_weight: float = 1.0,
         newline_carrier_ids: frozenset[int] = frozenset(),
         device: DeviceLike = None,
         dtype: torch.dtype | None = None,
@@ -139,7 +139,7 @@ class Molmo2ARDecoder(ARSuffixDecoder[Molmo2Model, Molmo2Memory]):
             tokenizer=tokenizer,
             opener_text=MOLMO2_GENERATION_OPENER,
             aux_runtime=aux_runtime,
-            aux_loss_weight=aux_loss_weight,
+            narration_weight=narration_weight,
             newline_carrier_ids=newline_carrier_ids,
         )
         if config.suffix_format != SUFFIX_FORMAT:
