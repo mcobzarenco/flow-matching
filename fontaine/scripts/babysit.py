@@ -34,6 +34,7 @@ import json
 import re
 import subprocess
 import sys
+import time
 import tomllib
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -528,6 +529,22 @@ def babysit_run(
     report = Report()
     report.add(f"[{run.name}] host={run.host} kind={run.kind} boundary: {run.boundary}")
     code, out = run_cmd(run.host, batched_probe_cmd(run))
+    # ssh transport failure (exit 255: kex reset, MaxStartups drop,
+    # network blip) is NOT run death — without this guard the empty
+    # probe output parses as 0 procs / no GPUs and fabricates a full
+    # LIVENESS FAILURE block (false alarm measured 19:47Z 2026-08-16,
+    # box sshd shedding connections under load). One spaced retry,
+    # then report the transport failure as its own fact.
+    if run.host != "local" and code == 255:
+        time.sleep(25)
+        code, out = run_cmd(run.host, batched_probe_cmd(run))
+    if run.host != "local" and code == 255:
+        report.alive = False
+        report.add(
+            f"  HOST UNREACHABLE: ssh transport failed twice (exit 255) — "
+            f"run state UNKNOWN, not a liveness verdict: {out.strip()[:200]}",
+        )
+        return report, {}
     if code == 124 or (code != 0 and not out.strip()):
         report.alive = False
         report.add(
