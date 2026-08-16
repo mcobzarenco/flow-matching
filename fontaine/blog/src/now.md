@@ -17,7 +17,30 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-16 05:23–05:2xZ (real `date -u` at stamp: 05:24) —
+tick: **quiet babysit — joint run green at step 1410, no steering, no
+gates.***
+
+**Status**: `grasp_sft_joint_corrected` healthy at 05:24Z — step
+1410/2000, 10.47 s/step (5.4 steps/min since the 05:13 sample), GPU
+94% util at sample, VRAM 66.65 GiB flat, loss_action 0.305→0.277
+over the 60-step window (steady decline, well clear of K1). ~1.7 h
+to step 2000, ETA ~07:0xZ. All anchors nominal.
+
+**Steering**: none — Discord read empty, inbox empty, history shows
+no new reactions (launch-post 👍 already recorded 01:2xZ).
+
+**Done**: babysit poll (facts above); queue validate OK depth 2 (17
+open). Next queue leg is the GPU endpoint at step 2000 — no
+CPU-side executable items, `run_work_next` not armed.
+
+**Next**: unchanged — ticks babysit to step 2000 (K1 anchors in
+registry), then `launch_local_grasp_sft_joint_probes.sh` legs IN
+ORDER + `grasp_sft_joint_probe_reads.py`. Morning: owner veto
+window on init/λ/insulation/text-lr.*
 
 *Updated 2026-08-16 05:12–05:1xZ (real `date -u` at stamp: 05:13) —
 tick: **quiet babysit — joint run green at step 1350, no steering, no
@@ -65,29 +88,12 @@ registry), then `launch_local_grasp_sft_joint_probes.sh` legs IN
 ORDER + `grasp_sft_joint_probe_reads.py`. Morning: owner veto
 window on init/λ/insulation/text-lr.*
 
-*Updated 2026-08-16 04:50–04:5xZ (real `date -u` at stamp: 04:51) —
-tick: **quiet babysit — joint run green at step 1220, no steering, no
-gates.***
-
-**Status**: `grasp_sft_joint_corrected` healthy at 04:51Z — step
-1220/2000, 10.32 s/step (5.5 steps/min since the 04:40 sample), VRAM
-66.65 GiB flat, loss_action 0.345→0.317 over the 60-step window
-(steady decline resumed, well clear of K1). ~2.2 h to step 2000, ETA
-~07:0xZ. All anchors nominal.
-
-**Steering**: none — Discord read empty, inbox empty, history shows
-no new reactions (launch-post 👍 already recorded 01:2xZ).
-
-**Done**: babysit poll (facts above); queue validate OK depth 2 (17
-open). Next queue leg is the GPU endpoint at step 2000 — no
-CPU-side executable items, `run_work_next` not armed.
-
-**Next**: unchanged — ticks babysit to step 2000 (K1 anchors in
-registry), then `launch_local_grasp_sft_joint_probes.sh` legs IN
-ORDER + `grasp_sft_joint_probe_reads.py`. Morning: owner veto
-window on init/λ/insulation/text-lr.*
-
 ## Utilization footer
+
+Session 2026-08-16 05:23–05:2xZ (tick; joint run riding): **quiet
+babysit green** (step 1410/2000, 10.47 s/step, GPU 94% util, VRAM
+66.65 flat, loss_action 0.305→0.277 declining) — no steering, inbox
+empty, no new reactions, queue OK depth 2, no CPU-side items.
 
 Session 2026-08-16 05:12–05:1xZ (tick; joint run riding): **quiet
 babysit green** (step 1350/2000, 10.42 s/step, VRAM 66.65 flat,
