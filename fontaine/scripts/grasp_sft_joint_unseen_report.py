@@ -43,6 +43,48 @@ ANCHOR = "#9aa0a8"
 
 BASE_ANCHOR = 9
 CORRUPT_ANCHOR = 28
+PROBE_ANCHOR = 44  # route-C joint step2000, flow-unseen (banked 08-16)
+
+# Page variants: step2000 (the original probe report, byte-identical
+# output) and v1endpoint (grasp_sft_v1_joint step 3000 on the 5,000-demo
+# corpus, anchored additionally on the probe checkpoint's 44/100).
+PRESETS: dict[str, dict] = {
+    "step2000": {
+        "anchor_rows": [
+            ("base (no SFT)", BASE_ANCHOR, ANCHOR),
+            ("stage-C AE, corrupt table", CORRUPT_ANCHOR, "#f593bd"),
+        ],
+        "subject_label": "joint step2000, corrected",
+        "anchors_tile_label": "anchors: base / corrupt-table",
+        "title": "joint step2000 — flow head, unseen 100",
+        "h1": "Grasp-SFT route C — joint step 2000, flow head on unseen seeds",
+        "meta_html": (
+            "Checkpoint <code>fontaine_grasp_sft_joint_corrected/step_002000</code>"
+            " (corrected norm table, insulated joint objective, registered amendment"
+            " 2026-08-16) · euler-10, execute-horizon 30, seeds 0–99, 30 s episodes ·"
+            " run 2026-08-16 06:58–08:21Z, ~1.4 GPU-h · verdict surface A §5:"
+            ' <b style="color:{success}">TABLE_FIX_POSITIVE</b> (44 &gt; 28+3)'
+        ),
+    },
+    "v1endpoint": {
+        "anchor_rows": [
+            ("base (no SFT)", BASE_ANCHOR, ANCHOR),
+            ("stage-C AE, corrupt table", CORRUPT_ANCHOR, "#f593bd"),
+            ("joint probe step2000 (313 demos)", PROBE_ANCHOR, "#f593bd"),
+        ],
+        "subject_label": "v1 step3000 (5,000 demos)",
+        "anchors_tile_label": "anchors: base / corrupt-table / probe",
+        "title": "grasp_sft_v1_joint step3000 — flow head, unseen 100",
+        "h1": "Grasp-SFT v1 — joint step 3000, flow head on unseen seeds",
+        "meta_html": (
+            "Checkpoint <code>grasp_sft_v1_joint_8xa100/step_003000</code>"
+            " (5,000-demo corpus + pick_place ×4, eff-96, 8×A100, launched"
+            " 18:21:14Z 2026-08-16) · euler-10, execute-horizon 30, seeds 0–99,"
+            " 30 s episodes, sharded 4×25 (exact: triple-keyed noise) ·"
+            " primary anchor: the probe checkpoint's <b>44/100</b>"
+        ),
+    },
+}
 
 
 def fig_to_b64(fig: Figure) -> str:
@@ -90,19 +132,14 @@ def outcome_strip(eps: list[dict]) -> str:
     return fig_to_b64(fig)
 
 
-def success_bar(n_success: int) -> str:
+def success_bar(rows: list[tuple[str, int, str]]) -> str:
     fig, ax = plt.subplots(figsize=(6.4, 2.6), facecolor=PAGE)
-    rows = [
-        ("base (no SFT)", BASE_ANCHOR, ANCHOR),
-        ("stage-C AE, corrupt table", CORRUPT_ANCHOR, "#f593bd"),
-        ("joint step2000, corrected", n_success, SUCCESS),
-    ]
     for i, (label, val, color) in enumerate(rows):
         ax.barh(i, val, color=color, height=0.55)
         ax.text(val + 1, i, f"{val}/100", color=TEXT, fontsize=10, va="center")
         ax.text(-1.5, i, label, color=TEXT, fontsize=9, va="center", ha="right")
     ax.set_yticks([])
-    ax.set_xlim(0, 60)
+    ax.set_xlim(0, max(60, int(max(v for _, v, _ in rows) * 1.2)))
     ax.set_xlabel("successes on unseen seeds 0–99")
     ax.set_title("Against the frozen anchors")
     style_ax(ax)
@@ -133,7 +170,13 @@ def main() -> int:
         type=Path,
         default=Path("reports/joint_unseen_gallery"),
     )
+    parser.add_argument(
+        "--preset",
+        choices=sorted(PRESETS),
+        default="step2000",
+    )
     args = parser.parse_args()
+    preset = PRESETS[args.preset]
 
     data = json.loads(args.leg_json.read_text())
     eps = data["episodes"]
@@ -192,7 +235,10 @@ def main() -> int:
 
     tiles = [
         (f"{len(succ)}/100", "successes (≤3 cm, held)"),
-        (f"{BASE_ANCHOR} / {CORRUPT_ANCHOR}", "anchors: base / corrupt-table"),
+        (
+            " / ".join(str(v) for _, v, _ in preset["anchor_rows"]),
+            preset["anchors_tile_label"],
+        ),
         (f"{len(moved)}/100", "moved the boat >0.5 cm"),
         (f"{mean_prog:.2f} cm", "mean progress toward disk"),
         (str(strikes), "reset strikes"),
@@ -202,9 +248,14 @@ def main() -> int:
         for v, k in tiles
     )
 
+    meta_html = preset["meta_html"].format(success=SUCCESS)
+    bar_rows = [
+        *preset["anchor_rows"],
+        (preset["subject_label"], len(succ), SUCCESS),
+    ]
     page = f"""<!doctype html>
 <html><head><meta charset="utf-8">
-<title>joint step2000 — flow head, unseen 100</title>
+<title>{preset["title"]}</title>
 <style>
  body {{ background:{PAGE}; color:{TEXT}; font-family:system-ui,sans-serif;
         max-width:1000px; margin:2rem auto; padding:0 1rem; }}
@@ -225,15 +276,11 @@ def main() -> int:
  figcaption {{ color:{META}; font-size:0.8rem; max-width:320px; }}
  a {{ color:{FAIL}; }}
 </style></head><body>
-<h1>Grasp-SFT route C — joint step 2000, flow head on unseen seeds</h1>
-<p class="meta">Checkpoint <code>fontaine_grasp_sft_joint_corrected/step_002000</code>
- (corrected norm table, insulated joint objective, registered amendment
- 2026-08-16) · euler-10, execute-horizon 30, seeds 0–99, 30 s episodes ·
- run 2026-08-16 06:58–08:21Z, ~1.4 GPU-h · verdict surface A §5:
- <b style="color:{SUCCESS}">TABLE_FIX_POSITIVE</b> (44 &gt; 28+3)</p>
+<h1>{preset["h1"]}</h1>
+<p class="meta">{meta_html}</p>
 <div class="tiles">{tiles_html}</div>
 <h2>Against the anchors</h2>
-<img src="data:image/png;base64,{success_bar(len(succ))}">
+<img src="data:image/png;base64,{success_bar(bar_rows)}">
 <h2>Per-seed outcomes</h2>
 <img src="data:image/png;base64,{outcome_strip(eps)}">
 <h2>Clips</h2>
