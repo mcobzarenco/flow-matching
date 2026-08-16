@@ -937,3 +937,26 @@ no_live_runs_reason = "declared 13:4xZ 08-15 work session: grasp_sft_step2000_pr
 # [[run.gates]]
 # kind = "gpu_hours_max"
 # value = 2.0
+
+[[run]]
+name = "grasp_sft_joint_corrected"
+kind = "train-jsonl"
+host = "local"
+pgrep = "fontaine_grasp_sft_joint_corrected"
+pgrep_min = 1
+gpu_indices = [0]
+gpu_mem_min_mib = 8000
+jsonl = "/home/ubuntu/checkpoints/finetune/fontaine_grasp_sft_joint_corrected/train_log.jsonl"
+total_steps = 2000
+probe_key = "eval_chunk_mae"
+vram_key = "vram_alloc_peak_gib"
+boundary = "route C joint (registered amendment 2026-08-16, posts/2026-08-16-amendment-grasp-sft-route-c-joint.md; owner steering 00:18Z): L_flow + 1.0*CE INSULATED, from-base corrected table, backbone-text-lr 1e-5 / decoder-lr 5e-5, 2000 steps gb64 chunks 4, act-ckpt + --offload-optim (8bb5b70). Launched 01:09:16Z unit fontaine-grasp-sft-joint-corrected, log /home/ubuntu/train_grasp_sft_joint_corrected.log. ETA ~07:3xZ. At step 2000 + unit inactive: BOTH heads' probes per amendment SS4 (flow euler-10 unseen 0-99 + train 1000-1099; token grammar-greedy unseen 0-99; optional base-token anchor leg default-run) — anchors flow base 9 / corrupt-28, token R2 bar >=20"
+anchors = [
+    "E1 (smoke-pinned): mount banner must show molmoact2_joint, seam INSULATED (KI), lambda=1, offloaded optimizer ON, chunked backward 4 x 16, 313 eps / 54101 frames dims 6/6",
+    "E2 (smoke-pinned): ~11.2-11.4 s/step steady, vram_alloc_peak ~66.5 GiB (kill-consider if >75 sustained), host RAM: mirrors+moments ~67 GB resident is EXPECTED (free -g available should stay >80)",
+    "E3: loss_aux (CE) fell 4.33->2.87 by step 6 in-smoke; flat-at-4.3 loss_aux past ~step 50 = CE not learning, flag; loss_action (flow) ~0.89 at start, ramps with LR then declines",
+    "K1: NaN in loss/grad_norm, or loss_aux rising >0.5 over 3 consecutive logs after warmup => investigate at next save boundary; morning veto items (init/lambda/insulation/text-lr) are the owner's, not gates",
+]
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 8.0

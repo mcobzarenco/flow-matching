@@ -309,3 +309,4 @@
   - [2026-08-15 — Pre-reg (DRAFT, owner-gated): grasp-SFT retrain on the corrected table, via bijou.train](posts/2026-08-15-prereg-grasp-sft-retrain-corrected-table.md)
   - [2026-08-15 — Pre-reg: --image-augment — the train-time sim2real photometric recipe (v0, frozen)](posts/2026-08-15-prereg-image-augment-sim2real.md)
   - [2026-08-15 — Pre-reg (DRAFT, owner-gated): token-SFT arm — measured competence for the discrete head, via bijou.train](posts/2026-08-15-prereg-grasp-sft-token-sft-arm.md)
+  - [2026-08-16 — Registered amendment: route C — one joint run merges the A+B pre-regs (+ --offload-optim)](posts/2026-08-16-amendment-grasp-sft-route-c-joint.md)

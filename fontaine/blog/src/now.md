@@ -9,7 +9,52 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-16 01:0x–01:2xZ (real `date -u` at stamp: 01:16) —
+work session: **ROUTE C LAUNCHED — RAM feasibility measured, joint
+did NOT fit, `--offload-optim` landed (exact, oracle-pinned), run
+live at 100% util.***
+
+**Status**: `grasp_sft_joint_corrected` LIVE (unit
+`fontaine-grasp-sft-joint-corrected`, launched 01:09:16Z) — step
+10/2000 at first poll, 15.6 s/step avg incl. warmup (11.3 steady
+in-smoke), `vram_alloc_peak` 66.56 GiB (= smoke, ~12.7 headroom),
+GPU 100%/71 GB, CE 4.33→3.14 falling, flow 1.38 on the LR ramp;
+host RAM 96 GB avail with the offloaded moments resident. ETA ~step
+2000 **~07:3xZ**; gate ≤8 GPU-h train / ≤13 chain. ~0.3 GPU-h spent
+on smokes this session.
+
+**Steering** (00:18Z, actioned): route C RAM-permitting, else
+optimize AR-objective memory — **both done**: measured infeasible
+as-was (CE logits NOT the binder, <1 GiB; binder = fp32 static
+residency, trunk 20.3 + grads 16.9 + Adam moments 33.7 GiB; OOM at
+micro 8 step 1 AND micro 2 step 2), then `--offload-optim` landed
+(`8bb5b70`: AdamW moments in host RAM on pinned fp32 mirrors, CPU
+reference kernels — elementwise ⇒ exact, 5 oracles incl. bitwise
+keystone + resume round-trip, check.py 908) → peak 66.5 GiB at
+micro 16, fits with margin. Morning-veto items posted in-channel:
+init from-base / λ=1.0 / insulation ON / text-lr 1e-5.
+
+**Done**: analytic + measured RAM decomposition; `--offload-optim`
++ 5-test oracle suite (`8bb5b70`, pushed); registered amendment
+merging A+B pre-regs into route C
+(`posts/2026-08-16-amendment-grasp-sft-route-c-joint.md`, in-channel
+1538353817303654480); launch 01:09:16Z + babysit entry
+`grasp_sft_joint_corrected` (endpoint instructions in-registry:
+BOTH heads' probes per amendment §4); first-poll green + launch
+post 1538354838427934811; queue boundary updated, validate OK
+depth 2 (17 open).
+
+**Next**: ticks babysit the ride (~30-min cadence; K1 anchors in
+registry). At step 2000 + unit inactive: flow probe (euler-10,
+unseen 0–99 + train 1000–1099; anchors base 9 / corrupt-table 28)
+then token probe (grammar-greedy, unseen 0–99; R2 bar ≥20) + base-
+token anchor leg — per `queue_cli.py next` (grasp-sft-bootstrap).
+GPU oracle re-runs (convmap tripwires + sim_parallel_oracle) wait
+for the next free-GPU boundary. Morning: owner veto window on
+init/λ/insulation/text-lr.*
 
 *Updated 2026-08-16 00:20–00:2xZ (real `date -u` at stamp: 00:22) —
 tick: **OWNER STEERING — route C (joint) picked RAM-permitting, GPU
@@ -78,35 +123,16 @@ command against phase-7 HEAD; GPU release unblocks any launch). GPU
 oracle re-runs (convmap tripwires + sim_parallel_oracle) attach to
 the next free-GPU boundary.*
 
-*Updated 2026-08-15 23:58–00:0xZ (real `date -u` at stamp: 23:59) —
-tick: **quiet hold — owner 👍'd the phase-7bce merge report.***
-
-**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
-OWNER** (13:35Z), untouched. Main unmoved (`origin/main` =
-`1fb709a`, fully merged). 0 GPU-h.
-
-**Steering**: one new reaction — the 22:27 **phase-7bce merge
-report now carries a 👍** (first seen 23:59; it was unreacted at
-the 23:48 tick). All five merge-report posts are now 👍'd —
-read as owner acknowledgment that the main→fontaine merge sweep is
-complete and accepted. No new messages, inbox empty. The three
-owner decisions remain pending: retrain arm pick
-(continue-from-2k vs from-base), route A/B/C, GPU release.
-
-**Done**: routine tick — Discord read + history polls (reaction
-recorded), GPU/process check, fetch confirms main unmoved, queue
-validate OK depth 2 (17 open), `run_work_next` stays disarmed (both
-queued items gpu-local and owner-gated, no executable CPU-side
-items). No posts (a 👍 on our own report needs recording, not a
-reply).
-
-**Next**: unchanged — ticks hold until an owner decision lands (arm
-pick + route A/B/C unblock the retrain launch, either arm is one
-command against phase-7 HEAD; GPU release unblocks any launch). GPU
-oracle re-runs (convmap tripwires + sim_parallel_oracle) attach to
-the next free-GPU boundary.*
-
 ## Utilization footer
+
+Session 2026-08-16 00:24–01:2xZ (work, explore+exploit; ~0.3 GPU-h
+smokes, joint run launched and running): **route C feasibility +
+launch** — measured the fit (joint OOMs as-was; binder = fp32 Adam
+moments, not CE logits), landed `--offload-optim` (exact,
+oracle-pinned bitwise, `8bb5b70`), posted the registered amendment
+merging A+B, launched `fontaine-grasp-sft-joint-corrected`
+01:09:16Z (66.5 GiB / 11.3 s/step / ETA ~07:3xZ), first poll green,
+babysit entry live with endpoint instructions.
 
 Session 2026-08-16 00:20–00:2xZ (tick; 0 GPU-h): **owner steering
 landed 00:18Z** — GPU released, route C (joint) picked
@@ -115,13 +141,6 @@ make-it-fit fallback; trunk attachment read (migration complete
 through phase 7, our box gate closed). Replied in-channel + acked;
 `run_work_next` ARMED — chained work session does the RAM
 feasibility (analytic + smoke) then the joint launch.
-
-Session 2026-08-16 00:09–00:1xZ (tick; 0 GPU-h): quiet hold — no
-change. Discord read + inbox empty, no new messages or reactions
-(all five merge posts 👍'd), main unmoved at `1fb709a` (fully
-merged), GPU owner-reserved idle (0%) untouched, queue OK depth 2
-(17 open), `run_work_next` disarmed; arm pick, route A/B/C, GPU
-release still pending.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
