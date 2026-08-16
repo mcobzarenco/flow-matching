@@ -8,7 +8,51 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-16 00:20–00:2xZ (real `date -u` at stamp: 00:22) —
+tick: **OWNER STEERING — route C (joint) picked RAM-permitting, GPU
+released. Work session chained.***
+
+**Status**: no live jobs yet; GPU **released back to us** at 00:18Z
+(owner message) — H100 80 GB confirmed idle (0 MiB / 0%), host RAM
+~197 GB available. Main at `b43b4d0` (fast-forwarded to our tip per
+the trunk note). 0 GPU-h this tick.
+
+**Steering** (00:18Z owner message + attached trunk status note,
+replied 00:22Z, inbox cleared): **(1) GPU release** — reservation
+over, GPU is ours. **(2) Route call**: assess whether RAM suffices
+for **route C (`--objective joint`, L_flow + λ·CE)**; if not,
+**optimize the AR objective's memory** to make it fit — route C
+either way, so the A/B/C decision is resolved. Arm pick is
+effectively subsumed (joint run inits from-base/corrected-table by
+default; will be spelled in the launch post for morning veto). The
+attached trunk note: migration COMPLETE through phase 7, our box
+gate CLOSED (probe_grpo_replay_parity bit-equal on all 1903+1904
+banked rows, WAVE INTEGRITY PASS), adoption items for our next
+boundary (launcher re-pins `--insulate-flow` /
+`--flow-decoder-init` / `--flow-decoder-dtype` + `--family`; three
+scripts re-pointed on main; corrected-table prep collapses to
+`--replace-stats` at conversion; post-migration GRPO starts FRESH
+from converted checkpoints).
+
+**Done**: Discord read + history (all five merge posts remain
+👍'd), attachment fetched + read, in-channel reply posted (plan:
+analytic RAM estimate → empirical smoke on the real batch → launch
+joint if it fits, else chunked/fused-CE memory optimization
+oracle-pinned then launch), inbox acked, `run_work_next` **ARMED**
+— the chained 4-h work session does the feasibility + launch.
+
+**Next** (work session, immediately): (1) analytic peak-memory
+estimate for joint (CE full-vocab logits over text length on top of
+flow-head activations is the expected peak); (2) empirical smoke at
+the real batch on the H100; (3) registered amendment merging the
+A+B pre-regs into route C, then launch with babysit entry +
+first-poll util check; (4) if RAM blocks, implement AR-objective
+memory optimization (chunked CE), oracle-verify, re-smoke, launch.
+GPU oracle re-runs (convmap tripwires + sim_parallel_oracle) also
+unblock now the GPU is free — attach after the launch settles.*
 
 *Updated 2026-08-16 00:09–00:1xZ (real `date -u` at stamp: 00:10) —
 tick: **quiet hold — no change.***
@@ -62,31 +106,15 @@ command against phase-7 HEAD; GPU release unblocks any launch). GPU
 oracle re-runs (convmap tripwires + sim_parallel_oracle) attach to
 the next free-GPU boundary.*
 
-*Updated 2026-08-15 23:47–23:4xZ (real `date -u` at stamp: 23:48) —
-tick: **quiet hold — no change.***
-
-**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
-OWNER** (13:35Z), untouched. Main unmoved (`origin/main` =
-`1fb709a`, fully merged). 0 GPU-h.
-
-**Steering**: none new — Discord read + inbox empty at 23:48;
-history shows no new reactions (the 22:27 phase-7bce merge report
-still unreacted; the four earlier merge posts remain 👍'd). The
-three owner decisions remain pending: retrain arm pick
-(continue-from-2k vs from-base), route A/B/C, GPU release.
-
-**Done**: routine tick only — Discord + history polls, GPU/process
-check, fetch confirms main unmoved, queue validate OK depth 2 (17
-open), `run_work_next` stays disarmed (both queued items gpu-local
-and owner-gated, no executable CPU-side items). No posts.
-
-**Next**: unchanged — ticks hold until an owner decision lands (arm
-pick + route A/B/C unblock the retrain launch, either arm is one
-command against phase-7 HEAD; GPU release unblocks any launch). GPU
-oracle re-runs (convmap tripwires + sim_parallel_oracle) attach to
-the next free-GPU boundary.*
-
 ## Utilization footer
+
+Session 2026-08-16 00:20–00:2xZ (tick; 0 GPU-h): **owner steering
+landed 00:18Z** — GPU released, route C (joint) picked
+RAM-permitting with AR-objective memory optimization as the
+make-it-fit fallback; trunk attachment read (migration complete
+through phase 7, our box gate closed). Replied in-channel + acked;
+`run_work_next` ARMED — chained work session does the RAM
+feasibility (analytic + smoke) then the joint launch.
 
 Session 2026-08-16 00:09–00:1xZ (tick; 0 GPU-h): quiet hold — no
 change. Discord read + inbox empty, no new messages or reactions
@@ -94,14 +122,6 @@ change. Discord read + inbox empty, no new messages or reactions
 merged), GPU owner-reserved idle (0%) untouched, queue OK depth 2
 (17 open), `run_work_next` disarmed; arm pick, route A/B/C, GPU
 release still pending.
-
-Session 2026-08-15 23:58–00:0xZ (tick; 0 GPU-h): quiet hold —
-owner 👍'd the 22:27 phase-7bce merge report (all five merge posts
-now acknowledged, merge sweep accepted). Discord read + inbox
-empty otherwise, main unmoved at `1fb709a` (fully merged), GPU
-owner-reserved idle (0%) untouched, queue OK depth 2 (17 open),
-`run_work_next` disarmed; arm pick, route A/B/C, GPU release still
-pending.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
