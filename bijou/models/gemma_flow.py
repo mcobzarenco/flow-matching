@@ -23,14 +23,14 @@ import torch.distributed as dist
 from safetensors.torch import load_file
 from torch import Tensor, nn
 
-from ..checkpoint import backbone_directory, read_metadata
+from ..checkpoint import backbone_files, read_metadata, tokenizer_directory
 from ..modelling.decoders.flow import (
     FlowDecoder,
     flow_matching_loss_sums,
     snapflow_distill_loss_sums,
 )
 from ..modelling.encoders.gemma4 import GemmaEncoder, GemmaInputs
-from ..modelling.gemma4.loading import load_config
+from ..modelling.gemma4.config import Gemma4Config
 from ..modelling.gemma4.model import Gemma4Model
 from ..modelling.interface import CollatedBatch, InputsCollator, SamplingMethod
 from ..sections import (
@@ -38,7 +38,6 @@ from ..sections import (
     GemmaPromptConfig,
     build_gemma_flow_parts,
     expert_config_from_architecture,
-    load_backbone_state,
     parse_decoder_config,
     parse_prompt_config,
 )
@@ -302,17 +301,17 @@ class GemmaFlowVLA(FlowVLA[GemmaInputs]):
                 f"{checkpoint} records a {type(section).__name__} as "
                 "flow_decoder — gemma_flow carries the flow section",
             )
-        trunk_dir = backbone_directory(checkpoint, metadata)
-        backbone_config = load_config(trunk_dir)
+        backbone_config = Gemma4Config.from_dict(metadata.backbone_config)
         expert_config = expert_config_from_architecture(
             prompt,
             section,
             backbone_config,
         )
         backbone, encoder, decoder = build_gemma_flow_parts(
-            trunk_dir,
+            backbone_files(checkpoint),
             backbone_config,
             expert_config,
+            tokenizer_dir=tokenizer_directory(checkpoint),
             max_soft_tokens=prompt.max_soft_tokens,
             device=device,
             dtype=dtype,
@@ -335,8 +334,5 @@ class GemmaFlowVLA(FlowVLA[GemmaInputs]):
             objective=parse_gemma_flow_objective(metadata.objective),
             serving=FlowServing.from_dict(metadata.serving),
         )
-        if metadata.backbone_trained:
-            load_backbone_state(backbone, checkpoint)
-            print(f"loaded trained backbone from {checkpoint}", flush=True)
         model.eval()
         return model

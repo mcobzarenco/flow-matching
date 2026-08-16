@@ -1,15 +1,25 @@
 """Checkpoint loading: HF safetensors -> pure-torch Gemma4Model.
 
-The module tree deliberately mirrors HF's names, so the mapping is mostly
-"strip the ``model.`` prefix". Checkpoint quirks handled here:
+Two load forms share the mount machinery:
 
-- audio tower weights (``model.audio_tower.*``, ``model.embed_audio.*``) are
-  skipped — the audio tower is not implemented,
-- KV-shared layers ship redundant ``k_proj``/``v_proj``/``k_norm`` weights
-  that HF also drops at load time,
-- ``lm_head.weight`` is absent and tied to the token embedding,
-- all floating-point tensors are cast to the model dtype (bf16), matching
-  HF's ``from_pretrained`` behavior.
+- :func:`load_model` reads an HF-LAYOUT artifact directory (dir-glob
+  over ``*.safetensors``) and translates keys — the importers', parity
+  harnesses' and fresh-run mount path. The module tree deliberately
+  mirrors HF's names, so the mapping is mostly "strip the ``model.``
+  prefix". Checkpoint quirks handled: audio tower weights
+  (``model.audio_tower.*``, ``model.embed_audio.*``) are skipped — the
+  audio tower is not implemented; KV-shared layers ship redundant
+  ``k_proj``/``v_proj``/``k_norm`` weights that HF also drops at load
+  time; ``lm_head.weight`` is absent and tied to the token embedding;
+  all floating-point tensors are cast to the model dtype (bf16),
+  matching HF's ``from_pretrained`` behavior.
+- :func:`load_model_from_files` reads a VLA checkpoint's per-part
+  trunk files (``backbone_text``/``backbone_vision``), which already
+  carry OUR key names — translation happened ONCE at import
+  (:func:`import_backbone_state`), so the load is a plain strict
+  ``load_state_dict`` with no skip-prefixes. Depth adaptation (a
+  FULL-depth file mounting a truncated build) is our own semantics and
+  stays.
 """
 
 from __future__ import annotations
@@ -129,6 +139,156 @@ def truncate_backbone_state(
             value = value.narrow(axis, 0, ple_width)
         result[key] = value
     return result
+
+
+@dataclass(frozen=True, slots=True)
+class ImportedBackboneState:
+    """An HF Gemma artifact's trunk tensors translated to OUR key names
+    and partitioned by LR-group part (the checkpoint format's file
+    split): ``text`` = the text stack + PLE projections + the multimodal
+    projector (``language_model.*``, ``embed_vision.*``); ``vision`` =
+    the vision tower (``vision_tower.*`` — exactly the
+    ``backbone_vision`` LR group's members). ``skipped`` names every
+    source key deliberately not imported. Tensor bytes and dtypes are
+    verbatim — extraction is key-filtering, never value change."""
+
+    text: dict[str, torch.Tensor]
+    vision: dict[str, torch.Tensor]
+    skipped: tuple[str, ...]
+
+
+def import_backbone_state(
+    checkpoint_dir: Path,
+    *,
+    config: Gemma4Config | None = None,
+) -> ImportedBackboneState:
+    """Translate an HF-layout Gemma artifact into per-part trunk states
+    (the ONE place translation happens; loads of the produced files are
+    plain strict ``load_state_dict``).
+
+    The key partition is AUDITED: every source shard key must classify
+    as text, vision, or known-skipped (audio towers, KV-shared layers'
+    redundant K/V weights, a tied ``lm_head``) — an unclassified tensor
+    refuses the import with the keys named, so a layout drift in a new
+    release can never silently drop weights."""
+    if config is None:
+        config = load_config(checkpoint_dir)
+    text: dict[str, torch.Tensor] = {}
+    vision: dict[str, torch.Tensor] = {}
+    skipped: list[str] = []
+    unclassified: list[str] = []
+    weight_files = sorted(checkpoint_dir.glob("*.safetensors"))
+    if not weight_files:
+        raise SystemExit(f"no *.safetensors files in {checkpoint_dir}")
+    for weight_file in weight_files:
+        with safe_open(weight_file, framework="pt", device="cpu") as f:
+            # it exposes .keys() but not iteration/__contains__.
+            for key in f.keys():  # noqa: SIM118
+                if key == "lm_head.weight" and config.text.tie_word_embeddings:
+                    # Tied head: re-synthesized from the embedding at
+                    # load (released artifacts do not ship it either).
+                    skipped.append(key)
+                    continue
+                if key.startswith(_AUDIO_PREFIXES):
+                    skipped.append(key)
+                    continue
+                if not key.startswith("model."):
+                    unclassified.append(key)
+                    continue
+                name = key.removeprefix("model.")
+                if _is_dropped_shared_kv_key(config, name):
+                    skipped.append(key)
+                    continue
+                if name.startswith("vision_tower."):
+                    vision[name] = f.get_tensor(key)
+                elif name.startswith(("language_model.", "embed_vision.")):
+                    text[name] = f.get_tensor(key)
+                else:
+                    unclassified.append(key)
+    if unclassified:
+        raise SystemExit(
+            f"{checkpoint_dir}: import audit FAILED — "
+            f"{len(unclassified)} source key(s) classify as neither text, "
+            f"vision, nor known-skipped: {sorted(unclassified)} — refusing "
+            "to import a layout this translation does not fully cover",
+        )
+    if not text:
+        raise SystemExit(f"{checkpoint_dir}: no text-stack tensors found")
+    return ImportedBackboneState(
+        text=text,
+        vision=vision,
+        skipped=tuple(sorted(skipped)),
+    )
+
+
+def load_model_from_files(
+    config: Gemma4Config,
+    *,
+    text_file: Path,
+    vision_file: Path,
+    device: torch.device | str = "cpu",
+    dtype: torch.dtype | None = None,
+    attn_backend: AttentionBackend = DEFAULT_ATTENTION_BACKEND,
+    truncate_layers: int | None = None,
+) -> Gemma4Model:
+    """Load a Gemma trunk from per-part weight files carrying OUR key
+    names (a VLA checkpoint's ``backbone_text``/``backbone_vision``) —
+    a plain strict load, no key translation, no skip-prefixes.
+
+    ``config`` is the artifact's parsed config (the checkpoint metadata
+    carries the dict verbatim); ``dtype`` overrides its dtype exactly
+    like :func:`load_model`. With ``truncate_layers=N`` a FULL-depth
+    text file mounts a truncated build: deeper layer keys are dropped
+    and the packed per-layer-embedding tensors sliced to the kept
+    layers (a no-op on a file already saved at that depth); a
+    prefix-depth file cannot mount a deeper build — the strict load
+    fails loudly on the missing keys. The model is returned in eval
+    mode with gradients disabled."""
+    if dtype is not None:
+        config = dataclasses.replace(config, dtype=dtype)
+    if truncate_layers is not None:
+        config = truncated_config(config, truncate_layers)
+    model = Gemma4Model(config, attn_backend=attn_backend, device="meta")
+
+    ple_slice_dim = truncate_layers and (
+        truncate_layers * config.text.hidden_size_per_layer_input
+    )
+    state_dict: dict[str, torch.Tensor] = {}
+    for weight_file in (text_file, vision_file):
+        if not weight_file.is_file():
+            raise SystemExit(f"backbone part file {weight_file} is missing")
+        with safe_open(weight_file, framework="pt", device=str(device)) as f:
+            # it exposes .keys() but not iteration/__contains__.
+            for key in f.keys():  # noqa: SIM118
+                if truncate_layers is not None and _is_truncated_layer_key(
+                    key,
+                    truncate_layers,
+                ):
+                    continue
+                if ple_slice_dim and (axis := _PLE_PACKED_KEYS.get(key)) is not None:
+                    # Read only the kept slices from disk ([:width]
+                    # no-ops when the file was saved at this depth).
+                    tensor_slice = f.get_slice(key)
+                    if axis == 0:
+                        tensor = tensor_slice[:ple_slice_dim, :]
+                    else:
+                        tensor = tensor_slice[:, :ple_slice_dim]
+                else:
+                    tensor = f.get_tensor(key)
+                if tensor.is_floating_point():
+                    tensor = tensor.to(config.dtype)
+                state_dict[key] = tensor
+
+    if config.text.tie_word_embeddings and "lm_head.weight" not in state_dict:
+        state_dict["lm_head.weight"] = state_dict["language_model.embed_tokens.weight"]
+
+    model.load_state_dict(state_dict, strict=True, assign=True)
+    model.eval()
+    model.requires_grad_(False)
+    # Parameters are already on the target device; this sweeps over the
+    # small computed buffers (rope inv_freq, embed scales), which meta
+    # construction materializes on CPU (see bijou.modelling.nn.buffer_device).
+    return model.to(device)
 
 
 def load_model(

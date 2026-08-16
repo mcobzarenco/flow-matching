@@ -31,7 +31,7 @@ from ..modelling.interface import (
     CollatedBatch,
     InputsCollator,
 )
-from ..modelling.molmo2.loading import load_config as load_molmo2_config
+from ..modelling.molmo2.config import Molmo2Config
 from ..modelling.molmo2.model import Molmo2Model
 from ..sections import (
     MOLMOACT2_FAST_TOKENIZER_REF,
@@ -57,7 +57,7 @@ from .serving import ARServing
 def build_molmoact2_ar_component(
     metadata: VLAMetadata,
     prompt: MolmoAct2PromptConfig,
-    trunk_dir: Path,
+    tokenizer_dir: Path,
     component: str,
 ) -> MolmoAct2ARDecoder:
     """The discrete decoder from its recorded component config — either
@@ -66,8 +66,9 @@ def build_molmoact2_ar_component(
     value-line emissions ride the Gemma/Molmo2 prompts), or a
     molmo_flow section (release-class conversions record no format-6
     section; the AR config derives from the flow geometry, block ids
-    from the trunk tokenizer, block width from the FAST artifact —
-    the recorded one, else the canonical release ref)."""
+    from the trunk tokenizer — the checkpoint's tokenizer/ — block
+    width from the FAST artifact: the recorded one, else the canonical
+    release ref)."""
     section = parse_decoder_config(dict(metadata.components[component]["config"]))
     if isinstance(section, ARDecoderConfig):
         if section.suffix_format != MOLMOACT2_SUFFIX_FORMAT:
@@ -82,7 +83,7 @@ def build_molmoact2_ar_component(
         config = molmoact2_ar_config_from_flow_section(
             section,
             prompt,
-            str(trunk_dir),
+            str(tokenizer_dir),
             fast_tokenizer=metadata.artifacts.get(
                 "fast_tokenizer",
                 MOLMOACT2_FAST_TOKENIZER_REF,
@@ -97,8 +98,8 @@ def build_molmoact2_ar_component(
     return build_molmoact2_ar_decoder(
         config,
         prompt,
-        load_molmo2_config(trunk_dir).text,
-        str(trunk_dir),
+        Molmo2Config.from_dict(metadata.backbone_config).text,
+        str(tokenizer_dir),
     )
 
 
@@ -264,7 +265,7 @@ class MolmoAct2ARVLA(ARVLA[MolmoAct2Inputs]):
                 "not molmoact2_ar — load through bijou.loading.load_vla",
             )
         prompt = molmoact2_prompt_of(metadata)
-        backbone, encoder, trunk_dir = load_molmoact2_backbone(
+        backbone, encoder, tokenizer_dir = load_molmoact2_backbone(
             checkpoint,
             metadata,
             prompt,
@@ -274,7 +275,7 @@ class MolmoAct2ARVLA(ARVLA[MolmoAct2Inputs]):
         decoder = build_molmoact2_ar_component(
             metadata,
             prompt,
-            trunk_dir,
+            tokenizer_dir,
             "ar_decoder",
         )
         model = cls(

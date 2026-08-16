@@ -24,7 +24,7 @@ import torch
 from safetensors.torch import load_file
 from torch import Tensor, nn
 
-from ..checkpoint import backbone_directory, read_metadata
+from ..checkpoint import backbone_files, read_metadata, tokenizer_directory
 from ..modelling.aux_text import AuxField
 from ..modelling.decoders.ar_molmo2 import Molmo2ARDecoder
 from ..modelling.encoders.molmo2 import Molmo2Encoder, Molmo2Inputs, Molmo2Memory
@@ -35,14 +35,12 @@ from ..modelling.interface import (
     InputsCollator,
     ValueCandidate,
 )
-from ..modelling.molmo2.loading import load_config as load_molmo2_config
-from ..modelling.molmo2.model import Molmo2Model
-from ..modelling.molmo2.model import load_model as load_molmo2_model
+from ..modelling.molmo2.config import Molmo2Config
+from ..modelling.molmo2.model import Molmo2Model, load_model_from_files
 from ..sections import (
     ARDecoderConfig,
     Molmo2PromptConfig,
     build_molmo2_ar_decoder,
-    load_backbone_state,
     parse_decoder_config,
     parse_prompt_config,
 )
@@ -269,11 +267,18 @@ class Molmo2ARVLA(ARVLA[Molmo2Inputs], NarratingVLA[Molmo2Inputs]):
                 f"{checkpoint} records a {type(config).__name__} as "
                 "ar_decoder — molmo2_ar carries the ar_backbone section",
             )
-        trunk_dir = backbone_directory(checkpoint, metadata)
-        molmo2_config = load_molmo2_config(trunk_dir)
-        backbone = load_molmo2_model(trunk_dir, device=device, dtype=dtype)
+        molmo2_config = Molmo2Config.from_dict(metadata.backbone_config)
+        files = backbone_files(checkpoint)
+        tokenizer_dir = tokenizer_directory(checkpoint)
+        backbone = load_model_from_files(
+            molmo2_config,
+            text_file=files.text,
+            vision_file=files.vision,
+            device=device,
+            dtype=dtype,
+        )
         encoder = Molmo2Encoder(
-            str(trunk_dir),
+            str(tokenizer_dir),
             max_crops=prompt.max_crops,
             state_dim=prompt.state_dim,
             hidden_size=molmo2_config.text.hidden_size,
@@ -282,7 +287,7 @@ class Molmo2ARVLA(ARVLA[Molmo2Inputs], NarratingVLA[Molmo2Inputs]):
         )
         objective = parse_ar_objective(metadata.objective)
         decoder = build_molmo2_ar_decoder(
-            str(trunk_dir),
+            str(tokenizer_dir),
             config,
             molmo2_config.text,
             narration_weight=objective.narration_weight,
@@ -304,8 +309,5 @@ class Molmo2ARVLA(ARVLA[Molmo2Inputs], NarratingVLA[Molmo2Inputs]):
             objective=objective,
             serving=ARServing.from_dict(metadata.serving),
         )
-        if metadata.backbone_trained:
-            load_backbone_state(backbone, checkpoint)
-            print(f"loaded trained backbone from {checkpoint}", flush=True)
         model.eval()
         return model

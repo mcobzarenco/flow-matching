@@ -35,7 +35,13 @@ from torch import Tensor, nn
 from ..gemma4.loading import resolve_checkpoint_dir
 from ..nn import MaskSpec
 from .config import Molmo2Config
-from .loading import load_config, load_text_model, load_vision_backbone
+from .loading import (
+    load_config,
+    load_text_model,
+    load_text_model_from_file,
+    load_vision_backbone,
+    load_vision_backbone_from_file,
+)
 from .text import Molmo2TextModel
 from .vision import Molmo2VisionBackbone
 
@@ -291,6 +297,38 @@ def load_model(
         raise ValueError(f"{checkpoint_dir} config has no image_patch_id")
     text = load_text_model(checkpoint_dir, device=device, dtype=dtype)
     vision = load_vision_backbone(checkpoint_dir, device=device, dtype=dtype)
+    model = Molmo2Model(text, vision, image_patch_id=config.image_patch_id)
+    model.eval()
+    model.requires_grad_(False)
+    return model
+
+
+def load_model_from_files(
+    config: Molmo2Config,
+    *,
+    text_file: Path,
+    vision_file: Path,
+    device: torch.device | str = "cpu",
+    dtype: torch.dtype | None = None,
+) -> Molmo2Model:
+    """Load the full multimodal model from a VLA checkpoint's per-part
+    trunk files (OUR key names; plain strict loads) — the from-files
+    twin of :func:`load_model`. ``config`` is the artifact's parsed
+    config (the checkpoint metadata carries the dict verbatim)."""
+    if config.image_patch_id < 0:
+        raise ValueError("backbone config has no image_patch_id")
+    text = load_text_model_from_file(
+        config.text,
+        text_file,
+        device=device,
+        dtype=dtype,
+    )
+    vision = load_vision_backbone_from_file(
+        config,
+        vision_file,
+        device=device,
+        dtype=dtype,
+    )
     model = Molmo2Model(text, vision, image_patch_id=config.image_patch_id)
     model.eval()
     model.requires_grad_(False)

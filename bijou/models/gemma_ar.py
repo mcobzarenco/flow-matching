@@ -24,11 +24,11 @@ import torch
 from safetensors.torch import load_file
 from torch import Tensor, nn
 
-from ..checkpoint import backbone_directory, read_metadata
+from ..checkpoint import backbone_files, read_metadata, tokenizer_directory
 from ..modelling.aux_text import AuxField
 from ..modelling.decoders.ar_gemma import GemmaARDecoder
 from ..modelling.encoders.gemma4 import GemmaEncoder, GemmaInputs, GemmaMemory
-from ..modelling.gemma4.loading import load_config
+from ..modelling.gemma4.config import Gemma4Config
 from ..modelling.gemma4.model import Gemma4Model
 from ..modelling.interface import (
     ActionCaptureStep,
@@ -43,7 +43,6 @@ from ..sections import (
     GemmaPromptConfig,
     build_gemma_ar_decoder,
     build_gemma_encoder,
-    load_backbone_state,
     parse_decoder_config,
     parse_prompt_config,
 )
@@ -279,11 +278,12 @@ class GemmaARVLA(ARVLA[GemmaInputs], NarratingVLA[GemmaInputs]):
                 f"'{depth}' backbone — its suffix runs the KV-shared deep "
                 "half, which only the full stack has",
             )
-        trunk_dir = backbone_directory(checkpoint, metadata)
-        backbone_config = load_config(trunk_dir)
+        backbone_config = Gemma4Config.from_dict(metadata.backbone_config)
+        tokenizer_dir = tokenizer_directory(checkpoint)
         backbone, encoder = build_gemma_encoder(
-            trunk_dir,
+            backbone_files(checkpoint),
             backbone_config,
+            tokenizer_dir=tokenizer_dir,
             exports=prompt.exports,
             max_soft_tokens=prompt.max_soft_tokens,
             state_dim=prompt.state_dim,
@@ -293,7 +293,7 @@ class GemmaARVLA(ARVLA[GemmaInputs], NarratingVLA[GemmaInputs]):
         )
         objective = parse_ar_objective(metadata.objective)
         decoder = build_gemma_ar_decoder(
-            trunk_dir,
+            tokenizer_dir,
             config,
             backbone_config.text,
             narration_weight=objective.narration_weight,
@@ -315,8 +315,5 @@ class GemmaARVLA(ARVLA[GemmaInputs], NarratingVLA[GemmaInputs]):
             objective=objective,
             serving=ARServing.from_dict(metadata.serving),
         )
-        if metadata.backbone_trained:
-            load_backbone_state(backbone, checkpoint)
-            print(f"loaded trained backbone from {checkpoint}", flush=True)
         model.eval()
         return model

@@ -1,14 +1,22 @@
 """Convert a legacy bijou checkpoint (``bijou_config.json`` format 3)
-to the VLA checkpoint format (``bijou/checkpoint.py``).
+to the VLA checkpoint format (``bijou/checkpoint.py``, schema 2).
 
 Usage::
 
     uv run python -m bijou.convert_legacy <legacy-dir> <new-dir> \\
         [--replace-stats <state-dict.json>]
 
-The conversion is a metadata re-expression plus hard links — weight
-files are never rewritten (content-identical by construction), so a
-conversion is cheap and, re-run against the same source, produces
+Component weight files are hard-linked, never rewritten
+(content-identical by construction). The trunk is IMPORTED into the
+per-part files (``backbone_text``/``backbone_vision``, our key names):
+a pristine trunk extracts from the resolved artifact snapshot (the
+extraction bytes are paid once, here — loads never touch HF layouts
+again), a trained legacy ``backbone.safetensors`` partitions into the
+same per-part files with both trained flags conservatively True (the
+legacy format recorded one fact for the whole trunk). The artifact's
+``config.json`` is carried VERBATIM in the metadata and its
+tokenizer/processor files hard-link into ``tokenizer/``. Conversion is
+deterministic: re-run against the same source, it produces
 content-identical output (the idempotence gate).
 
 This module is the ONE home of the legacy ``bijou_config.json``
@@ -53,10 +61,24 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from .checkpoint import VLAMetadata, validate_checkpoint, write_checkpoint
+from huggingface_hub import snapshot_download
+from safetensors.torch import load_file
+
+from .checkpoint import (
+    VLAMetadata,
+    tokenizer_manifest,
+    validate_checkpoint,
+    write_checkpoint,
+)
 from .data import DatasetStats
 from .loading import CheckpointTrainArgs
 from .modelling.decoders.ar_suffix import ARDecoderConfig
+from .modelling.gemma4.loading import (
+    import_backbone_state as import_gemma_backbone_state,
+)
+from .modelling.molmo2.loading import (
+    import_backbone_state as import_molmo2_backbone_state,
+)
 from .sections import (
     BackboneConfig,
     FlowDecoderSection,
@@ -66,6 +88,8 @@ from .sections import (
     MolmoFlowDecoderConfig,
     parse_decoder_config,
     parse_prompt_config,
+    split_gemma_backbone_state,
+    split_molmo2_backbone_state,
 )
 from .vla import VLAFamily
 
@@ -198,6 +222,13 @@ def convert(
 ) -> VLAMetadata:
     """Convert ``source`` (legacy) into ``destination`` (VLA format);
     returns the written metadata. Loud about every inference."""
+    if (source / "metadata.json").exists():
+        raise SystemExit(
+            f"{source} is a VLA-format directory, not a legacy checkpoint — "
+            "schema-1 artifacts re-convert from their ORIGINAL sources "
+            "(this converter on the legacy directory, or "
+            "bijou.convert_molmoact2 on the HF release)",
+        )
     config_path = source / "bijou_config.json"
     if not config_path.exists():
         raise SystemExit(f"{source}: no bijou_config.json — not a legacy checkpoint")
@@ -323,21 +354,55 @@ def convert(
     if train_args.fast_tokenizer is not None:
         artifacts["fast_tokenizer"] = train_args.fast_tokenizer
 
+    # --- the trunk import: per-part states, our key names ---
+    # The artifact snapshot supplies config.json (carried verbatim) and
+    # the tokenizer/processor files for BOTH arms; pristine trunks also
+    # extract their weights from it, trained trunks partition the legacy
+    # snapshot file instead.
+    snapshot = resolve_artifact_snapshot(sections.backbone.id)
+    backbone_config = json.loads((snapshot / "config.json").read_text())
+    gemma_trunk = isinstance(sections.prompt, GemmaPromptConfig)
     backbone_file = source / "backbone.safetensors"
     backbone_trained = backbone_file.exists()
-    backbone: Path
     if backbone_trained:
-        backbone = backbone_file
+        # The legacy format recorded ONE trained fact for the whole
+        # trunk — both per-part flags carry it conservatively.
+        legacy_state = load_file(str(backbone_file), device="cpu")
+        if gemma_trunk:
+            backbone_text, backbone_vision = split_gemma_backbone_state(legacy_state)
+        else:
+            backbone_text, backbone_vision = split_molmo2_backbone_state(legacy_state)
+        print(
+            f"[convert] trained trunk: {backbone_file.name} partitioned "
+            f"into text ({len(backbone_text)}) + vision "
+            f"({len(backbone_vision)}) tensors (both flags True)",
+        )
+    elif gemma_trunk:
+        imported = import_gemma_backbone_state(snapshot)
+        backbone_text, backbone_vision = imported.text, imported.vision
+        print(
+            f"[convert] pristine trunk imported from {snapshot}: text "
+            f"({len(backbone_text)}) + vision ({len(backbone_vision)}) "
+            f"tensors, skipped {len(imported.skipped)}",
+        )
     else:
-        snapshot = resolve_pristine_snapshot(sections.backbone.id)
-        backbone = snapshot
+        imported_molmo = import_molmo2_backbone_state(snapshot)
+        backbone_text, backbone_vision = imported_molmo.text, imported_molmo.vision
+        print(
+            f"[convert] pristine trunk imported from {snapshot}: text "
+            f"({len(backbone_text)}) + vision ({len(backbone_vision)}) "
+            f"tensors, expert ({len(imported_molmo.expert)}) left to the "
+            f"decoder file, skipped {len(imported_molmo.skipped)}",
+        )
     metadata = VLAMetadata(
         family=family,
         chunk_size=train_args.chunk_size,
         action_dim=action_dim,
         backbone_id=sections.backbone.id,
         backbone_depth=sections.backbone.depth.value,
-        backbone_trained=backbone_trained,
+        backbone_config=backbone_config,
+        backbone_text_trained=backbone_trained,
+        backbone_vision_trained=backbone_trained,
         objective=objective,
         serving=serving,
         components=components,
@@ -351,43 +416,53 @@ def convert(
         step=int(meta["step"]),
         stats_note=stats_note,
     )
+    tokenizer_files: dict[str, Path] = {}
+    for name in tokenizer_manifest(family):
+        path = snapshot / name
+        if not path.is_file():
+            raise SystemExit(
+                f"{snapshot} has no {name} — the {family.value} prompt "
+                "path reads it; cannot produce a self-contained checkpoint",
+            )
+        tokenizer_files[name] = path
     optimizer = source / "optimizer.pt"
     write_checkpoint(
         destination,
         metadata=metadata,
         components={},
         component_files=component_files,
-        backbone=backbone,
+        backbone_text=backbone_text,
+        backbone_vision=backbone_vision,
+        tokenizer_files=tokenizer_files,
         optimizer=optimizer if optimizer.exists() else None,
     )
     validate_checkpoint(destination)
     print(
         f"[convert] {source} -> {destination}: family={family.value} "
         f"chunk={metadata.chunk_size} action_dim={action_dim} "
-        f"backbone_trained={backbone_trained} step={metadata.step}",
+        f"backbone text_trained={backbone_trained} "
+        f"vision_trained={backbone_trained} step={metadata.step}",
     )
     return metadata
 
 
-def resolve_pristine_snapshot(backbone_id: str) -> Path:
-    """The pristine trunk's snapshot directory: a recorded local path is
-    used directly; a hub id resolves through the LOCAL cache only —
-    conversion never downloads (the machine converting a checkpoint
-    already trained/evaluated with the artifact)."""
+def resolve_artifact_snapshot(backbone_id: str) -> Path:
+    """The trunk artifact's snapshot directory (config.json, tokenizer
+    files, and — for pristine trunks — the weights to import): a
+    recorded local path is used directly; a hub id resolves through the
+    LOCAL cache only — conversion never downloads (the machine
+    converting a checkpoint already trained/evaluated with the
+    artifact)."""
     local = Path(backbone_id).expanduser()
     if local.is_dir():
         return local
-    from huggingface_hub import (
-        snapshot_download,
-    )
-
     try:
         return Path(
             snapshot_download(backbone_id, local_files_only=True),
         )
     except Exception as error:
         raise SystemExit(
-            f"pristine backbone {backbone_id!r} is not in the local HF "
+            f"backbone artifact {backbone_id!r} is not in the local HF "
             f"cache ({error}) — fetch it once (huggingface-cli download "
             f"{backbone_id}) and re-run",
         ) from error

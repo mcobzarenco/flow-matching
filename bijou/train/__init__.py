@@ -41,6 +41,7 @@ from .loop import (
     summed_loss_counts,
 )
 from .saving import (
+    BackbonePartSources,
     Normalizer,
     Normalizers,
     TrainState,
@@ -55,6 +56,7 @@ __all__ = [
     "ARCH_FLAGS",
     "DEFAULT_BACKBONE",
     "ArchSection",
+    "BackbonePartSources",
     "CheckpointResolution",
     "ChunkedBatch",
     "ChunkingCollator",

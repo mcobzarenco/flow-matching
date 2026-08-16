@@ -52,7 +52,11 @@ def write_gemma_trunk(directory: Path) -> Path:
     2048 vocabulary (batches use ids < 1000; the real 262k vocab exists
     only to match the real tokenizer, which these tests never run),
     plus a WordLevel tokenizer so AutoTokenizer resolves hermetically
-    (the ar_backbone construction path tokenizes its opener)."""
+    (the ar_backbone construction path tokenizes its opener). The
+    remaining gemma tokenizer-manifest files (processor_config.json,
+    chat_template.jinja) are STUBS: conversion requires their presence
+    for self-containment, and these hermetic tests never run the
+    AutoProcessor path that would read them."""
     config_json = gemma_tiny_config_json()
     config_json["text_config"]["vocab_size"] = GEMMA_VOCAB
     config_json["text_config"]["vocab_size_per_layer_input"] = GEMMA_VOCAB
@@ -75,6 +79,8 @@ def write_gemma_trunk(directory: Path) -> Path:
     (directory / "tokenizer_config.json").write_text(
         json.dumps({"tokenizer_class": "PreTrainedTokenizerFast"}),
     )
+    (directory / "processor_config.json").write_text("{}")
+    (directory / "chat_template.jinja").write_text("")
     return directory
 
 

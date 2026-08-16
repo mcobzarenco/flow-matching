@@ -40,12 +40,17 @@ from bijou.loading import (
     CheckpointTrainArgs,
     MolmoAct2PromptConfig,
     MolmoFlowDecoderConfig,
+    load_vla,
     parse_decoder_config,
     parse_prompt_config,
 )
 from bijou.modelling.decoders.molmo_flow import MolmoFlowConfig
 from bijou.models.molmoact2_flow import MolmoAct2FlowVLA
+from bijou.models.molmoact2_joint import MolmoAct2JointVLA
+from bijou.testing import TINY_MOLMOACT2_VOCAB
 from bijou.vla import VLAFamily
+
+FIXTURE_FAST = Path(__file__).parent / "fixtures" / "molmoact2_fast_tokenizer"
 
 _ACTION_DIM = 6
 _STATE_DIM = 6
@@ -120,7 +125,10 @@ def _source_config() -> dict[str, Any]:
         # the assembly test loads it for real.
         "text_config": {
             "model_type": "molmo2_text",
-            "vocab_size": 151_936,
+            # Must span the action block ([151934, 153982) + specials):
+            # the ar/joint import constructs the discrete decoder, whose
+            # guard refuses a block straddling past the base matrices.
+            "vocab_size": TINY_MOLMOACT2_VOCAB,
             "additional_vocab_size": 4_096,
             "hidden_size": 32,
             "intermediate_size": 64,
@@ -239,7 +247,12 @@ def source_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
     config = _source_config()
     (source / "config.json").write_text(json.dumps(config))
     (source / "norm_stats.json").write_text(json.dumps(_norm_stats()))
-    (source / "tokenizer.json").write_text("{}")
+    # A REAL anchored tiny tokenizer (not a stub): the ar/joint import
+    # verifies <action_*> anchors against it, and every conversion links
+    # it into tokenizer/.
+    from bijou.testing import _write_tiny_molmoact2_tokenizer
+
+    _write_tiny_molmoact2_tokenizer(source)
     state = _expert_state()
     torch.manual_seed(1)
     parsed = Molmo2Config.from_dict(config)
@@ -311,7 +324,12 @@ def test_happy_path_round_trips(source_dir: Path, tmp_path: Path) -> None:
     metadata = validate_checkpoint(out)
     assert metadata.family is VLAFamily.MOLMOACT2_FLOW
     assert metadata.backbone_id == "user/tiny-hf"
-    assert metadata.backbone_trained is False
+    assert metadata.backbone_text_trained is False
+    assert metadata.backbone_vision_trained is False
+    # Their config.json contents, verbatim.
+    assert metadata.backbone_config == json.loads(
+        (source_dir / "config.json").read_text(),
+    )
     assert metadata.step == 0
     assert metadata.objective == {"kind": "flow"}
     assert metadata.serving == {"kind": "flow", "num_steps": 10, "method": "euler"}
@@ -378,6 +396,27 @@ def test_expert_bytes_verbatim_and_names_match_port(
     assert set(written) == module_names
 
 
+def test_unclassified_source_key_refuses_import(
+    source_dir: Path,
+    tmp_path: Path,
+) -> None:
+    """The import audit: a source tensor that is neither text, vision,
+    expert nor known-skipped refuses the whole conversion by name — a
+    layout drift can never silently drop weights."""
+    import shutil
+
+    from safetensors.torch import save_file
+
+    drifted = tmp_path / "drifted"
+    shutil.copytree(source_dir, drifted)
+    save_file(
+        {"model.depth_tower.weight": torch.zeros(2)},
+        str(drifted / "extra.safetensors"),
+    )
+    with pytest.raises(SystemExit, match="depth_tower"):
+        _convert(drifted, tmp_path / "converted")
+
+
 def test_deterministic_and_refuses_overwrite(
     source_dir: Path,
     tmp_path: Path,
@@ -403,7 +442,7 @@ def test_from_checkpoint_assembles_molmo_flow(
 ) -> None:
     """The family assembly end-to-end on the tiny converted checkpoint
     (self-contained: the trunk mounts from the checkpoint's own
-    backbone/ mirror, no hub access): decoder built + configured off
+    per-part files, no hub access): decoder built + configured off
     the recorded sections, expert weights byte-equal the source, compat
     tensors injected, encoder carries the prompt facts, q01/q99 table
     on the decoder buffers."""
@@ -510,3 +549,54 @@ def test_missing_tokenizer_refused(source_dir: Path, tmp_path: Path) -> None:
 def test_wrong_tag_refused(source_dir: Path, tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="norm_tag"):
         convert(str(source_dir), tmp_path / "out", norm_tag="nope", backbone_ref=None)
+
+
+def test_family_joint_imports_both_surfaces(
+    source_dir: Path,
+    tmp_path: Path,
+) -> None:
+    """--family molmoact2_joint: ar_decoder config derived from the flow
+    section (parameterless), joint objective recorded as the default
+    continuation plan, and the directory loads as the joint family."""
+    out = convert(
+        str(source_dir),
+        tmp_path / "joint",
+        norm_tag="tiny_tag",
+        backbone_ref="user/tiny-hf",
+        family=VLAFamily.MOLMOACT2_JOINT,
+        fast_tokenizer=str(FIXTURE_FAST),
+    )
+    metadata = read_metadata(out)
+    assert metadata.family is VLAFamily.MOLMOACT2_JOINT
+    assert metadata.objective == {
+        "kind": "joint",
+        "ce_weight": 1.0,
+        "insulate_flow": False,
+    }
+    assert metadata.components["ar_decoder"]["weights"] is False
+    assert metadata.components["flow_decoder"]["weights"] is True
+    model = load_vla(out, device="cpu", dtype=torch.float32)
+    assert isinstance(model, MolmoAct2JointVLA)
+
+
+def test_family_joint_refuses_continuous_exports(
+    source_dir: Path,
+    tmp_path: Path,
+) -> None:
+    import json as _json
+    import shutil as _shutil
+
+    continuous = tmp_path / "continuous_export"
+    _shutil.copytree(source_dir, continuous)
+    config_path = continuous / "config.json"
+    payload = _json.loads(config_path.read_text())
+    payload["action_mode"] = "continuous"
+    config_path.write_text(_json.dumps(payload))
+    with pytest.raises(SystemExit, match="never"):
+        convert(
+            str(continuous),
+            tmp_path / "joint",
+            norm_tag="tiny_tag",
+            backbone_ref="user/tiny-hf",
+            family=VLAFamily.MOLMOACT2_JOINT,
+        )

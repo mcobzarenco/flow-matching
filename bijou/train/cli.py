@@ -80,7 +80,13 @@ from ..async_save import (
     capture_optimizer_state,
     copy_to_cpu,
 )
-from ..checkpoint import VLAMetadata, backbone_directory, read_metadata
+from ..checkpoint import (
+    VLAMetadata,
+    backbone_files,
+    read_metadata,
+    tokenizer_directory,
+    tokenizer_manifest,
+)
 from ..data import (
     EpisodeSplit,
     LengthBucketedBatchSampler,
@@ -115,12 +121,13 @@ from ..modelling.decoders.molmo_flow import load_expert_state
 from ..modelling.encoders.gemma4 import GemmaInputsCollator
 from ..modelling.encoders.molmo2 import Molmo2Encoder, Molmo2InputsCollator
 from ..modelling.encoders.molmoact2 import MolmoAct2Encoder, MolmoAct2InputsCollator
-from ..modelling.gemma4.loading import load_config, resolve_checkpoint_dir
+from ..modelling.gemma4.config import Gemma4Config
+from ..modelling.gemma4.loading import resolve_checkpoint_dir
 from ..modelling.interface import Collator, SamplingMethod
-from ..modelling.molmo2.config import Molmo2TextConfig
-from ..modelling.molmo2.loading import load_config as load_molmo2_config
+from ..modelling.molmo2.config import Molmo2Config, Molmo2TextConfig
 from ..modelling.molmo2.model import Molmo2Model
 from ..modelling.molmo2.model import load_model as load_molmo2_model
+from ..modelling.molmo2.model import load_model_from_files as load_molmo2_from_files
 from ..modelling.molmo2.tokenizer import Molmo2TextTokenizer, newline_carrier_ids
 from ..models.gemma_ar import GemmaARVLA
 from ..models.gemma_flow import GemmaFlowVLA
@@ -133,6 +140,7 @@ from ..models.serving import ARServing, FlowServing
 from ..offload_optim import CPUOffloadAdamW
 from ..sections import (
     BackboneDepth,
+    BackboneFiles,
     FlowDecoderSection,
     GemmaPromptConfig,
     MolmoAct2PromptConfig,
@@ -143,7 +151,7 @@ from ..sections import (
     build_molmoact2_ar_decoder,
     default_expert_config,
     expert_config_from_architecture,
-    load_backbone_state,
+    load_backbone_part_states,
     molmoact2_ar_config_from_flow_section,
     molmoact2_fresh_flow_section,
     parse_decoder_config,
@@ -171,6 +179,7 @@ from .loop import (
     validate,
 )
 from .saving import (
+    BackbonePartSources,
     CheckpointTensors,
     Normalizer,
     Normalizers,
@@ -634,23 +643,29 @@ def main() -> int:
     # so the shuffled partition stays coordinated.
     torch.manual_seed(args.seed + rank)
 
-    # -- source checkpoint + trunk directory ------------------------------
+    # -- source checkpoint + trunk sources ---------------------------------
     # Under --init-from/--resume the trunk mounts from the checkpoint's
-    # own materialization (self-containment: the pristine backbone/
-    # mirror, or the recorded artifact for trained trunks); fresh runs
-    # resolve --backbone.
+    # own per-part files, its config rides the metadata verbatim and its
+    # tokenizer/ carries the prompt-path artifacts (self-containment);
+    # fresh runs resolve --backbone to the HF-layout artifact — the one
+    # surviving translating mount, whose first save imports the trunk
+    # into the per-part files.
     source = args.init_from if args.init_from is not None else args.resume
     source_metadata: VLAMetadata | None = None
+    trunk_weights: Path | BackboneFiles
     if source is not None:
         source_metadata = read_metadata(source)
-        checkpoint_dir = backbone_directory(source, source_metadata)
+        trunk_weights = backbone_files(source)
+        tokenizer_dir = tokenizer_directory(source)
+        trunk_config_json = source_metadata.backbone_config
     else:
-        checkpoint_dir = resolve_checkpoint_dir(args.backbone)
+        artifact_dir = resolve_checkpoint_dir(args.backbone)
+        trunk_weights = artifact_dir
+        tokenizer_dir = artifact_dir
+        trunk_config_json = json.loads((artifact_dir / "config.json").read_text())
     # Trunk cross-check: the family DECLARES the trunk lineage; the
-    # artifact's own config.json must agree.
-    backbone_model_type = json.loads(
-        (checkpoint_dir / "config.json").read_text(),
-    ).get("model_type", "")
+    # artifact's own config must agree.
+    backbone_model_type = str(trunk_config_json.get("model_type", ""))
     molmo2_trunk = backbone_model_type in ("molmo2", "molmoact2")
     if args.family.startswith("gemma") and molmo2_trunk:
         raise SystemExit(
@@ -724,7 +739,7 @@ def main() -> int:
             molmoact2_ar_section = molmoact2_ar_config_from_flow_section(
                 molmo_flow_section,
                 molmoact2_prompt,
-                str(checkpoint_dir),
+                str(tokenizer_dir),
             )
         if args.family in ("molmoact2_flow", "molmoact2_joint"):
             if molmo_flow_section is None or not source_has_flow_weights:
@@ -914,13 +929,13 @@ def main() -> int:
             ),
         )
         aux_spec = AuxSpec(
-            tokenizer_dir=str(checkpoint_dir),
+            tokenizer_dir=str(tokenizer_dir),
             fields=aux_decode_config.fields,
             annotated_repos=selection.annotated_repos,
             block_base=(
-                load_molmo2_config(checkpoint_dir).text.fast_block_base
+                Molmo2Config.from_dict(trunk_config_json).text.fast_block_base
                 if molmo2_trunk
-                else load_config(checkpoint_dir).text.vocab_size
+                else Gemma4Config.from_dict(trunk_config_json).text.vocab_size
                 - action_codec.vocab_total
             ),
             dropout=args.aux_dropout,
@@ -941,7 +956,7 @@ def main() -> int:
     if args.family in MOLMOACT2_FAMILIES:
         assert molmoact2_prompt is not None
         inputs_collator = MolmoAct2InputsCollator(
-            str(checkpoint_dir),
+            str(tokenizer_dir),
             setup_type=molmoact2_prompt.setup_type,
             control_mode=molmoact2_prompt.control_mode,
             num_state_tokens=molmoact2_prompt.num_state_tokens,
@@ -949,10 +964,10 @@ def main() -> int:
             narration=molmoact2_prompt.narration,
         )
     elif molmo2_trunk:
-        inputs_collator = Molmo2InputsCollator(str(checkpoint_dir), args.max_crops)
+        inputs_collator = Molmo2InputsCollator(str(tokenizer_dir), args.max_crops)
     else:
         inputs_collator = GemmaInputsCollator(
-            str(checkpoint_dir),
+            str(tokenizer_dir),
             args.max_soft_tokens,
         )
     state_table: tuple[Tensor, Tensor] | None = None
@@ -1178,13 +1193,18 @@ def main() -> int:
                 f"{geometry_horizon} (checkpoint-inferred "
                 "under --init-from/--resume — drop any explicit flag)",
             )
-        molmoact2_backbone = load_molmo2_model(
-            checkpoint_dir,
+        # molmoact2 families are inherit-only: the trunk always mounts
+        # from the source checkpoint's per-part files.
+        assert isinstance(trunk_weights, BackboneFiles)
+        molmoact2_backbone = load_molmo2_from_files(
+            Molmo2Config.from_dict(trunk_config_json),
+            text_file=trunk_weights.text,
+            vision_file=trunk_weights.vision,
             device=device,
             dtype=(backbone_dtype if backbone_dtype is not None else torch.bfloat16),
         )
         molmoact2_encoder = MolmoAct2Encoder(
-            str(checkpoint_dir),
+            str(tokenizer_dir),
             setup_type=molmoact2_prompt.setup_type,
             control_mode=molmoact2_prompt.control_mode,
             num_state_tokens=molmoact2_prompt.num_state_tokens,
@@ -1204,7 +1224,7 @@ def main() -> int:
                 tuple(molmoact2_action_table[0].tolist()),
                 tuple(molmoact2_action_table[1].tolist()),
             )
-        molmo2_text_config = load_molmo2_config(checkpoint_dir).text
+        molmo2_text_config = Molmo2Config.from_dict(trunk_config_json).text
         if args.family == "molmoact2_ar":
             assert molmoact2_ar_section is not None
             assert isinstance(objective, ARObjective)
@@ -1217,7 +1237,7 @@ def main() -> int:
                 molmoact2_ar_section,
                 molmoact2_prompt,
                 molmo2_text_config,
-                checkpoint_dir,
+                tokenizer_dir,
             )
             model = MolmoAct2ARVLA(
                 molmoact2_backbone,
@@ -1268,7 +1288,7 @@ def main() -> int:
                         molmoact2_ar_section,
                         molmoact2_prompt,
                         molmo2_text_config,
-                        checkpoint_dir,
+                        tokenizer_dir,
                     ),
                     objective=objective,
                     serving=serving,
@@ -1290,7 +1310,7 @@ def main() -> int:
         backbone_module = molmoact2_backbone
     elif args.family == "gemma_flow":
         assert isinstance(objective, FlowObjective | SnapflowObjective)
-        backbone_config = load_config(checkpoint_dir)
+        backbone_config = Gemma4Config.from_dict(trunk_config_json)
         if source_metadata is not None:
             # The recorded sections are the architecture (the CLI's
             # shape flags were refused above); φ_s may extend the
@@ -1357,9 +1377,10 @@ def main() -> int:
             )
             max_soft_tokens = args.max_soft_tokens
         gemma_backbone, gemma_encoder, gemma_flow_decoder = build_gemma_flow_parts(
-            checkpoint_dir,
+            trunk_weights,
             backbone_config,
             expert_config,
+            tokenizer_dir=tokenizer_dir,
             max_soft_tokens=max_soft_tokens,
             device=device,
             dtype=backbone_dtype,
@@ -1383,17 +1404,29 @@ def main() -> int:
         assert args.fast_tokenizer is not None  # parse guard
         assert action_codec is not None
         assert isinstance(objective, ARObjective)
-        molmo2_config = load_molmo2_config(checkpoint_dir)
+        molmo2_config = Molmo2Config.from_dict(trunk_config_json)
         # Full multimodal model (decoder + untied head + vision tower);
         # live runs get fp32 masters, frozen runs the bf16 mount
         # convention (the release ships fp32 — never mount that raw).
-        molmo2_backbone = load_molmo2_model(
-            checkpoint_dir,
-            device=device,
-            dtype=(backbone_dtype if backbone_dtype is not None else torch.bfloat16),
+        molmo2_mount_dtype = (
+            backbone_dtype if backbone_dtype is not None else torch.bfloat16
         )
+        if isinstance(trunk_weights, BackboneFiles):
+            molmo2_backbone = load_molmo2_from_files(
+                molmo2_config,
+                text_file=trunk_weights.text,
+                vision_file=trunk_weights.vision,
+                device=device,
+                dtype=molmo2_mount_dtype,
+            )
+        else:
+            molmo2_backbone = load_molmo2_model(
+                trunk_weights,
+                device=device,
+                dtype=molmo2_mount_dtype,
+            )
         molmo2_encoder = Molmo2Encoder(
-            str(checkpoint_dir),
+            str(tokenizer_dir),
             max_crops=args.max_crops,
             state_dim=state_dim,
             hidden_size=molmo2_config.text.hidden_size,
@@ -1431,7 +1464,7 @@ def main() -> int:
                 suffix_format=SUFFIX_FORMAT,
                 aux=aux_decode_config,
             )
-        molmo2_text_tokenizer = Molmo2TextTokenizer(str(checkpoint_dir))
+        molmo2_text_tokenizer = Molmo2TextTokenizer(str(tokenizer_dir))
         carriers = newline_carrier_ids(
             molmo2_text_tokenizer,
             text_vocab_size=molmo2_config.text.vocab_size,
@@ -1481,7 +1514,7 @@ def main() -> int:
         assert args.fast_tokenizer is not None  # parse guard
         assert action_codec is not None
         assert isinstance(objective, ARObjective)
-        backbone_config = load_config(checkpoint_dir)
+        backbone_config = Gemma4Config.from_dict(trunk_config_json)
         if source_metadata is not None:
             prompt = parse_prompt_config(
                 dict(source_metadata.components["prompt"]["config"]),
@@ -1528,8 +1561,9 @@ def main() -> int:
                 aux=aux_decode_config,
             )
         gemma_ar_backbone, gemma_ar_encoder = build_gemma_encoder(
-            checkpoint_dir,
+            trunk_weights,
             backbone_config,
+            tokenizer_dir=tokenizer_dir,
             exports=exports,
             max_soft_tokens=max_soft_tokens,
             state_dim=state_dim,
@@ -1538,7 +1572,7 @@ def main() -> int:
             depth=BackboneDepth.FULL,
         )
         text_tokenizer = transformers.AutoTokenizer.from_pretrained(
-            str(checkpoint_dir),
+            str(tokenizer_dir),
         )
         aux_runtime = (
             build_aux_runtime(aux_decode_config, text_tokenizer)
@@ -1803,7 +1837,15 @@ def main() -> int:
         )
 
     start_step = 0
-    adapted_backbone_source: Path | None = None
+    # Frozen-part link sources for the save side: the source
+    # checkpoint's per-part files (inherit runs), else None until the
+    # first save serializes the fresh mount once; re-pointed to each
+    # save's own files as boundaries pass (same inode chain while a
+    # part stays frozen).
+    frozen_text_source: Path | None = None
+    frozen_vision_source: Path | None = None
+    inherited_text_trained = False
+    inherited_vision_trained = False
     if source is not None:
         assert source_metadata is not None
         load_family_weights(
@@ -1815,34 +1857,48 @@ def main() -> int:
             phi_s_extension=phi_s_extension,
             is_main=is_main,
         )
-        if source_metadata.backbone_trained:
-            load_backbone_state(backbone_module, source)
-            if not args.backbone_trained:
-                # Frozen inherited backbone: every checkpoint this run
-                # saves must carry the snapshot too (see save_checkpoint).
-                adapted_backbone_source = source / "backbone.safetensors"
-            if is_main:
-                print(
-                    f"loaded TRAINED backbone weights from {source} "
-                    f"(bf16 snapshot into "
-                    f"{'fp32 masters' if args.backbone_trained else 'bf16'})",
-                    flush=True,
-                )
-            if args.resume is not None and args.backbone_trained and is_main:
-                print(
-                    "WARNING: live-backbone resume is NOT lossless — "
-                    "checkpoints hold a bf16 backbone snapshot, so the "
-                    "fp32 masters restart snapped to the bf16 grid and "
-                    "sub-bf16-resolution updates accumulated before this "
-                    "boundary are discarded (Adam moments are restored; "
-                    "masters are never serialized)",
-                    flush=True,
-                )
+        # The trunk mounted from the source's own part files above; what
+        # remains is provenance: the per-part trained facts carry
+        # forward, and frozen parts link the source's files at save.
+        inherited_text_trained = source_metadata.backbone_text_trained
+        inherited_vision_trained = source_metadata.backbone_vision_trained
+        source_files = backbone_files(source)
+        frozen_text_source = source_files.text
+        frozen_vision_source = source_files.vision
+        if (
+            source_metadata.backbone_text_trained
+            or source_metadata.backbone_vision_trained
+        ) and is_main:
+            print(
+                f"mounted TRAINED backbone parts from {source} "
+                f"(text_trained={source_metadata.backbone_text_trained}, "
+                f"vision_trained={source_metadata.backbone_vision_trained}; "
+                f"bf16 files into "
+                f"{'fp32 masters' if args.backbone_trained else 'bf16'})",
+                flush=True,
+            )
+        if args.resume is not None and args.backbone_trained and is_main:
+            print(
+                "WARNING: live-backbone resume is NOT lossless — "
+                "checkpoints hold bf16 backbone part files, so the "
+                "fp32 masters restart snapped to the bf16 grid and "
+                "sub-bf16-resolution updates accumulated before this "
+                "boundary are discarded (Adam moments are restored; "
+                "masters are never serialized)",
+                flush=True,
+            )
     elif args.backbone_init_from is not None:
         # Stage-2: trunk (+ prompt state_proj) inherited, decoder fresh.
-        stage2_backbone_init(model, backbone_module, args.backbone_init_from)
-        if not args.backbone_trained:
-            adapted_backbone_source = args.backbone_init_from / "backbone.safetensors"
+        init_metadata = stage2_backbone_init(
+            model,
+            backbone_module,
+            args.backbone_init_from,
+        )
+        inherited_text_trained = init_metadata.backbone_text_trained
+        inherited_vision_trained = init_metadata.backbone_vision_trained
+        init_files = backbone_files(args.backbone_init_from)
+        frozen_text_source = init_files.text
+        frozen_vision_source = init_files.vision
         if is_main:
             print(
                 f"stage-2 init: ADAPTED backbone + prompt state_proj from "
@@ -1937,6 +1993,29 @@ def main() -> int:
             # keep the historical flag (and its recorded-graph perf).
             static_graph=args.backward_chunks == 1,
         )
+
+    # The tokenizer/ payload every save carries (constant per run):
+    # inherit runs link every file of the source checkpoint's tokenizer/
+    # forward; fresh runs select the family manifest from the resolved
+    # artifact — missing files die HERE, before any step runs.
+    tokenizer_files: dict[str, Path]
+    if isinstance(trunk_weights, BackboneFiles):
+        tokenizer_files = {
+            path.name: path
+            for path in sorted(tokenizer_dir.iterdir())
+            if path.is_file()
+        }
+    else:
+        tokenizer_files = {}
+        for name in tokenizer_manifest(model.spec.family):
+            path = tokenizer_dir / name
+            if not path.is_file():
+                raise SystemExit(
+                    f"{tokenizer_dir} has no {name} — the {args.family} "
+                    "prompt path reads it; checkpoints would not be "
+                    "self-contained",
+                )
+            tokenizer_files[name] = path
 
     # The probe's flow operating point: 10 solver steps at the family's
     # RECORDED serving method (heun for gemma_flow, euler for the
@@ -2364,8 +2443,11 @@ def main() -> int:
                             model,
                             backbone_module,
                             args=args,
-                            adapted_backbone_source=adapted_backbone_source,
-                            pristine_trunk_dir=checkpoint_dir,
+                            part_sources=BackbonePartSources(
+                                text=frozen_text_source,
+                                vision=frozen_vision_source,
+                            ),
+                            tokenizer_files=tokenizer_files,
                         )
                         metadata = build_vla_metadata(
                             model,
@@ -2373,7 +2455,9 @@ def main() -> int:
                             normalizers=normalizers,
                             per_dataset_stats=per_dataset_stats,
                             step=step,
-                            adapted_backbone_source=adapted_backbone_source,
+                            backbone_config=trunk_config_json,
+                            inherited_text_trained=inherited_text_trained,
+                            inherited_vision_trained=inherited_vision_trained,
                         )
                         # Captured now (copy_to_cpu doubles as a deep
                         # copy): a later scheduler.step() must not leak
@@ -2415,6 +2499,13 @@ def main() -> int:
                             "gather+write continue in background",
                             flush=True,
                         )
+                        # Frozen parts link THIS save's files at the next
+                        # boundary (writes serialize through the saver,
+                        # so the files exist before the next write runs).
+                        if args.backbone_text_lr is None:
+                            frozen_text_source = backbone_files(target_dir).text
+                        if args.backbone_vision_lr is None:
+                            frozen_vision_source = backbone_files(target_dir).vision
                     async_saver.submit(capture=optimizer_capture, write=write)
             elif save_boundary:
                 if args.zero1:
@@ -2434,10 +2525,21 @@ def main() -> int:
                         optimizer=optimizer,
                         scheduler=scheduler,
                         step=step,
-                        adapted_backbone_source=adapted_backbone_source,
-                        pristine_trunk_dir=checkpoint_dir,
+                        backbone_config=trunk_config_json,
+                        part_sources=BackbonePartSources(
+                            text=frozen_text_source,
+                            vision=frozen_vision_source,
+                        ),
+                        inherited_text_trained=inherited_text_trained,
+                        inherited_vision_trained=inherited_vision_trained,
+                        tokenizer_files=tokenizer_files,
                     )
                     print(f"saved {path}", flush=True)
+                    # Frozen parts link this save's files from now on.
+                    if args.backbone_text_lr is None:
+                        frozen_text_source = backbone_files(path).text
+                    if args.backbone_vision_lr is None:
+                        frozen_vision_source = backbone_files(path).vision
         epoch += 1
 
     if async_saver is not None:
@@ -2560,8 +2662,8 @@ def load_family_weights(
         return  # molmoact2 prompt side is parameterless; trunk loads at call site
     if isinstance(model, MolmoAct2ARVLA):
         # The discrete decoder owns ZERO parameters — there is nothing
-        # to load (trunk deltas ride backbone.safetensors at the call
-        # site; a flow-section source's flow_decoder.safetensors is
+        # to load (trunk state mounted from the source's part files at
+        # build; a flow-section source's flow_decoder.safetensors is
         # deliberately left behind: the ar pathway drops the decoder).
         return
     if isinstance(model, GemmaFlowVLA):
@@ -2615,22 +2717,25 @@ def stage2_backbone_init(
     model: TrainableVLA,
     backbone: nn.Module,
     checkpoint: Path,
-) -> None:
+) -> VLAMetadata:
     """Stage-2 warm start: inherit ONLY the backbone and the prompt-side
     parameters (state_proj) from a checkpoint, leaving the decoder as
     built — the point is mounting a DIFFERENT decoder family (a fresh
     flow decoder on an adapted trunk), so there is deliberately no
-    decoder-config match check here. Loud when the checkpoint carries no
-    trained backbone: inheriting a pristine trunk would silently run the
-    stock-backbone arm of an ablation twice."""
-    snapshot = checkpoint / "backbone.safetensors"
-    if not snapshot.exists():
+    decoder-config match check here. Loud when the checkpoint's
+    metadata records BOTH parts pristine: inheriting a pristine trunk
+    would silently run the stock-backbone arm of an ablation twice.
+    Returns the source metadata (the caller carries its per-part
+    trained facts forward)."""
+    metadata = read_metadata(checkpoint)
+    if not (metadata.backbone_text_trained or metadata.backbone_vision_trained):
         raise SystemExit(
-            f"--backbone-init-from {checkpoint}: no backbone.safetensors — "
-            "that checkpoint's backbone is pristine, so there is nothing "
-            "to inherit (for a stock backbone simply omit the flag)",
+            f"--backbone-init-from {checkpoint}: both backbone parts are "
+            "pristine (text_trained=False, vision_trained=False), so there "
+            "is nothing to inherit (for a stock backbone simply omit the "
+            "flag)",
         )
-    load_backbone_state(backbone, checkpoint)
+    load_backbone_part_states(backbone, backbone_files(checkpoint))
     # Prompt-side parameters (state_proj) travel with the trunk: the
     # backbone was adapted WITH this projection feeding its prompt —
     # loading one without the other would shift the trunk's input
@@ -2647,3 +2752,4 @@ def stage2_backbone_init(
             "this composition's encoder has prompt-side parameters — the "
             "trunk and its state projection travel together",
         )
+    return metadata

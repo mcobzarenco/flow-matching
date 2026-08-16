@@ -1,14 +1,15 @@
-"""save_checkpoint's backbone invariant (the VLA writer).
+"""save_checkpoint's backbone invariant (the VLA writer, schema 2).
 
-The backbone is ALWAYS materialized (D9): a bf16 ``backbone.safetensors``
-snapshot when the trunk state differs from pristine — trained in-run OR
-inherited frozen from an adapted --init-from/--resume checkpoint — else
-a hard-linked ``backbone/`` mirror of the pristine snapshot, with
-``metadata.backbone.trained`` recording the fact explicitly (presence is
-not a signal). Conditioning on ``args.backbone_trained`` alone shipped
-flags-off fine-tunes whose decoders were trained against adapted
-features but whose checkpoints silently loaded the pristine backbone
-(found 2026-07-31, ft-rig arm F).
+Both backbone PART files are ALWAYS materialized (D9, per part): a part
+trained this run snapshots bf16 at every boundary; a FROZEN part
+hard-links its source — the init checkpoint's file, or the previous
+save's after a fresh run's first boundary serialized the mount once —
+with ``metadata.backbone.text_trained``/``vision_trained`` recording
+the facts explicitly (presence is not a signal). Conditioning on
+``args.backbone_trained`` alone shipped flags-off fine-tunes whose
+decoders were trained against adapted features but whose checkpoints
+silently loaded the pristine backbone (found 2026-07-31, ft-rig arm F);
+the per-part flags carry the same invariant part-wise.
 
 The backbone-trained branch itself (live fp32 masters -> bf16 snapshot)
 is exercised by the stage-2 tests below on real tensors; big-trunk
@@ -25,7 +26,13 @@ import torch
 from safetensors.torch import load_file, save_file
 from test_backbone_continuation import tiny_text_config
 
-from bijou.checkpoint import link_or_copy, validate_checkpoint
+from bijou.checkpoint import (
+    BACKBONE_TEXT_FILENAME,
+    BACKBONE_VISION_FILENAME,
+    GEMMA_TOKENIZER_FILES,
+    link_or_copy,
+    validate_checkpoint,
+)
 from bijou.loading import BackboneDepth
 from bijou.modelling.decoders.flow import (
     FlowDecoder,
@@ -43,6 +50,7 @@ from bijou.models.gemma_flow import GemmaFlowVLA
 from bijou.models.objectives import FlowObjective
 from bijou.models.serving import FlowServing
 from bijou.train import (
+    BackbonePartSources,
     Normalizer,
     Normalizers,
     TrainArgs,
@@ -95,11 +103,10 @@ def family_of(
     )
 
 
-def tiny_model() -> GemmaFlowVLA:
-    # The backbone stays on the meta device: the flags-off save paths under
-    # test never touch its weights (only encoder.exports for metadata).
-    # Truncated exactly as the real build (depth derivation reads the
-    # backbone's config: no KV-shared layers <=> prefix depth).
+def tiny_meta_model() -> GemmaFlowVLA:
+    """Meta-device E2B-shaped model for group-partition inspection only
+    (weights never touched; the real E2B config carries the vision
+    tower the encoder's param_groups contract asserts)."""
     config = truncated_config(Gemma4Config.e2b(), 15)
     encoder = GemmaEncoder(
         config,
@@ -116,7 +123,7 @@ def test_frozen_state_proj_leaves_the_decoder_group() -> None:
     a no-grad prefix encode) — param_groups must then EXCLUDE it, or
     DDP's every-trainable-gets-a-grad contract breaks on the first
     backward; live runs keep it in the decoder group."""
-    model = tiny_model()
+    model = tiny_meta_model()
     encoder_params = set(model.encoder.parameters())
     live = set(model.param_groups()["decoder"])
     assert encoder_params <= live  # trainable by default (live runs)
@@ -202,25 +209,27 @@ def make_args(save_dir: Path) -> TrainArgs:
     )
 
 
-def pristine_dir(tmp_path: Path) -> Path:
-    """A stand-in pristine trunk snapshot to mirror (two files — the
-    hard-link rule cares about files, not their contents)."""
-    snapshot = tmp_path / "pristine_trunk"
-    if not snapshot.exists():
-        snapshot.mkdir()
-        (snapshot / "config.json").write_text("{}")
-        save_file({"w": torch.arange(4.0)}, str(snapshot / "model.safetensors"))
-    return snapshot
+def tokenizer_files_fixture(tmp_path: Path) -> dict[str, Path]:
+    """A gemma-manifest tokenizer payload for the writer (stub contents —
+    the writer links files; only their presence is validated here)."""
+    source = tmp_path / "tokenizer_source"
+    if not source.exists():
+        source.mkdir()
+        for name in GEMMA_TOKENIZER_FILES:
+            (source / name).write_text("{}")
+    return {name: source / name for name in GEMMA_TOKENIZER_FILES}
 
 
 def run_save(
     save_dir: Path,
-    adapted_backbone_source: Path | None,
     *,
-    model: GemmaFlowVLA | None = None,
+    model: GemmaFlowVLA,
     args: TrainArgs | None = None,
+    part_sources: BackbonePartSources | None = None,
+    inherited_text_trained: bool = False,
+    inherited_vision_trained: bool = False,
+    step: int = 5,
 ) -> Path:
-    model = model if model is not None else tiny_model()
     optimizer = torch.optim.AdamW(model.flow_decoder.parameters(), lr=1e-4)
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lambda _: 1.0)
     return save_checkpoint(
@@ -234,9 +243,16 @@ def run_save(
         per_dataset_stats={},
         optimizer=optimizer,
         scheduler=scheduler,
-        step=5,
-        adapted_backbone_source=adapted_backbone_source,
-        pristine_trunk_dir=pristine_dir(save_dir),
+        step=step,
+        backbone_config={"model_type": "gemma4"},
+        part_sources=(
+            part_sources
+            if part_sources is not None
+            else BackbonePartSources(text=None, vision=None)
+        ),
+        inherited_text_trained=inherited_text_trained,
+        inherited_vision_trained=inherited_vision_trained,
+        tokenizer_files=tokenizer_files_fixture(save_dir),
     )
 
 
@@ -249,55 +265,111 @@ def test_link_or_copy_links_fresh_destinations(tmp_path: Path) -> None:
     torch.testing.assert_close(load_file(str(destination))["w"], torch.arange(4.0))
 
 
-def test_frozen_pristine_run_mirrors_the_snapshot(tmp_path: Path) -> None:
-    """Self-containment without disk cost: flags off, no adapted init =>
-    a hard-linked backbone/ mirror, no backbone.safetensors, and the
-    metadata records trained=False explicitly."""
-    checkpoint = run_save(tmp_path, adapted_backbone_source=None)
-    assert (checkpoint / "flow_decoder.safetensors").exists()
-    assert (checkpoint / "prompt.safetensors").exists()
-    assert (checkpoint / "optimizer.pt").exists()
-    assert not (checkpoint / "backbone.safetensors").exists()
-    mirror = checkpoint / "backbone" / "model.safetensors"
-    assert (
-        mirror.stat().st_ino
-        == (pristine_dir(tmp_path) / "model.safetensors").stat().st_ino
-    )
-    metadata = validate_checkpoint(checkpoint)
-    assert metadata.backbone_trained is False
+def test_fresh_frozen_run_serializes_once_then_links(tmp_path: Path) -> None:
+    """Flags off, no source checkpoint: the FIRST save serializes both
+    frozen parts from the mount (once), the next save hard-links the
+    first's files (one inode per frozen lineage), and the metadata
+    records both parts untrained explicitly."""
+    model = tiny_cpu_model(decoder_hidden=64, seed=0)
+    first = run_save(tmp_path, model=model, step=5)
+    assert (first / "flow_decoder.safetensors").exists()
+    assert (first / "prompt.safetensors").exists()
+    assert (first / "optimizer.pt").exists()
+    text_file = first / BACKBONE_TEXT_FILENAME
+    vision_file = first / BACKBONE_VISION_FILENAME
+    assert text_file.is_file()
+    assert vision_file.is_file()  # vision-less config: a valid empty file
+    assert (first / "tokenizer" / "tokenizer.json").is_file()
+    metadata = validate_checkpoint(first)
+    assert metadata.backbone_text_trained is False
+    assert metadata.backbone_vision_trained is False
     assert metadata.family.value == "gemma_flow"
-    assert metadata.backbone_depth == BackboneDepth.PREFIX.value
+    assert metadata.backbone_depth == BackboneDepth.FULL.value
+    # The serialized part is the mount, bf16 params.
+    saved = load_file(str(text_file), device="cpu")
+    canary = "language_model.layers.0.mlp.down_proj.weight"
+    assert saved[canary].dtype == torch.bfloat16
+    assert torch.equal(
+        saved[canary],
+        model.backbone.state_dict()[canary].to(torch.bfloat16),
+    )
+    assert "lm_head.weight" not in saved  # the tied alias never serializes
+
+    second = run_save(
+        tmp_path,
+        model=model,
+        part_sources=BackbonePartSources(text=text_file, vision=vision_file),
+        step=10,
+    )
+    assert (second / BACKBONE_TEXT_FILENAME).stat().st_ino == text_file.stat().st_ino
+    assert (
+        second / BACKBONE_VISION_FILENAME
+    ).stat().st_ino == vision_file.stat().st_ino
+    validate_checkpoint(second)
 
 
-def test_frozen_inherited_backbone_rides_along(tmp_path: Path) -> None:
-    """Flags off but initialized from an adapted checkpoint: the inherited
-    snapshot must ride in every checkpoint, byte-identical to the source,
-    with trained=True recorded (the loader reloads it over the mount)."""
+def test_frozen_inherited_parts_link_and_stay_trained(tmp_path: Path) -> None:
+    """Flags off but initialized from an adapted checkpoint: both part
+    files hard-link the source's and the metadata keeps the inherited
+    trained facts (a frozen adapted part is still adapted)."""
     source_dir = tmp_path / "init_checkpoint"
     source_dir.mkdir()
-    source = source_dir / "backbone.safetensors"
-    adapted = {"language_model.layers.0.mlp.down_proj.weight": torch.randn(8, 8)}
-    save_file(adapted, str(source))
-
-    checkpoint = run_save(tmp_path, adapted_backbone_source=source)
-    carried = checkpoint / "backbone.safetensors"
-    assert carried.exists()
-    torch.testing.assert_close(
-        load_file(str(carried))["language_model.layers.0.mlp.down_proj.weight"],
-        adapted["language_model.layers.0.mlp.down_proj.weight"],
+    text_source = source_dir / BACKBONE_TEXT_FILENAME
+    vision_source = source_dir / BACKBONE_VISION_FILENAME
+    save_file(
+        {"language_model.layers.0.mlp.down_proj.weight": torch.randn(8, 8)},
+        str(text_source),
     )
-    # Metadata still records the pristine id (resolution base) — the
-    # adapted diff is exactly the carried file — plus the built depth
-    # and the explicit trained fact.
+    save_file({}, str(vision_source))
+
+    checkpoint = run_save(
+        tmp_path,
+        model=tiny_cpu_model(decoder_hidden=64, seed=0),
+        part_sources=BackbonePartSources(text=text_source, vision=vision_source),
+        inherited_text_trained=True,
+        inherited_vision_trained=False,
+    )
+    carried = checkpoint / BACKBONE_TEXT_FILENAME
+    assert carried.stat().st_ino == text_source.stat().st_ino
     metadata = validate_checkpoint(checkpoint)
     assert metadata.backbone_id == "google/gemma-4-e2b-it"
-    assert metadata.backbone_depth == BackboneDepth.PREFIX.value
-    assert metadata.backbone_trained is True
+    assert metadata.backbone_text_trained is True
+    assert metadata.backbone_vision_trained is False
 
 
-def test_inherited_source_must_exist(tmp_path: Path) -> None:
-    with pytest.raises(FileNotFoundError):
-        run_save(tmp_path, adapted_backbone_source=tmp_path / "missing.safetensors")
+def test_trained_text_snapshots_while_frozen_vision_links(tmp_path: Path) -> None:
+    """The mixed regime: --backbone-text-lr set, vision frozen — the
+    text part snapshots fresh (never links) while the vision part links
+    its source; flags follow the split."""
+    vision_dir = tmp_path / "prev"
+    vision_dir.mkdir()
+    vision_source = vision_dir / BACKBONE_VISION_FILENAME
+    save_file({}, str(vision_source))
+    model = tiny_cpu_model(decoder_hidden=64, seed=0)
+    checkpoint = run_save(
+        tmp_path,
+        model=model,
+        args=dataclasses.replace(make_args(tmp_path), backbone_text_lr=2e-5),
+        part_sources=BackbonePartSources(
+            text=tmp_path / "never_used.safetensors",
+            vision=vision_source,
+        ),
+    )
+    metadata = validate_checkpoint(checkpoint)
+    assert metadata.backbone_text_trained is True
+    assert metadata.backbone_vision_trained is False
+    assert (
+        checkpoint / BACKBONE_VISION_FILENAME
+    ).stat().st_ino == vision_source.stat().st_ino
+    # The text file is a fresh serialization (the fabricated "source"
+    # was never touched — it does not even exist).
+    assert not (tmp_path / "never_used.safetensors").exists()
+    saved = load_file(str(checkpoint / BACKBONE_TEXT_FILENAME), device="cpu")
+    canary = "language_model.layers.0.mlp.down_proj.weight"
+    assert torch.equal(
+        saved[canary],
+        model.backbone.state_dict()[canary].to(torch.bfloat16),
+    )
 
 
 def tiny_cpu_model(
@@ -305,8 +377,8 @@ def tiny_cpu_model(
     seed: int,
     truncate: int | None = None,
 ) -> GemmaFlowVLA:
-    """Real-tensor (non-meta) tiny model: --backbone-init-from actually
-    copies weights, so the backbone must exist on CPU. ``truncate``
+    """Real-tensor (non-meta) tiny model: the v2 writer serializes parts
+    from the mount, so the backbone must exist on CPU. ``truncate``
     builds the prefix-encoder shape (the flow arms' backbone)."""
     torch.manual_seed(seed)
     config = Gemma4Config(
@@ -337,8 +409,9 @@ def tiny_cpu_model(
 
 def test_backbone_init_from_loads_trunk_and_prompt_only(tmp_path: Path) -> None:
     """Stage-2 inheritance: backbone + state_proj come from the source
-    checkpoint (bf16 snapshot semantics), the decoder keeps its fresh
-    build — across DIFFERENT decoder configs (the point of the path)."""
+    checkpoint's part files (bf16 snapshot semantics), the decoder keeps
+    its fresh build — across DIFFERENT decoder configs (the point of the
+    path)."""
     source = tiny_cpu_model(decoder_hidden=64, seed=0)
     source_encoder = source.encoder
     # A trained-looking prompt projection (zero init would make the
@@ -347,7 +420,6 @@ def test_backbone_init_from_loads_trunk_and_prompt_only(tmp_path: Path) -> None:
     # backbone_text_lr set => the writer snapshots the live backbone.
     checkpoint = run_save(
         tmp_path,
-        adapted_backbone_source=None,
         model=source,
         args=dataclasses.replace(make_args(tmp_path), backbone_text_lr=2e-5),
     )
@@ -362,8 +434,9 @@ def test_backbone_init_from_loads_trunk_and_prompt_only(tmp_path: Path) -> None:
 
     stage2_backbone_init(target, target.backbone, checkpoint)
 
-    # Backbone: the snapshot's bf16 values, exactly (bf16 -> fp32 is lossless).
-    snapshot = load_file(str(checkpoint / "backbone.safetensors"), device="cpu")
+    # Backbone: the part file's bf16 values, exactly (bf16 -> fp32 is
+    # lossless).
+    snapshot = load_file(str(checkpoint / BACKBONE_TEXT_FILENAME), device="cpu")
     for key, value in snapshot.items():
         assert torch.equal(
             target.backbone.state_dict()[key],
@@ -390,7 +463,6 @@ def test_backbone_init_from_full_depth_into_truncated(tmp_path: Path) -> None:
     source = tiny_cpu_model(decoder_hidden=64, seed=0)  # full 8 layers
     checkpoint = run_save(
         tmp_path,
-        adapted_backbone_source=None,
         model=source,
         args=dataclasses.replace(make_args(tmp_path), backbone_text_lr=2e-5),
     )
@@ -400,7 +472,7 @@ def test_backbone_init_from_full_depth_into_truncated(tmp_path: Path) -> None:
     target = tiny_cpu_model(decoder_hidden=32, seed=1, truncate=6)
     stage2_backbone_init(target, target.backbone, checkpoint)
 
-    snapshot = load_file(str(checkpoint / "backbone.safetensors"), device="cpu")
+    snapshot = load_file(str(checkpoint / BACKBONE_TEXT_FILENAME), device="cpu")
     target_state = target.backbone.state_dict()
     kept = "language_model.layers.5.mlp.down_proj.weight"
     assert torch.equal(target_state[kept], snapshot[kept].to(torch.float32))
@@ -421,11 +493,12 @@ def test_backbone_init_from_full_depth_into_truncated(tmp_path: Path) -> None:
 
 
 def test_backbone_init_from_refuses_pristine_checkpoints(tmp_path: Path) -> None:
-    """A checkpoint without backbone.safetensors has nothing to inherit —
-    silently proceeding would run an ablation's stock arm twice."""
-    checkpoint = run_save(tmp_path, adapted_backbone_source=None)
+    """A checkpoint whose metadata records both parts pristine has
+    nothing to inherit — silently proceeding would run an ablation's
+    stock arm twice."""
+    checkpoint = run_save(tmp_path, model=tiny_cpu_model(decoder_hidden=64, seed=0))
     target = tiny_cpu_model(decoder_hidden=32, seed=1)
-    with pytest.raises(SystemExit, match=r"no backbone\.safetensors"):
+    with pytest.raises(SystemExit, match="both backbone parts are pristine"):
         stage2_backbone_init(target, target.backbone, checkpoint)
 
 

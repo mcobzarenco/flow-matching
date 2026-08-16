@@ -26,7 +26,12 @@ import torch.distributed as dist
 from safetensors.torch import load_file
 from torch import Tensor, nn
 
-from ..checkpoint import VLAMetadata, backbone_directory, read_metadata
+from ..checkpoint import (
+    VLAMetadata,
+    backbone_files,
+    read_metadata,
+    tokenizer_directory,
+)
 from ..modelling.decoders.molmo_flow import (
     MolmoFlowDecoder,
     load_expert_state,
@@ -34,13 +39,12 @@ from ..modelling.decoders.molmo_flow import (
 )
 from ..modelling.encoders.molmoact2 import MolmoAct2Encoder, MolmoAct2Inputs
 from ..modelling.interface import CollatedBatch, InputsCollator, SamplingMethod
-from ..modelling.molmo2.model import Molmo2Model
-from ..modelling.molmo2.model import load_model as load_molmo2_model
+from ..modelling.molmo2.config import Molmo2Config
+from ..modelling.molmo2.model import Molmo2Model, load_model_from_files
 from ..sections import (
     MolmoAct2PromptConfig,
     MolmoFlowDecoderConfig,
     build_molmo_flow_decoder,
-    load_backbone_state,
     parse_decoder_config,
     parse_prompt_config,
 )
@@ -70,23 +74,29 @@ def load_molmoact2_backbone(
 ) -> tuple[Molmo2Model, MolmoAct2Encoder, Path]:
     """The trunk + prompt-side encoder pair every molmoact2 family
     mounts (the encoder owns zero parameters — nothing further to
-    load), plus the resolved trunk directory (tokenizer source for the
-    discrete decoder). Trained trunks reload their state from the
-    checkpoint's ``backbone.safetensors``."""
-    trunk_dir = backbone_directory(checkpoint, metadata)
-    backbone = load_molmo2_model(trunk_dir, device=device, dtype=dtype)
+    load), plus the checkpoint's tokenizer/ directory (the tokenizer
+    source for the encoder and the discrete decoder). The trunk mounts
+    from the checkpoint's own per-part files — trained or pristine, the
+    files ARE the state (the metadata flags are provenance, not load
+    dispatch)."""
+    files = backbone_files(checkpoint)
+    tokenizer_dir = tokenizer_directory(checkpoint)
+    backbone = load_model_from_files(
+        Molmo2Config.from_dict(metadata.backbone_config),
+        text_file=files.text,
+        vision_file=files.vision,
+        device=device,
+        dtype=dtype,
+    )
     encoder = MolmoAct2Encoder(
-        str(trunk_dir),
+        str(tokenizer_dir),
         setup_type=prompt.setup_type,
         control_mode=prompt.control_mode,
         num_state_tokens=prompt.num_state_tokens,
         action_mode=prompt.action_mode,
         narration=prompt.narration,
     )
-    if metadata.backbone_trained:
-        load_backbone_state(backbone, checkpoint)
-        print(f"loaded trained backbone from {checkpoint}", flush=True)
-    return backbone, encoder, trunk_dir
+    return backbone, encoder, tokenizer_dir
 
 
 def build_molmoact2_flow_component(

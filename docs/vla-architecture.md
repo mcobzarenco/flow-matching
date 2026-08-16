@@ -93,7 +93,7 @@ shared building blocks; illegal states stop being representable.
 | D6 | `VLA.predict(batch)` takes no knobs and runs the **recorded serving operating point** (checkpoint metadata); knobbed inference lives on capability traits with statically-legal signatures | kills the knob-legality raise matrix; cross-family paired evals compare like with like |
 | D7 | Per-trait prediction structs: `ARPrediction(actions)`, `FlowPrediction(actions, noise)`, `NarratedPrediction(actions, generations)`; `BijouPrediction` retires | the None-union dies; a flow prediction with generations is unconstructible |
 | D8 | Narration is its own trait, orthogonal to the action head; `predict_narrated` requires non-empty `generate` and a batch collated with the same request | format-6 AR narrates never; a future narrated-flow family narrates without an AR head |
-| D9 | New checkpoint format (§7): `metadata.json` + per-component files; `backbone.safetensors` **always present, hard-linked** to the HF blob when pristine; explicit `backbone_trained` flag; stats tables and serving point are metadata; stats replacement is a first-class conversion op | self-containment without disk cost; presence-as-signal (the frozen⇒pristine trap) dies; fontaine's baked-q01/q99 seam becomes one flag |
+| D9 | New checkpoint format (§7): `metadata.json` + per-component files; the backbone **always materialized** with explicit trained flags; stats tables and serving point are metadata; stats replacement is a first-class conversion op. (The v1 pristine form — an HF-blob hard-link mirror — was superseded at phase 8a by the FULL IMPORT: per-part `backbone_text`/`backbone_vision` files with per-part flags, §7) | self-containment without disk cost; presence-as-signal (the frozen⇒pristine trap) dies; fontaine's baked-q01/q99 seam becomes one flag |
 | D10 | Naming ledger (§8): **decoder** = action/text-emitting component; **head** = shallow projection only (`lm_head`, `fast_head`); **backbone/trunk** and **encoder** as before; **expert** retired from identifiers | four words, four concepts; "Molmo2ARHead reading the trunk's lm_head" was the overload D10 prevents |
 | D11 | Package split: `modelling/` = building blocks (trunks, encoders, decoders, interface, nn, aux_text), `models/` = families + objectives; `vla.py` top-level | gemma4 beside `models/` was a layer violation in the directory tree |
 | D12 | Codec/tokenizer split follows the styleguide ledger: tokenizers (artifact + math) stay `fast/`; codecs (AR conventions: specials, block anchoring, symbol lengths) move to `modelling/decoders/codecs.py` | codecs are coupled to head id-space conventions, not to the artifact |
@@ -780,42 +780,89 @@ decoders" or "all encoders".
 
 ## 7. Checkpoint format
 
+Schema 2 — the FULL IMPORT (phase 8a): initializing from a released
+HF checkpoint imports the model into our format wholesale; no HF
+layout knowledge survives in any checkpoint load path (it lives only
+in the importers and the fresh-run `--backbone` artifact mount, whose
+first save imports the trunk into the per-part files).
+
 ```
 checkpoint/
   metadata.json
-  backbone.safetensors      # ALWAYS present; hard-linked when pristine
-  prompt.safetensors        # per checkpoint_components(): encoder params
-  flow_decoder.safetensors  # …and/or ar_decoder.safetensors
-  optimizer.pt              # optional (kept for run-seeding checkpoints)
+  backbone_text.safetensors    # ALWAYS present: text stack (+ untied
+                               #   lm_head on Molmo trunks), OUR keys
+  backbone_vision.safetensors  # ALWAYS present: tower + connector —
+                               #   exactly the backbone_vision LR group
+  prompt.safetensors           # per checkpoint_components(): encoder params
+  flow_decoder.safetensors     # …and/or ar_decoder.safetensors
+  tokenizer/                   # the per-trunk consumed artifact files
+  optimizer.pt                 # optional (kept for run-seeding checkpoints)
 ```
 
 `metadata.json` (illustrative):
 
 ```json
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "family": "gemma_flow",
   "spec": {"chunk_size": 50, "action_dim": 6},
-  "backbone": {"id": "google/gemma-4-e2b", "trained": false},
+  "backbone": {"id": "google/gemma-4-e2b", "depth": "prefix",
+               "config": {...their config.json, VERBATIM...},
+               "text_trained": false, "vision_trained": false},
   "objective": {"kind": "flow"},
   "serving": {"kind": "flow", "num_steps": 5, "method": "heun"},
-  "components": {"prompt": {...config...}, "flow_decoder": {...}},
+  "components": {"prompt": {"config": {...}, "weights": true}, ...},
   "artifacts": {"fast_tokenizer": "mcobzarenco/fast_tokenizer_v2"},
-  "stats": {"per_dataset": {...q01/q99 tables...}},
+  "stats": {...}, "per_dataset_stats": {...q01/q99 tables...},
   "train_args": {...provenance, verbatim...}
 }
 ```
 
 Rules:
 
-- **Self-contained, always** (working-together invariant, now without
-  the disk cost): the backbone file is always present. When the trunk
-  is pristine, the toolkit `os.link`s the resolved HF-cache blob
-  (`os.link(realpath(snapshot_file), dst)`); `EXDEV`/cross-device
-  falls back to a full copy with a printed note. A frozen-trunk run's
-  every `step_NNNNNN` links the same inode.
-- **Presence is not a signal.** `backbone.trained` is the explicit
-  fact (the frozen⇒pristine inference trap dies).
+- **Translate once, load strictly.** Key translation from released HF
+  layouts happens ONCE, at import (`bijou.convert_legacy`,
+  `bijou.convert_molmoact2`, the audited `import_backbone_state`
+  functions in `modelling/*/loading.py`); the part files carry OUR key
+  names, so every load is a plain strict `load_state_dict` — no
+  skip-prefixes anywhere in the load paths. The importers' key
+  PARTITION is audited: text + vision (+ expert on MolmoAct2) +
+  known-skipped (audio towers, KV-shared K/V duplicates, a tied
+  lm_head, the persisted rotary table) must exactly cover every source
+  shard key; an unclassified tensor refuses the import with the keys
+  named.
+- **Self-contained, always** — and dedup lives inside our world: the
+  extraction bytes are paid once per imported artifact; a FROZEN
+  part's file is byte-identical to its parent's and hard-links it
+  (`EXDEV`/cross-device falls back to a loud full copy). Conversion
+  links the import; a training run's first save serializes frozen
+  parts once (fresh runs) or links the init source, and every later
+  save links the previous — one inode per frozen lineage. The HF cache
+  becomes deletable.
+- **Presence is not a signal.** `backbone.text_trained` /
+  `backbone.vision_trained` are the explicit per-part facts (the
+  frozen⇒pristine inference trap dies, part-wise); a frozen part
+  inherited from an adapted checkpoint stays trained. The vision part
+  is exactly the `backbone_vision` LR group's members (Molmo: tower +
+  connector; Gemma: the tower — `embed_vision` trains under the TEXT
+  lr and rides the text part), so "frozen vision" ⇔ "the vision file
+  links".
+- **Their config, verbatim.** `backbone.config` carries the source
+  artifact's `config.json` contents unmodified, parsed at load with
+  the existing `Gemma4Config.from_dict`/`Molmo2Config.from_dict` —
+  zero new config parsers, so conversion cannot drift architecture.
+  `backbone.id` is provenance; `backbone.depth` records the depth the
+  text file was saved at (`full`, or the gemma `prefix` mount — a
+  FULL file mounts truncated builds via the packed-PLE slicing; a
+  prefix file cannot mount a deeper build and fails loudly).
+- **`tokenizer/` carries exactly what the trunk's prompt path reads**
+  (`tokenizer_manifest`): Molmo trunks — `tokenizer.json` alone (the
+  native tokenizers backend); Gemma — tokenizer.json +
+  tokenizer_config.json + processor_config.json + chat_template.jinja
+  (verified sufficient standalone for
+  `AutoProcessor`/`AutoTokenizer.from_pretrained`). Nothing else: no
+  remote-code `.py`, no shard index, no `norm_stats.json` (metadata
+  owns stats), no embedded stale expert copies.
 - **The serving operating point is recorded**, written explicitly at
   save/convert time — no silent family defaults (D6).
 - **Stats are metadata**, and stats replacement is a first-class
@@ -826,30 +873,22 @@ Rules:
 - **Objective payload serialized** as a tagged dict; loading
   reconstructs it for construction (eval-loaded models can compute
   their training loss).
-- Transfer caveat (documented in working-together when phase 3 lands):
-  local `rsync` needs `-H` to preserve hard links; without it the copy
-  is correct but fully materialized. HF hub dedupes by content hash.
+- Schema-1 directories (the retired snapshot-mirror era) are REFUSED
+  with a re-convert pointer: they re-derive from their ORIGINAL
+  sources (`convert_legacy` on the legacy directory,
+  `convert_molmoact2` on the HF release).
+- Transfer caveat: local `rsync` needs `-H` to preserve hard links;
+  without it the copy is correct but fully materialized. HF hub
+  dedupes by content hash.
 
-Loading becomes a registry plus a toolkit:
-
-```python
-FAMILIES: dict[VLAFamily, type[VLA[Any]]] = {
-    VLAFamily.GEMMA_FLOW: GemmaFlowVLA,
-    ...
-}
-
-def load(checkpoint: Path, *, device: DeviceLike, dtype: torch.dtype) -> VLA[Any]:
-    meta = CheckpointMetadata.read(checkpoint / "metadata.json")
-    return FAMILIES[meta.family].from_checkpoint(
-        checkpoint, device=device, dtype=dtype,
-    )
-
-def save(model: VLA[Any], directory: Path, *, metadata: CheckpointMetadata) -> None:
-    """The toolkit: atomic writes, component files from
-    checkpoint_components(), the backbone hard-link rule, metadata
-    validation, self-containment check before the directory is
-    renamed into place."""
-```
+Loading is the `bijou.loading.FAMILIES` registry (`load_vla` → the
+recorded family's `from_checkpoint`, which parses `backbone.config`,
+mounts the trunk from the checkpoint's own part files through the
+from-files loaders, and reads `tokenizer/`); writing is the
+`bijou.checkpoint.write_checkpoint` toolkit (atomic staging + rename,
+component files from `checkpoint_components()`, per-part dict-or-link
+arguments, tokenizer links, self-containment validation before
+publish).
 
 The train loop core (two-phase, D5), including the LR reconciliation:
 
@@ -1556,6 +1595,68 @@ survives in any load path; it lives only in the importers.
   tests reworked incl. the partition audit + per-part link semantics;
   a fresh-run save→`load_vla` round-trip; re-derived tiny fixtures
   prove the v1→v2 path preserves the anchors.
+VERDICT: PASS — three commits (cb6c6d7 additive loaders + import
+audit, 57c6843 the flip, plus this docs commit); the gate held at
+both code commits: `check.py` CHECKS PASSED (930 then 937 passed, 21
+skipped) and all five oracles bitwise through the unchanged CLI
+shapes (gemma flow 2.7903/1.9152 as the fresh-run CLI, now saving v2;
+gemma ar 27.8306/27.767; molmoact2 flow 1.3906/1.3305, ar
+12.2254/12.3317, joint(KI, λ=1) 13.616/13.6621 with the cross-oracle
+exact — loss_action_flow ≡ 1.3906/1.3305, loss_action_ar ≡
+12.2254/12.3317 — via `--init-from outputs/tiny-molmoact2/
+checkpoint_vla`, the fixture's converted directory RE-DERIVED by
+`bijou.convert_legacy` from the untouched legacy fixture: same
+weights, new format, same numbers); grad norms identical at every
+step. Resume gate re-run on a v2 save (joint step-2 → `--resume
+--steps 4 --seed 1 --backbone-text-lr 1e-5`, twice):
+bitwise-identical continuations reproducing the recorded
+13.4872/13.5119 (flow 1.416/1.5283, ar 12.0712/11.9836, lr
+2e-05/2.5e-05 on schedule). Fresh-run save→`load_vla` round-trips
+green (gemma_flow + molmoact2_joint saves validate and reload);
+frozen-part link semantics verified on disk (a fresh run's first
+save serializes both parts, the second links them — nlink=2, one
+inode; a frozen vision part links back through the fixture conversion
+to the trunk import; tokenizer.json shares one inode from artifact
+through conversion to training saves);
+`probes/probe_unfreeze_gradflow` re-pointed to the new builder
+signatures and RE-RUN — flags-on anchors exact (flow 1.6948
+text-only and text+vision, ar_backbone 27.8546), GRADFLOW CHECKS
+PASSED. Amendments at execution: (1) `backbone.depth` STAYS in the
+v2 backbone section beyond the pinned four keys — it records what
+the text file's layer set contains (gemma prefix-mount saves write
+prefix-only files; gemma_ar's full-stack refusal reads it). (2) The
+dir-glob HF path also survives for the fresh-run `--backbone` mount —
+the gemma oracles ARE fresh-run CLIs over an HF-layout artifact; the
+mount is the import boundary and the run's first save imports the
+trunk into the per-part files. `from_checkpoint`/`load_vla` carry
+zero HF-layout knowledge, as pinned. (3) The gemma tokenizer manifest
+verified empirically before pinning: the four files
+(tokenizer.json, tokenizer_config.json, processor_config.json,
+chat_template.jinja) load standalone through
+AutoProcessor/AutoTokenizer — no config.json needed. (4) "tower +
+connector" resolves per-trunk as "exactly the backbone_vision LR
+group's members": Molmo = tower + connector, Gemma = the tower only
+(`embed_vision` trains under the TEXT lr and rides the text part) —
+the file split follows the LR partition, which is what makes
+"frozen vision ⇔ the file links" true. (5) Frozen-part links
+re-point to the PREVIOUS save at each boundary (not pinned to the
+first), so pruning old step dirs mid-run cannot break later saves;
+hard links keep every published checkpoint self-contained
+regardless. (6) `load_backbone_state` → `load_backbone_part_states`,
+now the stage-2 inheritance path ONLY: families mount the trunk from
+the checkpoint's own part files in one strict pass, so the v1
+trained-state overwrite (and its transient second full-trunk copy)
+died; `--backbone-init-from` refuses both-parts-pristine sources via
+the metadata flags instead of file presence. (7) The hermetic gemma
+test trunk (`tests/vla_fixtures.write_gemma_trunk`) carries STUB
+processor_config.json/chat_template.jinja — conversion requires the
+manifest's presence and the hermetic tests never run AutoProcessor.
+(8) Commit 1 landed the from-files loaders + import audit additively,
+but the v2 schema/writer did NOT sit alongside v1 — the flip replaced
+the schema wholesale in one commit (a dual-schema intermediate would
+have duplicated the metadata class for one commit's lifetime with no
+consumer; the plan's "fewer commits when intermediate green points
+don't exist" clause).
 
 **Phase 8b — conversion campaign + adoption.** Convert the real
 checkpoint inventory, verify each (recorded eval/loss numbers where

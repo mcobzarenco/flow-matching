@@ -146,6 +146,7 @@ def build_flow(args: ProbeArgs) -> GemmaFlowVLA:
         Path(TINY),
         config,
         expert_config,
+        tokenizer_dir=Path(TINY),
         max_soft_tokens=args.max_soft_tokens,
         device="cpu",
         dtype=torch.float32 if args.backbone_trained else None,
@@ -176,6 +177,7 @@ def build_ar_backbone(args: ProbeArgs) -> GemmaARVLA:
     backbone, encoder = build_gemma_encoder(
         Path(TINY),
         backbone_config,
+        tokenizer_dir=Path(TINY),
         exports=(stop,),
         max_soft_tokens=args.max_soft_tokens,
         state_dim=6,
