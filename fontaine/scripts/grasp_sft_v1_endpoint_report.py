@@ -46,7 +46,10 @@ SIM_DIR = REPO / "outputs/sim/grasp_sft/v1_endpoint"
 IMG_DIR = REPO / "fontaine/blog/src/img/grasp_sft_v1"
 OUT_JSON = REPO / "reports/analysis__grasp_sft_v1_endpoint.json"
 
-WANDB_RUN = "aristotle1337/fontaine/8t78ipnl"  # grasp_sft_v1_joint_8xa100
+# Run 2 (--recompute-stats restart, 21:14:48Z 08-16). Run 1b (killed
+# ~1900, remap-only table) was 8t78ipnl; absolute MAE not comparable
+# across the two (different normalization scale).
+WANDB_RUN = "aristotle1337/fontaine/cgo3by9j"  # grasp_sft_v1_joint_8xa100
 
 # House eval-report scheme (sim100_charts.py / grasp_sft_chain_charts.py):
 # dark page, IBM CVD-safe categorical hues (adjacent-pair OKLab deltaE

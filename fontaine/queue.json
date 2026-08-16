@@ -1,6 +1,6 @@
 {
- "updated_utc": "2026-08-16T21:15:35Z",
- "depth_reason": "depth 2 (endpoint boundary runnable at run completion ~21:5xZ; approach redesign owner-gated). Every other candidate remains owner-gated (disk composite exemption, v2.1 bands, ckpt-format, morning-veto) or box-gated.",
+ "updated_utc": "2026-08-16T21:46:00Z",
+ "depth_reason": "depth 2: endpoint boundary (runnable at run-2 completion ~00:4xZ) + wrist-cam-pose-refit (runnable now, next work session). Others owner-gated (disk composite exemption, approach redesign, v2.1 bands, ckpt-format, morning-veto) or box-gated.",
  "items": [
   {
    "id": "demo-gen-sharded-a100",
@@ -1929,6 +1929,15 @@
    "prereg": null,
    "title": "Approach-leg smoothing done right (owner ask 19:42Z 08-16, drop-in ease measured NO-GO 41.7/40.8 vs 58.3 placed n=120 \u2014 quasi-static arm never trips the momentum-tuned exits; diagnosis banked in scripted_expert.py APPROACH_SLEW_DEG comment + fontaine/notes/smooth_v12*.json): redesign approach/descend for static poses \u2014 approach droop feedback (descend's settle-measure-correct pattern, own clip), exit on command-converged + corrected static err, descend entry from parked pose re-tuned (close/lift degraded from parked entry: pinch-miss loops, empty lifts). Instrument: smooth_expert_measure.py (knobs landed: --approach-slew/--retreat-glide), bar = yield-neutral vs 58.3/54.2/94.3 with approach visibly eased; sample videos for the owner eyeball. OWNER-GATED: proposed in-channel 20:1xZ 08-16 (msg 1538641510281519134), awaits their go.",
    "boundary": "Queued 20:1xZ 08-16 at the steering slice close."
+  },
+  {
+   "id": "wrist-cam-pose-refit",
+   "class": "cpu",
+   "status": "queued",
+   "owner_hold": false,
+   "prereg": null,
+   "title": "Wrist-cam pose refit vs rig v2 (owner ask 21:43:31Z 08-16, proposal agreed-in-channel 22:0xZ msg 1538665108811812925): sim wrist view shows one small clockwise-leaning orange jaw tip where rig v2 shows BOTH jaws symmetric from the bottom edge (eyeballed 08-16: /tmp pairs; the sim-wrist-periphery-fix pose overcorrected). Instrument first, fit second, lens-plumbline pattern: (1) matched pairs \u2014 replay rig v2 per-frame joint STATES into the sim, render wrist at identical kinematics; (2) measure both sides: in-image jaw-axis angle (orange jaw hue-segmentable real / exact mask sim), bottom-band occupancy fraction, both-jaws-visible rate; (3) fit mount-local camera roll/tilt (+fovy if needed) minimizing the matched-set discrepancy, validate held-out; ship flag-gated (bracket_appearance pattern), rides the next-gen regen with brackets + v1.3 expert. Note: pose change alters recorded wrist frames -> regen-only, never silently.",
+   "boundary": "Queued 22:0xZ 08-16 at the steering reply."
   }
  ],
  "updated": "2026-08-16T16:47:17Z"
