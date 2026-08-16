@@ -280,8 +280,10 @@ class SO101Sim:
             raise ValueError(
                 f"arm_texture={arm_texture!r} needs the composite path (v3/v4)",
             )
-        if spawn_version not in ("v1", "v2"):
-            raise ValueError(f"spawn_version {spawn_version!r} not in ('v1', 'v2')")
+        if spawn_version not in ("v1", "v2", "v2.1"):
+            raise ValueError(
+                f"spawn_version {spawn_version!r} not in ('v1', 'v2', 'v2.1')",
+            )
         if tint_band not in ("rig_gray", "wide", "mix70"):
             raise ValueError(
                 f"tint_band {tint_band!r} not in ('rig_gray', 'wide', 'mix70')",
@@ -293,7 +295,7 @@ class SO101Sim:
         # around it. Loaded eagerly so a drifted mask asset refuses at
         # construction, not mid-collection.
         self._spawn_mask = None
-        if spawn_version == "v2":
+        if spawn_version in ("v2", "v2.1"):
             from .spawn_v2 import WorkspaceMask
 
             self._spawn_mask = WorkspaceMask.frozen()
@@ -1538,18 +1540,23 @@ class SO101Sim:
         )
         mujoco.mj_resetData(self.model, self.data)
 
-        if self.spawn_version == "v2":
+        if self.spawn_version in ("v2", "v2.1"):
             # Spawn-v2 (finalized pre-reg 2026-08-16): disk uniform
             # over the frozen workspace mask, boat in the annulus
             # around it, full-range yaw — all on the spawn stream, in
-            # the sampler's pinned draw order. The disk is a static
-            # geom: moved on the MODEL, picked up by physics/render at
-            # the settle steps; success() and the expert read the live
-            # ``disk_center``.
+            # the sampler's pinned draw order. v2.1 (prereg §7): both
+            # placements constrained to the measured expert-competence
+            # radial bands. The disk is a static geom: moved on the
+            # MODEL, picked up by physics/render at the settle steps;
+            # success() and the expert read the live ``disk_center``.
             from .spawn_v2 import draw_spawn_v2
 
             assert self._spawn_mask is not None  # loaded at construction
-            spawn = draw_spawn_v2(self._spawn_mask, rng)
+            spawn = draw_spawn_v2(
+                self._spawn_mask,
+                rng,
+                radial_bands=self.spawn_version == "v2.1",
+            )
             self.reset_spawn_v2 = spawn
             self.model.geom_pos[self._disk_geom_id][:2] = spawn.disk_xy
             self.disk_center = (float(spawn.disk_xy[0]), float(spawn.disk_xy[1]))

@@ -238,7 +238,7 @@ def main() -> int:
     parser.add_argument("--target-kept", type=int, required=True)
     parser.add_argument("--seed-start", type=int, required=True)
     parser.add_argument("--seeds-per-shard", type=int, default=2000)
-    parser.add_argument("--spawn-version", choices=("v1", "v2"), default="v2")
+    parser.add_argument("--spawn-version", choices=("v1", "v2", "v2.1"), default="v2")
     parser.add_argument(
         "--tint-band",
         choices=("rig_gray", "wide", "mix70"),

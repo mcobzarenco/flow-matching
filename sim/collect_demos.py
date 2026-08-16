@@ -306,7 +306,7 @@ def main() -> int:
     parser.add_argument("--max-wall-hours", type=float, default=4.0)
     parser.add_argument("--max-ticks", type=int, default=600)
     parser.add_argument("--repo-id", default=REPO_ID)
-    parser.add_argument("--spawn-version", choices=("v1", "v2"), default="v1")
+    parser.add_argument("--spawn-version", choices=("v1", "v2", "v2.1"), default="v1")
     parser.add_argument(
         "--tint-band",
         choices=("rig_gray", "wide", "mix70"),

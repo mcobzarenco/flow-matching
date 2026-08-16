@@ -46,6 +46,20 @@ JAW_KEEPOUT = 0.04
 ACCEPT_PROBE_N = 200
 MAX_DRAWS = 10_000
 
+# v2.1 amendment (2026-08-16, registered in prereg §7): the v2 mask
+# was cut with a broken torque instrument — the reachability probe
+# reported static shoulder moment <= 0.25 of forcerange across W, but
+# direct actuator-force measurement (spawn_v2_hold_probe) shows the
+# sysid'd shoulder-lift servo SATURATED (fraction 1.00) holding
+# extended poses, sagging up to ~2 cm at r_base 0.36; the live expert
+# measures 48% success at boat r_base < 0.26 falling to ~1% beyond
+# 0.34 (600-seed field, spawn_v2_expert_probe). v2.1 constrains both
+# placements to the MEASURED competence bands (68.2% expert success on
+# the joint band, n=110) while keeping the annulus geometry, full
+# yaw, and uniform-in-W draws.
+BOAT_R_BASE = (0.16, 0.27)
+DISK_R_BASE = (0.18, 0.32)
+
 
 MASK_PATH = Path(__file__).parent / "spawn_v2_mask.json"
 
@@ -161,14 +175,34 @@ class SpawnV2:
     draws: int  # boat attempts spent — the acceptance telemetry
 
 
-def draw_spawn_v2(mask: WorkspaceMask, rng: np.random.Generator) -> SpawnV2:
+def draw_spawn_v2(
+    mask: WorkspaceMask,
+    rng: np.random.Generator,
+    *,
+    radial_bands: bool = False,
+) -> SpawnV2:
     """One episode's placements: disk uniform over W, boat uniform
     over the [R_MIN, R_MAX] annulus around it (area-uniform radius),
     rejection-sampled against W membership and the parked-jaw
-    keep-out. REFUSES loudly (RuntimeError) on a degenerate
-    configuration instead of stalling: acceptance below ACCEPT_FLOOR
-    over the first ACCEPT_PROBE_N attempts, or MAX_DRAWS exhausted."""
-    disk = mask.sample(rng)
+    keep-out. ``radial_bands=True`` is the v2.1 amendment: disk and
+    boat additionally rejection-sampled into the measured competence
+    bands DISK_R_BASE / BOAT_R_BASE (base-relative radius). REFUSES
+    loudly (RuntimeError) on a degenerate configuration instead of
+    stalling: zero acceptance over the first ACCEPT_PROBE_N attempts,
+    or MAX_DRAWS exhausted."""
+    disk: tuple[float, float] | None = None
+    for _ in range(ACCEPT_PROBE_N):
+        candidate = mask.sample(rng)
+        if not radial_bands or (
+            DISK_R_BASE[0] <= float(np.hypot(*candidate)) <= DISK_R_BASE[1]
+        ):
+            disk = candidate
+            break
+    if disk is None:
+        raise RuntimeError(
+            f"spawn-v2 disk draw degenerate: 0/{ACCEPT_PROBE_N} in the "
+            f"radial band {DISK_R_BASE} — mask/band constants inconsistent",
+        )
     accepted: tuple[float, float] | None = None
     attempts = 0
     while attempts < MAX_DRAWS:
@@ -179,10 +213,25 @@ def draw_spawn_v2(mask: WorkspaceMask, rng: np.random.Generator) -> SpawnV2:
         jaw_clear = (
             np.hypot(boat[0] - JAW_TIP_XY[0], boat[1] - JAW_TIP_XY[1]) >= JAW_KEEPOUT
         )
-        if mask.contains(*boat) and jaw_clear:
+        band_ok = not radial_bands or (
+            BOAT_R_BASE[0] <= float(np.hypot(*boat)) <= BOAT_R_BASE[1]
+        )
+        if mask.contains(*boat) and jaw_clear and band_ok:
             accepted = boat
             break
-        if attempts == ACCEPT_PROBE_N:
+        if attempts % ACCEPT_PROBE_N == 0 and accepted is None and radial_bands:
+            # Disks near the outer disk band + tight boat band can
+            # have thin acceptance; re-draw the DISK rather than
+            # refusing outright (bounded by MAX_DRAWS overall).
+            disk = None
+            for _ in range(ACCEPT_PROBE_N):
+                candidate = mask.sample(rng)
+                if DISK_R_BASE[0] <= float(np.hypot(*candidate)) <= DISK_R_BASE[1]:
+                    disk = candidate
+                    break
+            if disk is None:
+                raise RuntimeError("spawn-v2.1 disk re-draw degenerate")
+        elif attempts == ACCEPT_PROBE_N and accepted is None:
             raise RuntimeError(
                 f"spawn-v2 acceptance degenerate: 0/{ACCEPT_PROBE_N} boat "
                 f"draws accepted around disk {disk} — mask/annulus "

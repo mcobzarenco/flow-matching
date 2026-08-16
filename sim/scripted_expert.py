@@ -292,6 +292,10 @@ class ScriptedExpert:
     CLOSE_TICKS = 30  # 1 s pinch close+hold before lifting (P4 pace)
     OPEN_TICKS = 20
     PHASE_TIMEOUT = 200  # ticks; a stuck phase advances (never wedges)
+    #: Droop/place integrator clip (m). ±0.04 was tuned on the v1
+    #: spawn band (boat r_base ≤ ~0.27); a class attr so the spawn-v2
+    #: robustness probe can sweep it against far-radius shoulder sag.
+    DROOP_CLIP = 0.04
 
     def __init__(self, sim: SO101Sim) -> None:
         self.planner = ExpertPlanner(sim)
@@ -418,7 +422,7 @@ class ScriptedExpert:
             if state.ticks_in_phase > 20 and arm_speed < 0.08:
                 state.droop += grasp - pads_now
                 state.droop[2] = min(state.droop[2], 0.0)
-                state.droop = np.clip(state.droop, -0.04, 0.04)
+                state.droop = np.clip(state.droop, -self.DROOP_CLIP, self.DROOP_CLIP)
             arm, _ = planner.solve_grasp(
                 grasp + state.droop,
                 boat_yaw,
@@ -508,7 +512,11 @@ class ScriptedExpert:
             if state.ticks_in_phase > 20 and arm_speed < 0.08:
                 pad_err = place - pads_now
                 state.place_droop += np.array([pad_err[0], pad_err[1], 0.0])
-                state.place_droop = np.clip(state.place_droop, -0.04, 0.04)
+                state.place_droop = np.clip(
+                    state.place_droop,
+                    -self.DROOP_CLIP,
+                    self.DROOP_CLIP,
+                )
             arm, _ = planner.solve_ik_pads(
                 place + state.place_droop,
                 self._arm_now(sim),

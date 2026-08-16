@@ -196,3 +196,46 @@ window closed. What landed with the freeze:
   into the v1 dataset generation itself — the sharded collection
   measures the expert's spawn-v2 success rate on thousands of seeds as
   it generates; the first-shards read is the go/no-go telemetry.
+
+## §7 A′ FAILED on v2 as frozen → registered amendment v2.1 (same day)
+
+A′ ran immediately (the A100 box landed) and **failed hard: 19.8%
+expert success on 600 unrendered spawn-v2 seeds** (first rendered
+smoke agreed: 3/22). This is the §4 registered risk realized — and the
+instrument, not the expert, is the culprit:
+
+- **Failure geometry**: success is a cliff in *boat* distance from
+  base — 48.3% below r_base 0.26 m (the v1 band's radius), 6.3% at
+  0.26–0.34, 0.8% beyond. Bearing doesn't matter (0–4% across ±70° at
+  far radius). Failed episodes loop jam-flip → recover → approach:
+  the measured pads never come within the 3.5 cm jam threshold of the
+  solve target, which the expert misreads as a mechanical jam.
+  (`reports/analysis__spawn_v2_expert_probe.json`, phase traces
+  included; droop-clip A/B at ±8 cm: no effect, 19.2%.)
+- **The instrument was wrong about torque**: §3.1's static-moment
+  field read ≤0.25 of forcerange across W. Direct measurement
+  (`spawn_v2_hold_probe.py`: solve the expert's own grasp IK, teleport
+  onto the solution, hold under physics) shows the sysid'd
+  shoulder-lift servo **saturated (force fraction 1.00)** holding
+  extended poses, with steady-state pad sag growing from ~3 mm at
+  r_base 0.20 to ~20 mm at 0.36. The 1 mm IK-residual bar measured
+  *kinematic* reachability; the actuator cannot statically serve the
+  outer half of W. This is real arm physics (the same servo the rig
+  runs), not a sim artifact.
+- **Amendment v2.1** (`spawn_version="v2.1"`, the ONE registered
+  robustness amendment): keep the annulus geometry, full ±180° yaw,
+  uniform-in-W draws — constrain both placements to the **measured
+  competence bands**: boat r_base ∈ [0.16, 0.27], disk r_base ∈
+  [0.18, 0.32]. Cut from the 600-seed field (68.2% on the post-hoc
+  joint band, n=110); the v2.1 sampler measures **56.0% end-to-end on
+  400 fresh seeds** (edges of the bands are weaker than the interior —
+  the numbers above are the honest sampler-weighted rate). v2 as
+  frozen stays oracle-pinned and unused; v1 bit-compat untouched.
+- **Coverage vs v1 remains a step change**: disk anywhere in a
+  56 cm² annular band across all bearings (v1: one fixed point), boat
+  in the full annulus around it at 8–19 cm separation with free yaw
+  (v1: a 34 cm² patch in front of one disk).
+- The far-radius region is not lost, just deferred: reaching it needs
+  either a stronger shoulder (hardware) or a non-prehensile/regrasp
+  strategy (the side-spawn righting probe's territory — same skill
+  family, queued).

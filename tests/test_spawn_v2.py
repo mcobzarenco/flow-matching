@@ -133,3 +133,41 @@ def test_cleaned_all_speckle_refuses(tmp_path: Path) -> None:
     raw = WorkspaceMask.from_probe(probe_json(tmp_path, cells))
     with pytest.raises(ValueError, match="empty after morphological clean"):
         raw.cleaned()
+
+
+def test_v21_radial_bands(tmp_path: Path) -> None:
+    """v2.1 amendment (prereg §7): every draw lands disk and boat in
+    the measured competence bands, deterministically per seed, and the
+    frozen-mask real path honors them too."""
+    from sim.spawn_v2 import BOAT_R_BASE, DISK_R_BASE
+
+    mask = block_mask(tmp_path, 0.11, 0.39, -0.2, 0.28)
+    for seed in range(300):
+        rng = np.random.default_rng(seed)
+        spawn = draw_spawn_v2(mask, rng, radial_bands=True)
+        disk_r = float(np.hypot(*spawn.disk_xy))
+        boat_r = float(np.hypot(*spawn.boat_xy))
+        assert DISK_R_BASE[0] <= disk_r <= DISK_R_BASE[1], (seed, disk_r)
+        assert BOAT_R_BASE[0] <= boat_r <= BOAT_R_BASE[1], (seed, boat_r)
+        assert (
+            R_MIN
+            <= float(
+                np.hypot(
+                    spawn.boat_xy[0] - spawn.disk_xy[0],
+                    spawn.boat_xy[1] - spawn.disk_xy[1],
+                ),
+            )
+            <= R_MAX + 1e-9
+        )
+    again = draw_spawn_v2(mask, np.random.default_rng(7), radial_bands=True)
+    assert again == draw_spawn_v2(mask, np.random.default_rng(7), radial_bands=True)
+
+
+def test_v21_does_not_perturb_v2_stream(tmp_path: Path) -> None:
+    """The amendment adds a code path, not draws: radial_bands=False
+    reproduces the frozen v2 sequence exactly."""
+    mask = block_mask(tmp_path, 0.11, 0.39, -0.2, 0.28)
+    for seed in (0, 3, 11):
+        a = draw_spawn_v2(mask, np.random.default_rng(seed))
+        b = draw_spawn_v2(mask, np.random.default_rng(seed), radial_bands=False)
+        assert a == b
