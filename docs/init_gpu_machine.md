@@ -207,8 +207,9 @@ config + weights + optimizer. Delete `outputs/train/smoke_test` after.
   main checkout's gitignored `outputs/`; header conventions in
   `docs/working-together.md`).
 - Always `MALLOC_ARENA_MAX=2 MALLOC_MMAP_THRESHOLD_=131072` (glibc
-  arena bloat with many dataloader workers; train.py itself caps the
-  lerobot video-decoder cache via `LEROBOT_VIDEO_DECODER_CACHE_SIZE=4`).
+  arena bloat with many dataloader workers; `bijou.train` itself caps
+  the lerobot video-decoder cache via
+  `LEROBOT_VIDEO_DECODER_CACHE_SIZE=4`).
 - Two concurrent `torchrun`s on one box: give each an explicit
   `--rdzv-backend=c10d --rdzv-endpoint=localhost:<distinct port>`
   instead of `--standalone`.
