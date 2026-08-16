@@ -1,14 +1,14 @@
 {
- "updated_utc": "2026-08-16T12:22:34Z",
- "depth_reason": "depth 3 queued (2 new owner-ordered/accepted 12:1xZ 08-16: demo-gen sharding readiness P1 + side-spawn probe); gpu-local/box items blocked under the GPU owner-hold (extended 12:11:32Z: checkpoint-format change first); spawn-v2 finalization owner-gated.",
+ "updated_utc": "2026-08-16T12:27:46Z",
+ "depth_reason": "depth 3 queued; demo-gen-sharded-a100 is P1 EXECUTE (new A100 box allocated 12:26:52Z, machine-is-yours); home-box gpu items stay blocked under the owner hold (ckpt-format change pending); spawn-v2 dataset constants approved-for-generation 12:21:03Z vs the posted SS5 table.",
  "items": [
   {
    "id": "demo-gen-sharded-a100",
    "class": "cpu",
    "status": "queued",
    "owner_hold": false,
-   "prereg": null,
-   "title": "P1 OWNER-ORDERED 12:18:57Z 08-16 ('Make the sharding changes to be ready to generate the demo dataset'; 8xA100-80GB box confirmed 12:18Z): demo-gen sharding readiness — (1) shard driver for sim.collect_demos: N processes, disjoint seed ranges, per-shard --out + resume state, EGL context per shard round-robined over GPUs; (2) LeRobot v3 shard-merge into one dataset (episode/frame reindex + meta/provenance union, kept-seed lists concatenated); (3) HF dataset upload path (hub repo fontaine/*, same huggingface_hub route as checkpoints); (4) benchy tint-band knob: rig-gray band (current) vs wide-hue, mixed-slice config (70/30 APPROVED 12:21:03Z); target ~5,000 kept episodes; spawn protocol = spawn-v2 annulus + upright, OWNER-APPROVED 12:21:03Z ('agree with v1 with just the boat upright in the annulus'); finalize against the posted SS5 proposed-freeze table, objection window open until the box lands. All CPU-implementable now; oracles: 2-shard smoke merge bit-identical to single-run on same seeds, upload dry-run."
+   "prereg": "fontaine/blog/src/posts/2026-08-16-prereg-sim-spawn-v2.md",
+   "title": "P1 EXECUTE (allocation landed 12:26:52Z 08-16: 'machine is all yours' — 8xA100-80GB box 147.224.218.164 provisioned-access, verified idle, 240 cores/1.77TB/19TB, SSH BatchMode green): demo-gen sharding readiness — (1) shard driver for sim.collect_demos: N processes, disjoint seed ranges, per-shard --out + resume state, EGL context per shard round-robined over GPUs; (2) LeRobot v3 shard-merge into one dataset (episode/frame reindex + meta/provenance union, kept-seed lists concatenated); (3) HF dataset upload path (hub repo fontaine/*, same huggingface_hub route as checkpoints); (4) benchy tint-band knob: rig-gray band (current) vs wide-hue, mixed-slice config (70/30 APPROVED 12:21:03Z); target ~5,000 kept episodes; spawn protocol = spawn-v2 annulus + upright, OWNER-APPROVED 12:21:03Z ('agree with v1 with just the boat upright in the annulus'); finalize against the posted SS5 proposed-freeze table, objection window open until the box lands. All CPU-implementable now; oracles: 2-shard smoke merge bit-identical to single-run on same seeds, upload dry-run. EXECUTION extension: provision the box (repo+uv+assets per checklist), measure per-EGL-context render throughput then size shard count (240 cores >> the 16-32 estimate), launch v1 generation (spawn-v2 annulus + upright +/-180 yaw, 70/30 tint mix, ~5k kept), HF upload + dataset card post. Long-running remote job: launch detached on the box (systemd-run --user or setsid+nohup over ssh), babysit.toml entry at launch. NOTE: class taxonomy has no entry for the new A100 box yet (validator: gpu-local/gpu-box/cpu) — carried as cpu; work session adds a class for 147.224.218.164 to queue_cli validation as part of provisioning."
   },
   {
    "id": "side-spawn-feasibility-probe",
@@ -1849,5 +1849,5 @@
    "boundary": "Queued narratively at the 22:15Z tick (run_work_next armed), executed by the 22:18Z chained work session. || DONE 22:2xZ 08-15: merged 9e786b7 CLEAN (no conflicts, 50 files +907/-608), check.py 903 green; 6-point seam verify all green: (1) gradflow oracles EXACT 1.6948 flow / 27.8546 ar_backbone; (2) both retrain arms full-parse verbatim (family checkpoint-inferred molmoact2_flow, --flow-decoder-init inherit) AND both conversions validate_checkpoint green (base_corrected_stats_v0_vla + stagec_ar_step2000_corrected_v1); (3) GRPO targeted suite 40/40 (grew 33->40 upstream: test_molmo_flow_integration 6->13), broader grpo/replay/rollout sweep 75/75; (4) straggler grep clean — all 7b/7c/7e deletions are moves/renames (ObservationMemory -> per-trunk GemmaMemory/Molmo2Memory, tile_memory -> eval/policies, ARSuffixDecoder re-typed on PrefixMemory; BijouPrediction + SNAPFLOW_ALPHA/LAMBDA gone with zero fontaine-side refs); (5) parents[3] carry stands; (6) augment oracles 11/11; snapflow_identity_oracle module-import smoke green post-7e."
   }
  ],
- "updated": "2026-08-16T12:22:34Z"
+ "updated": "2026-08-16T12:27:46Z"
 }

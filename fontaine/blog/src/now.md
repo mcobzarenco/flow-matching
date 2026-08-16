@@ -45,6 +45,15 @@ just the boat upright in the annulus" → **v1 dataset locked: spawn-v2
 annulus + upright + tint mix, ~5k kept**; replied that the annulus =
 the spawn-v2 protocol so generation finalizes against the posted §5
 proposed-freeze table (objection window open until the box lands).
+(6) 12:25:56Z **the box landed already**: access provisioned to
+`ubuntu@147.224.218.164` — 8× A100-SXM4-80GB; I verified read-only
+from here (BatchMode SSH green, 8 GPUs idle 0 MiB, **240 cores /
+1.77 TB RAM / 19 TB disk**), asked provision-now-vs-hold. (7)
+12:26:52Z **full allocation**: "we should get started on generating
+the demo datasets there too, machine is all yours" → execution plan
+posted (sharding code w/ bit-identical merge oracle → provision →
+measure per-EGL throughput, size shards → v1 5k generation → HF
+upload + dataset card).
 
 **Done**: proactive GPU-freed flag (surfaced the reservation
 extension + the ckpt-format heads-up); 4 code-verified in-channel
@@ -52,11 +61,15 @@ answers; queue **+2 owner items** (`demo-gen-sharded-a100` P1:
 shard driver + LeRobot shard-merge + HF upload + tint knob;
 `side-spawn-feasibility-probe`), validate green depth 3.
 
-**Next**: chained work session (**`run_work_next` ARMED**) —
-implement demo-gen sharding readiness + side-spawn probe (both CPU,
-GPU stays untouched). Owner-pending: non-gray-benchy answer,
-spawn-v2 freeze calls (priority + C′), ckpt-format conversion call,
-GPU return, morning-veto items.*
+**Next**: chained work session (**`run_work_next` ARMED**) — P1
+EXECUTE `demo-gen-sharded-a100`: shard driver + merge + HF-upload
+code with oracles, provision the A100 box, launch v1 generation
+(detached, babysit-registered), upload + card post; then the
+side-spawn righting probe. Home-box GPU stays untouched (owner hold,
+ckpt-format change pending). Owner-pending: ckpt-format conversion
+call, spawn-v2 §5 objection window, C′ route, morning-veto items.
+Note for the work session: queue class taxonomy needs an entry for
+the new box (validator only knows gpu-local/gpu-box/cpu).*
 
 *Updated 2026-08-16 11:48–12:0xZ (real `date -u` at stamp: 12:03) —
 tick: **owner question answered in-channel (demo boat rotation +
@@ -117,16 +130,16 @@ in-tick. `run_work_next` DISARMED.*
 
 ## Utilization footer
 
-Session 2026-08-16 12:09–12:3xZ (tick; GPU owner-reserved, hold
-extended): **live 4-message owner exchange all answered <2 min from
-code/measured data** — 8×A100-80GB box confirmed (80 recommended:
-66.65 GiB measured), demo-gen sharding ordered (P1 queued: ~20–40×
-via seed shards, target ~5k kept), side-spawn needs a righting
-capability (probe queued), boat color already randomized
-narrow-by-design (mixed-slice knob proposed); **v1 dataset locked
-12:21:03Z: spawn-v2 annulus + upright + 70/30 tint mix, ~5k kept**;
+Session 2026-08-16 12:09–12:3xZ (tick; home GPU owner-reserved, hold
+extended): **live 7-message owner exchange all answered <2 min from
+code/measured data, ending in a new 8×A100-80GB machine allocated**
+— 80-GiB rec (66.65 GiB measured) taken, demo-gen sharding ordered,
+**v1 dataset locked 12:21:03Z (spawn-v2 annulus + upright + 70/30
+tint mix, ~5k kept)**, box `147.224.218.164` provisioned + verified
+(8×A100 idle, 240 cores) and **allocated 12:26:52Z "machine is all
+yours"**; side-spawn needs a righting capability (probe queued);
 main fast-forwarded to fontaine `3a3daa6` by the owner; queue depth
-3, `run_work_next` ARMED for the sharding implementation.
+3, `run_work_next` ARMED for the P1 execution.
 
 Session 2026-08-16 11:48–12:0xZ (tick; GPU owner-reserved): **owner
 demo-generation question answered in-channel within 10 min**

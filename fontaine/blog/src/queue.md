@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-16T09:50:26Z
+**Updated:** 2026-08-16T12:22:34Z
 
-**Depth call:** depth 2: grasp-sft-bootstrap (retrain arm owner-pending) + grpo-r2-post-sft (re-based per A2; token-sft arm item blocked owner-gated). merge-main-phase6 closed 19:4xZ 08-15.
+**Depth call:** depth 3 queued (2 new owner-ordered/accepted 12:1xZ 08-16: demo-gen sharding readiness P1 + side-spawn probe); gpu-local/box items blocked under the GPU owner-hold (extended 12:11:32Z: checkpoint-format change first); spawn-v2 finalization owner-gated.
 
-**18 open** (Live 0 · Queued 1 · Blocked 17 · Done 185)
+**20 open** (Live 0 · Queued 3 · Blocked 17 · Done 185)
 
 ## 🔴 Live (0)
 
@@ -14,7 +14,7 @@
 
 *(empty)*
 
-## 🟢 Queued (1)
+## 🟢 Queued (3)
 
 *ready — waiting on a window or a boundary*
 
@@ -27,6 +27,30 @@
 <details><summary>full record</summary>
 
 [pre-reg to be drafted as the item's first CPU slice: posts/2026-08-16-prereg-sim-spawn-v2.md — REQUIRED before any sim change or GPU stage] Spawn-v2 randomization (owner steering 09:16Z 08-16: 'Both the disc and boat should be placed randomly'): disk random in reachable workspace + boat full annulus with min-separation / jaw-clearance / measured-IK-reachability rejection sampling (stage-A torque-wall envelope is the exclusion instrument, not hand bands). Registered change: demos re-collected under spawn-v2, scripted-expert stage-A validation re-run, current band-protocol reads stay frozen, spawn-v2 eval becomes the new primary.
+
+</details>
+
+---
+
+**`side-spawn-feasibility-probe`** · `cpu`
+
+Side-spawn (capsized boat) feasibility probe (owner ask 12:18:57Z 08-16 'place the boat on the side'; accepted-with-design 12:19:52Z): unrendered CPU expert runs on side/rolled spawns (drop+settle reset extension)
+
+<details><summary>full record</summary>
+
+Side-spawn (capsized boat) feasibility probe (owner ask 12:18:57Z 08-16 'place the boat on the side'; accepted-with-design 12:19:52Z): unrendered CPU expert runs on side/rolled spawns (drop+settle reset extension) — measure what the current expert does vs the upright&gt;0.9 success oracle (so101_sim.py:1757, expected ~0), then design + prototype a righting maneuver (non-prehensile nudge or regrasp) and report its measured success rate BEFORE any dataset slice; if usable, side-spawns become a ~10-20% slice in a v1.1 dataset extension.
+
+</details>
+
+---
+
+**`demo-gen-sharded-a100`** · `cpu`
+
+P1 OWNER-ORDERED 12:18:57Z 08-16 ('Make the sharding changes to be ready to generate the demo dataset'; 8xA100-80GB box confirmed 12:18Z): demo-gen sharding readiness
+
+<details><summary>full record</summary>
+
+P1 OWNER-ORDERED 12:18:57Z 08-16 ('Make the sharding changes to be ready to generate the demo dataset'; 8xA100-80GB box confirmed 12:18Z): demo-gen sharding readiness — (1) shard driver for sim.collect_demos: N processes, disjoint seed ranges, per-shard --out + resume state, EGL context per shard round-robined over GPUs; (2) LeRobot v3 shard-merge into one dataset (episode/frame reindex + meta/provenance union, kept-seed lists concatenated); (3) HF dataset upload path (hub repo fontaine/*, same huggingface_hub route as checkpoints); (4) benchy tint-band knob: rig-gray band (current) vs wide-hue, mixed-slice config (70/30 APPROVED 12:21:03Z); target ~5,000 kept episodes; spawn protocol = spawn-v2 annulus + upright, OWNER-APPROVED 12:21:03Z ('agree with v1 with just the boat upright in the annulus'); finalize against the posted SS5 proposed-freeze table, objection window open until the box lands. All CPU-implementable now; oracles: 2-shard smoke merge bit-identical to single-run on same seeds, upload dry-run.
 
 </details>
 
