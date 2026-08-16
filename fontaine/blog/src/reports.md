@@ -888,6 +888,13 @@ the baseline the visual-matching lever must move.
   R2 bar ≥20, token-base anchor) land ~12:3xZ 08-16; consolidated
   verdicts JSON `analysis__grasp_sft_joint_probes.json` + report to
   follow
+- [standard 256-sample eval report](https://mcobzarenco-fontaine-reports.static.hf.space/eval__grasp_sft_joint_step2000_train256.html)
+  ([json](https://mcobzarenco-fontaine-reports.static.hf.space/eval__grasp_sft_joint_step2000_train256.json))
+  — owner request 09:06Z 08-16, stage-C train256 protocol reproduced
+  (state-copy anchors bitwise 9.3562/9.8678): joint chunk MAE
+  **3.24** vs corrupt-table stage-C **12.56** (which sat WORSE than
+  state-copy 9.36 — the wrist_roll clamp); ~3.9× tighter fit on the
+  same 256 demo frames with the corrected box
 - Weights: [`molmoact2_grasp_sft_joint_corrected_step2000`](https://huggingface.co/mcobzarenco/fontaine-checkpoints/tree/main/molmoact2_grasp_sft_joint_corrected_step2000)
   (weights-only, corrected table baked)
 

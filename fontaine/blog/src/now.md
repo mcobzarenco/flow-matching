@@ -5,13 +5,13 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-16 06:20–09:2xZ (real `date -u` at stamp: 09:21) —
+*Updated 2026-08-16 06:20–09:0xZ (real `date -u` at stamp: 09:04; corrected 09:13 — first stamp was written from memory, the check-clock class) —
 work session: **route-C endpoint caught — train COMPLETE, flow-unseen
 44/100 = TABLE_FIX_POSITIVE, owner report delivered, probe legs
 chaining.***
 
 **Status**: probe leg 2 `flow-train` (seeds 1000–1099, memorization
-read) live since 08:21:30Z — seed ~1051 at 09:16Z, ETA ~10:0xZ; unit
+read) live since 08:21:30Z — seed ~1051 at 09:08Z, ETA ~09:4xZ; unit
 `fontaine-joint-probe-flow-train`, registry entry
 `grasp_sft_joint_probes` (gate ≤6 GPU-h probe-side, ~1.9 spent).
 Chain total so far ~8.5 GPU-h vs ≤13 amendment gate. Train run
@@ -26,7 +26,13 @@ ack'd); (2) `loss_aux` semantics question → answered from
 `molmoact2_joint.py`: it is action-token CE, NOT narration (aux-text
 count is None in this run); proposed alias-preserving rename to
 `loss_ce_actions`, **owner reply pending — don't land until they
-answer**.
+answer**. Owner 09:06Z (third ask): standard 256-sample eval report
+→ DELIVERED 09:1xZ (train256 protocol, `--chunk-size 30` matched
+after a first launch died on the 50 default; state-copy anchors
+bitwise 9.3562/9.8678): joint chunk MAE **3.24** vs corrupt-table
+stage-C **12.56** (which sat worse than state-copy 9.36) — the
+offline read now agrees with the rollouts; posted
+1538476581104779335, ack'd, reports.md entry.
 
 **Done**: endpoint handoff executed — smoke leg PASSED
 (`bijou@2000_arhead`, 3 well-formed rows), leg 1 `flow-unseen` DONE
