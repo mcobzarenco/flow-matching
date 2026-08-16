@@ -953,11 +953,11 @@ pgrep = "rollout_sim"
 pgrep_min = 1
 gpu_indices = [0]
 gpu_mem_min_mib = 4000
-log = "/home/ubuntu/eval__grasp_sft_joint_flow_unseen.log"
+log = "/home/ubuntu/eval__grasp_sft_joint_flow_train.log"
 progress_re = "seed [0-9]+ replan [0-9]+"
-started_utc = "2026-08-16T06:58:08Z"
+started_utc = "2026-08-16T08:21:30Z"
 gpu_hours_per_wall_hour = 1.0
-boundary = "route C joint endpoint probes (amendment SS4, posts/2026-08-16-amendment-grasp-sft-route-c-joint.md): smoke DONE 07:0xZ; legs IN ORDER via ./fontaine/scripts/launch_local_grasp_sft_joint_probes.sh — (1) flow-unseen LIVE since 06:58:08Z unit fontaine-joint-probe-flow-unseen, then (2) flow-train (3) token-unseen (4) token-base, each ~1.3 GPU-h, one leg at a time detached via run_detached.sh (unit names fontaine-joint-probe-<leg>; log/started_utc fields here updated per launch). When the active unit goes inactive: launch the next leg; after ALL legs, reads via grasp_sft_joint_probe_reads.py (all five jsons, kept-split automatic, A SS5 / B SS3 verdicts baked; 29-31 unseen clause overlap SURFACED — boundary post owns that call)"
+boundary = "route C joint endpoint probes (amendment SS4, posts/2026-08-16-amendment-grasp-sft-route-c-joint.md): smoke DONE 07:0xZ; leg 1 flow-unseen DONE 08:21Z — 44/100 unseen, A SS5 verdict TABLE_FIX_POSITIVE baked (vs base 9 / corrupt-28; posted 1538462820751114270); (2) flow-train LIVE since 08:21:30Z unit fontaine-joint-probe-flow-train, then (3) token-unseen (4) token-base, each ~1.3 GPU-h, one leg at a time detached via run_detached.sh (unit names fontaine-joint-probe-<leg>; log/started_utc fields here updated per launch). When the active unit goes inactive: launch the next leg; after ALL legs, reads via grasp_sft_joint_probe_reads.py (all five jsons, kept-split automatic, A SS5 / B SS3 verdicts baked); boundary post owns the final verdicts"
 anchors = [
     "flow legs anchor: base 9/100 unseen, corrupt-table 28/100 (the retired stage-C AE read); A SS5 verdict surface baked in reads script",
     "token legs anchor: R2 bar >=20/100 unseen (grammar-greedy); token-base leg is the B SS3 default-run anchor on molmoact2_base_corrected_stats_v0_vla",
