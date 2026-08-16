@@ -212,6 +212,36 @@ def test_kinds_override_wins_over_dataset(tmp_path: Path) -> None:
     assert kinds == {"front": "side", "wrist": "wrist"}
 
 
+def test_kinds_fallback_notice_skipped_for_overridden_camera(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A camera the kinds file does not know normally prints the loud
+    'rendering as unknown' notice — but not when an explicit
+    --camera-kind covers it: the override wins, so the notice would
+    describe a fallback that never happens."""
+    dataset = write_rig_dataset(tmp_path, cameras={"front": "top"})
+    kinds = resolve_camera_kinds(["front", "top"], {"top": "top"}, dataset)
+    assert kinds == {"front": "top", "top": "top"}
+    captured = capsys.readouterr()
+    assert "rendering as 'unknown'" not in captured.out
+    # The un-overridden miss still prints (loud fallback stays loud).
+    kinds = resolve_camera_kinds(["front", "top"], {}, dataset)
+    assert kinds == {"front": "top", "top": "unknown"}
+    assert "rendering as 'unknown'" in capsys.readouterr().out
+
+
+def test_kinds_name_heuristic_warning_skipped_for_overridden_camera(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    kinds = resolve_camera_kinds(["front", "cam9"], {"cam9": "side"}, None)
+    assert kinds == {"front": "front", "cam9": "side"}
+    assert "not in the semantic" not in capsys.readouterr().out
+    kinds = resolve_camera_kinds(["front", "cam9"], {}, None)
+    assert kinds == {"front": "front", "cam9": "unknown"}
+    assert "not in the semantic" in capsys.readouterr().out
+
+
 def test_rollout_noise_keying_is_index_not_stable() -> None:
     """Live-rig observations carry no dataset identity (repo_id/episode/
     frame), so stable noise keying cannot apply — bijou.rollout must pin

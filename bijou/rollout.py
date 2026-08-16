@@ -30,6 +30,18 @@ normalization (molmo_flow) are additionally gated against their own
 baked-in state q01/q99 band in model frame, so a missing or wrong
 remap dies before any action is sent.
 
+Inference is local (``--checkpoint``) or remote (``--policy-server``:
+a ``bijou.policy_server`` on a GPU box, reached through an SSH tunnel
+— cameras/robot stay local, observations ship as JPEG, the sync
+loop's replan block grows by one round trip while the servos hold
+their last goal). Exactly one of the two; model-side flags
+(``--flow-decoder-dtype``, ``--offload-ple``) and the noise seed
+belong to the server invocation under ``--policy-server``, and
+``--async-inference`` is refused there (WAN latency-hiding is out of
+scope). ``--stats-repo-id`` keeps its exact local behavior either way
+(the server's /spec ships the checkpoint's stats tables; the resolved
+rig stats ride each request).
+
 Usage::
 
     uv run python -m bijou.rollout \
@@ -64,6 +76,7 @@ from .eval.policies import BijouPolicy
 from .modelling.aux_text import AuxField, AuxGeneration
 from .modelling.decoders.molmo_flow import MolmoFlowDecoder
 from .modelling.interface import SamplingMethod
+from .remote_policy import RemotePolicy
 from .rollout_async import AsyncExecutor, AsyncPlanner, PredictFn, sustainable
 from .rollout_safety import (
     JointFrameTransform,
@@ -87,9 +100,39 @@ SO_MOTORS = (
 )
 
 
+# The policy surface the control loops consume — a local checkpoint or
+# the remote client, chosen by --checkpoint / --policy-server (exactly
+# one; the parser enforces it).
+RolloutPolicy = BijouPolicy | RemotePolicy
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--checkpoint", type=Path, required=True)
+    parser.add_argument(
+        "--checkpoint",
+        type=Path,
+        default=None,
+        help="local checkpoint directory (exactly one of --checkpoint / "
+        "--policy-server)",
+    )
+    parser.add_argument(
+        "--policy-server",
+        default=None,
+        metavar="URL",
+        help="run inference on a remote bijou.policy_server instead of a "
+        "local checkpoint (e.g. http://localhost:8143 through an SSH "
+        "tunnel — the only supported remote path; the transport itself "
+        "is unauthenticated). Cameras/robot stay local; the sync loop "
+        "blocks one round trip per replan while the servos hold",
+    )
+    parser.add_argument(
+        "--policy-server-timeout",
+        type=float,
+        default=30.0,
+        help="per-request timeout (seconds) for --policy-server; a "
+        "timeout or connection error stops the rollout loudly — no "
+        "silent retries",
+    )
     parser.add_argument("--port", default="/dev/ttyACM0")
     parser.add_argument(
         "--robot-id",
@@ -299,9 +342,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--flow-decoder-dtype",
         choices=["float32", "bfloat16"],
-        default="float32",
+        default=None,
         help="bfloat16 halves flow-decoder memory for small inference "
-        "GPUs (post-load cast of the checkpoint's action decoder)",
+        "GPUs (post-load cast of the checkpoint's action decoder; "
+        "default float32). Local checkpoints only — with "
+        "--policy-server this knob belongs to the SERVER invocation",
     )
     parser.add_argument(
         "--seed",
@@ -328,10 +373,82 @@ def parse_args() -> argparse.Namespace:
         help="load the policy and stats, print the plan, exit without "
         "touching the robot",
     )
-    return parser.parse_args()
+    args = parser.parse_args()
+    if (args.checkpoint is None) == (args.policy_server is None):
+        parser.error(
+            "pass exactly one of --checkpoint (local inference) or "
+            "--policy-server (remote inference)",
+        )
+    if args.policy_server is not None:
+        if args.async_inference:
+            parser.error(
+                "--async-inference with --policy-server is out of scope: "
+                "latency-hiding over the WAN is deliberately "
+                "unimplemented — remote inference runs the sync loop "
+                "(the arm pauses during each replan)",
+            )
+        # Model-side flags configure the model MOUNT and belong to the
+        # server invocation; noise-side flags configure server-side
+        # draws the wire protocol does not carry. Refused, not ignored
+        # — a flag that silently does nothing is the drift class the
+        # checkpoint-inferred-flags rule kills.
+        refused: list[tuple[str, str]] = []
+        if args.flow_decoder_dtype is not None:
+            refused.append(
+                (
+                    "--flow-decoder-dtype",
+                    "pass it to python -m bijou.policy_server instead",
+                ),
+            )
+        if args.offload_ple:
+            refused.append(
+                (
+                    "--offload-ple",
+                    "pass it to python -m bijou.policy_server instead",
+                ),
+            )
+        if args.seed is not None:
+            refused.append(
+                (
+                    "--seed",
+                    (
+                        "noise draws happen server-side — set --seed on "
+                        "the policy_server invocation"
+                    ),
+                ),
+            )
+        if args.noise_ticket is not None:
+            refused.append(
+                (
+                    "--noise-ticket",
+                    (
+                        "the ticket bank substitutes server-side noise; "
+                        "the wire protocol does not carry it"
+                    ),
+                ),
+            )
+        if args.target_time == "zero":
+            refused.append(
+                (
+                    "--target-time zero",
+                    (
+                        "the φ_s shortcut is not carried by the wire "
+                        "protocol (options carry steps/method/draws/"
+                        "generate only)"
+                    ),
+                ),
+            )
+        if refused:
+            parser.error(
+                "; ".join(
+                    f"{flag} does not apply with --policy-server — {remedy}"
+                    for flag, remedy in refused
+                ),
+            )
+    return args
 
 
-def rig_stats(args: argparse.Namespace, policy: BijouPolicy) -> DatasetStats:
+def rig_stats(args: argparse.Namespace, policy: RolloutPolicy) -> DatasetStats:
     """Per-rig MEAN_STD stats, from the checkpoint table (already floored at
     training time) or a local dataset directory (floored on load, matching
     training's construction path)."""
@@ -404,7 +521,7 @@ def observation_to_item(
 
 
 def frame_transformed_predict(
-    policy: BijouPolicy,
+    policy: RolloutPolicy,
     frame: JointFrameTransform,
 ) -> PredictFn:
     """Single-item predict with chunks mapped model→arm — the ONE seam
@@ -477,31 +594,54 @@ def main() -> int:
         else JointFrameTransform.identity(len(SO_MOTORS))
     )
 
-    policy = BijouPolicy(
-        args.checkpoint,
-        device=device,
-        seed=args.seed if args.seed is not None else int(time.time()),
-        sample_steps=args.sample_steps,
-        method=SamplingMethod(args.sample_method),
-        # Stable noise keying is an eval instrument — it keys draws by
-        # dataset identity (repo_id/episode/frame), which a live rig
-        # observation does not have. Index keying with the replan counter
-        # as the index IS the deployment semantics: fresh noise per
-        # replan (and per draw at --sample-draws > 1), reproducible
-        # under a fixed --seed.
-        noise_key="index",
-        # A ticket file overrides the keying entirely: every replan
-        # integrates from the same bank row(s) — the fixed-noise
-        # deployment mode (seam-consistency lever; policies.py guards
-        # flow-only, chunk-size match, draws <= bank).
-        tickets=args.noise_ticket,
-        sample_draws=args.sample_draws,
-        target_time=0.0 if args.target_time == "zero" else None,
-        flow_decoder_dtype=getattr(torch, args.flow_decoder_dtype),
-        generate=tuple(AuxField(f) for f in (args.generate or ())),
-        include_subgoal_condition=args.subgoal is not None,
-        offload_ple=args.offload_ple,
-    )
+    policy: RolloutPolicy
+    if args.policy_server is not None:
+        # Remote inference: the server owns the model (and the
+        # model-side flags — the parser refused them here); decode
+        # knobs and the narration request ride each request.
+        policy = RemotePolicy(
+            args.policy_server,
+            timeout=args.policy_server_timeout,
+            generate=tuple(AuxField(f) for f in (args.generate or ())),
+            sample_steps=args.sample_steps,
+            method=SamplingMethod(args.sample_method),
+            sample_draws=args.sample_draws,
+        )
+        global_state_table = policy.global_state_table
+        decoder_note = f"decoder on {args.policy_server}"
+    else:
+        flow_decoder_dtype = (
+            args.flow_decoder_dtype
+            if args.flow_decoder_dtype is not None
+            else "float32"
+        )
+        policy = BijouPolicy(
+            args.checkpoint,
+            device=device,
+            seed=args.seed if args.seed is not None else int(time.time()),
+            sample_steps=args.sample_steps,
+            method=SamplingMethod(args.sample_method),
+            # Stable noise keying is an eval instrument — it keys draws by
+            # dataset identity (repo_id/episode/frame), which a live rig
+            # observation does not have. Index keying with the replan counter
+            # as the index IS the deployment semantics: fresh noise per
+            # replan (and per draw at --sample-draws > 1), reproducible
+            # under a fixed --seed.
+            noise_key="index",
+            # A ticket file overrides the keying entirely: every replan
+            # integrates from the same bank row(s) — the fixed-noise
+            # deployment mode (seam-consistency lever; policies.py guards
+            # flow-only, chunk-size match, draws <= bank).
+            tickets=args.noise_ticket,
+            sample_draws=args.sample_draws,
+            target_time=0.0 if args.target_time == "zero" else None,
+            flow_decoder_dtype=getattr(torch, flow_decoder_dtype),
+            generate=tuple(AuxField(f) for f in (args.generate or ())),
+            include_subgoal_condition=args.subgoal is not None,
+            offload_ple=args.offload_ple,
+        )
+        global_state_table = isinstance(policy.flow_decoder, MolmoFlowDecoder)
+        decoder_note = f"{flow_decoder_dtype} decoder"
     stats = rig_stats(args, policy)
     envelope = state_envelope(stats, expected_dim=len(SO_MOTORS))
     # molmo_flow normalizes with ONE checkpoint-resident table (§8.13
@@ -510,9 +650,11 @@ def main() -> int:
     # that table's own band: this is what catches a missing or wrong
     # --joint-frame before any action is sent. Per-dataset decoders
     # need no second gate (their model frame IS the rig stats frame).
+    # Remote policies report the fact through /spec (the client cannot
+    # isinstance a decoder it never mounts).
     model_envelope = (
         state_envelope(policy.info.normalization, expected_dim=len(SO_MOTORS))
-        if isinstance(policy.flow_decoder, MolmoFlowDecoder)
+        if global_state_table
         else None
     )
     predict = frame_transformed_predict(policy, frame)
@@ -538,8 +680,7 @@ def main() -> int:
     if args.sample_draws > 1:
         decode_tag += f"-mean{args.sample_draws}"
     print(
-        f"policy: {policy.name} (chunk {chunk_size}, "
-        f"{decode_tag}, {args.flow_decoder_dtype} decoder)",
+        f"policy: {policy.name} (chunk {chunk_size}, {decode_tag}, {decoder_note})",
     )
     if policy.tickets is not None:
         # Attribution line: a physical run under a fixed ticket must be
@@ -719,6 +860,9 @@ def main() -> int:
     deadline = time.perf_counter() + args.duration
     try:
         if args.async_inference:
+            # The parser refused --async-inference + --policy-server;
+            # narrow for the async loop's local-policy signature.
+            assert isinstance(policy, BijouPolicy)
             run_async_loop(
                 args,
                 robot,
@@ -799,7 +943,7 @@ def return_home(
 def run_sync_loop(
     args: argparse.Namespace,
     robot: SOFollower,
-    policy: BijouPolicy,
+    policy: RolloutPolicy,
     *,
     stats: DatasetStats,
     rig_kinds: dict[str, str],
