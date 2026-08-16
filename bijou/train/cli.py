@@ -2393,6 +2393,7 @@ def main() -> int:
                         table_key="eval/samples",
                         aux_fields=probe_aux_fields,
                         flow_probe_method=flow_probe_method,
+                        dataset_breakdown=args.eval_dataset_breakdown,
                     )
                     probe_record["eval_chunk_mae"] = round(eval_mae, 4)
                     probe_metrics["eval/chunk_mae"] = eval_mae
@@ -2409,6 +2410,7 @@ def main() -> int:
                     table_key="train/samples",
                     aux_fields=probe_aux_fields,
                     flow_probe_method=flow_probe_method,
+                    dataset_breakdown=args.eval_dataset_breakdown,
                 )
                 probe_record["train_mae"] = round(train_mae, 4)
                 probe_metrics["train/mae"] = train_mae

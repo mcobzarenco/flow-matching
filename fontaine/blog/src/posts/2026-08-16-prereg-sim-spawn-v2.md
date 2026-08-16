@@ -265,3 +265,47 @@ Two more changes landed before generation started, both measured:
    tail requirement), 86% of kept episodes end parked (the rest end
    quiet mid-return at the 150-tick tail budget, still successes);
    median kept episode 272 ticks (~9 s).
+
+## §8 Side-spawn feasibility probe: measured NO-GO on push-righting (2026-08-16, same day)
+
+The owner's side-spawn ask (12:18:57Z: "place the boat on the side")
+ran its CPU feasibility probe (`sim/probe_side_spawn.py`, commit
+`a8973dd`). Three phases, all n=120 demo-band seeds, all unrendered:
+
+1. **Side spawns are mechanically solid.** `reset(boat_start="side")`
+   (roll ±90° about the hull axis, drop from 3 cm, tripled settle;
+   upright-mode spawn stream bit-identical, oracle-pinned) rests the
+   boat on its hull side **120/120** — no self-righting, no capsize,
+   settled |upright| ≈ 0.002, base z 15.6 mm.
+2. **The stock expert scores 0/120** against the `upright > 0.9`
+   success oracle, as predicted. Instructive detail: it *pinches and
+   carries* the side-lying hull fine — 35% of episodes end within
+   disk radius, boat still on its side (89% end with |upright| <
+   0.5). Grasping isn't the missing capability; *reorienting* is.
+3. **Righting prototype: 0/120 — a measured NO-GO for quasistatic
+   pushing.** Six execution variants of the push-roll (sweep the
+   raised hull edge toward the keel side so the boat tips keel-down):
+   closed-jaw and open-jaw pad-space sweeps, keel-side press at two
+   alignments, tip-space sweeps at z 0.022/0.024/0.029 and 1–1.5
+   mm/tick. Every variant ends the same way: **the boat slides (6–7 cm
+   of plow), it does not roll** — peak upright 0.12. The transferable
+   tipping moment (limited by table friction under a rounded hull)
+   never beats the restoring moment.
+
+Tool-geometry facts measured en route, now on record: pad-midpoint
+space has a **physical floor at z ≈ 0.077** (the shoulder saturates
+with the jaw boxes doing the touching below — true during the stock
+expert's own descend, whose `GRASP_Z = 0.014` target is kinematic
+fiction the XY-alignment close rule papers over); the `gripperframe`
+site sits at the jaw-tip cluster, so site-space IK **is** tip-space;
+with the jaw axis rolled hull-parallel, the open moving jaw hangs
+below the tip and strikes the table first.
+
+**Consequence (the probe's decision):** side spawns stay **out of
+v1.1** — no dataset slice. A viable righting design needs a different
+mechanism than quasistatic pushing: candidates are a dynamic flick
+(momentum beats the friction bound; harder to make demo-grade), a
+wedge-under-and-lift with the tip, or hardware/scene changes (higher
+friction mat). Any of these is a new probe with its own measured
+gate, not a tuning pass on this one. The reset extension and the
+probe harness stay landed for that next attempt.

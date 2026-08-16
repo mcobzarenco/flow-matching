@@ -360,6 +360,12 @@ class TrainArgs:
     # (like sync_save) so checkpoints predating the flag replay their
     # train_args cleanly.
     dataset_repeat: tuple[str, ...] = ()
+    # Per-dataset eval reporting (owner work order 2026-08-16): the
+    # holdout/train probes additionally log each dataset's chunk-MAE
+    # scalar and a per-dataset eval-sample counts table to wandb.
+    # Defaulted (like sync_save) so checkpoints predating the flag
+    # replay their train_args cleanly.
+    eval_dataset_breakdown: bool = False
 
     @property
     def backbone_trained(self) -> bool:
@@ -967,6 +973,7 @@ class TrainArgs:
                 seed=raw.seed,
                 eval_samples=raw.eval_samples,
                 eval_seed=raw.eval_seed,
+                eval_dataset_breakdown=raw.eval_dataset_breakdown,
                 wandb_project=raw.wandb_project,
                 wandb_run_name=raw.wandb_run_name,
             )
@@ -1462,6 +1469,15 @@ def _build_parser() -> argparse.ArgumentParser:
         "device->CPU snapshot at the boundary (seconds), then "
         "gather+merge+write on a background thread over a dedicated "
         "gloo group; written bytes identical (tests/test_async_save.py)",
+    )
+    parser.add_argument(
+        "--eval-dataset-breakdown",
+        action="store_true",
+        help="log each dataset's eval chunk-MAE as its own wandb line "
+        "(eval/chunk_mae_dataset/<repo>) plus a per-eval wandb table of "
+        "eval-sample counts and MAE per dataset — the mixture-visibility "
+        "surface for multi-dataset runs (owner work order 2026-08-16). "
+        "Metrics-only: the aggregate MAE and the probe draw are unchanged",
     )
     parser.add_argument(
         "--chunk-grad-allreduce",

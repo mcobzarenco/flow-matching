@@ -299,6 +299,12 @@ class ProbeSet[I: BatchInputs]:
     # buckets, with the success slice as the open-loop deployment proxy
     # and the unlabeled slice as the continuity anchor.
     outcomes: tuple[str | None, ...]
+    # Per-dataset slicing (--eval-dataset-breakdown, owner work order
+    # 2026-08-16): each shard item's repo id, and the GLOBAL bucket
+    # order — derived from the concat dataset, identical on every rank
+    # so the fixed-size slice tensor stays collective-aligned.
+    repo_ids: tuple[str, ...] = ()
+    repo_buckets: tuple[str, ...] = ()
 
 
 OUTCOME_BUCKETS = ("success", "partial", "failure", "unlabeled")
@@ -335,12 +341,24 @@ def build_probe_set[I: BatchInputs](
         stride = max(len(items) // EVAL_TABLE_ROWS, 1)
         rich_positions = tuple(range(0, len(items), stride))[:EVAL_TABLE_ROWS]
         rich_items = [items[p] for p in rich_positions]
+    # Bucket order must be rank-identical: derived from the concat
+    # dataset's members (sorted, deduped across --dataset-repeat
+    # replicas), never from this rank's item stream. Members without a
+    # repo id (synthetic test datasets) contribute no bucket.
+    member_ids = {
+        str(repo_id)
+        for member in getattr(dataset, "datasets", ())
+        for repo_id in (getattr(getattr(member, "dataset", None), "repo_id", None),)
+        if repo_id is not None
+    }
     return ProbeSet(
         total=num,
         batches=batches,
         rich_items=rich_items,
         rich_positions=rich_positions,
         outcomes=tuple(item.get("condition_outcome") for item in items),
+        repo_ids=tuple(str(item.get("repo_id", "")) for item in items),
+        repo_buckets=tuple(sorted(member_ids)),
     )
 
 
@@ -412,6 +430,7 @@ def validate(
     table_key: str = "eval/samples",
     aux_fields: tuple[AuxField, ...] = (),
     flow_probe_method: SamplingMethod | None = None,
+    dataset_breakdown: bool = False,
 ) -> float:
     """Sampled-chunk MAE in raw action units over this rank's shard of the
     probe set; with ``distributed`` the sums all-reduce to the global value
@@ -428,6 +447,11 @@ def validate(
     totals = torch.zeros(2, device=device)  # [abs-error sum, valid elements]
     rich_rows: list[RichRow] = []
     slice_totals = torch.zeros(len(OUTCOME_BUCKETS), 2, device=device)
+    # --eval-dataset-breakdown: [abs-error sum, valid elements, samples]
+    # per repo bucket — fixed [D, 3] tensor, collective-aligned (the
+    # bucket order is rank-identical by construction).
+    dataset_breakdown = dataset_breakdown and len(probe.repo_buckets) > 0
+    dataset_totals = torch.zeros(max(len(probe.repo_buckets), 1), 3, device=device)
     wanted = iter(probe.rich_positions)
     next_rich = next(wanted, None)
     base = 0
@@ -464,6 +488,13 @@ def validate(
             )
             slice_totals[bucket, 0] += frame_error[i]
             slice_totals[bucket, 1] += frame_count[i]
+            if dataset_breakdown:
+                repo = probe.repo_ids[base + i]
+                if repo in probe.repo_buckets:
+                    d = probe.repo_buckets.index(repo)
+                    dataset_totals[d, 0] += frame_error[i]
+                    dataset_totals[d, 1] += frame_count[i]
+                    dataset_totals[d, 2] += 1
         # Batches stream in shard order: pick off the rich positions
         # (matching probe.rich_items one-to-one) as they pass.
         while next_rich is not None and next_rich < base + sampled.shape[0]:
@@ -484,6 +515,8 @@ def validate(
     if distributed:
         torch.distributed.all_reduce(totals)
         torch.distributed.all_reduce(slice_totals)
+        if dataset_breakdown:
+            torch.distributed.all_reduce(dataset_totals)
     mae = float(totals[0] / totals[1].clamp(min=1))
     metric_prefix = table_key.split("/")[0]
     if wandb_run is not None:
@@ -500,6 +533,28 @@ def validate(
                     f"{metric_prefix}/chunk_mae_{bucket}": value
                     for bucket, value in labeled.items()
                 },
+                step=step,
+            )
+        if dataset_breakdown:
+            # Per-dataset MAE scalars (a wandb line per repo) + one
+            # counts table: how many of the probe's samples came from
+            # each dataset this eval (global, after the all-reduce).
+            per_dataset = {
+                f"{metric_prefix}/chunk_mae_dataset/{repo}": float(
+                    dataset_totals[d, 0] / dataset_totals[d, 1].clamp(min=1),
+                )
+                for d, repo in enumerate(probe.repo_buckets)
+                if float(dataset_totals[d, 2]) > 0
+            }
+            counts = wandb.Table(columns=["dataset", "eval_samples", "chunk_mae"])
+            for d, repo in enumerate(probe.repo_buckets):
+                counts.add_data(
+                    repo,
+                    int(dataset_totals[d, 2]),
+                    float(dataset_totals[d, 0] / dataset_totals[d, 1].clamp(min=1)),
+                )
+            wandb_run.log(
+                {**per_dataset, f"{metric_prefix}/dataset_counts": counts},
                 step=step,
             )
 
