@@ -437,3 +437,23 @@ def test_from_lerobot_stats_requires_quantiles() -> None:
     }
     with pytest.raises(SystemExit, match="backfill"):
         DatasetStats.from_lerobot_stats(payload)
+
+
+def test_codecless_action_table_overrides_quantile_rows() -> None:
+    """Inference sets the merged action table WITHOUT a codec (nothing
+    to tokenize): the batch action_stats quantile rows must carry THE
+    table — per-item dataset quantiles would detokenize another rig's
+    ranges (the sim100 token-leg seam, 2026-08-17). Mean/std stay
+    per-item; only the decode-side quantile rows are pinned."""
+    merged_q01 = torch.full((DIM,), -3.0)
+    merged_q99 = torch.full((DIM,), 5.0)
+    batch = collator(action_q01=merged_q01, action_q99=merged_q99)(
+        [item(with_quantiles=True), item(with_quantiles=True)],
+    )
+    assert batch.action_stats.q01 is not None
+    assert batch.action_stats.q99 is not None
+    assert torch.equal(batch.action_stats.q01, merged_q01.expand(2, -1))
+    assert torch.equal(batch.action_stats.q99, merged_q99.expand(2, -1))
+    # Item rows are (-2, 2) — the override must NOT leak into mean/std.
+    assert torch.equal(batch.action_stats.mean, torch.zeros(2, DIM))
+    assert torch.equal(batch.action_stats.std, torch.ones(2, DIM))

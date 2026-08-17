@@ -41,7 +41,12 @@ from torch import Tensor
 from ..annotations import ConditionField
 from ..checkpoint import read_metadata
 from ..data import DatasetStats, PolicyInfo
-from ..loading import load_vla, molmo_flow_state_table, parse_prompt_config
+from ..loading import (
+    load_vla,
+    molmo_flow_state_table,
+    molmoact2_action_table,
+    parse_prompt_config,
+)
 from ..modelling.aux_text import AuxField, AuxGeneration, subgoal_text
 from ..modelling.decoders.ar_suffix import ARSuffixDecoder
 from ..modelling.decoders.flow import FlowDecoder
@@ -987,6 +992,18 @@ class BijouPolicy:
             if isinstance(self.flow_decoder, MolmoFlowDecoder)
             else None
         )
+        # The molmoact2 ar/joint discrete head decodes under the ONE
+        # merged action table its CE targets tokenized with — per-item
+        # dataset quantiles would detokenize another rig's ranges (the
+        # sim100 token-leg seam, 2026-08-17: run 2's merged table holds
+        # a descending lift pair, so a v2-table decode sign-inverted
+        # every lift command). Same one-source wiring as the state
+        # table above.
+        action_table = (
+            molmoact2_action_table(self.info.normalization)
+            if self.spec.family in (VLAFamily.MOLMOACT2_AR, VLAFamily.MOLMOACT2_JOINT)
+            else None
+        )
         # The families whose DESIGNATED action decoder is the AR suffix
         # (flow-less): their prompts always carry [generate|…] and the
         # request set is the caller's ask; a joint family serves through
@@ -1033,6 +1050,8 @@ class BijouPolicy:
             subgoal_condition_dropout=0.0,
             state_q01=state_table[0] if state_table is not None else None,
             state_q99=state_table[1] if state_table is not None else None,
+            action_q01=action_table[0] if action_table is not None else None,
+            action_q99=action_table[1] if action_table is not None else None,
         )
 
     @property

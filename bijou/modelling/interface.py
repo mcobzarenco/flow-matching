@@ -393,8 +393,13 @@ class Collator[I: BatchInputs]:
     # — their shared-table training convention and molmo_flow's
     # decision-6 decoder table, kept on one source so CE targets, the
     # in-train greedy decode and the flow clamp can never disagree.
-    # None keeps every existing path byte-identical (Gemma/Molmo2 AR
-    # tokenize with per-sample dataset quantiles). Both-or-neither.
+    # Inference sets the table WITHOUT a codec (nothing to tokenize):
+    # there it drives only the action_stats quantile rows, so the AR
+    # block decode detokenizes under the row training tokenized with
+    # instead of per-item dataset quantiles (the sim100 token-leg seam,
+    # 2026-08-17). None keeps every existing path byte-identical
+    # (Gemma/Molmo2 AR tokenize with per-sample dataset quantiles).
+    # Both-or-neither.
     action_q01: Tensor | None = None
     action_q99: Tensor | None = None
     _generator: torch.Generator | None = dataclasses.field(
@@ -445,12 +450,6 @@ class Collator[I: BatchInputs]:
             raise ValueError(
                 "action_q01/action_q99 travel together (the merged action "
                 "table) — got one without the other",
-            )
-        if self.action_q01 is not None and self.action_codec is None:
-            raise ValueError(
-                "an action table override without an action codec — the "
-                "table exists to drive tokenization; drop it or pass the "
-                "codec",
             )
         if self.aux is not None and (
             self.camera_filter is not None or self.max_cameras is not None
