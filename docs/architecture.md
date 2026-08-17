@@ -2073,9 +2073,15 @@ record: docs/molmoact2-retirement.md.**
    from the checkpoint tokenizer. bijou mode stays available for
    from-scratch runs on our trunks (the decoder never sees the prompt,
    only the cache).
-6. **Normalization is decoder-owned** for this kind: checkpoint-
-   resident q01/q99 buffers, clamp on input and output (their tail).
-   The per-dataset mean/std machinery is untouched for every other
+6. **Normalization is model-owned** for this kind: ONE checkpoint-
+   recorded q01/q99 table, clamp on input and output (their tail).
+   The table lives on the FAMILY as its `action_quantiles`
+   (`fast.molmoact2.QuantileStats`, built by
+   `models.molmoact2_flow.molmoact2_action_quantiles`) — the decoder
+   itself is a pure normalized-space program; loss paths normalize
+   targets and predict paths denormalize through the one family
+   object, which also feeds the joint rider's detokenization. The
+   per-dataset mean/std machinery is untouched for every other
    decoder; fine-tunes recompute ONE merged table (their semantics,
    rig-ft precedent). Accepted: loss values are not comparable across
    decoder kinds; eval MAE (raw units) is.

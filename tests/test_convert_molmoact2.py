@@ -37,7 +37,7 @@ from safetensors.torch import save_file
 from bijou.checkpoint import read_metadata, validate_checkpoint
 from bijou.convert_molmoact2 import convert
 from bijou.data import DatasetStats
-from bijou.fast.molmoact2 import QuantileStats, normalize_state, unnormalize_action
+from bijou.fast.molmoact2 import QuantileStats
 from bijou.loading import (
     CheckpointTrainArgs,
     MolmoAct2PromptConfig,
@@ -448,7 +448,8 @@ def test_from_checkpoint_assembles_molmo_flow(
     per-part files, no hub access): decoder built + configured off
     the recorded sections, expert weights byte-equal the source, compat
     tensors injected, encoder carries the prompt facts, q01/q99 table
-    on the decoder buffers."""
+    on the FAMILY'S quantile table (the decoder is normalized-space
+    pure and carries no table)."""
     from bijou.modelling.decoders.molmo_flow import MolmoFlowDecoder
     from bijou.modelling.encoders.molmoact2 import MolmoAct2Encoder
 
@@ -465,12 +466,12 @@ def test_from_checkpoint_assembles_molmo_flow(
     assert runtime.num_flow_steps == 10
     assert runtime.time_law.beta_beta == 1.5
     assert torch.equal(
-        decoder.action_q01[:_ACTION_DIM].cpu(),
+        model.action_quantiles.q01,
         torch.full((_ACTION_DIM,), -3.0),
     )
     assert torch.equal(
-        decoder.action_q99[_ACTION_DIM:].cpu(),
-        torch.ones(_MAX_ACTION_DIM - _ACTION_DIM),  # inert unit box on pads
+        model.action_quantiles.q99,
+        torch.full((_ACTION_DIM,), 3.0),
     )
     source = {
         key.removeprefix("model.action_expert."): value
@@ -668,10 +669,10 @@ def test_remap_stats_v21_to_v30(source_dir: Path, tmp_path: Path) -> None:
     validate_checkpoint(out)
     # the model between the two normalization boundaries is identical
     # bytes, so torch-path equivalence at both boundaries IS the
-    # end-to-end decode-equivalence claim: normalize_state(x_v3, mapped)
-    # == normalize_state(A(x_v3), original) on the way in, and
-    # unnormalize_action(v, mapped) == A⁻¹(unnormalize_action(v,
-    # original)) on the way out.
+    # end-to-end decode-equivalence claim: mapped.normalize(x_v3)
+    # == original.normalize(A(x_v3)) on the way in, and
+    # mapped.denormalize(v) == A⁻¹(original.denormalize(v)) on the
+    # way out.
     mapped_q = _quantile_stats_pair(stats)
     orig_q = _quantile_stats_pair(original)
     torch.manual_seed(0)
@@ -680,14 +681,14 @@ def test_remap_stats_v21_to_v30(source_dir: Path, tmp_path: Path) -> None:
     offsets = torch.tensor(frame.offsets)
     x_v21 = x_v3 * signs + offsets
     torch.testing.assert_close(
-        normalize_state(x_v3, mapped_q),
-        normalize_state(x_v21, orig_q),
+        mapped_q.normalize(x_v3),
+        orig_q.normalize(x_v21),
         atol=1e-5,
         rtol=1e-5,
     )
     v = torch.rand(64, 6) * 2.0 - 1.0
-    raw_mapped = unnormalize_action(v, mapped_q)
-    raw_orig = unnormalize_action(v, orig_q)
+    raw_mapped = mapped_q.denormalize(v)
+    raw_orig = orig_q.denormalize(v)
     torch.testing.assert_close(
         raw_mapped,
         (raw_orig - offsets) * signs,

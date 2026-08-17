@@ -6,7 +6,10 @@ Assembly: the full Molmo2 trunk speaking the MolmoAct2 prompt format
 and a
 :class:`~bijou.modelling.decoders.ar_molmoact2.MolmoAct2ARDecoder`,
 which owns ZERO parameters (trunk-native rows) — the trainable surface
-is the trunk itself.
+is the trunk itself. The family owns the merged q01/q99 table
+(``action_quantiles``, a :class:`~bijou.fast.molmoact2.QuantileStats`):
+the block decode detokenizes under the model's own rows, never
+per-item batch stats.
 
 Objective: :class:`~bijou.models.objectives.ARObjective`; the format-6
 emission has no aux fields, so ``narration_weight`` is inert and the
@@ -21,6 +24,7 @@ import torch
 from torch import Tensor, nn
 
 from ..checkpoint import VLAMetadata, read_metadata
+from ..fast.molmoact2 import QuantileStats
 from ..modelling.decoders.ar_molmoact2 import MolmoAct2ARDecoder
 from ..modelling.decoders.ar_suffix import MOLMOACT2_SUFFIX_FORMAT
 from ..modelling.encoders.molmo2 import Molmo2Memory
@@ -49,7 +53,11 @@ from .ar_suffix_ops import (
     ar_loss_counts,
     ar_suffix_report,
 )
-from .molmoact2_flow import load_molmoact2_backbone, molmoact2_prompt_of
+from .molmoact2_flow import (
+    load_molmoact2_backbone,
+    molmoact2_action_quantiles,
+    molmoact2_prompt_of,
+)
 from .objectives import ARObjective, parse_ar_objective
 from .serving import ARServing
 
@@ -118,6 +126,7 @@ class MolmoAct2ARVLA(ARVLA[MolmoAct2Inputs]):
         encoder: MolmoAct2Encoder,
         ar_decoder: MolmoAct2ARDecoder,
         *,
+        action_quantiles: QuantileStats,
         objective: ARObjective,
         serving: ARServing,
     ) -> None:
@@ -125,6 +134,7 @@ class MolmoAct2ARVLA(ARVLA[MolmoAct2Inputs]):
         self.backbone = backbone
         self.encoder = encoder
         self.ar_decoder = ar_decoder
+        self.action_quantiles = action_quantiles
         self.objective = objective
         self.serving = serving
 
@@ -203,6 +213,10 @@ class MolmoAct2ARVLA(ARVLA[MolmoAct2Inputs]):
             self.ar_decoder,
             self._encode(batch, with_grad=False),
             batch,
+            # The merged-table policy: every row detokenizes under the
+            # model's OWN table — per-item batch quantiles are another
+            # rig's ranges and are never consulted.
+            quantiles=self.action_quantiles.rows(batch.state.shape[0]),
             sampling=sampling,
             capture=capture,
         )
@@ -282,6 +296,7 @@ class MolmoAct2ARVLA(ARVLA[MolmoAct2Inputs]):
             backbone,
             encoder,
             decoder,
+            action_quantiles=molmoact2_action_quantiles(metadata),
             objective=parse_ar_objective(metadata.objective),
             serving=ARServing.from_dict(metadata.serving),
         )

@@ -92,12 +92,15 @@ range that overlaps none of these = ask, don't guess.
 
 ## 5. The MolmoAct2 released checkpoint, concretely
 
-Normalization on the molmoact2 families is DECODER-OWNED: one global
-q01/q99 clamp table from checkpoint `metadata.stats`, applied to state
-and action targets alike (`bijou/fast/molmoact2.py`). There is no
-per-dataset collate normalization on this path (that is the
-gemma4-family design), so the checkpoint's table is the single site
-where conventions meet — and the single site to fix.
+Normalization on the molmoact2 families is MODEL-OWNED: one global
+q01/q99 clamp table from checkpoint `metadata.stats`, held by the
+family as its `action_quantiles` (a `QuantileStats`,
+`bijou/fast/molmoact2.py`) and applied to action targets, sampled
+chunks and the discrete decode alike (state binning reads the same
+row's state table at collation). There is no per-dataset collate
+normalization on this path (that is the gemma4-family design), so the
+checkpoint's table is the single site where conventions meet — and
+the single site to fix.
 
 The released table is v2.1 degrees. Consumed directly against v3.0
 data: `elbow_flex` and `shoulder_lift` frames clamp to the table edge

@@ -579,42 +579,22 @@ def build_vla_metadata(
         )
 
     normalization = aggregate_stats(normalizers)
-    if isinstance(model, MolmoAct2FlowVLA | MolmoAct2JointVLA):
+    if isinstance(model, MolmoAct2FlowVLA | MolmoAct2ARVLA | MolmoAct2JointVLA):
         # The load-bearing tables (the merged scheme) ride the
         # normalization row: the run aggregate honestly carries no
-        # quantiles (aggregate_stats), but molmo_flow NORMALIZED with the
-        # source checkpoint's merged tables — the written row must carry
-        # the tables in use or the descendant checkpoint loses its clamp.
-        flow_decoder = model.flow_decoder
-        runtime = flow_decoder.runtime
-        assert runtime is not None  # configure() ran at build
+        # quantiles (aggregate_stats), but every molmoact2 head
+        # normalized/tokenized against the family's quantile table —
+        # the written row must carry the tables in use or the
+        # descendant checkpoint loses its clamp. ONE read for all three
+        # families: the model's own table (and the encoder's state
+        # table).
         encoder = model.encoder
         assert isinstance(encoder, MolmoAct2Encoder)
         assert encoder.state_table is not None
         normalization = dataclasses.replace(
             normalization,
-            action_q01=tuple(
-                flow_decoder.action_q01[: runtime.action_dim].tolist(),
-            ),
-            action_q99=tuple(
-                flow_decoder.action_q99[: runtime.action_dim].tolist(),
-            ),
-            state_q01=encoder.state_table[0],
-            state_q99=encoder.state_table[1],
-        )
-    elif isinstance(model, MolmoAct2ARVLA):
-        # The ar family has no flow decoder to read tables off — the
-        # collator tokenized under the encoder-stashed merged tables;
-        # the written row carries THE tables in use (same invariant as
-        # the flow branch, different source of truth).
-        encoder = model.encoder
-        assert isinstance(encoder, MolmoAct2Encoder)
-        assert encoder.state_table is not None
-        assert encoder.action_table is not None
-        normalization = dataclasses.replace(
-            normalization,
-            action_q01=encoder.action_table[0],
-            action_q99=encoder.action_table[1],
+            action_q01=tuple(model.action_quantiles.q01.tolist()),
+            action_q99=tuple(model.action_quantiles.q99.tolist()),
             state_q01=encoder.state_table[0],
             state_q99=encoder.state_table[1],
         )

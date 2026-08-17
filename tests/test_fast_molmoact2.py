@@ -29,7 +29,6 @@ import torch
 from bijou.fast.molmoact2 import (
     MolmoAct2FastTokenizer,
     QuantileStats,
-    unnormalize_action,
 )
 from bijou.modelling.codecs import ActionCodec, FastActionCodec, MolmoAct2ActionCodec
 
@@ -176,7 +175,7 @@ def test_adapter_encode_prepends_boa_and_matches_reference_bins() -> None:
         q99=torch.tensor(Q99, dtype=torch.float32),
     )
     for chunk, reference in zip(chunks, bins, strict=True):
-        raw = unnormalize_action(torch.from_numpy(chunk), stats).double().numpy()
+        raw = stats.denormalize(torch.from_numpy(chunk)).double().numpy()
         renormalized = (
             2.0 * (torch.from_numpy(raw).float() - stats.q01) / (stats.q99 - stats.q01)
         ) - 1.0
@@ -204,11 +203,10 @@ def test_adapter_decode_is_the_reference_tail_bitwise() -> None:
     )
     for stream in bins:
         expected = (
-            unnormalize_action(
+            stats.denormalize(
                 torch.from_numpy(
                     raw_tokenizer.decode(stream, time_horizon=T, action_dim=D),
                 ).to(torch.float32),
-                stats,
             )
             .double()
             .numpy()
@@ -234,7 +232,7 @@ def test_adapter_encode_refuses_quantization_hole_chunks() -> None:
         q01=torch.tensor(Q01, dtype=torch.float32),
         q99=torch.tensor(Q99, dtype=torch.float32),
     )
-    raw = unnormalize_action(torch.from_numpy(normalized), stats).double().numpy()
+    raw = stats.denormalize(torch.from_numpy(normalized)).double().numpy()
     with pytest.raises(ValueError, match="quantization hole"):
         loaded.encode(raw, Q01, Q99)
 
@@ -244,3 +242,53 @@ def test_adapter_geometry_guards() -> None:
         MolmoAct2ActionCodec(codec(), time_horizon=0, action_dim=D)
     with pytest.raises(ValueError, match=r"encode expects \[30, 6\]"):
         adapter().encode(np.zeros((T, D + 1)), Q01, Q99)
+
+
+def test_quantile_stats_descending_pair_carries_the_sign_flip() -> None:
+    """A remapped sign-flipped joint stores q01 > q99; normalize maps
+    q01 → −1 and q99 → +1 regardless of order, so the flip survives the
+    normalized space and denormalize restores raw orientation."""
+    table = QuantileStats(
+        q01=torch.tensor([44.8]),
+        q99=torch.tensor([-96.1]),
+    )
+    assert torch.allclose(table.normalize(torch.tensor([44.8])), torch.tensor([-1.0]))
+    assert torch.allclose(table.normalize(torch.tensor([-96.1])), torch.tensor([1.0]))
+    assert torch.allclose(
+        table.denormalize(torch.tensor([-1.0, 1.0]).reshape(2, 1)),
+        torch.tensor([[44.8], [-96.1]]),
+    )
+
+
+def test_quantile_stats_zero_width_row_is_eps_guarded() -> None:
+    table = QuantileStats(
+        q01=torch.tensor([1.0, -1.0]),
+        q99=torch.tensor([1.0, 1.0]),
+    )
+    norm = table.normalize(torch.tensor([[1.0, 0.0]]))
+    assert bool(torch.isfinite(norm).all())
+    assert bool(torch.isfinite(table.denormalize(norm)).all())
+
+
+def test_quantile_stats_guards_are_loud() -> None:
+    table = QuantileStats(q01=torch.zeros(6), q99=torch.ones(6))
+    with pytest.raises(ValueError, match="width 4"):
+        table.normalize(torch.zeros(2, 4))
+    with pytest.raises(ValueError, match="width 4"):
+        table.denormalize(torch.zeros(2, 4))
+    with pytest.raises(ValueError, match="matching 1-D"):
+        QuantileStats(q01=torch.zeros(6), q99=torch.ones(7))
+
+
+def test_quantile_stats_rows_expand_per_row() -> None:
+    """The per-row form the discrete decode consumes: every row is the
+    ONE table."""
+    table = QuantileStats(
+        q01=torch.tensor([-1.0, -2.0]),
+        q99=torch.tensor([1.0, 2.0]),
+    )
+    q01, q99 = table.rows(3)
+    assert q01.shape == (3, 2) and q99.shape == (3, 2)
+    for row in range(3):
+        assert torch.equal(q01[row], table.q01)
+        assert torch.equal(q99[row], table.q99)

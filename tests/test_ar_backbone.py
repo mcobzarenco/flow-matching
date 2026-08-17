@@ -40,6 +40,7 @@ from bijou.modelling.gemma4.config import Gemma4Config
 from bijou.modelling.gemma4.model import Gemma4Model
 from bijou.modelling.interface import CollatedBatch, NormStats
 from bijou.modelling.nn import AttentionBackend
+from bijou.models.ar_suffix_ops import batch_action_quantiles
 
 FIXTURE = Path(__file__).parent / "fixtures" / "tiny_fast_tokenizer"
 BATCH = 2
@@ -264,6 +265,7 @@ def test_predict_chunk_fast_path_always_valid() -> None:
         backbone,
         encode_memory(backbone),
         sample,
+        quantiles=batch_action_quantiles(sample),
     )
     assert actions.shape == (BATCH, loaded.time_horizon, loaded.action_dim)
     assert bool(torch.isfinite(actions).all())
@@ -272,11 +274,13 @@ def test_predict_chunk_fast_path_always_valid() -> None:
 
 def test_generate_on_auxless_checkpoint_is_rejected() -> None:
     backbone, decoder, loaded = build()
+    sample = batch(loaded)
     with pytest.raises(ValueError, match="trained aux fields"):
         decoder.predict_chunk(
             backbone,
             encode_memory(backbone),
-            batch(loaded),
+            sample,
+            quantiles=batch_action_quantiles(sample),
             generate=(AuxField.HOLDING,),
         )
 

@@ -200,7 +200,7 @@ def write_tiny_molmoact2_release(root: Path) -> tuple[Path, Path]:
         state_q99=TINY_MOLMOACT2_Q99,
     )
     torch.manual_seed(1)
-    expert = build_molmo_flow_decoder(section, stats, device="cpu", dtype=torch.float32)
+    expert = build_molmo_flow_decoder(section, device="cpu", dtype=torch.float32)
     # Converted-export shape: the construction-frozen compat tensors
     # are OMITTED (their loader convention; load_expert_state injects).
     frozen = {

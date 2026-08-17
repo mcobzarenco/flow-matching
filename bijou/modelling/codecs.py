@@ -39,8 +39,6 @@ import torch
 from ..fast.molmoact2 import (
     MolmoAct2FastTokenizer,
     QuantileStats,
-    normalize_state,
-    unnormalize_action,
 )
 from ..fast.tokenizer import (
     AnyFloatArray,
@@ -240,8 +238,8 @@ class MolmoAct2ActionCodec:
     DCT decode to fp32 BEFORE the [-1, 1] clamp + q01/q99 inversion;
     fp32 → fp64 → fp32 is lossless). Encode applies the same
     clamp-normalize map action targets train under
-    (:func:`~bijou.fast.molmoact2.normalize_state`) before the DCT,
-    then guards the symbol
+    (:meth:`~bijou.fast.molmoact2.QuantileStats.normalize`) before the
+    DCT, then guards the symbol
     budget: a chunk whose coefficients hit one of the 7 released-BPE
     quantization holes cannot round-trip and is REFUSED by default (a
     silently short CE target is the exact failure class the loud path
@@ -310,10 +308,7 @@ class MolmoAct2ActionCodec:
                 f"encode expects [{self.time_horizon}, {self.action_dim}] "
                 f"raw chunks, got {array.shape}",
             )
-        normalized = normalize_state(
-            torch.from_numpy(array),
-            _quantile_stats(q01, q99),
-        )
+        normalized = _quantile_stats(q01, q99).normalize(torch.from_numpy(array))
         bins = self.tokenizer.encode(normalized.double().numpy())
         budget = self.time_horizon * self.action_dim
         expanded = int(self.symbol_lengths[bins].sum()) if bins else 0
@@ -359,8 +354,7 @@ class MolmoAct2ActionCodec:
             time_horizon=self.time_horizon,
             action_dim=self.action_dim,
         )
-        raw = unnormalize_action(
+        raw = _quantile_stats(q01, q99).denormalize(
             torch.from_numpy(normalized).to(torch.float32),
-            _quantile_stats(q01, q99),
         )
         return raw.double().numpy()

@@ -38,6 +38,7 @@ from test_selfsubgoal import _parse as parse_cli
 
 from bijou.eval.policies import BijouPolicy, MaskedContrastSubgoalPolicy
 from bijou.modelling.interface import ActionCaptureStep, ARSampling
+from bijou.models.ar_suffix_ops import batch_action_quantiles
 from bijou.vla import ARPrediction
 
 # ------------------------------------------------- scripted harness
@@ -312,10 +313,12 @@ def test_capture_matches_teacher_forced_reforward() -> None:
     memory = encode_memory(backbone)
     snapshot = decoder.cache_snapshot(memory)
     capture: list[ActionCaptureStep] = []
+    sample = tiny_batch(loaded)
     decoder.predict_chunk(
         backbone,
         memory,
-        tiny_batch(loaded),
+        sample,
+        quantiles=batch_action_quantiles(sample),
         action_capture=capture,
     )
     assert capture, "action phase must capture at least one step"
@@ -351,10 +354,12 @@ def test_teacher_forced_filler_and_empty_rows() -> None:
     memory = encode_memory(backbone)
     snapshot = decoder.cache_snapshot(memory)
     capture: list[ActionCaptureStep] = []
+    sample = tiny_batch(loaded)
     decoder.predict_chunk(
         backbone,
         memory,
-        tiny_batch(loaded),
+        sample,
+        quantiles=batch_action_quantiles(sample),
         action_capture=capture,
     )
     base = decoder.config.block_base
@@ -379,13 +384,16 @@ def test_capture_off_leaves_decode_untouched() -> None:
     backbone, decoder, loaded = build()
     memory = encode_memory(backbone)
     snapshot = decoder.cache_snapshot(memory)
-    plain, _ = decoder.predict_chunk(backbone, memory, tiny_batch(loaded))
+    sample = tiny_batch(loaded)
+    quantiles = batch_action_quantiles(sample)
+    plain, _ = decoder.predict_chunk(backbone, memory, sample, quantiles=quantiles)
     decoder.cache_restore(memory, snapshot)
     capture: list[ActionCaptureStep] = []
     captured, _ = decoder.predict_chunk(
         backbone,
         memory,
-        tiny_batch(loaded),
+        sample,
+        quantiles=quantiles,
         action_capture=capture,
     )
     assert torch.equal(plain, captured)

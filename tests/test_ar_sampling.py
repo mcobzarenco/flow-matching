@@ -28,6 +28,7 @@ from bijou.eval.cli import parse_args
 from bijou.eval.policies import stable_noise, stable_sample_rng
 from bijou.modelling.decoders.ar_suffix import _sample_action_ids
 from bijou.modelling.interface import ARSampling
+from bijou.models.ar_suffix_ops import batch_action_quantiles
 
 
 def rngs(draw: int, *, seed: int = 0) -> tuple[np.random.Generator, ...]:
@@ -43,11 +44,18 @@ def test_low_temperature_limit_recovers_greedy() -> None:
     greedy decode, proving both share one decision point."""
     backbone, decoder, loaded = build()
     sample = batch(loaded)
-    greedy, _ = decoder.predict_chunk(backbone, encode_memory(backbone), sample)
+    quantiles = batch_action_quantiles(sample)
+    greedy, _ = decoder.predict_chunk(
+        backbone,
+        encode_memory(backbone),
+        sample,
+        quantiles=quantiles,
+    )
     cold, _ = decoder.predict_chunk(
         backbone,
         encode_memory(backbone),
         sample,
+        quantiles=quantiles,
         sampling=ARSampling(temperature=1e-4, rngs=rngs(0)),
     )
     assert torch.equal(cold, greedy)
@@ -63,6 +71,7 @@ def test_sampled_decode_valid_deterministic_and_draw_distinct() -> None:
         backbone,
         encode_memory(backbone),
         sample,
+        quantiles=batch_action_quantiles(sample),
         sampling=ARSampling(temperature=2.0, rngs=rngs(draw)),
     )[0]
     first, again, other = hot(0), hot(0), hot(1)
@@ -106,10 +115,16 @@ def test_cache_snapshot_restore_shares_one_prefill_exactly() -> None:
     sample = batch(loaded)
     memory = encode_memory(backbone)
     snapshot = decoder.cache_snapshot(memory)
-    first, _ = decoder.predict_chunk(backbone, memory, sample)
+    quantiles = batch_action_quantiles(sample)
+    first, _ = decoder.predict_chunk(backbone, memory, sample, quantiles=quantiles)
     decoder.cache_restore(memory, snapshot)
-    second, _ = decoder.predict_chunk(backbone, memory, sample)
-    fresh, _ = decoder.predict_chunk(backbone, encode_memory(backbone), sample)
+    second, _ = decoder.predict_chunk(backbone, memory, sample, quantiles=quantiles)
+    fresh, _ = decoder.predict_chunk(
+        backbone,
+        encode_memory(backbone),
+        sample,
+        quantiles=quantiles,
+    )
     assert torch.equal(first, second)
     assert torch.equal(first, fresh)
 
@@ -149,6 +164,7 @@ def test_sampling_guards_are_loud() -> None:
             backbone,
             encode_memory(backbone),
             sample,
+            quantiles=batch_action_quantiles(sample),
             sampling=ARSampling(temperature=1.0, rngs=rngs(0)[:1]),
         )
 

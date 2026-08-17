@@ -61,7 +61,7 @@ from test_train_args import _checkpoint, _parse
 
 from bijou.convert_legacy import CheckpointMetadata, convert
 from bijou.data import DatasetStats
-from bijou.fast.molmoact2 import MolmoAct2FastTokenizer
+from bijou.fast.molmoact2 import MolmoAct2FastTokenizer, QuantileStats
 from bijou.loading import (
     BackboneConfig,
     BackboneDepth,
@@ -148,7 +148,6 @@ def stats_row() -> DatasetStats:
 def build_flow_decoder() -> MolmoFlowDecoder:
     decoder = build_molmo_flow_decoder(
         tiny_flow_section(),
-        stats_row(),
         device="cpu",
         dtype=torch.float32,
     )
@@ -160,6 +159,13 @@ def build_flow_decoder() -> MolmoFlowDecoder:
         for parameter in decoder.parameters():
             parameter.add_(torch.randn(parameter.shape, generator=generator) * 0.02)
     return decoder
+
+
+def action_quantiles() -> QuantileStats:
+    return QuantileStats(
+        q01=torch.as_tensor(Q01, dtype=torch.float32),
+        q99=torch.as_tensor(Q99, dtype=torch.float32),
+    )
 
 
 def joint_model(
@@ -181,6 +187,7 @@ def joint_model(
         ),
         build_flow_decoder(),
         build_decoder(tiny_checkpoint),
+        action_quantiles=action_quantiles(),
         objective=JointObjective(
             ce_weight=joint_ce_weight,
             insulate_flow=insulate,
@@ -226,7 +233,9 @@ def joint_terms_on(
     flow_sum, flow_count = molmo_flow_loss_sums(
         model.flow_decoder,
         memory,
-        sample,  # type: ignore[arg-type]  # CollatedBatch[FakeInputs] — kernel-generic
+        actions_norm=model.action_quantiles.normalize(
+            sample.actions,  # type: ignore[attr-defined]  # CollatedBatch[FakeInputs]
+        ),
         insulate=model.objective.insulate_flow,
     )
     ce_sum, ce_count, ce_aux_sum, _ = ar_backbone_loss_sums(
@@ -260,7 +269,7 @@ def test_decision5_ordering_and_lambda_composition(
         flow_only = molmo_flow_loss(
             model.flow_decoder,
             encode_memory_with_grad(trunk),
-            sample,
+            actions_norm=model.action_quantiles.normalize(sample.actions),
         )
         memory = encode_memory_with_grad(trunk)
         cache = memory.cache
@@ -330,7 +339,7 @@ def test_ki_under_joint_reaches_disjoint_parameter_sets(
     flow = molmo_flow_loss(
         flow_decoder,
         encode_memory_with_grad(trunk),
-        sample,
+        actions_norm=action_quantiles().normalize(sample.actions),
         insulate=True,
     )
     flow.backward()
@@ -382,7 +391,7 @@ def test_uninsulated_flow_reaches_the_trunk(
     flow = molmo_flow_loss(
         flow_decoder,
         encode_memory_with_grad(trunk),
-        sample,
+        actions_norm=action_quantiles().normalize(sample.actions),
         insulate=False,
     )
     flow.backward()
@@ -469,9 +478,11 @@ def test_fresh_flow_section_synthesizer() -> None:
 
 
 def test_collator_merged_action_table_override() -> None:
-    """Tokenization and the batch stats quantile rows both read the ONE
-    merged table; per-item quantiles are deliberately unused (items
-    without them tokenize fine under the override)."""
+    """CE tokenization reads the ONE merged table; per-item quantiles
+    are deliberately unused (items without them tokenize fine under the
+    override) — and the batch stats stay HONEST per-item rows: the
+    table never reaches them (decode-side tables are the family's
+    quantile table, never batch state)."""
     codec = MolmoAct2ActionCodec(
         MolmoAct2FastTokenizer.load(FAST_FIXTURE),
         time_horizon=T,
@@ -513,9 +524,11 @@ def test_collator_merged_action_table_override() -> None:
         assert tokens[row, : len(sequence)].tolist() == sequence
         assert bool((tokens[row, len(sequence) :] == codec.pad).all())
     stats = collator._stats(items, "action")
-    assert stats.q01 is not None and stats.q99 is not None
-    assert torch.equal(stats.q01, table_q01.expand(BATCH, -1))
-    assert torch.equal(stats.q99, table_q99.expand(BATCH, -1))
+    # No per-item quantiles on the items ⇒ none on the batch: the merged
+    # table is tokenization-side only and never masquerades as stats.
+    assert stats.q01 is None and stats.q99 is None
+    assert torch.equal(stats.mean, torch.zeros(BATCH, D))
+    assert torch.equal(stats.std, torch.ones(BATCH, D))
 
 
 def molmoact2_source(**overrides: object):  # noqa: ANN201  # test_train_args' fabricator type

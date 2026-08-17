@@ -173,7 +173,7 @@ def _port_pack(sample: PromptInputs) -> Any:
     )
 
 
-# Maps normalize_state to the identity on already-normalized inputs:
+# Maps QuantileStats.normalize to the identity on already-normalized inputs:
 # q01=-1, q99=1 -> 2*(x+1)/2-1 = x.
 _IDENTITY_STATS = QuantileStats(
     q01=torch.full((6,), -1.0),

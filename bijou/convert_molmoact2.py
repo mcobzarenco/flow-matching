@@ -23,7 +23,7 @@ the remap story live in ``docs/so101-joint-conventions.md``.
   VERBATIM in the backbone section (parsed at load with
   ``Molmo2Config.from_dict``), and the tag's merged stats table
   verbatim (their mean/std/q01/q99 rows, unfloored — the q01/q99
-  fields ARE the decoder-owned clamp table, stored once).
+  fields ARE the family's quantile table, stored once).
 - ``backbone_text.safetensors`` + ``backbone_vision.safetensors``: the
   trunk IMPORTED wholesale (our key names, bytes/dtypes verbatim —
   ``modelling.molmo2.loading.import_backbone_state``, whose audit

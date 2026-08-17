@@ -63,8 +63,6 @@ from torch import Tensor
 from ...fast.molmoact2 import (
     QuantileStats,
     normalize_q01q99,
-    normalize_state,
-    unnormalize_action,
     unnormalize_q01q99,
 )
 from ..molmo2.processor import ImageCrops, _arange_for_pooling, _pixels_to_patches
@@ -94,7 +92,6 @@ __all__ = [
     "process_image_resize",
     "require_single_obs",
     "to_uint8_rgb",
-    "unnormalize_action",
     "unnormalize_q01q99",
     "validate_inference_config",
 ]
@@ -487,7 +484,7 @@ def pack_action_example(
     state = torch.as_tensor(state, dtype=torch.float32)
     if state.ndim != 1:
         raise ValueError(f"expected a single [D] state row, got {tuple(state.shape)}")
-    normalized_state = normalize_state(state, state_stats)
+    normalized_state = state_stats.normalize(state)
     prompt = build_robot_prompt(
         task=normalize_task_text(task) if normalize_language else task,
         discrete_state=discrete_state_string(

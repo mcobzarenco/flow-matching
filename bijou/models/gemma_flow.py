@@ -29,10 +29,15 @@ from ..modelling.decoders.flow import (
     flow_matching_loss_sums,
     snapflow_distill_loss_sums,
 )
-from ..modelling.encoders.gemma4 import GemmaEncoder, GemmaInputs
+from ..modelling.encoders.gemma4 import GemmaEncoder, GemmaInputs, GemmaMemory
 from ..modelling.gemma4.config import Gemma4Config
 from ..modelling.gemma4.model import Gemma4Model
-from ..modelling.interface import CollatedBatch, InputsCollator, SamplingMethod
+from ..modelling.interface import (
+    CollatedBatch,
+    InputsCollator,
+    NormStats,
+    SamplingMethod,
+)
 from ..sections import (
     FlowDecoderSection,
     GemmaPromptConfig,
@@ -44,6 +49,126 @@ from ..sections import (
 from ..vla import FlowPrediction, FlowVLA, Loss, LossReport, VLAFamily, VLASpec
 from .objectives import FlowObjective, SnapflowObjective
 from .serving import FlowServing
+
+
+def normalized_state(batch: CollatedBatch[Any]) -> Tensor:
+    """The gemma per-sample stats policy, state side: each sample
+    z-scores under its OWN dataset's mean/std.
+
+    Shapes:
+    - ``batch.state``/stats rows: [B, state_dim]
+    - returns: [B, state_dim] normalized units
+    """
+    return (batch.state - batch.state_stats.mean) / batch.state_stats.std
+
+
+def normalized_actions(batch: CollatedBatch[Any]) -> Tensor:
+    """The gemma per-sample stats policy, action-target side.
+
+    Shapes:
+    - ``batch.actions``: [B, chunk, action_dim] raw units
+    - returns: [B, chunk, action_dim] normalized units
+    """
+    return (
+        batch.actions - batch.action_stats.mean[:, None, :]
+    ) / batch.action_stats.std[:, None, :]
+
+
+def raw_chunks(sampled: Tensor, stats: NormStats) -> Tensor:
+    """Sampled normalized chunks back to raw units under per-sample
+    stats (the affine inverse of :func:`normalized_actions`; the mean
+    over draws commutes with it).
+
+    Shapes:
+    - ``sampled``: [B, chunk, action_dim] normalized units
+    - stats rows: [B, action_dim]
+    - returns: [B, chunk, action_dim] float32 raw units
+    """
+    return sampled.float() * stats.std[:, None, :] + stats.mean[:, None, :]
+
+
+@torch.no_grad()
+def decode_chunk(
+    decoder: FlowDecoder,
+    memory: GemmaMemory,
+    batch: CollatedBatch[Any],
+    *,
+    generator: torch.Generator | None = None,
+    noise: Tensor | None = None,
+    num_steps: int = 5,
+    method: SamplingMethod = SamplingMethod.HEUN,
+    target_time: float | None = None,
+    sde_noise_level: float | None = None,
+    sde_step_noise: Tensor | None = None,
+) -> tuple[Tensor, Tensor]:
+    """RAW-unit chunk decode — the family-owned boundary around the pure
+    decoder: normalize the batch's state with its per-sample stats,
+    integrate the field, and denormalize with the action stats.
+    ``num_steps``/``method``/``target_time`` are flow-specific solver
+    knobs.
+
+    Returns ``(actions, noise)``. ``noise`` is ALWAYS the initial draw
+    the solver actually integrated (supplied or drawn) — paired
+    re-decodes must reuse it, or sampling variance floors any
+    conditioning-sensitivity signal.
+
+    ``sde_noise_level`` routes the decode through
+    :meth:`FlowDecoder.sample_actions_sde` (Euler-only, no φ_s) with the
+    same normalization seam — ``method`` must be EULER and
+    ``target_time`` None so an SDE read can never silently wear ODE
+    solver knobs.
+
+    Shapes:
+      - returns actions: [B, chunk, action_dim] — RAW action units
+      - returns noise: [B, chunk, action_dim] — normalized units
+    """
+    state = normalized_state(batch)
+    if noise is None:
+        # The identical draw sample_actions would make (same shape/
+        # dtype/device/generator ⇒ bit-exact result and generator
+        # consumption) — made here so the return can carry it.
+        noise = torch.randn(
+            state.shape[0],
+            decoder.config.chunk_size,
+            decoder.config.action_dim,
+            dtype=state.dtype,
+            device=state.device,
+            generator=generator,
+        )
+    if sde_noise_level is not None:
+        if method is not SamplingMethod.EULER:
+            raise ValueError(
+                "the SDE decode is Euler-only (a Heun corrector breaks "
+                f"the Gaussian transition), got method={method.name}",
+            )
+        if target_time is not None:
+            raise ValueError(
+                "sample_actions_sde offers no φ_s shortcut conditioning "
+                f"— target_time must be None, got {target_time}",
+            )
+        sampled = decoder.sample_actions_sde(
+            memory,
+            state,
+            noise_level=sde_noise_level,
+            num_steps=num_steps,
+            noise=noise,
+            step_noise=sde_step_noise,
+            generator=generator,
+        )
+        assert isinstance(sampled, Tensor)  # return_logprob not requested
+    elif sde_step_noise is not None:
+        raise ValueError("sde_step_noise without sde_noise_level")
+    else:
+        sampled = decoder.sample_actions(
+            memory,
+            state,
+            num_steps=num_steps,
+            method=method,
+            noise=noise,
+            generator=generator,
+            target_time=target_time,
+        )
+    return raw_chunks(sampled, batch.action_stats), noise
 
 
 def parse_gemma_flow_objective(
@@ -144,16 +269,24 @@ class GemmaFlowVLA(FlowVLA[GemmaInputs]):
                 with_grad=live,
                 retain_cache=False,
             )
+        state_norm = normalized_state(batch)
+        actions_norm = normalized_actions(batch)
         if isinstance(self.objective, SnapflowObjective):
             loss_sum, count = snapflow_distill_loss_sums(
                 self.flow_decoder,
                 memory,
-                batch,
+                state_norm=state_norm,
+                actions_norm=actions_norm,
                 alpha=self.objective.alpha,
                 shortcut_weight=self.objective.shortcut_weight,
             )
         else:
-            loss_sum, count = flow_matching_loss_sums(self.flow_decoder, memory, batch)
+            loss_sum, count = flow_matching_loss_sums(
+                self.flow_decoder,
+                memory,
+                state_norm=state_norm,
+                actions_norm=actions_norm,
+            )
         world = dist.get_world_size() if dist.is_initialized() else 1
         # Per-rank scalar whose DDP MEAN is the global objective:
         # sum_r · W / global_count.
@@ -195,7 +328,8 @@ class GemmaFlowVLA(FlowVLA[GemmaInputs]):
             with_grad=False,
             retain_cache=False,
         )
-        actions, drawn = self.flow_decoder.predict_chunk(
+        actions, drawn = decode_chunk(
+            self.flow_decoder,
             memory,
             batch,
             generator=generator,
@@ -236,7 +370,8 @@ class GemmaFlowVLA(FlowVLA[GemmaInputs]):
             with_grad=False,
             retain_cache=False,
         )
-        actions, drawn = self.flow_decoder.predict_chunk(
+        actions, drawn = decode_chunk(
+            self.flow_decoder,
             memory,
             batch,
             generator=generator,

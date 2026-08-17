@@ -46,12 +46,10 @@ from bijou.modelling.encoders.molmoact2_processing import (
     infer_max_sequence_length,
     load_norm_stats,
     normalize_q01q99,
-    normalize_state,
     normalize_task_text,
     pack_action_example,
     process_image_resize,
     to_uint8_rgb,
-    unnormalize_action,
     unnormalize_q01q99,
 )
 from bijou.modelling.molmo2.tokenizer import Molmo2TextTokenizer
@@ -157,7 +155,7 @@ def test_unnormalize_action_matches_their_pipeline(
     name, _scale = case
     ref = np.load(goldens.FIXTURE_DIR / f"action_{name}.npz")
     action_stats, _, _ = stats_and_meta
-    out = unnormalize_action(torch.from_numpy(ref["action_norm"].copy()), action_stats)
+    out = action_stats.denormalize(torch.from_numpy(ref["action_norm"].copy()))
     np.testing.assert_array_equal(out.numpy(), ref["action_out"])
 
 
@@ -329,15 +327,12 @@ def test_quantile_normalize_roundtrip_and_eps() -> None:
         QuantileStats(q01=stats.q01[:2], q99=stats.q99[:2]),
     )
     np.testing.assert_allclose(back.numpy(), raw[:, :2].numpy(), atol=1e-6)
-    # normalize_state clamps; unnormalize_action clamps FIRST.
-    assert normalize_state(torch.tensor([100.0, 100.0, 3.0]), stats).max() == 1.0
-    clamped = unnormalize_action(
-        torch.tensor([5.0, -5.0]),
-        QuantileStats(
-            q01=stats.q01[:2],
-            q99=stats.q99[:2],
-        ),
-    )
+    # normalize clamps; denormalize clamps FIRST.
+    assert stats.normalize(torch.tensor([100.0, 100.0, 3.0])).max() == 1.0
+    clamped = QuantileStats(
+        q01=stats.q01[:2],
+        q99=stats.q99[:2],
+    ).denormalize(torch.tensor([5.0, -5.0]))
     np.testing.assert_allclose(
         clamped.numpy(),
         [stats.q99[0].item(), stats.q01[1].item()],

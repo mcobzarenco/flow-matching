@@ -27,7 +27,6 @@ from huggingface_hub import snapshot_download
 from safetensors.torch import load_file
 from torch import nn
 
-from .data import DatasetStats
 from .fast.molmoact2 import MolmoAct2FastTokenizer
 from .modelling.aux_text import AuxDecodeConfig, build_aux_runtime
 from .modelling.codecs import FastActionCodec, MolmoAct2ActionCodec
@@ -359,7 +358,7 @@ class MolmoFlowDecoderConfig:
     geometry of the tag (``action_dim`` of ``max_action_dim`` padded
     dims, ``action_horizon`` of ``max_horizon``).
 
-    ``normalization`` is the decoder-owned scheme tag:
+    ``normalization`` is the scheme tag:
     ``"q01q99"`` = clamp-normalized targets against the checkpoint's
     ``normalization`` DatasetStats table (whose q01/q99 fields ARE the
     tag's merged table — stored once, not duplicated here);
@@ -1067,35 +1066,23 @@ def build_molmo2_ar_decoder(
 
 def build_molmo_flow_decoder(
     section: MolmoFlowDecoderConfig,
-    normalization: DatasetStats,
     *,
     device: DeviceLike = None,
     dtype: torch.dtype | None = None,
 ) -> MolmoFlowDecoder:
     """The section → module bridge: build the expert from the recorded
-    geometry, configure it with the tag's action geometry, recorded
-    t-law and the q01/q99 clamp table (the checkpoint normalization
-    row's quantile fields — stored once, §8.13), and stash
-    the write-side schema dict (decoders cannot import this module).
-    Weights are NOT loaded here — the caller owns that (converted
+    geometry, configure it with the tag's action geometry + recorded
+    t-law, and stash the write-side schema dict (decoders cannot import
+    this module). The q01/q99 table is NOT the decoder's — the family
+    owns it as its quantile table built from the same normalization
+    row. Weights are NOT loaded here — the caller owns that (converted
     checkpoints inject compat tensors; fresh sections would init)."""
     if section.normalization not in ("q01q99", "q01q99_per_dataset"):
         raise SystemExit(
             f"flow_decoder section records normalization scheme "
             f"{section.normalization!r} — this build knows 'q01q99' "
-            "(decoder-baked merged table) and 'q01q99_per_dataset' "
+            "(family merged table) and 'q01q99_per_dataset' "
             "(per-item dataset rows); newer checkpoint than code?",
-        )
-    if normalization.action_q01 is None or normalization.action_q99 is None:
-        raise SystemExit(
-            "molmo_flow needs the q01/q99 quantile rows in the checkpoint "
-            "normalization table (the decoder-owned clamp "
-            "table) — this table predates them",
-        )
-    if len(normalization.action_q01) != section.action_dim:
-        raise SystemExit(
-            f"normalization action rows are {len(normalization.action_q01)}-wide "
-            f"but the decoder section records action_dim={section.action_dim}",
         )
     config = MolmoFlowConfig(
         max_horizon=section.max_horizon,
@@ -1130,10 +1117,7 @@ def build_molmo_flow_decoder(
                 beta_beta=section.beta_beta,
             ),
         ),
-        action_q01=torch.tensor(normalization.action_q01, dtype=torch.float32),
-        action_q99=torch.tensor(normalization.action_q99, dtype=torch.float32),
         checkpoint_schema=section.to_dict(),
-        per_dataset_norm=section.normalization == "q01q99_per_dataset",
     )
     if dtype is not None:
         decoder = decoder.to(dtype)

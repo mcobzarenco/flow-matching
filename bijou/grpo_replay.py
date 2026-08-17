@@ -59,7 +59,7 @@ from torch import Tensor
 
 from .checkpoint import read_metadata, tokenizer_directory
 from .data import DatasetStats
-from .fast.molmoact2 import QuantileStats, normalize_state
+from .fast.molmoact2 import QuantileStats
 from .loading import (
     MOLMOACT2_FAST_TOKENIZER_REF,
     MolmoFlowDecoderConfig,
@@ -187,6 +187,9 @@ class MolmoAct2DiscreteStack:
                     Molmo2Config.from_dict(metadata.backbone_config).text,
                     str(tokenizer_dir),
                 ),
+                # The flow family already built the ONE merged table —
+                # the AR read detokenizes under the same rows.
+                action_quantiles=vla.action_quantiles,
                 # Adapter construction facts, not checkpoint records:
                 # the AR read decodes greedily unless sampled (the unit
                 # ARServing) and format 6 has no aux for the weight to
@@ -261,9 +264,8 @@ class MolmoAct2DiscreteStack:
                     image=torch.from_numpy(array).permute(2, 0, 1).float() / 255.0,
                 ),
             )
-        normalized = normalize_state(
+        normalized = self.state_stats.normalize(
             torch.as_tensor(state, dtype=torch.float32),
-            self.state_stats,
         )
         inputs = self.collator(
             [

@@ -59,6 +59,7 @@ from bijou.modelling.interface import ARSampling
 from bijou.modelling.molmo2.cache import Molmo2KVCache
 from bijou.modelling.molmo2.model import Molmo2Model, load_model
 from bijou.modelling.molmo2.testing import write_tiny_text_checkpoint
+from bijou.models.ar_suffix_ops import batch_action_quantiles
 from bijou.models.molmo2_ar import Molmo2ARVLA
 from bijou.models.objectives import ARObjective
 from bijou.models.serving import ARServing
@@ -93,11 +94,18 @@ def test_low_temperature_limit_recovers_greedy(
     decoder, loaded = build_decoder(model)
     encoder = build_encoder(tiny_checkpoint)
     sample = batch(loaded, tiny_inputs())
-    greedy, _ = decoder.predict_chunk(model, encode_memory(encoder, model), sample)
+    quantiles = batch_action_quantiles(sample)
+    greedy, _ = decoder.predict_chunk(
+        model,
+        encode_memory(encoder, model),
+        sample,
+        quantiles=quantiles,
+    )
     cold, _ = decoder.predict_chunk(
         model,
         encode_memory(encoder, model),
         sample,
+        quantiles=quantiles,
         sampling=ARSampling(temperature=1e-4, rngs=rngs(0)),
     )
     assert torch.equal(cold, greedy)
@@ -117,6 +125,7 @@ def test_sampled_decode_valid_deterministic_and_draw_distinct(
         model,
         encode_memory(encoder, model),
         sample,
+        quantiles=batch_action_quantiles(sample),
         sampling=ARSampling(temperature=2.0, rngs=rngs(draw)),
     )[0]
     first, again, other = hot(0), hot(0), hot(1)
@@ -140,13 +149,27 @@ def test_cache_snapshot_restore_shares_one_prefill_exactly(
     memory = encode_memory(encoder, model)
     sampling = lambda: ARSampling(temperature=2.0, rngs=rngs(0))
     snapshot = decoder.cache_snapshot(memory)
-    first, _ = decoder.predict_chunk(model, memory, sample, sampling=sampling())
+    quantiles = batch_action_quantiles(sample)
+    first, _ = decoder.predict_chunk(
+        model,
+        memory,
+        sample,
+        quantiles=quantiles,
+        sampling=sampling(),
+    )
     decoder.cache_restore(memory, snapshot)
-    second, _ = decoder.predict_chunk(model, memory, sample, sampling=sampling())
+    second, _ = decoder.predict_chunk(
+        model,
+        memory,
+        sample,
+        quantiles=quantiles,
+        sampling=sampling(),
+    )
     fresh, _ = decoder.predict_chunk(
         model,
         encode_memory(encoder, model),
         sample,
+        quantiles=quantiles,
         sampling=sampling(),
     )
     assert torch.equal(first, second)
@@ -197,6 +220,7 @@ def test_ar_predict_sampled_dispatches_molmo2(
         model,
         encode_memory(encoder, model),
         sample,
+        quantiles=batch_action_quantiles(sample),
         sampling=ARSampling(temperature=2.0, rngs=rngs(0)),
     )
     assert torch.equal(via_model.actions, direct)
@@ -218,6 +242,7 @@ def test_bf16_mounted_trunk_decodes_with_fp32_patch(
         bf16,
         encode_memory(encoder, bf16),
         sample,
+        quantiles=batch_action_quantiles(sample),
     )
     assert actions.shape == (BATCH, loaded.time_horizon, loaded.action_dim)
     assert bool(torch.isfinite(actions).all())
@@ -283,10 +308,12 @@ def test_narrated_generate_decodes_fields_on_the_molmo2_trunk(
     decoder, loaded = build_aux_decoder(model)
     encoder = build_encoder(tiny_checkpoint)
     request = aux_config().fields
+    sample = batch(loaded, tiny_inputs())
     actions, generations = decoder.predict_chunk(
         model,
         encode_memory(encoder, model),
-        batch(loaded, tiny_inputs()),
+        sample,
+        quantiles=batch_action_quantiles(sample),
         generate=request,
     )
     assert len(generations) == BATCH

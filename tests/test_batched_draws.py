@@ -97,37 +97,21 @@ def test_tile_stats_tiles_exactly_the_predict_chunk_fields() -> None:
         )
 
     # A structural stand-in is enough: tile_stats replaces exactly
-    # state, the two stats, and the per-item action rows when carried,
-    # so any dataclass carrying them exercises the whole function.
-    fake_batch = dataclasses.make_dataclass(
+    # state and the two stats, so any dataclass carrying them
+    # exercises the whole function.
+    batch = dataclasses.make_dataclass(
         "FakeBatch",
-        ["state", "action_stats", "state_stats", "item_action_stats"],
-    )
-    batch = fake_batch(
-        torch.randn(BATCH, STATE_DIM, generator=generator),
-        stats(),
-        stats(),
-        stats(),  # the per-dataset flow scheme's carrier tiles too
-    )
+        ["state", "action_stats", "state_stats"],
+    )(torch.randn(BATCH, STATE_DIM, generator=generator), stats(), stats())
     tiled = tile_stats(batch, DRAWS)
     q99, tiled_q99 = batch.action_stats.q99, tiled.action_stats.q99
     assert q99 is not None and tiled_q99 is not None
-    assert tiled.item_action_stats is not None
-    item_q01, tiled_item_q01 = (
-        batch.item_action_stats.q01,
-        tiled.item_action_stats.q01,
-    )
-    assert item_q01 is not None and tiled_item_q01 is not None
     for draw in range(DRAWS):
         rows = slice(draw * BATCH, (draw + 1) * BATCH)
         assert torch.equal(tiled.state[rows], batch.state)
         assert torch.equal(tiled.action_stats.mean[rows], batch.action_stats.mean)
         assert torch.equal(tiled_q99[rows], q99)
         assert torch.equal(tiled.state_stats.std[rows], batch.state_stats.std)
-        assert torch.equal(tiled_item_q01[rows], item_q01)
-    # Carrier-less batches (every non-per-dataset path) stay None.
-    plain = fake_batch(batch.state, stats(), stats(), None)
-    assert tile_stats(plain, DRAWS).item_action_stats is None
 
 
 def test_tile_memory_refuses_cache() -> None:

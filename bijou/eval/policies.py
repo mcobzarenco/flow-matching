@@ -44,7 +44,6 @@ from ..data import DatasetStats, PolicyInfo
 from ..loading import (
     load_vla,
     molmo_flow_state_table,
-    molmoact2_action_table,
     parse_prompt_config,
 )
 from ..modelling.aux_text import AuxField, AuxGeneration, subgoal_text
@@ -66,7 +65,7 @@ from ..modelling.interface import (
     mask_state_item,
 )
 from ..models.gemma_ar import GemmaARVLA
-from ..models.gemma_flow import GemmaFlowVLA
+from ..models.gemma_flow import GemmaFlowVLA, decode_chunk
 from ..models.molmo2_ar import Molmo2ARVLA
 from ..models.molmoact2_ar import MolmoAct2ARVLA
 from ..models.molmoact2_flow import MolmoAct2FlowVLA
@@ -401,10 +400,10 @@ def tile_memory(memory: GemmaMemory, draws: int) -> GemmaMemory:
 
 def tile_stats(batch: CollatedBatch[Any], draws: int) -> CollatedBatch[Any]:
     """The FLOW-DECODE view of a batch at draws x B: only the fields
-    FlowDecoder.predict_chunk reads — ``state``, the two stats, and the
-    per-item action rows when carried — are
-    tiled (draws-major, matching :func:`tile_memory`). Every other
-    field keeps its B rows and must not be consumed at draws scale."""
+    the gemma boundary (``models.gemma_flow.decode_chunk``) reads —
+    ``state`` and the two stats — are tiled (draws-major, matching
+    :func:`tile_memory`). Every other field keeps its B rows and must
+    not be consumed at draws scale."""
 
     def tile(stats: NormStats) -> NormStats:
         return dataclasses.replace(
@@ -420,11 +419,6 @@ def tile_stats(batch: CollatedBatch[Any], draws: int) -> CollatedBatch[Any]:
         state=batch.state.repeat(draws, 1),
         action_stats=tile(batch.action_stats),
         state_stats=tile(batch.state_stats),
-        item_action_stats=(
-            tile(batch.item_action_stats)
-            if batch.item_action_stats is not None
-            else None
-        ),
     )
 
 
@@ -999,27 +993,10 @@ class BijouPolicy:
             else None
         )
         # The molmoact2 ar/joint discrete head decodes under the ONE
-        # merged action table its CE targets tokenized with — per-item
-        # dataset quantiles would detokenize another rig's ranges (the
-        # sim100 token-leg seam, 2026-08-17: run 2's merged table holds
-        # a descending lift pair, so a v2-table decode sign-inverted
-        # every lift command). Same one-source wiring as the state
-        # table above.
-        action_table = (
-            molmoact2_action_table(self.info.normalization)
-            if self.spec.family in (VLAFamily.MOLMOACT2_AR, VLAFamily.MOLMOACT2_JOINT)
-            else None
-        )
-        # The per-dataset flow scheme (section tag "q01q99_per_dataset",
-        # read off the built decoder): the batch must carry the RAW
-        # per-item rows so the flow decode denormalizes under the
-        # serving rig's own table — the harness-attached stats (rollout
-        # --stats-repo-id picks the row) — while ``action_stats`` keeps
-        # the merged CE table above for the token leg.
-        per_dataset_flow = (
-            isinstance(self.flow_decoder, MolmoFlowDecoder)
-            and self.flow_decoder.per_dataset_norm
-        )
+        # merged action table its CE targets tokenized with — the
+        # family's own quantile table (built from the checkpoint at
+        # load), applied inside predict_ar; nothing to thread here, and
+        # per-item dataset quantiles never reach a decode.
         # The families whose DESIGNATED action decoder is the AR suffix
         # (flow-less): their prompts always carry [generate|…] and the
         # request set is the caller's ask; a joint family serves through
@@ -1066,9 +1043,6 @@ class BijouPolicy:
             subgoal_condition_dropout=0.0,
             state_q01=state_table[0] if state_table is not None else None,
             state_q99=state_table[1] if state_table is not None else None,
-            action_q01=action_table[0] if action_table is not None else None,
-            action_q99=action_table[1] if action_table is not None else None,
-            carry_item_action_stats=per_dataset_flow,
         )
 
     @property
@@ -1354,7 +1328,8 @@ class BijouPolicy:
                 self.sample_draws,
                 shape,
             ).to(self.device)
-            tiled_actions, _ = model.flow_decoder.predict_chunk(
+            tiled_actions, _ = decode_chunk(
+                model.flow_decoder,
                 tile_memory(memory, self.sample_draws),
                 tile_stats(batch, self.sample_draws),
                 noise=noise,

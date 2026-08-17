@@ -40,6 +40,7 @@ from bijou.modelling.decoders.flow import (
     snapflow_distill_loss_sums,
 )
 from bijou.modelling.interface import CollatedBatch, NormStats
+from bijou.models.gemma_flow import normalized_actions, normalized_state
 
 # The historical run mix (the module constants the payload replaced) —
 # these oracles pin the SAME numbers under the threaded knobs.
@@ -156,7 +157,8 @@ def test_snapflow_loss_is_the_declared_mix() -> None:
     total = snapflow_distill_loss(
         extended,
         memory,
-        sample,
+        state_norm=normalized_state(sample),
+        actions_norm=normalized_actions(sample),
         alpha=ALPHA,
         shortcut_weight=SHORTCUT_WEIGHT,
     )
@@ -164,7 +166,8 @@ def test_snapflow_loss_is_the_declared_mix() -> None:
     fm_squared, shortcut_squared = _snapflow_squared_errors(
         extended,
         memory,
-        sample,
+        state_norm=normalized_state(sample),
+        actions_norm=normalized_actions(sample),
     )
     expected = (
         ALPHA * fm_squared.mean()
@@ -176,7 +179,8 @@ def test_snapflow_loss_is_the_declared_mix() -> None:
     loss_sum, count = snapflow_distill_loss_sums(
         extended,
         memory,
-        sample,
+        state_norm=normalized_state(sample),
+        actions_norm=normalized_actions(sample),
         alpha=ALPHA,
         shortcut_weight=SHORTCUT_WEIGHT,
     )
@@ -197,7 +201,8 @@ def test_snapflow_loss_closed_form_at_zero_field() -> None:
     total = snapflow_distill_loss(
         extended,
         memory,
-        sample,
+        state_norm=normalized_state(sample),
+        actions_norm=normalized_actions(sample),
         alpha=ALPHA,
         shortcut_weight=SHORTCUT_WEIGHT,
     )
@@ -224,7 +229,8 @@ def test_snapflow_gradients_reach_phi_s() -> None:
     snapflow_distill_loss(
         extended,
         memory,
-        sample,
+        state_norm=normalized_state(sample),
+        actions_norm=normalized_actions(sample),
         alpha=ALPHA,
         shortcut_weight=SHORTCUT_WEIGHT,
     ).backward()

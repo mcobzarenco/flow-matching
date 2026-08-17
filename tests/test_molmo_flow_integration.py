@@ -28,6 +28,7 @@ Pinned:
 
 from __future__ import annotations
 
+import dataclasses
 import json
 from pathlib import Path
 from typing import Any
@@ -36,7 +37,7 @@ import pytest
 import torch
 from test_convert_molmoact2 import _ACTION_DIM, _HORIZON, _convert, source_dir
 
-from bijou.checkpoint import VLAMetadata
+from bijou.checkpoint import VLAMetadata, read_metadata
 from bijou.data import DatasetStats
 from bijou.eval.molmo_norm import MolmoNorm
 from bijou.eval.policies import BijouPolicy
@@ -50,7 +51,10 @@ from bijou.modelling.interface import (
     PromptInputs,
     SamplingMethod,
 )
-from bijou.models.molmoact2_flow import MolmoAct2FlowVLA
+from bijou.models.molmoact2_flow import (
+    MolmoAct2FlowVLA,
+    molmoact2_action_quantiles,
+)
 from bijou.vla import VLAFamily
 
 assert source_dir is not None  # re-exported pytest fixture (module-scoped)
@@ -193,7 +197,12 @@ def _run_backward(model: MolmoAct2FlowVLA, *, insulate: bool) -> tuple[float, in
     batch = _batch(model)
     memory = _encode(model, batch, with_grad=True)
     decoder = model.flow_decoder
-    loss = molmo_flow_loss(decoder, memory, batch, insulate=insulate)
+    loss = molmo_flow_loss(
+        decoder,
+        memory,
+        actions_norm=model.action_quantiles.normalize(batch.actions),
+        insulate=insulate,
+    )
     loss.backward()
     expert_grads = sum(
         1
@@ -269,9 +278,7 @@ def test_predict_dispatch_and_tail(tiny_model: MolmoAct2FlowVLA) -> None:
     assert float(first.actions.abs().max()) <= 3.0
     assert torch.equal(first.actions, again.actions)
     assert not torch.equal(first.actions, other.actions)
-    # Per-sample stats are decoder-ignored: perturbing them is inert.
-    import dataclasses
-
+    # Per-sample stats never reach the decode: perturbing them is inert.
     assert batch.action_stats.q01 is not None and batch.action_stats.q99 is not None
     perturbed = dataclasses.replace(
         batch,
@@ -311,7 +318,11 @@ def test_loss_surface_sum_form_contract(tiny_model: MolmoAct2FlowVLA) -> None:
     report = tiny_model(batch, counts=counts)
     memory = _encode(tiny_model, batch, with_grad=False)
     torch.manual_seed(11)
-    mean_form = molmo_flow_loss(tiny_model.flow_decoder, memory, batch)
+    mean_form = molmo_flow_loss(
+        tiny_model.flow_decoder,
+        memory,
+        actions_norm=tiny_model.action_quantiles.normalize(batch.actions),
+    )
     action = report.components["action_flow"]
     objective = float(report.objective.detach())
     assert int(action.count) == int(counts["action_flow"])
@@ -323,8 +334,6 @@ def test_loss_surface_sum_form_contract(tiny_model: MolmoAct2FlowVLA) -> None:
 
 
 def test_chunk_length_mismatch_is_loud(tiny_model: MolmoAct2FlowVLA) -> None:
-    import dataclasses
-
     batch = _batch(tiny_model)
     wrong = dataclasses.replace(
         batch,
@@ -333,7 +342,11 @@ def test_chunk_length_mismatch_is_loud(tiny_model: MolmoAct2FlowVLA) -> None:
     )
     memory = _encode(tiny_model, wrong, with_grad=False)
     with pytest.raises(ValueError, match="chunk length"):
-        molmo_flow_loss(tiny_model.flow_decoder, memory, wrong)
+        molmo_flow_loss(
+            tiny_model.flow_decoder,
+            memory,
+            actions_norm=tiny_model.action_quantiles.normalize(wrong.actions),
+        )
 
 
 @pytest.fixture(scope="module")
@@ -623,3 +636,36 @@ def test_per_dataset_mode_is_scale_equivariant(
     ours = pdnorm.predict([wide], [1])
     contract = tiny_policy.predict([reference], [1])
     torch.testing.assert_close(ours[0], contract[0] * 2.0, atol=1e-4, rtol=0)
+
+
+def test_action_quantiles_builder_guards_are_loud(
+    tiny_vla_checkpoint: Path,
+) -> None:
+    """The family table builder refuses (a) normalization rows without
+    quantiles — mean/std cannot drive a quantile-normalized head — and
+    (b) rows whose width drifts from the recorded action geometry."""
+    metadata = read_metadata(tiny_vla_checkpoint)
+    table = molmoact2_action_quantiles(metadata)
+    assert table.q01.shape == (_ACTION_DIM,)
+    quantile_less = dataclasses.replace(
+        metadata,
+        stats=dataclasses.replace(
+            metadata.stats,
+            action_q01=None,
+            action_q99=None,
+        ),
+    )
+    with pytest.raises(SystemExit, match="no action q01/q99"):
+        molmoact2_action_quantiles(quantile_less)
+    assert metadata.stats.action_q01 is not None
+    assert metadata.stats.action_q99 is not None
+    narrow = dataclasses.replace(
+        metadata,
+        stats=dataclasses.replace(
+            metadata.stats,
+            action_q01=metadata.stats.action_q01[:-1],
+            action_q99=metadata.stats.action_q99[:-1],
+        ),
+    )
+    with pytest.raises(SystemExit, match="action_dim"):
+        molmoact2_action_quantiles(narrow)

@@ -62,17 +62,77 @@ _NORM_EPS = 1e-8
 
 @dataclass(frozen=True, slots=True)
 class QuantileStats:
-    """q01/q99 rows for one feature, float32 like their normalizer casts
-    to (stats follow the input tensor dtype; inputs are float32)."""
+    """One feature's q01/q99 rows and the clamped maps between raw units
+    and [-1, 1] — the merged-table normalization scheme. The molmoact2
+    families hold ONE per checkpoint as their ``action_quantiles`` (the
+    raw↔normalized boundary for flow targets, sampled chunks and the
+    discrete detokenization); the codec builds one per call from
+    explicit rows. float32 like their normalizer casts to.
 
-    q01: Tensor  # [D] float32
-    q99: Tensor  # [D] float32
+    Descending pairs (q01 > q99) are legal: a sign-flipped joint
+    carries its orientation in the pair order, and the clamps preserve
+    it (q01 → −1, q99 → +1 regardless of order).
+
+    Shapes:
+    - ``q01``/``q99``: [D] float32
+    """
+
+    q01: Tensor
+    q99: Tensor
 
     def __post_init__(self) -> None:
         if self.q01.shape != self.q99.shape or self.q01.ndim != 1:
             raise ValueError(
                 f"expected matching 1-D q01/q99, got {self.q01.shape} / {self.q99.shape}",
             )
+
+    def _on(self, device: torch.device) -> QuantileStats:
+        return QuantileStats(q01=self.q01.to(device), q99=self.q99.to(device))
+
+    def _check_width(self, value: Tensor, what: str) -> None:
+        if value.shape[-1] != self.q01.shape[0]:
+            raise ValueError(
+                f"{what} width {value.shape[-1]} != the table's "
+                f"{self.q01.shape[0]} — wrong rows for this tensor",
+            )
+
+    def normalize(self, value: Tensor) -> Tensor:
+        """Input-side path: q01/q99 normalize then clamp to [-1, 1]
+        (their ``MolmoAct2ClampNormalizedProcessorStep``) — the map
+        action targets and prompt state train under.
+
+        Shapes:
+        - ``value``: [..., D] raw units
+        - returns: [..., D] float32 in [-1, 1]
+        """
+        self._check_width(value, "normalize input")
+        return normalize_q01q99(value, self._on(value.device)).clamp(-1.0, 1.0)
+
+    def denormalize(self, value: Tensor) -> Tensor:
+        """Output-side path: clamp the sampled normalized chunk to
+        [-1, 1] (their ``MolmoAct2ClampActionProcessorStep``), then
+        invert the q01/q99 map back to raw units in fp32 (callers own
+        any dtype round-trip).
+
+        Shapes:
+        - ``value``: [..., D] sampled normalized chunk
+        - returns: [..., D] float32 raw units
+        """
+        self._check_width(value, "denormalize input")
+        clamped = torch.as_tensor(value, dtype=torch.float32).clamp(-1.0, 1.0)
+        return unnormalize_q01q99(clamped, self._on(value.device))
+
+    def rows(self, batch_size: int) -> tuple[Tensor, Tensor]:
+        """The table in per-row form — the shape the discrete decode
+        consumes (every row detokenizes under the ONE table).
+
+        Shapes:
+        - returns: ([batch_size, D], [batch_size, D]) float32
+        """
+        return (
+            self.q01.expand(batch_size, -1),
+            self.q99.expand(batch_size, -1),
+        )
 
 
 def normalize_q01q99(value: Tensor, stats: QuantileStats) -> Tensor:
@@ -83,10 +143,7 @@ def normalize_q01q99(value: Tensor, stats: QuantileStats) -> Tensor:
     - ``value``: [..., D] raw units
     - returns: [..., D] float32 normalized
     """
-    value = torch.as_tensor(value, dtype=torch.float32)
-    denom = stats.q99 - stats.q01
-    denom = torch.where(denom == 0, torch.tensor(_NORM_EPS, dtype=torch.float32), denom)
-    return 2.0 * (value - stats.q01) / denom - 1.0
+    return normalize_q01q99_rows(value, stats.q01, stats.q99)
 
 
 def unnormalize_q01q99(value: Tensor, stats: QuantileStats) -> Tensor:
@@ -96,36 +153,36 @@ def unnormalize_q01q99(value: Tensor, stats: QuantileStats) -> Tensor:
     - ``value``: [..., D] normalized
     - returns: [..., D] float32 raw units
     """
+    return unnormalize_q01q99_rows(value, stats.q01, stats.q99)
+
+
+def normalize_q01q99_rows(value: Tensor, q01: Tensor, q99: Tensor) -> Tensor:
+    """:func:`normalize_q01q99` on explicit row tensors — the same map
+    when the rows are not ONE table ([D]) but broadcast against the
+    value (the per-dataset flow scheme's [B, 1, D] item rows).
+
+    Shapes:
+    - ``value``: [..., D] raw units; ``q01``/``q99`` broadcastable to it
+    - returns: [..., D] float32 normalized
+    """
     value = torch.as_tensor(value, dtype=torch.float32)
-    denom = stats.q99 - stats.q01
+    denom = q99 - q01
     denom = torch.where(denom == 0, torch.tensor(_NORM_EPS, dtype=torch.float32), denom)
-    return (value + 1.0) * denom / 2.0 + stats.q01
+    return 2.0 * (value - q01) / denom - 1.0
 
 
-def normalize_state(value: Tensor, stats: QuantileStats) -> Tensor:
-    """Input-side path: q01/q99 normalize then clamp to [-1, 1] (their
-    ``MolmoAct2ClampNormalizedProcessorStep``) — the SAME map their
-    recipe applies to action targets before FAST-encoding (train.py
-    normalizes actions with this before ``encode``).
+def unnormalize_q01q99_rows(value: Tensor, q01: Tensor, q99: Tensor) -> Tensor:
+    """:func:`unnormalize_q01q99` on explicit row tensors (see
+    :func:`normalize_q01q99_rows`).
 
     Shapes:
-    - ``value``: [..., D] raw units
-    - returns: [..., D] float32 in [-1, 1]
+    - ``value``: [..., D] normalized; ``q01``/``q99`` broadcastable to it
+    - returns: [..., D] float32 raw units
     """
-    return normalize_q01q99(value, stats).clamp(-1.0, 1.0)
-
-
-def unnormalize_action(value: Tensor, stats: QuantileStats) -> Tensor:
-    """Output-side action path: clamp the sampled normalized chunk to
-    [-1, 1] (their ``MolmoAct2ClampActionProcessorStep``) then invert
-    the q01/q99 map back to joint units.
-
-    Shapes:
-    - ``value``: [..., D] sampled normalized chunk
-    - returns: [..., D] float32 joint units
-    """
-    value = torch.as_tensor(value, dtype=torch.float32).clamp(-1.0, 1.0)
-    return unnormalize_q01q99(value, stats)
+    value = torch.as_tensor(value, dtype=torch.float32)
+    denom = q99 - q01
+    denom = torch.where(denom == 0, torch.tensor(_NORM_EPS, dtype=torch.float32), denom)
+    return (value + 1.0) * denom / 2.0 + q01
 
 
 class MolmoAct2FastTokenizer:

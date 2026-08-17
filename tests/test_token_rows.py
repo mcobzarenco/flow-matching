@@ -49,6 +49,7 @@ from bijou.modelling.decoders.ar_gemma import GemmaARDecoder
 from bijou.modelling.encoders.gemma4 import GemmaMemory
 from bijou.modelling.gemma4.model import Gemma4Model
 from bijou.modelling.interface import ActionCaptureStep, ARSampling
+from bijou.models.ar_suffix_ops import batch_action_quantiles
 from sim.rollout_sim_parallel import TrainingRowWriter
 from sim.rollout_sim_parallel import parse_args as rollout_parse_args
 
@@ -78,7 +79,14 @@ def greedy_rows() -> tuple[
     memory = encode_memory(backbone)
     snapshot = decoder.cache_snapshot(memory)
     capture: list[ActionCaptureStep] = []
-    decoder.predict_chunk(backbone, memory, batch(loaded), action_capture=capture)
+    sample = batch(loaded)
+    decoder.predict_chunk(
+        backbone,
+        memory,
+        sample,
+        quantiles=batch_action_quantiles(sample),
+        action_capture=capture,
+    )
     rows = token_rows_from_capture(
         capture,
         block_base=decoder.config.block_base,
@@ -92,12 +100,20 @@ def test_greedy_capture_is_pure_observation() -> None:
     """The surface records the decode; it must never steer it — actions
     with capture on are bit-identical to the plain greedy path."""
     backbone, decoder, loaded = build()
-    plain, _ = decoder.predict_chunk(backbone, encode_memory(backbone), batch(loaded))
+    sample = batch(loaded)
+    quantiles = batch_action_quantiles(sample)
+    plain, _ = decoder.predict_chunk(
+        backbone,
+        encode_memory(backbone),
+        sample,
+        quantiles=quantiles,
+    )
     capture: list[ActionCaptureStep] = []
     captured, _ = decoder.predict_chunk(
         backbone,
         encode_memory(backbone),
-        batch(loaded),
+        sample,
+        quantiles=quantiles,
         action_capture=capture,
     )
     assert capture, "action phase must capture at least one step"
@@ -172,10 +188,12 @@ def test_sampled_rows_record_the_sampled_stream() -> None:
 
     def decode(draw: int) -> tuple[torch.Tensor, list[TokenRow]]:
         capture: list[ActionCaptureStep] = []
+        sample = batch(loaded)
         actions, _ = decoder.predict_chunk(
             backbone,
             encode_memory(backbone),
-            batch(loaded),
+            sample,
+            quantiles=batch_action_quantiles(sample),
             sampling=ARSampling(temperature=2.0, rngs=rngs(draw)),
             action_capture=capture,
         )

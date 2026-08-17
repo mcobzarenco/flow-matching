@@ -399,6 +399,7 @@ class ARSuffixDecoder[B: nn.Module, M: PrefixMemory](nn.Module, abc.ABC):
         memory: M,
         batch: CollatedBatch[Any],
         *,
+        quantiles: tuple[Tensor, Tensor],
         generate: tuple[AuxField, ...] = (),
         sampling: ARSampling | None = None,
         action_capture: list[ActionCaptureStep] | None = None,
@@ -427,9 +428,19 @@ class ARSuffixDecoder[B: nn.Module, M: PrefixMemory](nn.Module, abc.ABC):
         Requires an aux-trained checkpoint for non-empty ``generate``
         (requested-but-untrained fields would be elicited off-manifold).
 
-        Returns ``(actions, generations)`` — the raw natural product;
-        the family wraps it: chunks [B, chunk, action_dim] raw units +
-        one AuxGeneration per row (empty-text for ``generate=()``)."""
+        ``quantiles`` is the q01/q99 pair each row detokenizes under —
+        the CALLER (the family) resolves the table policy: per-dataset
+        families pass the batch-resolved rows, merged-table families
+        their model-owned quantile-table rows. This decoder applies the
+        pair mechanically and never chooses.
+
+        Returns ``(actions, generations)``: chunks
+        [B, chunk, action_dim] raw units + one AuxGeneration per row
+        (empty-text for ``generate=()``).
+
+        Shapes:
+        - ``quantiles``: ([B, action_dim], [B, action_dim]) float32
+        """
         config = self.config
         if generate:
             trained = () if config.aux is None else config.aux.fields
@@ -446,13 +457,6 @@ class ARSuffixDecoder[B: nn.Module, M: PrefixMemory](nn.Module, abc.ABC):
                     f"generate must keep template order; got "
                     f"{[f.value for f in generate]}",
                 )
-        stats = batch.action_stats
-        if stats.q01 is None or stats.q99 is None:
-            raise SystemExit(
-                "batch stats carry no action quantiles — AR decoding needs "
-                "the exact q01/q99 the tokenizer was fitted under (old "
-                "checkpoint stats tables cannot drive AR inference)",
-            )
         batch_size = batch.state.shape[0]
         if sampling is not None and len(sampling.rngs) != batch_size:
             raise ValueError(
@@ -640,8 +644,8 @@ class ARSuffixDecoder[B: nn.Module, M: PrefixMemory](nn.Module, abc.ABC):
                 flush=True,
             )
 
-        q01 = stats.q01.cpu().numpy()
-        q99 = stats.q99.cpu().numpy()
+        q01 = quantiles[0].cpu().numpy()
+        q99 = quantiles[1].cpu().numpy()
         chunks = [
             torch.from_numpy(
                 self.codec.decode(row_ids, q01[row], q99[row]),
