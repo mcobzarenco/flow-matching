@@ -17,9 +17,13 @@ the owner's 09:23Z call): banner correct — 3 datasets / 4551 eps /
 slice dilutes ~8.7%→~6.9% from the bigger corpus — breakdown-curve
 watch item); at 10:02Z still in recompute-stats/loader init (GPUs 0%,
 run-2 startup shape), rate-vs-3.9s/step check at next poll,
-babysit-registered (40 GPU-h gate). (2) `sft-v1-eval-chain` local H100
-leg 1: seed 85/100 at 09:58Z, 0.8 seeds/min → leg-1 boundary ~10:1xZ,
-gate projection 1.8/12 GPU-h.
+babysit-registered (40 GPU-h gate). (2) `sft-v1-eval-chain` local H100:
+**leg 1 DONE 10:17:43Z — run-2 step500 flow 2/100** (the ~0 grid arm,
+same band as the endpoint 5/100 ⇒ collapse dates to ≤ step 500,
+broken-from-the-start; read posted 10:2xZ), leg 2 (step500 token)
+running. Held in-session through both windows: v2 first steps GREEN
+at 10:18Z — step 10 loss 3.98 (AR 3.65 + flow 0.328), VRAM 59.5 GiB
+peak, 96–98% util, recompute receipt over 1,879,795 frames.
 
 **Steering** (2 messages, both replied + acked): 09:47:32Z "Skip the
 smoke, let's go for the real thing asap" → done (smoke killed at init,
