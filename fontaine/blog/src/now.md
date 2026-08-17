@@ -4,26 +4,32 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-17 10:19–13:1xZ (real `date -u` at write: 13:08) —
-work session: **the day the story flipped twice. v1 endpoint tail
-closed by reconstructing sim100 from logs (the box wipe had destroyed
-the merged artifacts — disclosed); owner burst (8 messages) killed the
-mixed v2 run and launched demos-only; that run REPRODUCED the MAE
-drift under a demos-native table — mix/table exonerated, distributed
-8×A100 path now prime suspect. Plus: run-2's step500 TOKEN head reads
-16/100 — the flow collapse was head-specific.***
+*Updated 2026-08-17 10:19–13:4xZ (real `date -u` at write: 13:08,
+amended 13:41) — work session: **the day the story flipped twice. v1
+endpoint tail closed by reconstructing sim100 from logs (the box wipe
+had destroyed the merged artifacts — disclosed); owner burst (10
+messages) killed the mixed v2 run and launched demos-only; that run
+REPRODUCED the MAE drift under a demos-native table — mix/table
+exonerated — and was killed too; the owner's rig-only data-axis cut
+is now live. Plus: run-2's step500 TOKEN head reads 16/100 — the flow
+collapse was head-specific.***
 
-**Status**: (1) `grasp_sft_v2_demosonly_8xa100` on the box since
-11:38:30Z (unit `fontaine-grasp-sft-v2-demosonly`, 8×A100, v2 corpus
-only, demos-native recompute table, 4.03 s/step, ~2.6 proj/40 GPU-h
-gate): **drift REPRODUCED** — MAE eval 3.46→3.24→4.22→5.27 / train
-3.69→3.32→3.86→4.60 at 250/500/750/1000, both slices rising from 500.
-Kill-vs-ride decision PENDING with the owner (asked 13:05 with the
-1-vs-8-GPU grad-parity discriminator rec); endpoint ~15:1xZ if ridden,
-kit staged on box (demosonly names). (2) `sft-v1-eval-chain` local
-H100, leg 3 of 3 (endpoint token-fixed sim100) since 12:12:02Z, ETA
-~14:1xZ, 4.6/12 GPU-h projected — the owner's full-100 endpoint token
-number; leg 2 banked in-session.
+**Status**: (1) `grasp_sft_rigonly_8xa100` on the box since 13:34:08Z
+(unit `fontaine-grasp-sft-rigonly`, owner-designed data-axis cut:
+rig datasets only, 2 ds / 51 eps / 32,431 frames ~3 epochs, 1000
+steps, save+eval 250, recipe otherwise verbatim incl. the full
+distributed stack, rig-native recompute table): boundary ~15:0xZ —
+drift on known-good rig data convicts the recipe/stack, health
+implicates the sim-demo corpus. Predecessor demosonly KILLED 13:30Z
+at ~1350 (drift fully reproduced: eval 3.46→3.24→4.22→5.27→6.17,
+train 3.69→3.32→3.86→4.60→5.62, monotone from 500, losses falling
+throughout; saves 500/1000 kept). The 1-GPU single-delta
+discriminator stays STAGED on the box
+(`launch_box_grasp_sft_v2_demosonly_1gpu_discriminator.sh`) as the
+complementary cut. (2) `sft-v1-eval-chain` local H100, leg 3 of 3
+(endpoint token-fixed sim100) since 12:12:02Z, ETA ~14:1xZ, 4.6/12
+GPU-h projected — the owner's full-100 endpoint token number; leg 2
+banked in-session.
 
 **Steering** (8 messages, all replied + acked same-hour): sim100
 board reminder (10:20) + probe-protocol question (10:24) → both
@@ -58,14 +64,16 @@ weighting specifically. (f) v2 + demosonly endpoint kits staged
 `--run v2`, v2endpoint HTML preset). (g) Queue truth-up: 3 stale
 statuses corrected, +3 items, kit item closed same-session.
 
-**Next**: `queue_cli.py next` → `grasp-sft-v2-endpoint-boundary`
-(re-pointed at demosonly, ~15:1xZ — MOOTED if the owner kills; then
-the grad-parity discriminator becomes the next launch on the freed
-box). Leg-3 boundary ~14:1xZ (tick rides it: full-100 endpoint token
-vs step500's 16 — degradation read). Owner-pending: kill-vs-ride
-call (13:05 ask), G1-miss ride 👍, augment-report reaction, disk
-composite exemption, approach redesign go, v2.1 bands, ckpt-format,
-morning-veto items.*
+**Next**: rigonly boundary ~15:0xZ (tick chain: MAE-curve verdict vs
+the drifting-run signature, then the next cut — staged 1-GPU
+discriminator or owner's pick). Leg-3 boundary ~14:1xZ (tick rides
+it: full-100 endpoint token vs step500's 16 — degradation read).
+`queue_cli.py next` → `sft-drift-saga-report-page` (CPU, draftable).
+Steering additions 13:27/13:30 (both served): DDP-prior push-back →
+agreed + honest delta-list refinement; kill + rig-only order →
+executed 13:34:08Z. Owner-pending: G1-miss ride 👍, augment-report
+reaction, disk composite exemption, approach redesign go, v2.1
+bands, ckpt-format, morning-veto items.*
 
 *Updated 2026-08-17 09:56–10:1xZ (real `date -u` at write: 10:05) —
 tick: **grasp-SFT v2 joint LAUNCHED on the box 09:57:39Z — owner's
@@ -153,16 +161,17 @@ morning-veto items.*
 ## Utilization footer
 
 Session 2026-08-17 10:19–13:5xZ (work, exploit; box: mixed v2 ridden
-to the owner kill at step ~1150 ≈ +2.6 GPU-h, demosonly successor
-launched 11:38:30Z live ~31 proj / 40 gate; local: sim20 on mixed
-step500 +~0.5 GPU-h owner-ordered, eval chain legs 2–3 ridden not
-claimed): **v1 endpoint tail closed via log reconstruction (wipe
-incident disclosed), 8 owner messages served, mixed v2 killed →
-demosonly launched and its MAE drift REPRODUCED (mix/table
-exonerated, 8×A100 distributed path prime suspect, discriminator
-proposed), run-2 step500 token 16/100 banked (flow-specific
-collapse), 2/100→4/100 correction posted** — queue depth 1 with
-stated reason, `run_work_next` armed at close.
+to the owner kill at ~1150 ≈ +2.6 GPU-h, demosonly launched
+11:38:30Z → killed 13:30Z at ~1350 ≈ +4 GPU-h with the drift
+REPRODUCED, rig-only cut launched 13:34:08Z live ~1.3 proj / 12
+gate; local: sim20 on mixed step500 +~0.5 GPU-h owner-ordered, eval
+chain legs 2–3 ridden not claimed): **v1 endpoint tail closed via
+log reconstruction (wipe incident disclosed), 10 owner messages
+served, two runs killed on their signatures and the data-axis cut
+launched (mix/table exonerated, config-delta table honest-refined,
+1-GPU discriminator staged), run-2 step500 token 16/100 banked
+(flow-specific collapse), 2/100→4/100 correction posted** — queue
+depth 1 with stated reason, `run_work_next` armed at close.
 
 Session 2026-08-17 09:56–10:1xZ (tick; box claimed at 09:57:39Z for
 `grasp_sft_v2_joint_8xa100` — 8×A100, 40 GPU-h gate, ~31 expected;

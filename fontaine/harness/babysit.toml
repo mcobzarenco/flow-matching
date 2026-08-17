@@ -1080,24 +1080,32 @@ value = 12.0
 # copied local by the owner, sim20 read 0/20 posted 1538874281784508466).
 # Successor entry below.
 
+# grasp_sft_v2_demosonly_8xa100 entry PRUNED 13:3xZ 08-17 — KILLED by
+# owner order 13:30Z at step ~1350 (~4 GPU-h): drift REPRODUCED under
+# the demos-native table (eval 3.46/3.24/4.22/5.27/6.17, train
+# 3.69/3.32/3.86/4.60/5.62 at 250..1250, monotone from 500, losses
+# falling) => mix/table exonerated. Saves 500/1000 kept. Successor =
+# owner-designed rig-only cut (below); 1-GPU discriminator stays
+# staged (launch_box_grasp_sft_v2_demosonly_1gpu_discriminator.sh).
+
 [[run]]
-name = "grasp_sft_v2_demosonly_8xa100"
+name = "grasp_sft_rigonly_8xa100"
 kind = "train-jsonl"
 host = "147.224.218.164"
 pgrep = "bijou.train"
 pgrep_min = 8
 gpu_indices = [0, 1, 2, 3, 4, 5, 6, 7]
 gpu_mem_min_mib = 20000
-jsonl = "/home/ubuntu/checkpoints/finetune/grasp_sft_v2_demosonly_8xa100/train_log.jsonl"
-total_steps = 3000
-started_utc = "2026-08-17T11:38:30+00:00"
+jsonl = "/home/ubuntu/checkpoints/finetune/grasp_sft_rigonly_8xa100/train_log.jsonl"
+total_steps = 1000
+started_utc = "2026-08-17T13:34:08+00:00"
 gpu_hours_per_wall_hour = 8.0
-boundary = "save-every 500 (async) of 3000 steps; eval-250 (breakdown trivially single-dataset). Owner order 11:27-11:28Z: v2 corpus ONLY (both rig datasets out, --dataset-repeat dropped), same recipe otherwise, --recompute-stats = the demos-native table cell of the isolation grid; no smoke. Launched 11:38:30Z unit fontaine-grasp-sft-v2-demosonly. At boundary: endpoint kit staged (adapt names from v2 scripts); rsync eval artifacts local BEFORE any box cleanup."
+boundary = "1000 steps, save+eval every 250. Owner-designed data-axis cut (13:30Z): rig datasets ONLY (pick_place_v2 + clean, 51 eps / 32,431 frames, ~3 epochs), recipe otherwise verbatim incl. the full distributed stack; --recompute-stats = rig-native table. Boundary ~15:0xZ: post the MAE curve verdict — drift on known-good rig data convicts the recipe/stack; health implicates the sim-demo corpus; then the staged 1-GPU discriminator is the complementary cut (owner decides). Rsync any eval artifacts local BEFORE box cleanup."
 anchors = [
-    "run-2 spent ~31/40 GPU-h at ~3.9 s/step, same shape expected; rate materially above ~4 s/step = investigate input starvation",
-    "the fishy signature this run tests: v2 mixed run's MAE rose monotone from step 250 - eval 3.85/4.95/6.29 and TRAIN 4.24/4.76/6.48 at 250/750/1000 (train rising = not overfitting, the objective itself drifting); demos-native table should hold MAE flat-to-falling if the mixed table was the poison",
-    "endpoint grid: flow >= probe band 44 => corpus+native table fixed it (mix was the poison); flow ~4-5/100 => table/mix NOT the lever, suspicion moves to corpus or deeper seam; v2-mixed step500 sim20 was 0/20 (band, not better)",
+    "drifting-runs signature: MAE rising monotone from step 500 on BOTH slices while losses fall (mixed v2 and demosonly curves banked in queue/now.md); rig-only healthy = corpus implicated, rig-only drifting = recipe/stack convicted",
+    "run-2's rig-slice context (NOT directly comparable - different table/share): real v2 train 8.15 / eval 15.77 at step 3000",
+    "rate ~4 s/step expected (same batch geometry); 1000 steps ~ 1.2 h stepping",
 ]
 [[run.gates]]
 kind = "gpu_hours_max"
-value = 40.0
+value = 12.0

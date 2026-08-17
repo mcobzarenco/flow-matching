@@ -1,6 +1,6 @@
 {
- "updated_utc": "2026-08-17T13:31:00Z",
- "depth_reason": "depth 1, stated reason: grasp-sft-v2-endpoint-boundary is the next work and is time-gated (~15:1xZ boundary, tick chain owns it); both GPUs carry live ridden runs (demosonly train, eval chain legs 2-3); every other open item is owner-gated or box-gated. Kit prep done this session.",
+ "updated_utc": "2026-08-17T13:40:30Z",
+ "depth_reason": "depth 1: drift-saga report page (CPU, draftable now). Next experimental work is boundary-gated (rigonly verdict ~15:0xZ, leg 3 ~14:1xZ) with the 1-GPU discriminator pre-staged as the next arm; the follow-up choice is owner-gated on those verdicts. Both GPUs carry live ridden runs.",
  "items": [
   {
    "id": "demo-gen-sharded-a100",
@@ -2009,11 +2009,11 @@
   {
    "id": "grasp-sft-v2-endpoint-boundary",
    "class": "cpu",
-   "status": "queued",
+   "status": "done",
    "owner_hold": false,
    "prereg": "fontaine/blog/src/posts/2026-08-17-prereg-grasp-sft-v2-joint.md",
    "title": "grasp_sft_v2_DEMOSONLY endpoint boundary (RE-POINTED 11:4xZ: mixed run killed by owner at ~1150, successor grasp_sft_v2_demosonly_8xa100 live since 11:38:30Z unit fontaine-grasp-sft-v2-demosonly, ETA ~15:1xZ): on unit inactive + step 3000 saved \u2014 (1) final eval read + per-dataset MAE breakdown (breakdown curves are the real-slice watch item: run-2 gap was 8.15 train vs 15.77 eval at 8% share); (2) checkpoint upload weights-only same-session (standing rule); (3) sharded sim100 on the box via eval_box_grasp_sft_v2_joint_sim100.sh ADAPTED to demosonly names (CKPT/OUT/log), BOTH legs valid (flow euler-10 + token greedy \u2014 the b779ba4 merged-table decode fix is in the deployed tree): vs the pre-reg grid: flow >= probe band 44 => demos were the lever; flow ~5 => data not the lever, banked --per-dataset-flow-norm cell is the next arm; token vs the >=20/100 bar; (4) RSYNC sim100 jsons+videos LOCAL before ANY box cleanup (08-17 wipe lesson); (5) HTML report (grasp_sft_joint_unseen_report.py --preset to add) + consolidated chart-led post.",
-   "boundary": "Queued 10:3xZ 08-17. Runnable at run completion (~13:3xZ; this work session rides it if the clock allows, else the run_work_next tick chain owns it). Gate facts + anchors live in babysit.toml entry grasp_sft_v2_joint_8xa100. | RE-POINTED 11:4xZ at the demos-only successor: boundary ~15:1xZ (after this work session's 14:19Z kill) \u2014 the run_work_next tick chain owns it; kit staged on box needs the name swap (v2_joint -> v2_demosonly) in CKPT/OUT/DEST before use. Per-dataset breakdown table trivial (1 dataset); decisive read = MAE shape (flat-to-falling vs drift) + endpoint flow vs probe 44 band. | LIKELY MOOT 13:2xZ: drift reproduced on demosonly; if the owner kills, this item closes unexecuted and the discriminator (see grasp-sft-v2-demosonly-run boundary) takes the box."
+   "boundary": "Queued 10:3xZ 08-17. Runnable at run completion (~13:3xZ; this work session rides it if the clock allows, else the run_work_next tick chain owns it). Gate facts + anchors live in babysit.toml entry grasp_sft_v2_joint_8xa100. | RE-POINTED 11:4xZ at the demos-only successor: boundary ~15:1xZ (after this work session's 14:19Z kill) \u2014 the run_work_next tick chain owns it; kit staged on box needs the name swap (v2_joint -> v2_demosonly) in CKPT/OUT/DEST before use. Per-dataset breakdown table trivial (1 dataset); decisive read = MAE shape (flat-to-falling vs drift) + endpoint flow vs probe 44 band. | LIKELY MOOT 13:2xZ: drift reproduced on demosonly; if the owner kills, this item closes unexecuted and the discriminator (see grasp-sft-v2-demosonly-run boundary) takes the box. | CLOSED UNEXECUTED 13:3xZ: run killed mid-flight by owner steering; no endpoint exists. Kit scripts remain staged for whatever run next reaches an endpoint."
   },
   {
    "id": "grasp-sft-v2-step500-flow-read",
@@ -2027,11 +2027,11 @@
   {
    "id": "grasp-sft-v2-demosonly-run",
    "class": "gpu-box",
-   "status": "live",
+   "status": "done",
    "owner_hold": false,
    "prereg": "fontaine/blog/src/posts/2026-08-17-prereg-grasp-sft-v2-joint.md",
    "title": "grasp_sft_v2_demosonly_8xa100 (owner order 11:27-11:28Z 08-17, delta posted 11:37Z pre-launch, launched 11:38:30Z, unit fontaine-grasp-sft-v2-demosonly): v2-joint recipe verbatim MINUS both rig datasets and --dataset-repeat; --recompute-stats on the single dataset = demos-native quantile table (the isolation grid's remaining cell). Banner verified 1 dataset / 4500 eps / 1,750,071 frames / holdout 500. Anchors: killed-run MAE drift (train AND eval rising from step 250); probe 44/100; run-2 endpoint 5/100.",
-   "boundary": "Live since 11:38:30Z, 3000 steps, ~15:1xZ ETA, 40 GPU-h gate, babysit entry grasp_sft_v2_demosonly_8xa100. Watch at every poll: MAE shape \u2014 flat-to-falling exonerates the corpus and convicts the mix/table; drift-again moves suspicion deeper. Endpoint work = grasp-sft-v2-endpoint-boundary (re-pointed). | DRIFT REPRODUCED (curve eval 3.46/3.24/4.22/5.27/6.17, train 3.69/3.32/3.86/4.60/5.62 at 250..1250, monotone from 500, losses falling throughout): mix/table EXONERATED. Kill-vs-ride PENDING with owner (asked 13:05, re-asked 13:24). ON THE KILL CALL: stop unit fontaine-grasp-sft-v2-demosonly, keep saves, then launch the PREPARED 1-GPU discriminator (launch_box_grasp_sft_v2_demosonly_1gpu_discriminator.sh, staged on box \u2014 single delta: distributed machinery removed; same eff-96/micro-12/augment/recompute/init/seed/corpus; MAE read at 250-step probes, drift shows by 750-1000; ~5-9 h wall on gpu0) + babysit entry + in-channel receipt. Healthy-vs-drifting config deltas documented in the script header (distributed / image-augment / batch / table-mode / init)."
+   "boundary": "Live since 11:38:30Z, 3000 steps, ~15:1xZ ETA, 40 GPU-h gate, babysit entry grasp_sft_v2_demosonly_8xa100. Watch at every poll: MAE shape \u2014 flat-to-falling exonerates the corpus and convicts the mix/table; drift-again moves suspicion deeper. Endpoint work = grasp-sft-v2-endpoint-boundary (re-pointed). | DRIFT REPRODUCED (curve eval 3.46/3.24/4.22/5.27/6.17, train 3.69/3.32/3.86/4.60/5.62 at 250..1250, monotone from 500, losses falling throughout): mix/table EXONERATED. Kill-vs-ride PENDING with owner (asked 13:05, re-asked 13:24). ON THE KILL CALL: stop unit fontaine-grasp-sft-v2-demosonly, keep saves, then launch the PREPARED 1-GPU discriminator (launch_box_grasp_sft_v2_demosonly_1gpu_discriminator.sh, staged on box \u2014 single delta: distributed machinery removed; same eff-96/micro-12/augment/recompute/init/seed/corpus; MAE read at 250-step probes, drift shows by 750-1000; ~5-9 h wall on gpu0) + babysit entry + in-channel receipt. Healthy-vs-drifting config deltas documented in the script header (distributed / image-augment / batch / table-mode / init). | KILLED BY OWNER 13:30Z at step ~1350 (~4 GPU-h; drift fully reproduced, saves 500/1000 kept). Read BANKED: demos-native table does NOT fix the drift => mix/table exonerated as sole cause. Successor: grasp-sft-rigonly-run (owner-designed data-axis cut)."
   },
   {
    "id": "grasp-sft-v2-demosonly-endpoint-kit",
@@ -2041,6 +2041,24 @@
    "prereg": null,
    "title": "Adapt the staged v2 endpoint kit to the demosonly successor (CPU, ~15 min): eval_box script CKPT/OUT/log names v2_joint -> v2_demosonly; upload script RUN_DIR/DEST -> grasp_sft_v2_demosonly_8xa100/grasp_sft_v2_demosonly_step3000 + provenance para; endpoint charts --run key 'v2' paths already generic (curve__grasp_sft_v2_* / v2_endpoint) \u2014 re-point SIM/labels to demosonly (single-dataset labels); v2endpoint HTML preset meta text (demosonly command, launch stamp 11:38:30Z). Then scp to box so the ~15:1xZ boundary is push-button.",
    "boundary": "Queued 11:43Z 08-17. Runnable NOW (CPU); do before the ~15:1xZ boundary. This session takes it if the ride allows. | DONE 11:5xZ same session: eval_box_grasp_sft_v2_demosonly_sim100.sh + upload_grasp_sft_v2_demosonly_checkpoint.py written + scp'd to box; report --run v2 key re-pointed at demosonly (single-dataset labels, mixed-run sim20 anchor added); v2endpoint HTML preset meta updated to the demosonly command/stamps. Boundary is push-button."
+  },
+  {
+   "id": "grasp-sft-rigonly-run",
+   "class": "gpu-box",
+   "status": "live",
+   "owner_hold": false,
+   "prereg": "fontaine/blog/src/posts/2026-08-17-prereg-grasp-sft-v2-joint.md",
+   "title": "grasp_sft_rigonly_8xa100 (owner-designed data-axis cut, order 13:30Z 08-17, launched 13:34:08Z unit fontaine-grasp-sft-rigonly): rig datasets ONLY (pick_place_v2 + clean, 2 ds / 51 eps / 32,431 frames ~3 epochs at 1000 steps), recipe otherwise verbatim incl. full distributed stack; --recompute-stats = rig-native table; save+eval every 250. Decides the data axis with the stack held constant: drift on known-good rig data => recipe/stack convicted; health => sim-demo corpus implicated.",
+   "boundary": "Registration: recipe base = the v2 pre-reg page; deltas (rig-only data, 1000 steps, save-250) are the owner's verbatim 13:30Z order, restated in-channel 13:34 (post 1538903937078263858) and in the launcher header. | Live 13:34:08Z, 1000 steps ~1.2 h stepping + init => boundary ~15:0xZ (tick chain owns it; session window ends 14:1xZ). At boundary: post MAE curve verdict vs the banked drifting-run signature; next cut = the staged 1-GPU discriminator (launch_box_grasp_sft_v2_demosonly_1gpu_discriminator.sh) or owner's pick per the verdict. babysit entry grasp_sft_rigonly_8xa100 (12 GPU-h gate)."
+  },
+  {
+   "id": "sft-drift-saga-report-page",
+   "class": "cpu",
+   "status": "queued",
+   "owner_hold": false,
+   "prereg": null,
+   "title": "Chart-led drift-saga page (owner preference: chart-led consolidated reports): the grasp-SFT MAE-drift investigation as one page \u2014 the isolation grid (run-1b remap / run-2 pooled / mixed-v2 merged / demosonly native / rigonly cut), the banked MAE curves per run (all four drifting curves + the healthy probe), the two-rulers mechanism (normalized-loss vs raw-degree MAE, 1/(q99-q01)^2 weighting), the head asymmetry (step500 flow 4/100 vs token 16/100), and the config-delta table (distributed/augment/batch/table-mode/init). Curves are already banked in logs/queue; the page can be drafted now and finalizes when the rigonly (+discriminator) verdicts land. Dark-mode charts, plain-words opener per papers rule.",
+   "boundary": "Queued 13:40Z 08-17. Draftable now (CPU); FINALIZE slots for the rigonly/discriminator verdicts. Feeds the eventual fix pre-reg."
   }
  ]
 }
