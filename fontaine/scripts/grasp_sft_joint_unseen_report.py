@@ -73,18 +73,19 @@ PRESETS: dict[str, dict] = {
             ("joint probe step2000 (313 demos)", PROBE_ANCHOR, "#f593bd"),
             ("v1 step3000 (broken table)", V1_ENDPOINT_ANCHOR, "#f593bd"),
         ],
-        "subject_label": "v2 step3000 (5,000 v1.3 demos)",
+        "subject_label": "v2 demosonly step3000",
         "anchors_tile_label": "anchors: base / probe / v1 endpoint",
-        "title": "grasp_sft_v2_joint step3000 — flow head, unseen 100",
-        "h1": "Grasp-SFT v2 — joint step 3000, flow head on unseen seeds",
+        "title": "grasp_sft_v2_demosonly step3000 — flow head, unseen 100",
+        "h1": "Grasp-SFT v2 demos-only — joint step 3000, flow head on unseen seeds",
         "meta_html": (
-            "Checkpoint <code>grasp_sft_v2_joint_8xa100/step_003000</code>"
-            " (v2 regen corpus — expert v1.3, 1.88M frames — + pick_place ×4,"
-            " eff-96, 8×A100; launched 09:57:39Z 2026-08-17, run-2 recipe"
-            " verbatim, one merged recompute-stats table) · euler-10,"
+            "Checkpoint <code>grasp_sft_v2_demosonly_8xa100/step_003000</code>"
+            " (v2 regen corpus ONLY — expert v1.3, 1.75M frames, rig datasets"
+            " out per the owner's 11:27Z 08-17 order, so the recomputed table"
+            " is demos-native; eff-96, 8×A100, launched 11:38:30Z; the mixed"
+            " v2 run was killed at ~1150 on rising train MAE) · euler-10,"
             " execute-horizon 30, seeds 0–99, 30 s episodes, sharded 4×25"
-            " (exact: triple-keyed noise) · pre-reg grid: ≥ probe band 44 ⇒"
-            " demos were the lever; ~5 ⇒ data not the lever"
+            " (exact: triple-keyed noise) · isolation grid: ≥ probe band 44 ⇒"
+            " mix/table was the poison; ~5 ⇒ suspicion moves past the mix"
         ),
     },
     "v1endpoint": {

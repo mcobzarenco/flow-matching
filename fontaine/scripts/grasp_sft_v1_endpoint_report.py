@@ -91,15 +91,20 @@ RUNS = {
         "labels": DATASET_LABELS,
         "extra_sim_anchors": {},
     },
+    # v2 = the DEMOS-ONLY successor (owner killed the mixed v2 run at
+    # step ~1150, 11:27Z 08-17; launched 11:38:30Z): single dataset, so
+    # the breakdown is one series and the recomputed table is demos-native.
     "v2": {
-        "run_name": "grasp_sft_v2_joint",
+        "run_name": "grasp_sft_v2_demosonly",
         "wandb_run": None,
         "labels": {
-            "grasp_demos_v2/merged": "grasp_demos_v2 (93%)",
-            "mcobzarenco/so101_pick_place_v2": "pick_place_v2 (6%)",
-            "mcobzarenco/so101_pick_place_clean": "pick_place_clean (1%)",
+            "grasp_demos_v2/merged": "grasp_demos_v2 (100%)",
         },
-        "extra_sim_anchors": {"v1_endpoint_flow": 5, "v1_step500_flow": 2},
+        "extra_sim_anchors": {
+            "v1_endpoint_flow": 5,
+            "v1_step500_flow": 4,
+            "v2_mixed_step500_sim20": 0,
+        },
     },
 }
 RUN_NAME = "grasp_sft_v1_joint"
@@ -121,7 +126,9 @@ def configure(run_key: str, wandb_run: str | None) -> None:
     mod.OUT_JSON = REPO / f"reports/analysis__grasp_sft_{short}_endpoint.json"
     mod.WANDB_RUN = wandb_run or cfg["wandb_run"]
     mod.DATASET_LABELS = cfg["labels"]
-    mod.DATASET_COLORS = dict(zip(cfg["labels"], colors, strict=True))
+    mod.DATASET_COLORS = dict(
+        zip(cfg["labels"], colors[: len(cfg["labels"])], strict=True),
+    )
     mod.EXTRA_SIM_ANCHORS = cfg["extra_sim_anchors"]
 
 

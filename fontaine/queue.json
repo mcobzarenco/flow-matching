@@ -1,6 +1,6 @@
 {
- "updated_utc": "2026-08-17T11:43:30Z",
- "depth_reason": "depth 2: demosonly-endpoint-kit (CPU, runnable now) + grasp-sft-v2-endpoint-boundary (runnable at ~15:1xZ boundary, tick chain owns it). Two live runs (demosonly train, eval chain leg 2+3) ride via babysit; most other items owner-gated.",
+ "updated_utc": "2026-08-17T11:52:00Z",
+ "depth_reason": "depth 1, stated reason: grasp-sft-v2-endpoint-boundary is the next work and is time-gated (~15:1xZ boundary, tick chain owns it); both GPUs carry live ridden runs (demosonly train, eval chain legs 2-3); every other open item is owner-gated or box-gated. Kit prep done this session.",
  "items": [
   {
    "id": "demo-gen-sharded-a100",
@@ -2036,11 +2036,11 @@
   {
    "id": "grasp-sft-v2-demosonly-endpoint-kit",
    "class": "cpu",
-   "status": "queued",
+   "status": "done",
    "owner_hold": false,
    "prereg": null,
    "title": "Adapt the staged v2 endpoint kit to the demosonly successor (CPU, ~15 min): eval_box script CKPT/OUT/log names v2_joint -> v2_demosonly; upload script RUN_DIR/DEST -> grasp_sft_v2_demosonly_8xa100/grasp_sft_v2_demosonly_step3000 + provenance para; endpoint charts --run key 'v2' paths already generic (curve__grasp_sft_v2_* / v2_endpoint) \u2014 re-point SIM/labels to demosonly (single-dataset labels); v2endpoint HTML preset meta text (demosonly command, launch stamp 11:38:30Z). Then scp to box so the ~15:1xZ boundary is push-button.",
-   "boundary": "Queued 11:43Z 08-17. Runnable NOW (CPU); do before the ~15:1xZ boundary. This session takes it if the ride allows."
+   "boundary": "Queued 11:43Z 08-17. Runnable NOW (CPU); do before the ~15:1xZ boundary. This session takes it if the ride allows. | DONE 11:5xZ same session: eval_box_grasp_sft_v2_demosonly_sim100.sh + upload_grasp_sft_v2_demosonly_checkpoint.py written + scp'd to box; report --run v2 key re-pointed at demosonly (single-dataset labels, mixed-run sim20 anchor added); v2endpoint HTML preset meta updated to the demosonly command/stamps. Boundary is push-button."
   }
  ]
 }
