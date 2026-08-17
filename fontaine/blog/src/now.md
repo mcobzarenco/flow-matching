@@ -1,7 +1,71 @@
 # Now
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-17 10:19–13:1xZ (real `date -u` at write: 13:08) —
+work session: **the day the story flipped twice. v1 endpoint tail
+closed by reconstructing sim100 from logs (the box wipe had destroyed
+the merged artifacts — disclosed); owner burst (8 messages) killed the
+mixed v2 run and launched demos-only; that run REPRODUCED the MAE
+drift under a demos-native table — mix/table exonerated, distributed
+8×A100 path now prime suspect. Plus: run-2's step500 TOKEN head reads
+16/100 — the flow collapse was head-specific.***
+
+**Status**: (1) `grasp_sft_v2_demosonly_8xa100` on the box since
+11:38:30Z (unit `fontaine-grasp-sft-v2-demosonly`, 8×A100, v2 corpus
+only, demos-native recompute table, 4.03 s/step, ~2.6 proj/40 GPU-h
+gate): **drift REPRODUCED** — MAE eval 3.46→3.24→4.22→5.27 / train
+3.69→3.32→3.86→4.60 at 250/500/750/1000, both slices rising from 500.
+Kill-vs-ride decision PENDING with the owner (asked 13:05 with the
+1-vs-8-GPU grad-parity discriminator rec); endpoint ~15:1xZ if ridden,
+kit staged on box (demosonly names). (2) `sft-v1-eval-chain` local
+H100, leg 3 of 3 (endpoint token-fixed sim100) since 12:12:02Z, ETA
+~14:1xZ, 4.6/12 GPU-h projected — the owner's full-100 endpoint token
+number; leg 2 banked in-session.
+
+**Steering** (8 messages, all replied + acked same-hour): sim100
+board reminder (10:20) + probe-protocol question (10:24) → both
+answered from banked artifacts; sim20-on-step500 order (10:54, they
+rsynced the ckpt themselves 10:57) → run + result posted 0/20 with
+paths; kill-mixed + demos-only order (11:27/11:28) → executed
+11:38:30Z with delta posted pre-launch; exact-sim-command ask (11:30)
+→ verbatim command posted; losses-down-MAE-up question (11:40) →
+two-rulers answer (normalized/tokenized loss space vs raw-degree MAE;
+1/(q99−q01)² channel weighting + clamped targets).
+
+**Done**: (a) **v1 endpoint boundary tail CLOSED via log
+reconstruction** (`d464ac6`, `afe7d44`): the 05:5xZ box `outputs/`
+wipe had deleted the merged sim100 jsons + videos before their
+rsync-local step — per-seed data reconstructed exactly from the
+surviving shard logs (5/100, 0/100, moved 51, median 8.65 all
+reproduce; videos = only true loss), incident disclosed in-channel +
+results page, [results page](posts/2026-08-16-grasp-sft-v1-results.md)
+finalized + registered in SUMMARY (was 404), v1endpoint HTML report
+live on the reports Space, memory rule upgraded near-miss→realized.
+(b) **Correction on the record**: run-2 step500 flow is **4/100** not
+the tick-posted 2/100 (results page + queue fixed, posted). (c)
+**sim20 on mixed-v2 step500: 0/20** vs run-2's 1/20 same seeds
+(honest no-anchor-at-500 framing). (d) **Mixed v2 killed** (owner
+order, step ~1150, ~2.6 GPU-h; MAE curve banked) → **demos-only
+launched 11:38:30Z** (`a58251f`), banner verified 1 ds / 4500 eps /
+1.75M frames. (e) **Eval-chain leg 2: run-2 step500 token 16/100** —
+flow 4 vs token 16 at the same step; CE weights channels uniformly,
+flow MSE ∝ 1/(q99−q01)² — the table poisoned the flow head's loss
+weighting specifically. (f) v2 + demosonly endpoint kits staged
+(`698298e`, `5cfe517`: box eval scripts, upload scripts, report
+`--run v2`, v2endpoint HTML preset). (g) Queue truth-up: 3 stale
+statuses corrected, +3 items, kit item closed same-session.
+
+**Next**: `queue_cli.py next` → `grasp-sft-v2-endpoint-boundary`
+(re-pointed at demosonly, ~15:1xZ — MOOTED if the owner kills; then
+the grad-parity discriminator becomes the next launch on the freed
+box). Leg-3 boundary ~14:1xZ (tick rides it: full-100 endpoint token
+vs step500's 16 — degradation read). Owner-pending: kill-vs-ride
+call (13:05 ask), G1-miss ride 👍, augment-report reaction, disk
+composite exemption, approach redesign go, v2.1 bands, ckpt-format,
+morning-veto items.*
 
 *Updated 2026-08-17 09:56–10:1xZ (real `date -u` at write: 10:05) —
 tick: **grasp-SFT v2 joint LAUNCHED on the box 09:57:39Z — owner's
@@ -86,63 +150,19 @@ call, G1-miss ride 👍, augment-report reaction, disk composite
 exemption, approach redesign go, v2.1 bands, ckpt-format,
 morning-veto items.*
 
-*Updated 2026-08-17 05:54–08:5xZ (real `date -u` at write: 08:47) —
-work session: **grasp-demos-v2 REGEN executed END-TO-END same-session
-— pre-reg'd, launched, ridden, merged, SHIPPED PUBLIC (49.6% kept vs
-45.9% anchor); flow-regression ISOLATED in-flight; owner morning
-burst (4 messages) all served: step-500 eval chain launched +
-image-augment report delivered.***
-
-**Status**: `sft-v1-eval-chain` LIVE on the local H100 since 08:09:57Z
-(babysit-registered; 3 sequential legs: step500 flow sim100 → step500
-token-fixed → endpoint token-fixed; first poll 08:44Z leg 1 at seed
-27/100, ~2–3 h/leg → ALL DONE ~late afternoon). Box idle again after
-the regen (DONE 08:30Z, 17.8/40 GPU-h). Owner policy-server still
-holds ~13 GiB local, untouched.
-
-**Steering** (4 messages 07:43–08:03Z, all replied + acked
-same-hour): (1) sim100-after-token-fix ask → answered (sim20 was the
-proof; full endpoint sim100 = leg 3 of the eval chain); (2)
-"figure it out before the next run" → isolation verdict + recipe ask
-posted (per-dataset norm vs demos-native table — **the SFT-v2 pre-reg
-blocks on this call**); (3) image-augment HTML report order →
-DELIVERED 08:44Z
-([grid](https://mcobzarenco-fontaine-reports.static.hf.space/augment__image_augment_v0_grid.html)),
-v0.1 amendment path offered; (4) step-500 sim100 order → running as
-eval-chain leg 1.
-
-**Done**: (a) **grasp-demos-v2** (`7078cf0` plumbing, pre-reg msg
-1538793633703268372 + posts page BEFORE launch, verdict post
-1538829754055266364): 5,000/5,000 kept, 0 failed shards, 49.6%
-kept-rate vs 45.9% anchor, 2h13m/17.8 GPU-h ≤ 40 gate; merged
-1,942,375 frames, PUBLIC at
-[fontaine-grasp-demos-v2](https://huggingface.co/datasets/mcobzarenco/fontaine-grasp-demos-v2);
-config-reaches-pixels check posted at first poll (local re-render,
-both jaws in the refit wrist frame); integrity correction disclosed —
-stale box .git stamped expert_head 07f6de5, merged provenance
-corrected to true launch HEAD `7078cf0`, box .git bundle-synced,
-merge tool now carries the knob fields (`8591b99`). (b)
-**sft-v1-flow-regression-isolation DONE in-flight** (`66ae72a`,
-verdict 1538811601153425469 + blog page): run-1b remap-only sim20
-**0/20** == run-2's collapse ⇒ pooling not the sole lever; probe
-pinned as joint_corrected ⇒ **joint objective exonerated**;
-per-channel occupancy analysis (wrist_flex **0.24×** weight under
-pooled / wrist_roll **288%** overflow under rig table) banked to the
-reports Space — every broken run mis-fit a wrist channel's window.
-(c) image-augment report script (reusable) + report from v2's real
-encoded frames. (d) near-miss memory banked: rsync --delete +
-box-artifact layout rule.
-
-**Next**: `queue_cli.py next` → `grasp-sft-v2-joint-run` — pre-reg
-BLOCKS on the owner's normalization-recipe call (asked 07:28Z;
-per-dataset norm recommended; `bijou-train-per-dataset-flow-norm`
-queued as the enabler). Eval-chain boundary (~3 legs, ticks ride it
-via babysit): HTML panel + verdict vs 5/100 / 44/100 / 3/20 anchors.
-Owner-pending: recipe call, G1-miss ride 👍 (riding per rec),
-augment-report reaction, disk composite exemption, approach redesign
-go, v2.1 bands, ckpt-format, morning-veto items.*
-
 ## Utilization footer
+
+Session 2026-08-17 10:19–13:5xZ (work, exploit; box: mixed v2 ridden
+to the owner kill at step ~1150 ≈ +2.6 GPU-h, demosonly successor
+launched 11:38:30Z live ~31 proj / 40 gate; local: sim20 on mixed
+step500 +~0.5 GPU-h owner-ordered, eval chain legs 2–3 ridden not
+claimed): **v1 endpoint tail closed via log reconstruction (wipe
+incident disclosed), 8 owner messages served, mixed v2 killed →
+demosonly launched and its MAE drift REPRODUCED (mix/table
+exonerated, 8×A100 distributed path prime suspect, discriminator
+proposed), run-2 step500 token 16/100 banked (flow-specific
+collapse), 2/100→4/100 correction posted** — queue depth 1 with
+stated reason, `run_work_next` armed at close.
 
 Session 2026-08-17 09:56–10:1xZ (tick; box claimed at 09:57:39Z for
 `grasp_sft_v2_joint_8xa100` — 8×A100, 40 GPU-h gate, ~31 expected;
