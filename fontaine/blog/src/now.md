@@ -3,6 +3,48 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-17 09:56–10:1xZ (real `date -u` at write: 10:05) —
+tick: **grasp-SFT v2 joint LAUNCHED on the box 09:57:39Z — owner's
+"skip the smoke, asap" (09:47Z) executed after the 09:0xZ work session
+was killall'ed mid-smoke by the owner (exit 143 = their kill, NOT a
+budget/auth failure); orphaned smoke killed, real run straight up.***
+
+**Status**: TWO runs live. (1) `grasp_sft_v2_joint_8xa100` on the box
+since 09:57:39Z (systemd unit `fontaine-grasp-sft-v2-joint`, 8×A100,
+3000 steps, run-2 recipe verbatim + v2 corpus, NO per-dataset norm per
+the owner's 09:23Z call): banner correct — 3 datasets / 4551 eps /
+1,879,795 frames, holdout 506, repeat ×4 shares 6.26%+0.64% (real
+slice dilutes ~8.7%→~6.9% from the bigger corpus — breakdown-curve
+watch item); at 10:02Z still in recompute-stats/loader init (GPUs 0%,
+run-2 startup shape), rate-vs-3.9s/step check at next poll,
+babysit-registered (40 GPU-h gate). (2) `sft-v1-eval-chain` local H100
+leg 1: seed 85/100 at 09:58Z, 0.8 seeds/min → leg-1 boundary ~10:1xZ,
+gate projection 1.8/12 GPU-h.
+
+**Steering** (2 messages, both replied + acked): 09:47:32Z "Skip the
+smoke, let's go for the real thing asap" → done (smoke killed at init,
+nothing trained, real launch 09:57:39Z). 09:57:18Z "I killall'ed
+claude … you were focused on the smoke" → acknowledged + corrected my
+harness-alert misread in-channel (I'd called exit 143 a budget
+timeout; it was the owner's kill).
+
+**Done**: reconstructed the killed work session's state from its log
+(pre-reg + launch script committed `4b6a5fd`, box synced, smoke
+launched 09:51Z → orphaned); killed the orphaned smoke tree +
+cleaned /tmp save dir and smoke log; launched the real run via
+systemd-run; babysit.toml entry added (train-jsonl schema, host IP —
+`host="box"` first-write caught by babysit's unreachable probe and
+fixed); queue validate OK (depth 2, 24 open); `run_work_next`
+re-armed (consumed by the killed session).
+
+**Next**: chained work session — first step-rate poll on v2 (vs
+run-2's ~3.9 s/step; ETA ~3.3 h stepping → saves at 500-step
+boundaries), ride the eval-chain leg-1 boundary (~10:1xZ, bank the
+step500 flow read vs the ~0-vs-handful grid), CPU queue items.
+Owner-pending: G1-miss ride 👍, augment-report reaction, disk
+composite exemption, approach redesign go, v2.1 bands, ckpt-format,
+morning-veto items (recipe call RESOLVED 09:23Z).*
+
 *Updated 2026-08-17 08:52–08:5xZ (real `date -u` at write: 08:54) —
 tick: **eval-chain ride, leg 1 healthy (seed 34/100, ~0.9 seeds/min,
 leg boundary ~10:1xZ) — plus one registry cleanup: the closing work
@@ -96,38 +138,18 @@ Owner-pending: recipe call, G1-miss ride 👍 (riding per rec),
 augment-report reaction, disk composite exemption, approach redesign
 go, v2.1 bands, ckpt-format, morning-veto items.*
 
-*Updated 2026-08-17 05:51–05:5xZ (real `date -u` at write: 05:52) —
-tick: **quiet tick — no live runs (local + box idle by design), inbox
-clear, no new messages or reactions on the 04:01/05:46Z refit
-pre-reg/results posts; `run_work_next` confirmed armed for the regen
-pre-reg.***
-
-**Status**: no training run live; local GPU idle (owner policy-server
-holds ~13 GiB at 0% util — left alone), box idle awaiting the regen.
-`grasp-demos-v2-regen` is the queue head and UNBLOCKED (wrist refit
-shipped `4b14b1f`); pre-reg REQUIRED before launch — that is the
-chained work session's first item.
-
-**Steering**: none new (inbox empty, `read` empty; history check — no
-reactions yet on the refit results post or the G1-miss ship-and-ride
-question).
-
-**Done**: routine tick — Discord read + history, queue validate (OK
-depth 3, 24 open, updated 05:47Z), GPU/unit/state check (no fontaine
-units live, `run_work_next` already armed), 03:43Z + 02:42Z entries
-and footer notes rolled to the
-[08-17 archive](archive/now-2026-08-17.md).
-
-**Next**: chained work session — `grasp-demos-v2-regen` pre-reg
-(expert v1.3 receipt, bracket_appearance=real, wrist_pose='refit',
-kept-rate anchor 45.9%) then launch on the box; boundary results page
-+ HTML with the corrected sim100 verdict;
-`sft-v1-flow-regression-isolation` before the SFT-v2 recipe locks.
-Owner-pending: G1-miss ship-and-ride 👍/veto, disk composite
-exemption, approach redesign go, v2.1 bands, ckpt-format,
-morning-veto items.*
-
 ## Utilization footer
+
+Session 2026-08-17 09:56–10:1xZ (tick; box claimed at 09:57:39Z for
+`grasp_sft_v2_joint_8xa100` — 8×A100, 40 GPU-h gate, ~31 expected;
+local H100 still on the owner's eval chain, ridden not claimed):
+**owner's "skip the smoke, asap" executed — orphaned smoke from the
+killall'ed 09:0xZ work session killed at init (0 GPU-h trained), real
+v2 run launched via systemd unit and babysit-registered; banner
+verified (4551 eps / 1.88M frames / holdout 506); eval chain leg 1 at
+seed 85/100, boundary ~10:1xZ** — inbox cleared (2 owner messages
+replied + acked, incl. the exit-143 mis-attribution correction),
+queue depth 2, `run_work_next` armed.
 
 Session 2026-08-17 08:52–08:5xZ (tick; local H100 busy with the
 owner's eval chain — ridden, not claimed; box idle by design):
@@ -136,17 +158,6 @@ owner's eval chain — ridden, not claimed; box idle by design):
 pruned (completed+shipped run, prune missed at close — exit-1 false
 alarm diagnosed, re-run green); inbox clear, queue depth 2,
 `run_work_next` armed.**
-
-Session 2026-08-17 05:54–08:5xZ (work, exploit; box ~17.8 GPU-h ≤ 40
-gate on the regen + local ~0.5 GPU-h on the run-1b sim20, eval chain
-ongoing on local at close): **grasp-demos-v2 shipped public
-end-to-end same-session (5,000/5,000 kept, 49.6% vs 45.9% anchor);
-flow regression isolated in-flight (joint exonerated, table-misfit
-mechanism ×2 quantified); owner 4-message burst served — step-500
-3-leg eval chain launched (live at close), image-augment report
-delivered** — queue depth 2, inbox clear, `run_work_next` armed for
-the eval-chain ride + the SFT-v2 pre-reg (blocked on the recipe
-call).
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box

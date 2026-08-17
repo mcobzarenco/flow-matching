@@ -1071,3 +1071,25 @@ value = 12.0
 # liveness FAIL (box GPUs 0 MiB x8, 5000/5000) was the completed run,
 # not a death. Box idle again; next box claim = grasp-sft-v2-joint-run
 # (pre-reg blocked on the owner's normalization-recipe call).
+
+[[run]]
+name = "grasp_sft_v2_joint_8xa100"
+kind = "train-jsonl"
+host = "147.224.218.164"
+pgrep = "bijou.train"
+pgrep_min = 8
+gpu_indices = [0, 1, 2, 3, 4, 5, 6, 7]
+gpu_mem_min_mib = 20000
+jsonl = "/home/ubuntu/checkpoints/finetune/grasp_sft_v2_joint_8xa100/train_log.jsonl"
+total_steps = 3000
+started_utc = "2026-08-17T09:57:39+00:00"
+gpu_hours_per_wall_hour = 8.0
+boundary = "save-every 500 (async) of 3000 steps; eval-250 with dataset breakdown. Run-2 verbatim recipe, two deltas: v2 regen corpus + run name; NO per-dataset norm (owner call 09:23Z). Owner 09:47Z: smoke SKIPPED on their order - orphaned smoke killed 09:57Z, real run straight up."
+anchors = [
+    "run-2 spent ~31/40 GPU-h at ~3.9 s/step, same shape expected; rate materially above ~4 s/step = investigate input starvation",
+    "run-2 endpoint flow 5/100 box / 0/20 local; token-fixed 3/20; joint-corrected probe 44/100 - endpoint grid: flow >= probe band => demos were the lever; flow ~5/100 => data not the lever, banked per-dataset-norm cell is next arm",
+    "watch run-2's real-slice gap (8.15 train vs 15.77 eval at 8% share) via breakdown curves",
+]
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 40.0
