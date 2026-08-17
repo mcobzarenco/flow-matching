@@ -2,9 +2,51 @@
 
 
 
-
-
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-17 22:36–22:4xZ (real `date -u` at write: 22:41) —
+tick: **quiet babysit — discriminator step 510/1000, healthy; a
+host-RAM drop (91→50 GB available) investigated and cleared as a
+step-change at the save-500 boundary, not a leak.***
+
+**Status**: 1 live run — `grasp_sft_v2_demosonly_1gpu_disc` attempt
+2 at step 510/1000, loss 0.5791→0.5196, window rate 3.6 steps/min
+(≈16.6 s/step, inside attempt-1's 15–18.7 band; the jsonl's 22.9
+s/step at 510 is inflated by the probe+save at 500), VRAM 62.26 GiB
+vs the 78 gate, GPU 100%/66.6 GiB. Probe trajectory 12.51@250 →
+7.57@500 as banked. **Host-RAM watch finding**: available fell
+91→50 GB since the 20:30 poll — root-caused, NOT loader creep:
+the save path deep-copies the CPU-offloaded optimizer state +
+tensors at each boundary (`copy_to_cpu` capture + async write,
+`bijou/train/cli.py:2602`), a transient double retained by glibc
+arenas. Evidence: VmHWM 147.3 GB vs RSS 145.8 GB (peak ≈ current —
+save-1000 reuses the arena, no new high-water), and a 66-s resample
+showed RSS flat (+116 MB noise) with MemAvailable *rising*
+(51.8→52.3 GB). 50 GB headroom for the remaining ~2.5 h — no
+action; boundary tick should still glance at `free -g` at first
+poll (concern bar: <20 GB available).
+
+**Steering**: none — `read` empty, inbox empty, `history -n 5`
+shows only our own posts (the 👍 on the Amendment-1 post was
+already recorded).
+
+**Done**: babysit exit 0 + the standing util/rate/RAM first-poll
+checks (util 100%, rate in-band, RAM investigated above); queue
+validate OK depth 2 (23 open); `run_work_next` confirmed armed
+(GPU-busy window, `queue-box-kill-audit` is the CPU head). No
+in-channel post — the 22:34 step-500 post is current; the RAM
+finding is a non-event once root-caused.
+
+**Next**: boundary tick ~00:4x–01:0xZ 08-18 owns step 1000:
+`sft_drift_saga_charts.py --discriminator` on the fresh jsonl only,
+then **Amendment 1** (raw AND scale-adjusted rules, disagree ⇒
+AMBIGUOUS-BY-INSTRUMENT + stack-parity probe of saves 500/1000);
+carry the descent-asymmetry caveat if Δ is negative
+(1539039813804498984). Then `queue-box-kill-audit` (CPU head);
+`prereg-draft-per-dataset-flow-norm-rerun` stays verdict-gated.
+Owner-pending list unchanged (G1-miss ride 👍, augment-report
+reaction, disk composite exemption, approach redesign go, v2.1
+bands, ckpt-format, morning-veto items).*
 
 *Updated 2026-08-17 19:20–22:5xZ (real `date -u` at write: 22:38) —
 work session: **utilization ledger REBASED + discriminator OOM
@@ -75,74 +117,16 @@ if Δ is negative. Owner-pending list unchanged
 (G1-miss ride 👍, augment-report reaction, disk composite exemption,
 approach redesign go, v2.1 bands, ckpt-format, morning-veto items).*
 
-*Updated 2026-08-17 19:17–19:2xZ (real `date -u` at write: 19:20) —
-tick: **quiet babysit — discriminator healthy at step 100/1000, on
-pace for the ~23:0xZ verdict.***
-
-**Status**: 1 live run — `grasp_sft_v2_demosonly_1gpu_disc` at step
-100/1000, loss 4.94→1.08, 15.8 s/step steady (~3.9 h to 1000), VRAM
-62.24 GiB vs the 78 gate, GPU 65%/66.5 GiB mid-cycle, host RAM 91 GB
-available (stable vs 92 at launch — no loader-buffer creep). babysit
-exit 0. First eval probe at 250 ≈ 19:55Z — lands after this tick's
-cap; the next tick reads it (drifting comparators sat at 3.46 there;
-NO probe-kill bars — verdict at 1000 only).
-
-**Steering**: none — `read` empty, inbox empty, no new reactions in
-`history -n 5`.
-
-**Done**: babysit + queue validate (OK, depth 2, 23 open) + the
-standing RAM/util watch checks; `run_work_next` confirmed armed
-(GPU-busy window, `utilization-ledger-rebase` is the CPU head). No
-in-channel post — the 19:13 post covers current state, step-100
-status adds nothing.
-
-**Next**: chained work session takes `utilization-ledger-rebase`;
-next tick reads the step-250 probe. At step 1000 (~23:0xZ):
-`sft_drift_saga_charts.py --discriminator` verdict → drift-saga
-finalize + in-channel + un-gates
-`prereg-draft-per-dataset-flow-norm-rerun`. Owner-pending list
-unchanged (G1-miss ride 👍, augment-report reaction, disk composite
-exemption, approach redesign go, v2.1 bands, ckpt-format,
-morning-veto items).*
-
-*Updated 2026-08-17 19:02–19:2xZ (real `date -u` at write: 19:13) —
-work session: **v1 mirror restored + a babysit-registry fix; the
-discriminator is riding FAST — step-1000 verdict lands ~23:0xZ
-TONIGHT, not the 7–9 h estimate.***
-
-**Status**: 1 live run — `grasp_sft_v2_demosonly_1gpu_disc` at step
-40/1000, loss 4.94→2.17, **15.1 s/step steady** (vs 25–32 box
-estimate → ~4 h wall), VRAM 62.24 GiB vs the 78 gate, util cycling
-100% (0% dips = offloaded-optimizer CPU phase, expected). First eval
-probe at 250 ≈ 19:55Z (drifting comparators: 3.46 there); saves
-500/1000; verdict read AT 1000 only.
-
-**Steering**: none — `read` empty, inbox empty.
-
-**Done**: (1) babysit exit-1 at boot diagnosed in minutes: the
-registry's jsonl path was the BOX layout (`outputs/train/<run>/`);
-the local bijou.train stack writes `~/checkpoints/finetune/<run>/` —
-path fixed, babysit green (`303830d`), run never blipped. (2) Queue
-item `local-dataset-mirrors-restore` DONE: audit first — NONE of the
-three held gpu-local arms needs the v1 corpus (bootstrap + token-SFT
-→ `grasp_sft_demos_v0`, on disk; grpo-r2 → checkpoint), mapping
-recorded in their boundaries; then `fontaine-grasp-demos-v1` pulled
-→ `~/datasets/fontaine/grasp_demos_v1/merged` in 1m42s, verified
-EXACT vs the HF manifest (232 files, 28,099,973,012 bytes = 26.17
-GiB, data/meta/videos present; disk 458 GB free). Pull = durability
-redundancy — HF was the ONLY v1 copy post-box-kill. Refill:
-`utilization-ledger-rebase` (footer baseline 11 days stale).
-In-channel 1538989075539693651.
-
-**Next**: `queue_cli.py next` = `utilization-ledger-rebase` (CPU,
-unblocked); `run_work_next` armed. Discriminator boundary ~23:0xZ:
-`sft_drift_saga_charts.py --discriminator` verdict → drift-saga
-finalize + in-channel + un-gates
-`prereg-draft-per-dataset-flow-norm-rerun`. Owner-pending: G1-miss
-ride 👍, augment-report reaction, disk composite exemption, approach
-redesign go, v2.1 bands, ckpt-format, morning-veto items.*
-
 ## Utilization footer
+
+Session 2026-08-17 22:36–22:4xZ (tick; GPU-h accruing —
+discriminator riding to the ~00:4xZ verdict): **quiet babysit —
+step 510/1000 at ≈16.6 s/step effective, loss 0.52, VRAM 62.26 GiB
+vs the 78 gate; the 91→50 GB host-RAM drop root-caused to the
+save-boundary optimizer deep-copy (VmHWM≈RSS, resample flat) — no
+leak, no action, boundary tick keeps the `free -g` glance** —
+`run_work_next` armed; boundary tick owns the Amendment-1 verdict
+read.
 
 Session 2026-08-17 19:20–22:5xZ (work, exploit-infra; ~1.25 GPU-h
 burned on discriminator attempt 1's OOM death + ~2.5 accrued on
