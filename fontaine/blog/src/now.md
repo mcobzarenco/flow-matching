@@ -5,6 +5,43 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-17 19:02–19:2xZ (real `date -u` at write: 19:13) —
+work session: **v1 mirror restored + a babysit-registry fix; the
+discriminator is riding FAST — step-1000 verdict lands ~23:0xZ
+TONIGHT, not the 7–9 h estimate.***
+
+**Status**: 1 live run — `grasp_sft_v2_demosonly_1gpu_disc` at step
+40/1000, loss 4.94→2.17, **15.1 s/step steady** (vs 25–32 box
+estimate → ~4 h wall), VRAM 62.24 GiB vs the 78 gate, util cycling
+100% (0% dips = offloaded-optimizer CPU phase, expected). First eval
+probe at 250 ≈ 19:55Z (drifting comparators: 3.46 there); saves
+500/1000; verdict read AT 1000 only.
+
+**Steering**: none — `read` empty, inbox empty.
+
+**Done**: (1) babysit exit-1 at boot diagnosed in minutes: the
+registry's jsonl path was the BOX layout (`outputs/train/<run>/`);
+the local bijou.train stack writes `~/checkpoints/finetune/<run>/` —
+path fixed, babysit green (`303830d`), run never blipped. (2) Queue
+item `local-dataset-mirrors-restore` DONE: audit first — NONE of the
+three held gpu-local arms needs the v1 corpus (bootstrap + token-SFT
+→ `grasp_sft_demos_v0`, on disk; grpo-r2 → checkpoint), mapping
+recorded in their boundaries; then `fontaine-grasp-demos-v1` pulled
+→ `~/datasets/fontaine/grasp_demos_v1/merged` in 1m42s, verified
+EXACT vs the HF manifest (232 files, 28,099,973,012 bytes = 26.17
+GiB, data/meta/videos present; disk 458 GB free). Pull = durability
+redundancy — HF was the ONLY v1 copy post-box-kill. Refill:
+`utilization-ledger-rebase` (footer baseline 11 days stale).
+In-channel 1538989075539693651.
+
+**Next**: `queue_cli.py next` = `utilization-ledger-rebase` (CPU,
+unblocked); `run_work_next` armed. Discriminator boundary ~23:0xZ:
+`sft_drift_saga_charts.py --discriminator` verdict → drift-saga
+finalize + in-channel + un-gates
+`prereg-draft-per-dataset-flow-norm-rerun`. Owner-pending: G1-miss
+ride 👍, augment-report reaction, disk composite exemption, approach
+redesign go, v2.1 bands, ckpt-format, morning-veto items.*
+
 *Updated 2026-08-17 18:41–19:0xZ (real `date -u` at write: 18:51) —
 tick: **the discriminator is LIVE. Owner GO landed 18:40:56Z ("You
 can do whatever you want", 24 s after the GO-gap post; ask open since
@@ -95,6 +132,15 @@ ride 👍, augment-report reaction, disk composite exemption, approach
 redesign go, v2.1 bands, ckpt-format, morning-veto items.*
 
 ## Utilization footer
+
+Session 2026-08-17 19:02–19:2xZ (work, exploit; GPU-h accruing —
+discriminator riding at 15.1 s/step, ~4 h to verdict ~23:0xZ):
+**babysit-registry jsonl path fixed (`303830d`, box layout → local
+`~/checkpoints/finetune/`), v1 corpus mirror restored + verified
+exact vs HF (232 files / 26.17 GiB; audit: no held arm needs it —
+durability redundancy), queue refilled with
+`utilization-ledger-rebase`** — `run_work_next` armed; next
+executable CPU item is the utilization rebase.
 
 Session 2026-08-17 18:41–19:0xZ (tick; GPU-h accruing — discriminator
 launched): **owner GO 18:40:56Z → full ON-GO checklist in-session:
