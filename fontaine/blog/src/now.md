@@ -18,10 +18,14 @@ train_log). Eval curve oscillated all run: 4.05 → 4.54 → 3.74 → 5.00
 → 5.09 → **3.62 @1500** → **6.64 @1750** → 5.49 → 6.36 → 5.48 → 5.52
 → 5.41 @3000; per-dataset @3000: sim 5.06/4.99 (eval/train), **real
 v2 15.77/8.15 — a 2× train/eval gap on real data** (the boundary
-caveat, sharper than run-1b's rise). sim100 (flow+token, 4×25 exact
-shards) LIVE on the box under unit `sft-v1-sim100`, ~10/25 seeds per
-shard at 01:53Z, ETA ~02:2xZ — verdict vs the 44/100 flow anchor +
-≥20 token bar lands in this session's tail or the next tick. Local
+caveat, sharper than run-1b's rise). **sim100 VERDICT (merged 02:3xZ):
+FLOW 5/100, TOKEN 0/100** vs anchors probe 44 / base 9 / corrupt 28 +
+token bar ≥20 → pre-reg band flow <25 = **seam/serving investigation
+FIRST, no bank**. Not read as raw model failure: flow moved the boat
+51/100 (median final 8.7 cm from ~11 spawns) — reaches, cannot grasp;
+prime suspect a serving-path norm mismatch on exactly the recomputed
+wrist/lift channels → `sft-v1-serving-norm-audit` queued, GATES the
+v2 pipeline (same flag). Page/HTML finalize on the next tick. Local
 GPU idle after refit renders.
 
 **Steering** (3 threads, all replied + acked, inbox clear): (1)
