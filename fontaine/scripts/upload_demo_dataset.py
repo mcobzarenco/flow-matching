@@ -65,7 +65,7 @@ is rewritten away — see `sim/collect_demos.py:rewrite_quantile_stats`).
 def render_card(root: Path, repo: str) -> str:
     provenance = json.loads((root / "meta" / "demo_provenance.json").read_text())
     info = json.loads((root / "meta" / "info.json").read_text())
-    return CARD_TEMPLATE.format(
+    card = CARD_TEMPLATE.format(
         repo=repo,
         kept=provenance["kept"],
         attempted=provenance["attempted"],
@@ -77,6 +77,21 @@ def render_card(root: Path, repo: str) -> str:
         expert_head=provenance["expert_head"],
         substrate=provenance["substrate"],
     )
+    # v2+ visual knobs ride provenance when the collector was launched
+    # with them; older datasets (v0/v1) predate the fields.
+    extras = {
+        "bracket_appearance": "Bracket appearance",
+        "wrist_pose": "Wrist camera pose",
+    }
+    lines = [
+        f"- **{label}**: `{provenance[key]}`"
+        for key, label in extras.items()
+        if provenance.get(key)
+    ]
+    if lines:
+        card += "\nVisual-config knobs (see `meta/demo_provenance.json`):\n\n"
+        card += "\n".join(lines) + "\n"
+    return card
 
 
 def main() -> int:
