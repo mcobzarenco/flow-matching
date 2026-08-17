@@ -1968,6 +1968,33 @@
    "boundary": "Queued 02:3xZ 08-17 at the sim100 verdict. GATES grasp-demos-v2-regen -> grasp-sft-v2-joint-run (same --recompute-stats flag). Runnable immediately, leads with wrist-cam-pose-refit next session. | DONE 03:3xZ 08-17 work session (commit b779ba4): TOKEN-LEG SEAM FOUND + FIXED — inference collator couldn't carry the merged action table (codec-required guard), AR decode fell back to per-item quantiles = the real-v2 rig row in sim100 while training tokenized under the recomputed MERGED row; merged lift pair descending (+44.26 -> -124.8) vs v2 ascending => every token lift command decoded SIGN-INVERTED. Fix: molmoact2_action_table pinned family-gated in BijouPolicy; guard removed; test added. FLOW path audited CLEAN (decoder-owned row empirically == metadata merged after load; state clamp affine both sides; box code byte-identical to HEAD). 20 unseen seeds 100-119 local: token WITH fix 3/20 (box 0/100) = seam confirmed + AR head success-capable; flow 0/20 (box 5/100, median final 8.9 vs 8.7 cm) = flow regression REAL, not serving. Gate half-cleared: serving trustworthy; flow fault isolation queued (sft-v1-flow-regression-isolation)."
   },
   {
+   "id": "sft-v1-step500-sim100",
+   "class": "cpu",
+   "status": "queued",
+   "owner_hold": false,
+   "prereg": null,
+   "title": "sim100 on run-2's step_000500 (owner order 08:03:49Z 08-17, msg 1538820633826299954): pull step_000500 weights from the box archive (~/checkpoints/finetune/grasp_sft_v1_joint_8xa100), run locally as detached units — flow leg first (euler-10, seeds 0-99, the regression under investigation), then token-with-fix greedy leg; HTML panel + verdict vs anchors (endpoint flow 5/100 box / 0/20 local, probe 44/100, token-fixed 3/20). Feeds the isolation story: the degradation curve — did run 2 ever grasp before the table damage compounded. Also chained: full sim100 of the ENDPOINT token-with-fix (owner 07:43Z ask), after the step500 legs on the same GPU.",
+   "boundary": "Queued 08:0xZ 08-17 at the order; reply posted 1538821253362745426. Launch this session (work session 05:54Z owns it); babysit entries at launch; results likely land at a later tick/session (~3 h/leg)."
+  },
+  {
+   "id": "image-augment-html-report",
+   "class": "cpu",
+   "status": "queued",
+   "owner_hold": false,
+   "prereg": null,
+   "title": "Image-augmentation HTML report (owner order 07:55:24Z 08-17, msg 1538818515908173824): sample real frames from the demo corpus, render a few augmented draws per frame under the frozen --image-augment v0 recipe (pre-reg posts/2026-08-15-prereg-image-augment-sim2real.md), grid them in a browsable HTML report on fontaine-reports for owner review.",
+   "boundary": "Queued 08:0xZ 08-17 at the order; reply posted 1538821252431609988. Execute this session after the regen boundary if budget allows, else next session top."
+  },
+  {
+   "id": "bijou-train-per-dataset-flow-norm",
+   "class": "cpu",
+   "status": "queued",
+   "owner_hold": false,
+   "prereg": null,
+   "title": "Per-dataset flow-target normalization in bijou.train (the isolation verdict's recipe enabler, 07:28Z 08-17 post 1538811601153425469): normalize each item's flow targets under its OWN dataset's q01/q99 row (per_dataset_stats already ride metadata) instead of one pooled/foreign table, and serve the same way (the b779ba4 train/serve-consistency lesson: the flow decoder must denormalize under the row the item was trained with — sim rollouts use the sim row). Flag-gated alongside --recompute-stats, default off; oracle: a two-dataset synthetic fixture where pooled vs per-dataset normalization produce measurably different normalized targets, round-trip exact. Feeds grasp-sft-v2-joint-run: with per-dataset norm the v2 run is the clean 4th isolation cell (3-mix + sim-fit table) — if it grasps, the mix (b) is exonerated for free.",
+   "boundary": "Queued 07:3xZ 08-17 at the isolation verdict. GATED on the owner's recipe call (per-dataset norm vs demos-native table vs drop the flag — asked in the verdict post); implementation is the same plumbing for the first two options. Do BEFORE grasp-sft-v2-joint-run locks its pre-reg."
+  },
+  {
    "id": "sft-v1-flow-regression-isolation",
    "class": "cpu",
    "status": "done",

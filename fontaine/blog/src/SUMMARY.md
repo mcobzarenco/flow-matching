@@ -314,3 +314,5 @@
   - [2026-08-16 — Registered amendment: route C — one joint run merges the A+B pre-regs (+ --offload-optim)](posts/2026-08-16-amendment-grasp-sft-route-c-joint.md)
   - [2026-08-16 — Pre-reg (DRAFT): sim spawn-v2 — randomize the disk and the boat](posts/2026-08-16-prereg-sim-spawn-v2.md)
   - [2026-08-16 — Smoother demos v1.1: rate-bounded commands + the tail-budget artifact](posts/2026-08-16-smoother-demos-v11.md)
+  - [2026-08-17 — Pre-registration: grasp-demos-v2 regen (expert v1.3 + real bracket + refit wrist pose)](posts/2026-08-17-prereg-grasp-demos-v2-regen.md)
+  - [2026-08-17 — sft-v1 flow regression isolated: the normalization window, twice, differently](posts/2026-08-17-sft-v1-flow-isolation.md)
