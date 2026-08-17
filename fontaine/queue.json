@@ -1938,6 +1938,24 @@
    "prereg": null,
    "title": "Wrist-cam pose refit vs rig v2 (owner ask 21:43:31Z 08-16, proposal agreed-in-channel 22:0xZ msg 1538665108811812925): sim wrist view shows one small clockwise-leaning orange jaw tip where rig v2 shows BOTH jaws symmetric from the bottom edge (eyeballed 08-16: /tmp pairs; the sim-wrist-periphery-fix pose overcorrected). Instrument first, fit second, lens-plumbline pattern: (1) matched pairs \u2014 replay rig v2 per-frame joint STATES into the sim, render wrist at identical kinematics; (2) measure both sides: in-image jaw-axis angle (orange jaw hue-segmentable real / exact mask sim), bottom-band occupancy fraction, both-jaws-visible rate; (3) fit mount-local camera roll/tilt (+fovy if needed) minimizing the matched-set discrepancy, validate held-out; ship flag-gated (bracket_appearance pattern), rides the next-gen regen with brackets + v1.3 expert. Note: pose change alters recorded wrist frames -> regen-only, never silently.",
    "boundary": "Queued 22:0xZ 08-16 at the steering reply. | STAGE 1 DONE 23:4xZ 08-16 (in-session fill work during the run-2 ride, owner status ask 23:06Z): matched-pairs instrument landed (fontaine/scripts/wrist_cam_matched_pairs.py, commit 31d8391), 312 pairs at outputs/sim/wrist_refit/matched_pairs/ + manifest. Read: discrepancy CONSISTENT \u2014 the real-centered working area (jaw tips/held object/disk) sits at/below the sim bottom edge => pitch overshoot + clockwise roll; some poses see the mount body. Remaining: stage-2 measurements on the 312 pairs, stage-3 fit + held-out validation + flag-gated ship (composite posted in-channel 1538690503976161410)."
+  },
+  {
+   "id": "grasp-demos-v2-regen",
+   "status": "queued",
+   "title": "Grasp demos v2: 5k regen with all demo improvements (owner order 00:45:29Z 08-17): expert v1.3 (1.5 cm centering, retreat glide 5deg/tick, tail 450) + bracket_appearance=real + the FITTED wrist-cam pose (owner: \"definitely include an adjusted wrist camera angle to match the rig\" => BLOCKED on wrist-cam-pose-refit landing its validated pose). Same collector path/scale as demo_gen_v1 (5000 kept episodes, sharded on the box), then upload public as fontaine-grasp-demos-v2. Box is free after the v1 endpoint sim100 (~02:1xZ 08-17).",
+   "boundary": "Queued 01:5xZ 08-17 at the owner order. Sequenced: wrist-cam-pose-refit (validated pose) -> this regen -> grasp-sft-v2-joint-run. Pre-reg the regen params (expert version receipt, wrist pose flag, kept-rate anchor 45.9%) before launch. Pre-reg REQUIRED before launch (prereg field null until posted).",
+   "class": "cpu",
+   "owner_hold": false,
+   "prereg": null
+  },
+  {
+   "id": "grasp-sft-v2-joint-run",
+   "status": "queued",
+   "title": "Grasp-SFT v2 joint run (owner order 00:45:29Z 08-17): SAME hyperparameters as grasp_sft_v1_joint run 2 (bijou.train --objective joint --joint-ce-weight 1.0 --insulate-flow --recompute-stats, eff-96, 3000 steps, eval 250 breakdown, save 500 async, same seed policy) on the v2 regen corpus. Anchors: run-2 endpoint sim100 (this boundary) + the 44/100 probe; run-2 real-slice caveat (v2 train 8.15 vs eval 15.77 \u2014 2x generalization gap at 8% share) is the watch item.",
+   "boundary": "Queued 01:5xZ 08-17 at the owner order. BLOCKED on grasp-demos-v2-regen (dataset uploaded + receipts). Pre-reg before launch per charter. Pre-reg REQUIRED before launch (prereg field null until posted).",
+   "class": "cpu",
+   "owner_hold": false,
+   "prereg": null
   }
  ],
  "updated": "2026-08-16T16:47:17Z"
