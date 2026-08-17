@@ -142,5 +142,6 @@ corrections are follow-up posts.
 - [2026-08-15 — Wrist-transfer screen results: closed F-instrument (chart-led)](2026-08-15-wrist-screen-results.md)
 - [2026-08-16 — Registered amendment: route C — one joint run merges the A+B pre-regs (+ --offload-optim)](2026-08-16-amendment-grasp-sft-route-c-joint.md)
 - [2026-08-16 — Pre-reg (DRAFT): sim spawn-v2 — randomize the disk and the boat](2026-08-16-prereg-sim-spawn-v2.md)
+- [2026-08-16 — Grasp-SFT v1: the 5,000-demo joint run — endpoint results](2026-08-16-grasp-sft-v1-results.md)
 - [2026-08-17 — Pre-registration: grasp-demos-v2 regen (expert v1.3 + real bracket + refit wrist pose)](2026-08-17-prereg-grasp-demos-v2-regen.md)
 - [2026-08-17 — sft-v1 flow regression isolated: the normalization window, twice, differently](2026-08-17-sft-v1-flow-isolation.md)
