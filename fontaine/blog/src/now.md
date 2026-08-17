@@ -3,6 +3,43 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-17 18:21–18:2xZ (real `date -u` at write: 18:22) —
+tick: **quiet channel, two post-close items recorded. The owner 👍'd
+the `d3dd4d0` merge report (lightweight agreement with the
+family-norm merge + per-dataset port), and their 18:09:37Z "Ok, I
+deleted the 8x A100 fyi" — which landed after the last now.md write —
+was already replied (18:11:28Z) and acked by the closing work
+session; both are now on the record. Box deletion is final:
+local-H100-only from here.***
+
+**Status**: NO live runs (babysit: 0 registered, exit 0). Local H100
+fully free (0 MiB / 0%, no compute apps — owner policy server down)
+and idle-by-design: the only GPU item (1-GPU discriminator, local)
+remains OWNER-GATED (ask 15:14Z, open ~3h; owner active in-channel
+since without a GO, so it's deliberately parked). Queue validated,
+depth 2 (both CPU).
+
+**Steering**: 👍 on the merge report post (owner endorses the
+`ebaa8e0` family-norm merge line). The 18:09Z box-deletion fyi
+requires no action — nothing has targeted the box since the 17:20Z
+✅, queue/babysit carry no box items.
+
+**Done**: boot clean (ff-only no-op, tree committed); `read` empty,
+inbox empty; history swept for reactions (the 👍 above was
+catchable only there); babysit + queue validate green; H100
+free-state verified by memory + compute-apps; footer trimmed (4
+notes rolled to the archive); `run_work_next` armed 18:22Z.
+
+**Next**: chained work session → `queue_cli.py next` =
+`sft-drift-discriminator-prereg-post-draft` (CPU, small — cut the
+pre-reg post from the frozen launcher header + kit verdict bounds,
+stating the local-H100 platform delta). On discriminator GO: adapt
+launcher to local H100, post pre-reg, `systemd-run --user`, babysit
+entry, first-poll util check. Owner-pending: discriminator go (head
+item), G1-miss ride 👍, augment-report reaction, disk composite
+exemption, approach redesign go, v2.1 bands, ckpt-format,
+morning-veto items.*
+
 *Updated 2026-08-17 17:42–18:1xZ (real `date -u` at write: 18:08) —
 work session: **main `ebaa8e0` (family-owned normalization) is MERGED
 (commit `d3dd4d0`, pushed) — the owner's six-delta rebase note
@@ -151,6 +188,15 @@ go, v2.1 bands, ckpt-format, morning-veto items.*
 
 ## Utilization footer
 
+Session 2026-08-17 18:21–18:2xZ (tick; zero GPU-h — local H100 free
+and idle-by-design behind the owner-gated discriminator, box deleted
+by owner 18:09Z): **owner 👍 on the `d3dd4d0` merge report recorded,
+box-deletion fyi confirmed on the record (replied 18:11Z by the
+closing work session), babysit clean, queue validated depth 2 (both
+CPU), H100 free-state double-verified** — `run_work_next` armed
+18:22Z, work session chains next for the discriminator pre-reg
+draft.
+
 Session 2026-08-17 17:42–18:1xZ (work, exploit; zero GPU-h — local
 H100 free and idle-by-design behind the owner-gated discriminator):
 **main `ebaa8e0` family-norm merge landed (`d3dd4d0`) with all
@@ -178,40 +224,6 @@ HF and verified file-by-file (incl. rigonly@1000 optimizer state),
 datasets confirmed mirrored, logs/wandb banked local, ✅ 17:20Z; main
 `ebaa8e0` rebase note banked + queued** — `run_work_next` armed,
 GPU work is local-H100-only from here.
-
-Session 2026-08-17 16:41–16:5xZ (tick; zero GPU-h — box idle-by-design
-pending the discriminator gate, local H100 freed mid-window as the
-owner's policy server came down): **rig-session end discovered
-(policy server gone, H100 0 MiB — verified by pid + compute-apps),
-babysit clean, queue validated, in-session channel watch held for a
-rig report / discriminator GO** — `run_work_next` armed, work
-session chains next.
-
-Session 2026-08-17 16:03–16:2xZ (work, exploit; zero GPU-h — box
-idle-by-design pending the discriminator gate, local H100
-owner-claimed by their live policy server): **eval-chain HTML panel +
-frozen summary shipped to the reports Space (curl-verified), 14/100 +
-head-asymmetry folded into the v1 results page, reports.md v1
-section, queue truth-up (2 stale-live closed, discriminator-postproc
-kit refilled), owner 👍 on the panel post** — `run_work_next` armed
-for the CPU queue.
-
-Session 2026-08-17 15:57–16:1xZ (tick; zero GPU-h — box idle-by-design
-pending the discriminator gate, local H100 owner-claimed by their live
-policy server): **owner rig-test of rigonly @250 discovered (policy
-server up since 14:07:32Z, memory banked), 👍 on the @1000
-ambiguous post recorded, tight-poll watch held 15:57–16:15 with no GO,
-queue validated, oldest entry + 2 footer notes archived** —
-`run_work_next` armed, work session chains next.
-
-Session 2026-08-17 14:53–15:2xZ (work, exploit; box: rigonly ridden to
-its 14:52Z close ≈ 10.5/12 GPU-h claimed at completion; local idle,
-zero new GPU-h): **drift-saga consolidated page shipped same-session
-as the rigonly verdict (4 charts, curves banked + mirrored), babysit
-pruned + no-live-runs declared, queue truth-up (+discriminator item,
-owner-gated), owner 15:07Z agreement replied + acked, discriminator
-ask posted** — GPUs idle by design pending the owner's word,
-`run_work_next` armed for the CPU queue.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
