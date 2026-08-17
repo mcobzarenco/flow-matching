@@ -1,5 +1,5 @@
 {
-  "updated_utc": "2026-08-17T22:52:00Z",
+  "updated_utc": "2026-08-17T22:57:00Z",
   "depth_reason": "depth 2 queued (per-dataset-flow-norm pre-reg draft, gated on the discriminator verdict ~23:0xZ; queue-box-kill-audit CPU unblocked) after the utilization-ledger-rebase close.",
   "items": [
     {
@@ -2144,12 +2144,21 @@
     {
       "id": "stack-parity-probe-instrument",
       "class": "cpu",
-      "status": "queued",
+      "status": "done",
       "prereg": "fontaine/blog/src/posts/2026-08-17-prereg-sft-drift-discriminator.md",
       "owner_hold": false,
       "title": "Stack-parity probe instrument (CPU prep for Amendment 1's disambiguator): a runnable script/procedure that re-evaluates the discriminator's saved step-500/step-1000 checkpoints' probe MAE on the PRE-MERGE stats surface (the merged-table override units every 8x comparator ran under, pre-d3dd4d0) so an AMBIGUOUS-BY-INSTRUMENT verdict \u2014 or a negative-delta HEALTHY needing the descent-asymmetry confirmation (in-channel 1539039813804498984) \u2014 can be disambiguated the same session instead of stalling on tooling. Deliverable: the exact invocation (env/flag/stats-table pin) + a dry-run on the step-500 save; probe batching at the OOM-fixed micro size both ends.",
-      "boundary": "Queued 22:5xZ 08-17 work session (refill at queue-box-kill-audit close, charter section 4). CPU prep only; the actual parity EVAL is a small GPU job (~minutes) that runs only after step 1000 frees the H100 and only if the verdict branch calls for it. Instrument work is pre-registered-compatible: Amendment 1 names the stack-parity probe as the disambiguator; this item just makes it executable."
+      "boundary": "Queued 22:5xZ 08-17 work session (refill at queue-box-kill-audit close, charter section 4). CPU prep only; the actual parity EVAL is a small GPU job (~minutes) that runs only after step 1000 frees the H100 and only if the verdict branch calls for it. Instrument work is pre-registered-compatible: Amendment 1 names the stack-parity probe as the disambiguator; this item just makes it executable. || CLOSED 22:5xZ 08-17 same session: fontaine/scripts/stack_parity_probe.sh landed \u2014 prepare mode builds the 9094e60 (d3dd4d0^1) worktree env and DRY-RAN GREEN: the pre-merge stack parses the step-500 save (family molmoact2_joint, chunk 30, per_dataset_flow_norm=False, schema 2 unchanged across the merge \u2014 checkpoint.py/vla.py/validate_checkpoint.py zero-diff), and the checkpoint table's source-oriented shoulder pair (q01[1]=55.71 > q99[1]=-113.50) is confirmed as the surface the old MolmoNorm.CHECKPOINT eval path reads. run mode = old-stack bijou.eval, probe-matched pins (holdout 0.1 / split-seed 0 / 256 samples seed 0 / chunk 30 / euler-10 / batch 12 = the OOM-fixed micro size applied by flag since the old stack predates the fix), GPU-guarded (owner policy-server), executable the moment step 1000 frees the H100."
+    },
+    {
+      "id": "disc-verdict-checkpoint-upload",
+      "class": "cpu",
+      "status": "queued",
+      "prereg": "fontaine/blog/src/posts/2026-08-17-prereg-sft-drift-discriminator.md",
+      "owner_hold": false,
+      "title": "Upload the discriminator's verdict-evidence checkpoints to fontaine-checkpoints (owner standing rule: banked/consumable checkpoints leave the box/host same-session, weights-only unless seeding training): step_000500 + step_001000 of grasp_sft_v2_demosonly_1gpu_disc under grasp_sft_v2_demosonly_1gpu_disc/{step_000500,step_001000}, weights-only (drop optimizer.pt), plus the fresh train_log.jsonl + train_log_attempt1_oom250.jsonl as run records. These saves are Amendment 1's disambiguation substrate (stack-parity probe evaluates them) \u2014 they are evidence, not just artifacts.",
+      "boundary": "Queued 22:5xZ 08-17 work session (refill at stack-parity-probe-instrument close). Executable after step 1000 writes save-1000 (~01:1xZ 08-18); network-only, no GPU. Pattern: upload_grasp_sft_v2_demosonly_checkpoint.py precedent (extend/parametrize for the two steps)."
     }
   ],
-  "updated": "2026-08-17T22:52:00Z"
+  "updated": "2026-08-17T22:57:00Z"
 }
