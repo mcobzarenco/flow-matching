@@ -3,7 +3,38 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-17 19:17–19:2xZ (real `date -u` at write: 19:20) —
+tick: **quiet babysit — discriminator healthy at step 100/1000, on
+pace for the ~23:0xZ verdict.***
+
+**Status**: 1 live run — `grasp_sft_v2_demosonly_1gpu_disc` at step
+100/1000, loss 4.94→1.08, 15.8 s/step steady (~3.9 h to 1000), VRAM
+62.24 GiB vs the 78 gate, GPU 65%/66.5 GiB mid-cycle, host RAM 91 GB
+available (stable vs 92 at launch — no loader-buffer creep). babysit
+exit 0. First eval probe at 250 ≈ 19:55Z — lands after this tick's
+cap; the next tick reads it (drifting comparators sat at 3.46 there;
+NO probe-kill bars — verdict at 1000 only).
+
+**Steering**: none — `read` empty, inbox empty, no new reactions in
+`history -n 5`.
+
+**Done**: babysit + queue validate (OK, depth 2, 23 open) + the
+standing RAM/util watch checks; `run_work_next` confirmed armed
+(GPU-busy window, `utilization-ledger-rebase` is the CPU head). No
+in-channel post — the 19:13 post covers current state, step-100
+status adds nothing.
+
+**Next**: chained work session takes `utilization-ledger-rebase`;
+next tick reads the step-250 probe. At step 1000 (~23:0xZ):
+`sft_drift_saga_charts.py --discriminator` verdict → drift-saga
+finalize + in-channel + un-gates
+`prereg-draft-per-dataset-flow-norm-rerun`. Owner-pending list
+unchanged (G1-miss ride 👍, augment-report reaction, disk composite
+exemption, approach redesign go, v2.1 bands, ckpt-format,
+morning-veto items).*
 
 *Updated 2026-08-17 19:02–19:2xZ (real `date -u` at write: 19:13) —
 work session: **v1 mirror restored + a babysit-registry fix; the
@@ -42,96 +73,14 @@ finalize + in-channel + un-gates
 ride 👍, augment-report reaction, disk composite exemption, approach
 redesign go, v2.1 bands, ckpt-format, morning-veto items.*
 
-*Updated 2026-08-17 18:41–19:0xZ (real `date -u` at write: 18:51) —
-tick: **the discriminator is LIVE. Owner GO landed 18:40:56Z ("You
-can do whatever you want", 24 s after the GO-gap post; ask open since
-15:14Z) and the tick executed the full ON-GO checklist inside the
-session: pre-reg dated + published
-(`posts/2026-08-17-prereg-sft-drift-discriminator.md`, SUMMARY +
-Space pushed + 200-verified, in-channel 1538981787479449671),
-`systemd-run --user` unit `fontaine-demosonly-1gpu-disc` launched
-18:44:15Z on the local H100 (preflight guard passed — GPU was clean),
-babysit entry active, launch commit `b02cfed` pushed.***
-
-**Status**: 1 live run — `grasp_sft_v2_demosonly_1gpu_disc` (demosonly
-recipe on ONE GPU, single delta = distributed machinery removed;
-eff-96 = micro-12 × 8 chunks, seed 0). Verdict read AT STEP 1000, not
-mid-run: Δeval(1000 vs 500) ≤ +0.30 → HEALTHY (distributed CONVICTED);
-≥ +1.0158 → same-drift (EXONERATED); else AMBIGUOUS. No probe-kill
-bars by design — drift is the expected-interesting outcome. Gates:
-vram 78 GiB, GPU-h 12. Startup verified: 4500/500 episode split as
-pre-registered, weights on GPU 18:49Z, wandb run `oc2zc46t`.
-
-**Steering**: the GO itself — recorded, replied 18:42:31Z, acked
-(inbox empty). Read as a delegation on the pending ask; per the
-standing rules (idle GPU is the failure, GO-gap staged to minutes)
-the call was launch-now.
-
-**Done**: ON-GO checklist end-to-end as above; queue item
-`sft-drift-discriminator-run` → live (prereg field repointed to the
-dated post); check.py 992 green on the launch commit; first-poll
-held in-session to 18:59Z: **GPU util 95% at 66.5 GiB** — the first
-eff-96 step computing (jsonl lands at its completion; no starvation);
-host RAM 92 GB available with the batch-96 loader buffers filled (the
-flagged watch item is real but headroom is fine — next poll re-checks
-`free -g`).
-
-**Next**: babysit cadence owns the run (~7–9 h to step 1000, probes
-every 250, saves 500/1000). On completion: `sft_drift_saga_charts.py
---discriminator` verdict → drift-saga finalize slot + in-channel.
-CPU queue: `local-dataset-mirrors-restore` is the executable item
-(`prereg-draft-per-dataset-flow-norm-rerun` stays gated on this
-run's verdict); `run_work_next` armed. Owner-pending: G1-miss ride 👍,
-augment-report reaction, disk composite exemption, approach redesign
-go, v2.1 bands, ckpt-format, morning-veto items.*
-
-*Updated 2026-08-17 18:23–18:3xZ (real `date -u` at write: 18:33) —
-work session: **discriminator GO-gap collapsed to minutes. The queue
-head (`sft-drift-discriminator-prereg-post-draft`) is DONE and
-over-delivered: the formal pre-reg DRAFT is cut
-(`posts/2026-08-xx-prereg-sft-drift-discriminator.md`, deliberately
-NOT in SUMMARY.md — drafting is not posting), the launcher is
-re-platformed to the local H100
-(`fontaine/scripts/launch_local_grasp_sft_v2_demosonly_1gpu_disc_h100.sh`,
-command block byte-identical to the frozen box script by diff,
-full-parse green vs the merged CLI: `molmoact2_joint`,
-`per_dataset_flow_norm=False`, seed 0, plus a GPU-busy abort guard for
-the owner policy-server), and the v2 corpus is BACK ON LOCAL DISK
-(35 GiB snapshot of `mcobzarenco/fontaine-grasp-demos-v2` →
-`~/datasets/fontaine/grasp_demos_v2/merged` — it was HF-only after
-the box kill). Frozen bounds quoted verbatim in the draft: healthy
-≤ +0.30 / drift ≥ +1.0158 (= 0.5 × demosonly +2.0317), fixture
-rigonly +0.6929 → AMBIGUOUS agrees.***
-
-**Status**: NO live runs (babysit: 0 registered, exit 0). Local H100
-free (0 MiB, no compute apps) and idle-by-design: the 1-GPU
-discriminator stays OWNER-GATED (ask 15:14Z, open ~3.5h). Queue
-validated, depth 2 (both CPU).
-
-**Steering**: none this session — `read` empty, inbox empty at boot
-and at close.
-
-**Done**: queue head `sft-drift-discriminator-prereg-post-draft`
-DONE (this commit): draft + local launcher + dataset pull as above;
-check.py 992 green; `sft-drift-discriminator-run` re-classed
-gpu-local with the ON-GO checklist in its boundary (date post → 
-SUMMARY → blog push → in-channel → systemd-run → babysit entry →
-first-poll util + `free -g`, loader workers 8 × prefetch 4 at
-batch-96 flagged as the host-RAM watch item, GPU-h gate 12). Queue
-refill: `local-dataset-mirrors-restore` (CPU — v1 corpus is HF-only
-since the box kill; audit which held gpu-local arms need it, then
-pull). Queue page regenerated; posted in-channel.
-
-**Next**: `queue_cli.py next` = `prereg-draft-per-dataset-flow-norm-rerun`
-— but it is GATED behind the discriminator verdict (its baseline arm
-depends on it), so the executable item is
-`local-dataset-mirrors-restore`; `run_work_next` armed. On
-discriminator GO: the run item's boundary carries the full minutes-
-scale checklist. Owner-pending: discriminator go (head item), G1-miss
-ride 👍, augment-report reaction, disk composite exemption, approach
-redesign go, v2.1 bands, ckpt-format, morning-veto items.*
-
 ## Utilization footer
+
+Session 2026-08-17 19:17–19:2xZ (tick; GPU-h accruing — discriminator
+riding): **quiet babysit — step 100/1000 at 15.8 s/step, loss
+4.94→1.08, VRAM 62.2 GiB vs the 78 gate, host RAM stable at 91 GB
+available, queue validated depth 2, no steering, no in-channel post
+needed** — `run_work_next` armed; the step-250 probe (≈19:55Z) reads
+at the next tick, verdict at 1000 ≈23:0xZ.
 
 Session 2026-08-17 19:02–19:2xZ (work, exploit; GPU-h accruing —
 discriminator riding at 15.1 s/step, ~4 h to verdict ~23:0xZ):
@@ -141,24 +90,6 @@ exact vs HF (232 files / 26.17 GiB; audit: no held arm needs it —
 durability redundancy), queue refilled with
 `utilization-ledger-rebase`** — `run_work_next` armed; next
 executable CPU item is the utilization rebase.
-
-Session 2026-08-17 18:41–19:0xZ (tick; GPU-h accruing — discriminator
-launched): **owner GO 18:40:56Z → full ON-GO checklist in-session:
-pre-reg published + `grasp_sft_v2_demosonly_1gpu_disc` LIVE on the
-local H100 from 18:44:15Z (unit fontaine-demosonly-1gpu-disc, ~7–9 h
-to step 1000, GPU-h gate 12), babysit entry active, launch commit
-`b02cfed`** — `run_work_next` armed for the CPU queue
-(v1-mirror-restore) while the run rides.
-
-Session 2026-08-17 18:23–18:3xZ (work, exploit; zero GPU-h — local
-H100 free and idle-by-design behind the owner-gated discriminator):
-**discriminator GO-gap collapsed to minutes — formal pre-reg draft
-cut (frozen kit bounds quoted verbatim), launcher re-platformed to
-local H100 (command block byte-identical to the frozen box script,
-full-parse green, policy-server abort guard), v2 corpus re-pulled
-local (35 GiB HF snapshot); check.py 992 green; queue refilled with
-the v1-mirror-restore infra item** — `run_work_next` armed, next
-executable CPU item is the v1 mirror restore.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
