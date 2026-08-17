@@ -4,7 +4,47 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-17 23:46–23:5xZ (real `date -u` at write: 23:48) —
+tick: **step-750 probe read — 6.59, still descending; ratio to
+comparator shrinks again (1.56×); posted pre-endpoint; ~0.9 h to
+the verdict.***
+
+**Status**: 1 live run — `grasp_sft_v2_demosonly_1gpu_disc` attempt
+2 at step 780/1000, loss 0.4727, 14.86 s/step (window rate 4.3
+steps/min), VRAM 62.26 GiB vs the 78 gate, host RAM flat at the
+root-caused plateau. **Step-750 probe read**: eval_chunk_mae
+12.51@250 → 7.57@500 → **6.59@750** — still descending into the
+verdict window, no upturn. Ratio-to-comparator now **1.56×**
+(6.59 vs their 4.22@750), down from 3.61× @250 and 2.34× @500 —
+and 750 is where the drifting comparators had already turned UP
+(3.24@500 → 4.22@750); ours descends through their
+drift-signature step. Step 1000 → save + verdict **~00:4xZ
+08-18**.
+
+**Steering**: none — `read` empty, unreplied inbox empty, `history
+-n 5` shows only our own posts (Amendment-1 👍 already recorded).
+
+**Done**: babysit exit 0 (liveness 5 procs, rate/RAM in-band);
+queue validate green depth 2 (22 open). **In-channel post
+1539058172340469791**: the step-750 read + shrinking-ratio trend,
+recorded before the step-1000 endpoint per Amendment 1's
+pre-endpoint discipline (250 and 500 each got a pre-verdict post;
+this is the last probe before the read). `run_work_next` stays NOT
+armed — unchanged: both queued CPU items are verdict-gated.
+
+**Next**: boundary tick ~00:4x–01:0xZ 08-18 owns step 1000 —
+`sft_drift_saga_charts.py --discriminator` on the fresh jsonl, then
+**Amendment 1** (raw AND scale-adjusted rules; disagree ⇒
+AMBIGUOUS-BY-INSTRUMENT + `stack_parity_probe.sh` run mode); the
+descent-asymmetry caveat now looks LIKELY (750 still falling —
+Δ(1000−500) plausibly negative ⇒ HEALTHY bounds satisfied
+trivially, carry the caveat + stack-parity probe as confirmation).
+Post-verdict: checkpoint upload
+(`upload_grasp_sft_v2_disc_checkpoints.py`, prepped) then the
+flow-norm pre-reg draft. Owner-pending list unchanged.*
 
 *Updated 2026-08-17 23:25–23:3xZ (real `date -u` at write: 23:26) —
 tick: **quiet babysit — discriminator step 690/1000, healthy and
@@ -39,46 +79,17 @@ checkpoint upload (`upload_grasp_sft_v2_disc_checkpoints.py`,
 prepped) then the flow-norm pre-reg draft. Owner-pending list
 unchanged.*
 
-*Updated 2026-08-17 23:05–23:1xZ (real `date -u` at write: 23:09) —
-tick: **quiet babysit — discriminator step 610/1000, healthy and
-in-band; no steering; both CPU queue heads are verdict-gated so
-`run_work_next` deliberately stays unarmed.***
-
-**Status**: 1 live run — `grasp_sft_v2_demosonly_1gpu_disc` attempt
-2 at step 610/1000, loss 0.501, 16.5 s/step (inside the 15–18.7
-band), VRAM 62.26 GiB vs the 78 gate, ~1.8 h to step 1000 → save +
-verdict window ~00:5xZ 08-18. Host RAM 49 GB available — flat at
-the post-save-500 plateau root-caused last tick (glibc-arena
-retention of the save-boundary optimizer copy), above the 20 GB
-concern bar; save-1000 reuses the arena, no new high-water
-expected.
-
-**Steering**: none — `read` empty, unreplied inbox empty, `history
--n 5` shows only our own posts (Amendment-1 👍 already recorded).
-
-**Done**: babysit exit 0 (liveness 5 procs, util/rate/RAM
-first-poll checks all in-band); queue validate green depth 2 (22
-open). **`run_work_next` NOT armed, deliberately**: the only
-queued CPU items — `disc-verdict-checkpoint-upload` (executable
-after save-1000 exists) and
-`prereg-draft-per-dataset-flow-norm-rerun` (gated on the verdict's
-recipe implications) — are both verdict-gated, so a chained work
-session would have nothing executable; this is gated-by-design,
-not idle-by-choice. No in-channel post (the 22:34 step-500 post is
-current; nothing changed).
-
-**Next**: boundary tick ~00:4x–01:0xZ 08-18 owns step 1000 —
-`sft_drift_saga_charts.py --discriminator` on the fresh jsonl,
-then **Amendment 1** (raw AND scale-adjusted rules; disagree ⇒
-AMBIGUOUS-BY-INSTRUMENT + the stack-parity probe, run mode staged
-in `fontaine/scripts/stack_parity_probe.sh`); carry the
-descent-asymmetry caveat if Δ(1000−500) is negative
-(1539039813804498984). Post-verdict, both gated CPU items unlock:
-checkpoint upload (`upload_grasp_sft_v2_disc_checkpoints.py`,
-prepped) then the per-dataset-flow-norm pre-reg draft.
-Owner-pending list unchanged.*
-
 ## Utilization footer
+
+Session 2026-08-17 23:46–23:5xZ (tick; GPU-h accruing —
+discriminator riding to the ~00:4xZ boundary): **step-750 probe
+read — eval 6.59, trajectory 12.51 → 7.57 → 6.59 still descending,
+ratio-to-comparator 1.56× (was 3.61× @250, 2.34× @500); run healthy
+at step 780/1000, 14.86 s/step, VRAM 62.26 vs 78, posted in-channel
+pre-endpoint (id 1539058172340469791); queue green depth 2** —
+`run_work_next` stays unarmed (both CPU queue items verdict-gated);
+boundary tick ~00:4x–01:0xZ owns step 1000 + Amendment 1, with the
+descent-asymmetry caveat now likely.
 
 Session 2026-08-17 23:25–23:3xZ (tick; GPU-h accruing —
 discriminator riding to the ~00:4xZ boundary): **quiet babysit —
@@ -87,16 +98,6 @@ step 690/1000 at 14.97 s/step, loss 0.4744, VRAM 62.26 GiB vs the
 plateau); no steering, queue green depth 2, no in-channel post** —
 `run_work_next` stays unarmed (both CPU queue items verdict-gated);
 boundary tick ~00:4x–01:0xZ owns step 1000 + Amendment 1.
-
-Session 2026-08-17 23:05–23:1xZ (tick; GPU-h accruing —
-discriminator riding to the ~00:5xZ boundary): **quiet babysit —
-step 610/1000 at 16.5 s/step, loss 0.501, VRAM 62.26 GiB vs the 78
-gate, host RAM 49 GB available (flat at the root-caused post-save
-plateau); no steering, queue green depth 2, no in-channel post** —
-`run_work_next` deliberately NOT armed: both queued CPU items are
-verdict-gated (checkpoint upload needs save-1000; the flow-norm
-pre-reg needs the verdict), so the boundary tick owns everything
-next.
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-10
 00:00Z → 2026-08-17 19:45Z; rebased 08-17 from per-run prune records
