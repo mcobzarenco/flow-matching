@@ -1,6 +1,59 @@
 # Now
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-17 17:42–18:1xZ (real `date -u` at write: 18:08) —
+work session: **main `ebaa8e0` (family-owned normalization) is MERGED
+(commit `d3dd4d0`, pushed) — the owner's six-delta rebase note
+executed with all oracle gates green, and the
+`--per-dataset-flow-norm` enabler PORTED to the family level. The
+interim `b779ba4` serving-norm threading is superseded structurally:
+`policies.py`/`interface.py`/`molmo_flow.py` are byte-identical to
+main again, the merged-table override and my `item_action_stats`
+carrier are deleted (upstream's honest per-item `batch.action_stats`
+is what the carrier existed to preserve), and the sim100 token-leg
+failure class is unrepresentable by construction. The per-dataset
+scheme now lives where the new design says it must:
+`flow_normalize_targets`/`flow_denormalize_chunk` +
+`item_flow_quantiles` + `per_dataset_flow_scheme` in
+`models.molmoact2_flow`, both molmoact2 families branching on a
+ctor flag read from the recorded section tag at `from_checkpoint`;
+`fast.molmoact2` gains `*_q01q99_rows` row forms with the stats
+forms delegating (one source of truth for the clamp maps).***
+
+**Status**: NO live runs (babysit registry empty). Local H100 still
+free and idle-by-design — the only GPU item (1-GPU discriminator,
+local) remains OWNER-GATED (ask 15:14Z, open ~3h). Box dead per
+owner order, do not target.
+
+**Steering**: none this session — `read` empty, inbox empty at boot.
+
+**Done**: queue item `merge-main-ebaa8e0-family-norm` DONE (commit
+`d3dd4d0`): 4 conflicts resolved (theirs where b779ba4 was
+superseded; feature port where 6a6a0aa lived), oracle suite
+rewritten to the family API (5 tests, pooled-vs-own crush fixture +
+exact round trip). Gates: check.py **992 green**; gradflow loss
+oracles EXACT (flow **1.6948** / ar_backbone **27.8546** — the
+note's zero-numeric-change claim reproduces here); the staged
+discriminator launcher FULL-PARSES against the merged CLI
+(family-inferred `molmoact2_joint`, frozen params intact — the
+GO→launch path is re-verified post-merge); released ckpt loads
+through the new family-norm surface (descending shoulder pair
+preserved); straggler grep clean across fontaine/+probes/+sim/;
+parents[3] goldens carry stands. Posted 1538972749672751145. Queue:
+merge item closed + refill `prereg-draft-per-dataset-flow-norm-rerun`
+(the isolation verdict's recipe rec, now executable on this stack;
+gated behind the discriminator verdict), validate green depth 2.
+
+**Next**: `queue_cli.py next` → discriminator pre-reg post draft
+(CPU, small, states the local-H100 platform delta) — left queued per
+the bounded-session contract; `run_work_next` armed so the next tick
+chains into it. On discriminator GO: adapt launcher to local H100,
+post pre-reg, `systemd-run --user`, babysit entry, first-poll util
+check. Owner-pending: discriminator go (head item), G1-miss ride 👍,
+augment-report reaction, disk composite exemption, approach redesign
+go, v2.1 bands, ckpt-format, morning-veto items.*
 
 *Updated 2026-08-17 17:37–17:4xZ (real `date -u` at write: 17:39) —
 tick: **quiet channel, clean state. Local H100 verified fully free
@@ -96,43 +149,17 @@ Owner-pending: discriminator go (now local-H100), G1-miss ride 👍,
 augment-report reaction, disk composite exemption, approach redesign
 go, v2.1 bands, ckpt-format, morning-veto items.*
 
-*Updated 2026-08-17 16:41–16:5xZ (real `date -u` at write: 16:43) —
-tick: **the owner's rig session has ENDED — the H100 policy server
-(pid 3365591, serving rigonly @250 since 14:07:32Z) is gone; local
-H100 back to 0 MiB / 0%, free again. No steering yet from the rig
-test; the discriminator ask is still unanswered (~90 min). Both GPUs
-idle-by-design — nothing local is GPU-queued and the box stays
-owner-gated.***
-
-**Status**: NO live runs (babysit: 0 registered, exit 0). Box 8×A100
-idle-by-design (discriminator OWNER-GATED, ask msg
-1538929076079689849 unanswered since 15:14Z). Local H100 **freed
-between 16:22 and 16:42** — policy server down, rig session over;
-only GPU item in queue is the box discriminator (gated), so
-idle-by-design holds. `run_work_next` armed (on disk, 16:23) — work
-session chains next for the CPU queue.
-
-**Steering**: none — `read` empty, inbox empty, history shows
-nothing beyond the two recorded 👍s. A rig report on @250 may be
-imminent now the server is down — non-consuming channel watch held
-in-session to ~16:58; any rig-behavior message = priority context.
-
-**Done**: policy-server-down discovery verified (pid gone +
-compute-apps empty, not assumed from one probe); queue validated
-(depth 1, stated reason stands — `sft-drift-discriminator-postproc-kit`
-CPU/dry-runnable is next); babysit clean.
-
-**Next**: chained work session → discriminator postproc kit (CPU,
-rigonly logs as fixture) + boundary polls for the discriminator
-answer / rig report. On GO: formal pre-reg post from the frozen
-launcher header BEFORE launch, `systemd-run --user
---unit=fontaine-demosonly-1gpu-disc`, babysit.toml entry, first-poll
-util check (~25–32 s/step expected, 1-GPU eff-96). Owner-pending:
-discriminator go, G1-miss ride 👍, augment-report reaction, disk
-composite exemption, approach redesign go, v2.1 bands, ckpt-format,
-morning-veto items.*
-
 ## Utilization footer
+
+Session 2026-08-17 17:42–18:1xZ (work, exploit; zero GPU-h — local
+H100 free and idle-by-design behind the owner-gated discriminator):
+**main `ebaa8e0` family-norm merge landed (`d3dd4d0`) with all
+oracle gates green (check.py 992, gradflow anchors exact,
+discriminator launcher full-parse) and `--per-dataset-flow-norm`
+ported to the family level; b779ba4 interim threading superseded,
+carrier deleted; queue refilled with the per-dataset rerun pre-reg
+draft** — `run_work_next` armed, next chain works the discriminator
+pre-reg draft.
 
 Session 2026-08-17 17:37–17:4xZ (tick; zero GPU-h — box killed by
 owner, local H100 verified free and idle-by-design pending the
