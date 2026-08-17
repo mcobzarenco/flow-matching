@@ -1006,33 +1006,15 @@
 # Next box job after sim100: grasp-demos-v2-regen (owner pipeline
 # 00:45Z 08-17), pre-reg first, blocked on wrist-cam-pose-refit.
 
-# LIVE — sft-v1 serving-norm-audit 20-seed local legs (queue item
-# sft-v1-serving-norm-audit; NOT a training run — two parallel
-# rollout_sim legs on the local H100, units norm-audit-token +
-# norm-audit-flow, launched 03:0xZ 08-17). Token leg serves the AR
-# head THROUGH THE FIX (merged-table decode, bijou this session);
-# flow leg replicates the box 5/100 on unseen seeds 100-119. Ride
-# in-session; prune at completion (short eval class).
-[[run]]
-name = "norm_audit_legs"
-kind = "progress-log"
-host = "local"
-pgrep = "sim.rollout_sim"
-pgrep_min = 2                      # two parallel legs
-gpu_indices = [0]
-gpu_mem_min_mib = 8000
-log = "/home/ubuntu/flow-matching/outputs/sim/grasp_sft/v1_endpoint_norm_audit/token_fixed_s100.json"
-progress_re = "seed [0-9]+ replan [0-9]+"
-started_utc = "2026-08-17T03:05:00Z"
-gpu_hours_per_wall_hour = 1.0
-boundary = "20 seeds x 2 legs (~1.5 GPU-h class); at completion: reads vs box legs (flow 5/100, token 0/100) + anchors (probe 44/100, base 9, corrupt 28, token bar >=20); journalctl --user -u norm-audit-{token,flow}"
-anchors = [
-    "token leg decodes under the checkpoint MERGED table (the fix) — the box leg decoded under the v2 rig table (lift sign-inverted); a large jump vs 0/100 = seam confirmed as the token-leg fault",
-    "flow leg table was NEVER wrong (decoder-owned row verified == metadata merged) — expect ~5% replication; jump here would contradict the audit, investigate",
-    "gates: reset strikes 0; seeds exactly 100-119 (unseen, disjoint from box 0-99)",
-]
-[[run.gates]]
-kind = "gpu_hours_max"
-value = 3.0
+# norm_audit_legs entry PRUNED 03:3xZ 08-17 work session — BOTH LEGS
+# COMPLETE ~03:24-03:27Z rc 0 (~1.1 GPU-h total, 20 unseen seeds
+# 100-119 each, strikes 0). READS: token WITH the merged-table decode
+# fix (b779ba4) 3/20 successes vs the box's 0/100 broken decode =
+# SEAM CONFIRMED, AR head success-capable; flow replication 0/20 vs
+# box 5/100 (median final 8.9 vs 8.7 cm) = flow regression REAL, not
+# serving (decoder-owned row empirically verified == metadata merged).
+# Flow fault isolation queued (sft-v1-flow-regression-isolation).
 
 # (no_live_runs_reason cleared 03:0xZ 08-17 work session — norm_audit_legs live above. PRIOR: "declared 02:0xZ 08-17 work session — no training run live: grasp_sft_v1_joint run 2 COMPLETE 01:07:43Z and pruned above; sim100 eval finishes on the box (~02:2xZ, unit sft-v1-sim100, session/tick owns the boundary read); local GPU idle. Next GPU legs: grasp-demos-v2-regen (pre-reg first, blocked on wrist-cam-pose-refit) then grasp-sft-v2-joint-run.")
+
+no_live_runs_reason = "declared 03:3xZ 08-17 work session — no training run live, local GPU idle again: norm_audit_legs complete + pruned above (token-fix 3/20 / flow 0/20 verdicts in-channel). Box idle since sim100. Next GPU legs: grasp-demos-v2-regen (pre-reg first, blocked on wrist-cam-pose-refit) then grasp-sft-v2-joint-run; sft-v1-flow-regression-isolation sim20 of run-1b saves is a cheap local leg when picked up."

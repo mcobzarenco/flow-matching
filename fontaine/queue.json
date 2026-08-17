@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-16T21:46:00Z",
+ "updated_utc": "2026-08-17T03:38:40Z",
  "depth_reason": "depth 2: endpoint boundary (runnable at run-2 completion ~00:4xZ) + wrist-cam-pose-refit (runnable now, next work session). Others owner-gated (disk composite exemption, approach redesign, v2.1 bands, ckpt-format, morning-veto) or box-gated.",
  "items": [
   {
@@ -1943,7 +1943,7 @@
    "id": "grasp-demos-v2-regen",
    "status": "queued",
    "title": "Grasp demos v2: 5k regen with all demo improvements (owner order 00:45:29Z 08-17): expert v1.3 (1.5 cm centering, retreat glide 5deg/tick, tail 450) + bracket_appearance=real + the FITTED wrist-cam pose (owner: \"definitely include an adjusted wrist camera angle to match the rig\" => BLOCKED on wrist-cam-pose-refit landing its validated pose). Same collector path/scale as demo_gen_v1 (5000 kept episodes, sharded on the box), then upload public as fontaine-grasp-demos-v2. Box is free after the v1 endpoint sim100 (~02:1xZ 08-17).",
-   "boundary": "Queued 01:5xZ 08-17 at the owner order. Sequenced: wrist-cam-pose-refit (validated pose) -> this regen -> grasp-sft-v2-joint-run. Pre-reg the regen params (expert version receipt, wrist pose flag, kept-rate anchor 45.9%) before launch. Pre-reg REQUIRED before launch (prereg field null until posted).",
+   "boundary": "Queued 01:5xZ 08-17 at the owner order. Sequenced: wrist-cam-pose-refit (validated pose) -> this regen -> grasp-sft-v2-joint-run. Pre-reg the regen params (expert version receipt, wrist pose flag, kept-rate anchor 45.9%) before launch. Pre-reg REQUIRED before launch (prereg field null until posted). | 03:3xZ 08-17: serving-norm audit DONE \u2014 serving path now trustworthy (token decode fix b779ba4); flow-regression isolation (new item) is the remaining pre-v2 question.",
    "class": "cpu",
    "owner_hold": false,
    "prereg": null
@@ -1952,7 +1952,7 @@
    "id": "grasp-sft-v2-joint-run",
    "status": "queued",
    "title": "Grasp-SFT v2 joint run (owner order 00:45:29Z 08-17): SAME hyperparameters as grasp_sft_v1_joint run 2 (bijou.train --objective joint --joint-ce-weight 1.0 --insulate-flow --recompute-stats, eff-96, 3000 steps, eval 250 breakdown, save 500 async, same seed policy) on the v2 regen corpus. Anchors: run-2 endpoint sim100 (this boundary) + the 44/100 probe; run-2 real-slice caveat (v2 train 8.15 vs eval 15.77 \u2014 2x generalization gap at 8% share) is the watch item.",
-   "boundary": "Queued 01:5xZ 08-17 at the owner order. BLOCKED on grasp-demos-v2-regen (dataset uploaded + receipts). Pre-reg before launch per charter. Pre-reg REQUIRED before launch (prereg field null until posted).",
+   "boundary": "Queued 01:5xZ 08-17 at the owner order. BLOCKED on grasp-demos-v2-regen (dataset uploaded + receipts). Pre-reg before launch per charter. Pre-reg REQUIRED before launch (prereg field null until posted). | 03:3xZ 08-17: serving-norm audit DONE \u2014 serving path now trustworthy (token decode fix b779ba4); flow-regression isolation (new item) is the remaining pre-v2 question.",
    "class": "cpu",
    "owner_hold": false,
    "prereg": null
@@ -1960,12 +1960,21 @@
   {
    "id": "sft-v1-serving-norm-audit",
    "class": "cpu",
-   "status": "queued",
+   "status": "done",
    "owner_hold": false,
    "prereg": null,
    "title": "Serving-path normalization audit (from the 5/100 sim100 verdict, post 1538738118151249940): trace the action de-normalization table end-to-end at rollout (checkpoint metadata.json vs dataset-side stats vs any cached constants) for the recomputed channels (wrist_roll +-157, wrist_flex -52/95, lift -124.8); verify what rollout_sim actually applied on the box legs; then re-run 20 unseen seeds LOCALLY (owner: local sim100s) with the verified table. Decisive + cheap: if the mismatch is real, expect a large jump; if not, the 16x-data model genuinely regressed and the v2 pipeline needs the fault isolated BEFORE grasp-sft-v2 trains with the same flag.",
-   "boundary": "Queued 02:3xZ 08-17 at the sim100 verdict. GATES grasp-demos-v2-regen -> grasp-sft-v2-joint-run (same --recompute-stats flag). Runnable immediately, leads with wrist-cam-pose-refit next session."
+   "boundary": "Queued 02:3xZ 08-17 at the sim100 verdict. GATES grasp-demos-v2-regen -> grasp-sft-v2-joint-run (same --recompute-stats flag). Runnable immediately, leads with wrist-cam-pose-refit next session. | DONE 03:3xZ 08-17 work session (commit b779ba4): TOKEN-LEG SEAM FOUND + FIXED \u2014 inference collator couldn't carry the merged action table (codec-required guard), AR decode fell back to per-item quantiles = the real-v2 rig row in sim100 while training tokenized under the recomputed MERGED row; merged lift pair descending (+44.26 -> -124.8) vs v2 ascending => every token lift command decoded SIGN-INVERTED. Fix: molmoact2_action_table pinned family-gated in BijouPolicy; guard removed; test added. FLOW path audited CLEAN (decoder-owned row empirically == metadata merged after load; state clamp affine both sides; box code byte-identical to HEAD). 20 unseen seeds 100-119 local: token WITH fix 3/20 (box 0/100) = seam confirmed + AR head success-capable; flow 0/20 (box 5/100, median final 8.9 vs 8.7 cm) = flow regression REAL, not serving. Gate half-cleared: serving trustworthy; flow fault isolation queued (sft-v1-flow-regression-isolation)."
+  },
+  {
+   "id": "sft-v1-flow-regression-isolation",
+   "class": "cpu",
+   "status": "queued",
+   "owner_hold": false,
+   "prereg": null,
+   "title": "Isolate the sft-v1 FLOW regression (5/100 box + 0/20 local replication vs probe 44/100; serving audited clean 03:3xZ 08-17, commit b779ba4 \u2014 the fault is in the trained model, not the table path). Run-2 deltas vs the 44/100 probe: (a) joint objective (CE weight 1.0, insulate-flow) vs flow-only; (b) 3-dataset sim+real mix vs demos-only; (c) --recompute-stats pooled table vs demos-only table. Named candidate mechanism (c'): pooling real+sim widens the wrist_flex normalized window (q01 -52.35 pooled vs +23.0 demos-only) => sim wrist targets compress into a sub-interval of [-1,1] => less effective flow-MSE weight on exactly the grasp-critical channel (reaches-but-cannot-grasp shape). CHEAP DISCRIMINATORS, no training: (1) sim20 the archived run-1b remap-only saves (_run1_remaponly on box, trained WITHOUT recompute-stats, has (a)+(b) but not (c)) \u2014 if run-1b grasps, (c) is the lever; (2) per-channel normalized-space MSE breakdown of run 2's eval (train_log has per-dataset; a wrist_flex-heavy residual on sim supports c'). Then the v2 recipe decision (per-dataset action normalization / demos-oriented table / drop the flag) goes to the owner with evidence.",
+   "boundary": "Queued 03:3xZ 08-17 at the audit verdict. Gates the grasp-sft-v2 recipe choice (same flag question); grasp-demos-v2-regen itself is NOT gated (no dependency on the table)."
   }
  ],
- "updated": "2026-08-16T16:47:17Z"
+ "updated": "2026-08-17T03:38:40Z"
 }

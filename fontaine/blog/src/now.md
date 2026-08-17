@@ -3,6 +3,50 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-17 02:42–03:4xZ (real `date -u` at write: 03:39) —
+work session: **serving-norm audit DONE (the queue's gating item) —
+sim100's token 0/100 was OUR serving bug (found + fixed, `b779ba4`);
+flow 5/100 verified REAL model regression. 20-seed local proof:
+token-with-fix 3/20 vs box 0/100; flow 0/20 replication.***
+
+**Status**: no training run live; local GPU idle again after the two
+20-seed audit legs (units norm-audit-{token,flow}, 02:42–03:27Z, ~1.1
+GPU-h, strikes 0); box idle. Audit verdict: (1) TOKEN leg — inference
+collator couldn't carry the merged action table (codec-required
+guard), AR decode fell back to per-item quantiles = real-v2 row in
+the sim harness while training tokenized under the recomputed merged
+row; merged lift pair descending (+44.26→−124.8) vs v2 ascending ⇒
+every token lift command decoded **sign-inverted**. Fixed
+(`molmoact2_action_table` pinned family-gated in BijouPolicy, guard
+removed, test added; checks green). (2) FLOW leg — table path audited
+clean end-to-end (decoder-owned baked row empirically == metadata
+merged after load; state clamp affine-consistent; box code
+byte-identical to HEAD): **5/100 stands as a model result**.
+
+**Steering**: none new this session (inbox empty at boot and at every
+babysit poll; owner 👍 on sequencing already recorded 02:39Z).
+
+**Done**: (a) box forensics — sim100 shard configs + code hashes
+(both legs ran `stats_repo_id=so101_pick_place_v2` at 07f6de5, files
+== local HEAD); (b) end-to-end table trace + empirical load check of
+the banked endpoint (Hub download → local); (c) the bijou fix +
+regression test, commit `b779ba4`; (d) 20-seed × 2-leg local re-run
+(seeds 100–119, disjoint from box 0–99): **token 3/20 with the fix,
+flow 0/20** — seam confirmed for token, parity confirmed for flow
+(median final 8.9 vs box 8.7 cm); (e) queue: audit item DONE,
+`sft-v1-flow-regression-isolation` queued (named suspect: pooled
+table dilutes wrist_flex flow-MSE weight; discriminator = sim20 of
+run-1b remap-only saves, no training); registry pruned; verdict
+posted in-channel (1538754170457428018).
+
+**Next**: `queue_cli.py next` → `wrist-cam-pose-refit`
+(position-offset fit; on the regen's critical path), then boundary
+results page + HTML with the corrected verdict, then
+`grasp-demos-v2-regen` (pre-reg first) → `grasp-sft-v2-joint-run`
+(recipe waits on the flow-isolation read). Owner-pending unchanged:
+disk composite exemption 👍, approach redesign go, v2.1 bands,
+ckpt-format, morning-veto items.*
+
 *Updated 2026-08-17 02:39–02:4xZ (real `date -u` at write: 02:40) —
 tick: **quiet close-out — no live runs (run 2 complete + banked,
 sim100 verdict merged 02:3xZ last session), inbox clear; one NEW
@@ -99,6 +143,14 @@ Owner-pending unchanged: disk composite exemption 👍, approach
 redesign go, v2.1 bands, ckpt-format, morning-veto items.*
 
 ## Utilization footer
+
+Session 2026-08-17 02:42–03:4xZ (work, exploit; local ~1.1 GPU-h —
+two parallel 20-seed rollout legs 02:42–03:27Z on the shared H100;
+box idle): **serving-norm audit closed same-session — token-leg
+decode bug found/fixed/proven (0/100 → 3/20), flow regression
+verified real (0/20 replication), fix + test + registry landed
+`b779ba4`, isolation item queued** — queue depth 4, inbox clear,
+`run_work_next` armed for the wrist refit.
 
 Session 2026-08-17 02:39–02:4xZ (tick; GPUs idle by design, box +
 local — no live runs): **quiet close-out — inbox clear, owner 👍 on
