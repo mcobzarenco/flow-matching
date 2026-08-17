@@ -44,6 +44,7 @@ ANCHOR = "#9aa0a8"
 BASE_ANCHOR = 9
 CORRUPT_ANCHOR = 28
 PROBE_ANCHOR = 44  # route-C joint step2000, flow-unseen (banked 08-16)
+V1_ENDPOINT_ANCHOR = 5  # v1 run-2 step3000, flow-unseen (banked 08-17)
 
 # Page variants: step2000 (the original probe report, byte-identical
 # output) and v1endpoint (grasp_sft_v1_joint step 3000 on the 5,000-demo
@@ -64,6 +65,26 @@ PRESETS: dict[str, dict] = {
             " 2026-08-16) · euler-10, execute-horizon 30, seeds 0–99, 30 s episodes ·"
             " run 2026-08-16 06:58–08:21Z, ~1.4 GPU-h · verdict surface A §5:"
             ' <b style="color:{success}">TABLE_FIX_POSITIVE</b> (44 &gt; 28+3)'
+        ),
+    },
+    "v2endpoint": {
+        "anchor_rows": [
+            ("base (no SFT)", BASE_ANCHOR, ANCHOR),
+            ("joint probe step2000 (313 demos)", PROBE_ANCHOR, "#f593bd"),
+            ("v1 step3000 (broken table)", V1_ENDPOINT_ANCHOR, "#f593bd"),
+        ],
+        "subject_label": "v2 step3000 (5,000 v1.3 demos)",
+        "anchors_tile_label": "anchors: base / probe / v1 endpoint",
+        "title": "grasp_sft_v2_joint step3000 — flow head, unseen 100",
+        "h1": "Grasp-SFT v2 — joint step 3000, flow head on unseen seeds",
+        "meta_html": (
+            "Checkpoint <code>grasp_sft_v2_joint_8xa100/step_003000</code>"
+            " (v2 regen corpus — expert v1.3, 1.88M frames — + pick_place ×4,"
+            " eff-96, 8×A100; launched 09:57:39Z 2026-08-17, run-2 recipe"
+            " verbatim, one merged recompute-stats table) · euler-10,"
+            " execute-horizon 30, seeds 0–99, 30 s episodes, sharded 4×25"
+            " (exact: triple-keyed noise) · pre-reg grid: ≥ probe band 44 ⇒"
+            " demos were the lever; ~5 ⇒ data not the lever"
         ),
     },
     "v1endpoint": {

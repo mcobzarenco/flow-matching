@@ -24,12 +24,16 @@ writes reports/analysis__grasp_sft_v1_endpoint.json for the post.
 Usage:
   uv run python fontaine/scripts/grasp_sft_v1_endpoint_report.py --extract
   uv run python fontaine/scripts/grasp_sft_v1_endpoint_report.py
+  # v2 boundary (paths re-pointed; wandb id fetched at boundary):
+  uv run python ... --run v2 --extract --wandb-run aristotle1337/fontaine/<id>
+  uv run python ... --run v2
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -75,6 +79,50 @@ DATASET_COLORS = {
     "mcobzarenco/so101_pick_place_v2": BLUE,
     "mcobzarenco/so101_pick_place_clean": GOLD,
 }
+
+# --run v2 re-points every path at the v2 boundary artifacts
+# (grasp_sft_v2_joint_8xa100, launched 09:57:39Z 08-17 on the v2 regen
+# corpus). Its wandb id is unknown until the run registers — pass
+# --wandb-run at --extract time (babysit/queue item carries the lookup).
+RUNS = {
+    "v1": {
+        "run_name": "grasp_sft_v1_joint",
+        "wandb_run": "aristotle1337/fontaine/cgo3by9j",
+        "labels": DATASET_LABELS,
+        "extra_sim_anchors": {},
+    },
+    "v2": {
+        "run_name": "grasp_sft_v2_joint",
+        "wandb_run": None,
+        "labels": {
+            "grasp_demos_v2/merged": "grasp_demos_v2 (93%)",
+            "mcobzarenco/so101_pick_place_v2": "pick_place_v2 (6%)",
+            "mcobzarenco/so101_pick_place_clean": "pick_place_clean (1%)",
+        },
+        "extra_sim_anchors": {"v1_endpoint_flow": 5, "v1_step500_flow": 2},
+    },
+}
+RUN_NAME = "grasp_sft_v1_joint"
+EXTRA_SIM_ANCHORS: dict[str, int] = {}
+
+
+def configure(run_key: str, wandb_run: str | None) -> None:
+    """Re-point the module-level path/label constants at one run's
+    artifacts (module attributes, since every chart fn reads them)."""
+    mod = sys.modules[__name__]
+    cfg = RUNS[run_key]
+    short = run_key  # v1 / v2
+    colors = list(DATASET_COLORS.values())
+    mod.RUN_NAME = cfg["run_name"]
+    mod.TRAIN_JSONL = REPO / f"reports/curve__grasp_sft_{short}_train.jsonl"
+    mod.WANDB_JSON = REPO / f"reports/curve__grasp_sft_{short}_wandb.json"
+    mod.SIM_DIR = REPO / f"outputs/sim/grasp_sft/{short}_endpoint"
+    mod.IMG_DIR = REPO / f"fontaine/blog/src/img/grasp_sft_{short}"
+    mod.OUT_JSON = REPO / f"reports/analysis__grasp_sft_{short}_endpoint.json"
+    mod.WANDB_RUN = wandb_run or cfg["wandb_run"]
+    mod.DATASET_LABELS = cfg["labels"]
+    mod.DATASET_COLORS = dict(zip(cfg["labels"], colors, strict=True))
+    mod.EXTRA_SIM_ANCHORS = cfg["extra_sim_anchors"]
 
 
 def style_axis(ax: plt.Axes) -> None:
@@ -144,7 +192,7 @@ def chart_loss(steps: list[dict[str, Any]], out: Path) -> None:
     ax.set_yscale("log")
     ax.set_xlabel("step")
     ax.set_ylabel("loss (log)")
-    ax.set_title("grasp_sft_v1_joint — component losses")
+    ax.set_title(f"{RUN_NAME} — component losses")
     ax.set_xlim(0, max(xs) * 1.18)
     fig.savefig(out, bbox_inches="tight", facecolor=PAGE, dpi=150)
     plt.close(fig)
@@ -266,8 +314,18 @@ def chart_sim_strip(
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--extract", action="store_true")
+    parser.add_argument("--run", choices=sorted(RUNS), default="v1")
+    parser.add_argument(
+        "--wandb-run",
+        default=None,
+        help="wandb run path override (REQUIRED for --run v2 --extract: "
+        "the id only exists once the run registers)",
+    )
     args = parser.parse_args()
+    configure(args.run, args.wandb_run)
     if args.extract:
+        if WANDB_RUN is None:
+            parser.error(f"--run {args.run} has no banked wandb id; pass --wandb-run")
         extract_wandb()
         return 0
 
@@ -330,6 +388,7 @@ def main() -> int:
             "anchors": {
                 "flow_probe_step2000": ANCHOR_FLOW_PROBE,
                 "token_r2_bar": ANCHOR_TOKEN_R2,
+                **EXTRA_SIM_ANCHORS,
             },
         },
     }
@@ -340,6 +399,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    import sys
-
     sys.exit(main())
