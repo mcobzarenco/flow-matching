@@ -2,15 +2,29 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-17T05:47:03Z
+**Updated:** 2026-08-17T14:33:30Z
 
-**Depth call:** depth 2: endpoint boundary (runnable at run-2 completion ~00:4xZ) + wrist-cam-pose-refit (runnable now, next work session). Others owner-gated (disk composite exemption, approach redesign, v2.1 bands, ckpt-format, morning-veto) or box-gated.
+**Depth call:** depth 1: drift-saga report page (CPU, draftable now). Next experimental work is boundary-gated (rigonly verdict ~15:0xZ, leg 3 ~14:1xZ) with the 1-GPU discriminator pre-staged as the next arm; the follow-up choice is owner-gated on those verdicts. Both GPUs carry live ridden runs.
 
-**24 open** (Live 2 · Queued 2 · Blocked 20 · Done 198)
+**24 open** (Live 2 · Queued 2 · Blocked 20 · Done 205)
 
 ## 🔴 Live (2)
 
 *running right now (GPU or owner-window)*
+
+**`grasp-sft-rigonly-run`** · `gpu-box`
+
+grasp_sft_rigonly_8xa100 (owner-designed data-axis cut, order 13:30Z 08-17, launched 13:34:08Z unit fontaine-grasp-sft-rigonly): rig datasets ONLY (pick_place_v2 + clean, 2 ds / 51 eps / 32,431 frames ~3 epochs at 1000 steps), re…
+
+**boundary:** Registration: recipe base = the v2 pre-reg page; deltas (rig-only data, 1000 steps, save-250) are the owner's verbatim 13:30Z order, restated in-channel 13:34 (post 1538903937078263858) and in the launcher header. | Live 13:34:08Z, 1000 steps ~1.2 h stepping + init =&gt; boundary ~15:0xZ (tick chain owns it; session window ends 14:1xZ). At boundary: post MAE curve verdict vs the banked drifting-run signature; next cut = the staged 1-GPU discriminator (launch_box_grasp_sft_v2_demosonly_1gpu_discriminator.sh) or owner's pick per the verdict. babysit entry grasp_sft_rigonly_8xa100 (12 GPU-h gate). · [pre-reg](posts/2026-08-17-prereg-grasp-sft-v2-joint.md)
+
+<details><summary>full record</summary>
+
+grasp_sft_rigonly_8xa100 (owner-designed data-axis cut, order 13:30Z 08-17, launched 13:34:08Z unit fontaine-grasp-sft-rigonly): rig datasets ONLY (pick_place_v2 + clean, 2 ds / 51 eps / 32,431 frames ~3 epochs at 1000 steps), recipe otherwise verbatim incl. full distributed stack; --recompute-stats = rig-native table; save+eval every 250. Decides the data axis with the stack held constant: drift on known-good rig data =&gt; recipe/stack convicted; health =&gt; sim-demo corpus implicated.
+
+</details>
+
+---
 
 **`sft-v1-step500-sim100`** · `cpu`
 
@@ -26,47 +40,33 @@ sim100 on run-2's step_000500 (owner order 08:03:49Z 08-17, msg 1538820633826299
 
 ---
 
-**`grasp-sft-v1-endpoint-boundary`** · `cpu`
-
-grasp_sft_v1_joint endpoint boundary — RE-POINTED at run 2 (RESTART --recompute-stats, unit grasp-sft-v1c live since 21:14:48Z 08-16, owner order 20:51:19Z; run 1b killed at ~1900, saves archived _run1_remaponly): on unit inactiv…
-
-**boundary:** Queued 18:1xZ 08-16 at launch; re-pointed 21:1xZ after the owner-ordered restart. Runnable at run-2 completion; the armed run_work_next tick chain owns it if no session is live. | EXECUTED 01:0x-02:3xZ 08-17 (work session): final eval 5.41 + per-dataset table (real v2 train 8.15 / eval 15.77 - 2x gap) posted; ckpt uploaded + byte-verified (grasp_sft_v1_joint_step3000); sim100 both legs merged on the box: FLOW 5/100, TOKEN 0/100 vs anchors 44/9/28 + bar 20 =&gt; pre-reg band flow&lt;25 = seam/serving investigation FIRST (verdict post 1538738118151249940; flow moved 51/100 median final 8.7cm - reaches, cannot grasp =&gt; prime suspect wrist-channel norm mismatch in serving). REMAINING (next tick): rsync merged jsons+videos local, re-run endpoint report for sim_strip, HTML report --preset v1endpoint on box + rsync, finalize results-page FINALIZE slots, blog build + Space push. · [pre-reg](posts/2026-08-16-amendment-grasp-sft-route-c-joint.md)
-
-<details><summary>full record</summary>
-
-grasp_sft_v1_joint endpoint boundary — RE-POINTED at run 2 (RESTART --recompute-stats, unit grasp-sft-v1c live since 21:14:48Z 08-16, owner order 20:51:19Z; run 1b killed at ~1900, saves archived _run1_remaponly): on unit inactive + step 3000 saved — (1) final eval read + per-dataset MAE breakdown table to the chart-led report page (grasp_sft_v1_endpoint_report.py, NOTE: wandb run id changes — update WANDB_RUN before --extract; absolute MAE not comparable to run 1, different normalization); (2) checkpoint upload (upload_grasp_sft_v1_joint_checkpoint.py ON the box, weights-only) same-session; (3) sharded sim100 on the box (staged_endpoint/eval_box_grasp_sft_v1_joint_sim100.sh smoke then full, merge_rollout_shards.py, reads vs probe anchors 44/100 flow / R2 bar &gt;=20 token); (4) HTML report --preset v1endpoint + wandb link + consolidated post. ETA ~00:3x-00:5xZ 08-17.
-
-</details>
-
----
-
 ## 🟢 Queued (2)
 
 *ready — waiting on a window or a boundary*
 
-**`bijou-train-per-dataset-flow-norm`** · `cpu`
+**`sft-v1-eval-chain-html-panel`** · `cpu`
 
-Per-dataset flow-target normalization in bijou.train (the isolation verdict's recipe enabler, 07:28Z 08-17 post 1538811601153425469): normalize each item's flow targets under its OWN dataset's q01/q99 row (per_dataset_stats alrea…
+Eval-chain HTML panel + results-page integration: browsable panel for the 3-leg sim100 chain (step500 flow 4/100, step500 token 16/100, endpoint token-fixed 14/100, seeds 0-99) per the HTML-reports rule
 
-**boundary:** Queued 07:3xZ 08-17 at the isolation verdict. GATED on the owner's recipe call (per-dataset norm vs demos-native table vs drop the flag — asked in the verdict post); implementation is the same plumbing for the first two options. Do BEFORE grasp-sft-v2-joint-run locks its pre-reg.
+**boundary:** Queued 14:3xZ 08-17 tick at chain ALL DONE 14:17:56Z (verdict posted 1538917693032243293; babysit entry pruned same tick). Chain cost ~6.2/12 GPU-h. Local H100 free.
 
 <details><summary>full record</summary>
 
-Per-dataset flow-target normalization in bijou.train (the isolation verdict's recipe enabler, 07:28Z 08-17 post 1538811601153425469): normalize each item's flow targets under its OWN dataset's q01/q99 row (per_dataset_stats already ride metadata) instead of one pooled/foreign table, and serve the same way (the b779ba4 train/serve-consistency lesson: the flow decoder must denormalize under the row the item was trained with — sim rollouts use the sim row). Flag-gated alongside --recompute-stats, default off; oracle: a two-dataset synthetic fixture where pooled vs per-dataset normalization produce measurably different normalized targets, round-trip exact. Feeds grasp-sft-v2-joint-run: with per-dataset norm the v2 run is the clean 4th isolation cell (3-mix + sim-fit table) — if it grasps, the mix (b) is exonerated for free.
+Eval-chain HTML panel + results-page integration: browsable panel for the 3-leg sim100 chain (step500 flow 4/100, step500 token 16/100, endpoint token-fixed 14/100, seeds 0-99) per the HTML-reports rule — report --run v1chain or equivalent preset, dark-mode, linked from reports/; fold the 14/100 endpoint token number + head-asymmetry read into the v1 results page (which carries the 3/20 sample today). Data: outputs/sim/grasp_sft/step500_sim100/ + endpoint_token_fixed_sim100/token_s0.json.
 
 </details>
 
 ---
 
-**`grasp-sft-v2-joint-run`** · `cpu`
+**`sft-drift-saga-report-page`** · `cpu`
 
-Grasp-SFT v2 joint run (owner order 00:45:29Z 08-17): SAME hyperparameters as grasp_sft_v1_joint run 2 (bijou.train --objective joint --joint-ce-weight 1.0 --insulate-flow --recompute-stats, eff-96, 3000 steps, eval 250 breakdown…
+Chart-led drift-saga page (owner preference: chart-led consolidated reports): the grasp-SFT MAE-drift investigation as one page
 
-**boundary:** Queued 01:5xZ 08-17 at the owner order. BLOCKED on grasp-demos-v2-regen (dataset uploaded + receipts). Pre-reg before launch per charter. Pre-reg REQUIRED before launch (prereg field null until posted). | 03:3xZ 08-17: serving-norm audit DONE — serving path now trustworthy (token decode fix b779ba4); flow-regression isolation (new item) is the remaining pre-v2 question.
+**boundary:** Queued 13:40Z 08-17. Draftable now (CPU); FINALIZE slots for the rigonly/discriminator verdicts. Feeds the eventual fix pre-reg.
 
 <details><summary>full record</summary>
 
-Grasp-SFT v2 joint run (owner order 00:45:29Z 08-17): SAME hyperparameters as grasp_sft_v1_joint run 2 (bijou.train --objective joint --joint-ce-weight 1.0 --insulate-flow --recompute-stats, eff-96, 3000 steps, eval 250 breakdown, save 500 async, same seed policy) on the v2 regen corpus. Anchors: run-2 endpoint sim100 (this boundary) + the 44/100 probe; run-2 real-slice caveat (v2 train 8.15 vs eval 15.77 — 2x generalization gap at 8% share) is the watch item.
+Chart-led drift-saga page (owner preference: chart-led consolidated reports): the grasp-SFT MAE-drift investigation as one page — the isolation grid (run-1b remap / run-2 pooled / mixed-v2 merged / demosonly native / rigonly cut), the banked MAE curves per run (all four drifting curves + the healthy probe), the two-rulers mechanism (normalized-loss vs raw-degree MAE, 1/(q99-q01)^2 weighting), the head asymmetry (step500 flow 4/100 vs token 16/100), and the config-delta table (distributed/augment/batch/table-mode/init). Curves are already banked in logs/queue; the page can be drafted now and finalizes when the rigonly (+discriminator) verdicts land. Dark-mode charts, plain-words opener per papers rule.
 
 </details>
 
@@ -352,9 +352,65 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (198)
+## ✅ Done (205)
 
 *closed — the full record stays in each fold*
+
+**`grasp-sft-v2-demosonly-endpoint-kit`** · `cpu`
+
+Adapt the staged v2 endpoint kit to the demosonly successor (CPU, ~15 min): eval_box script CKPT/OUT/log names v2_joint -&gt; v2_demosonly; upload script RUN_DIR/DEST -&gt; grasp_sft_v2_demosonly_8xa100/grasp_sft_v2_demosonly_step3000…
+
+**boundary:** Queued 11:43Z 08-17. Runnable NOW (CPU); do before the ~15:1xZ boundary. This session takes it if the ride allows. | DONE 11:5xZ same session: eval_box_grasp_sft_v2_demosonly_sim100.sh + upload_grasp_sft_v2_demosonly_checkpoint.py written + scp'd to box; report --run v2 key re-pointed at demosonly (single-dataset labels, mixed-run sim20 anchor added); v2endpoint HTML preset meta updated to the demosonly command/stamps. Boundary is push-button.
+
+<details><summary>full record</summary>
+
+Adapt the staged v2 endpoint kit to the demosonly successor (CPU, ~15 min): eval_box script CKPT/OUT/log names v2_joint -&gt; v2_demosonly; upload script RUN_DIR/DEST -&gt; grasp_sft_v2_demosonly_8xa100/grasp_sft_v2_demosonly_step3000 + provenance para; endpoint charts --run key 'v2' paths already generic (curve__grasp_sft_v2_* / v2_endpoint) — re-point SIM/labels to demosonly (single-dataset labels); v2endpoint HTML preset meta text (demosonly command, launch stamp 11:38:30Z). Then scp to box so the ~15:1xZ boundary is push-button.
+
+</details>
+
+---
+
+**`grasp-sft-v2-demosonly-run`** · `gpu-box`
+
+grasp_sft_v2_demosonly_8xa100 (owner order 11:27-11:28Z 08-17, delta posted 11:37Z pre-launch, launched 11:38:30Z, unit fontaine-grasp-sft-v2-demosonly): v2-joint recipe verbatim MINUS both rig datasets and --dataset-repeat; --re…
+
+**boundary:** Live since 11:38:30Z, 3000 steps, ~15:1xZ ETA, 40 GPU-h gate, babysit entry grasp_sft_v2_demosonly_8xa100. Watch at every poll: MAE shape — flat-to-falling exonerates the corpus and convicts the mix/table; drift-again moves suspicion deeper. Endpoint work = grasp-sft-v2-endpoint-boundary (re-pointed). | DRIFT REPRODUCED (curve eval 3.46/3.24/4.22/5.27/6.17, train 3.69/3.32/3.86/4.60/5.62 at 250..1250, monotone from 500, losses falling throughout): mix/table EXONERATED. Kill-vs-ride PENDING with owner (asked 13:05, re-asked 13:24). ON THE KILL CALL: stop unit fontaine-grasp-sft-v2-demosonly, keep saves, then launch the PREPARED 1-GPU discriminator (launch_box_grasp_sft_v2_demosonly_1gpu_discriminator.sh, staged on box — single delta: distributed machinery removed; same eff-96/micro-12/augment/recompute/init/seed/corpus; MAE read at 250-step probes, drift shows by 750-1000; ~5-9 h wall on gpu0) + babysit entry + in-channel receipt. Healthy-vs-drifting config deltas documented in the script header (distributed / image-augment / batch / table-mode / init). | KILLED BY OWNER 13:30Z at step ~1350 (~4 GPU-h; drift fully reproduced, saves 500/1000 kept). Read BANKED: demos-native table does NOT fix the drift =&gt; mix/table exonerated as sole cause. Successor: grasp-sft-rigonly-run (owner-designed data-axis cut). · [pre-reg](posts/2026-08-17-prereg-grasp-sft-v2-joint.md)
+
+<details><summary>full record</summary>
+
+grasp_sft_v2_demosonly_8xa100 (owner order 11:27-11:28Z 08-17, delta posted 11:37Z pre-launch, launched 11:38:30Z, unit fontaine-grasp-sft-v2-demosonly): v2-joint recipe verbatim MINUS both rig datasets and --dataset-repeat; --recompute-stats on the single dataset = demos-native quantile table (the isolation grid's remaining cell). Banner verified 1 dataset / 4500 eps / 1,750,071 frames / holdout 500. Anchors: killed-run MAE drift (train AND eval rising from step 250); probe 44/100; run-2 endpoint 5/100.
+
+</details>
+
+---
+
+**`grasp-sft-v2-step500-flow-read`** · `gpu-local`
+
+v2 step-500 flow sim100 — the sharpened isolation read (posted 10:18Z 1538854676324155442): run-2's step500 flow = 4/100 (seeds 8/29/40/54; CORRECTED 11:1xZ from the tick's posted 2/100 misread
+
+**boundary:** Queued 10:3xZ 08-17. GPU-sequenced, not decision-blocked: earliest slot = local H100 at eval-chain ALL DONE (~late afternoon) or box GPUs at the v2 endpoint (~13:3xZ). NOTE: the v2 endpoint sim100 may answer the lever question first — if endpoint flow &gt;= probe band, this read becomes optional color (skip-with-note allowed). | PULLED FORWARD 10:54Z 08-17: owner ordered a sim20 (seeds 0-19) on step_000500 immediately, running locally beside the eval chain since 11:04Z (unit sim20-v2-step500); comparison sub-band: run-2 step500 had 1/20 on seeds 0-19 (seed 8). The full sim100 leg of this item stays queued for a free GPU. | sim20 EXECUTED 11:04-11:36Z (owner order): v2 step500 flow 0/20 on seeds 0-19 vs run-2's 1/20 same seeds — indistinguishable, not beating the band; 7/20 moved&gt;0.5, mean final progress -2.68 cm (knocks boat away on the tail). NO healthy-run step-500 anchor exists (probe only evaluated at 2000) so this neither confirms nor kills the table story — the discriminative read is the v2 ENDPOINT sim100. Posted 1538874281784508466. Full sim100 leg of this item now likely moot unless the endpoint is ambiguous. | CLOSED 11:4xZ: the sim20 WAS the read (0/20, posted, banked in outputs/sim/grasp_sft/v2_step500/) and the mixed run is dead — full sim100 on a killed run's step500 has no decision value. The demosonly run's step-500 save can get the same sim20 treatment on owner ask. · [pre-reg](posts/2026-08-17-prereg-grasp-sft-v2-joint.md)
+
+<details><summary>full record</summary>
+
+v2 step-500 flow sim100 — the sharpened isolation read (posted 10:18Z 1538854676324155442): run-2's step500 flow = 4/100 (seeds 8/29/40/54; CORRECTED 11:1xZ from the tick's posted 2/100 misread — same band as the endpoint's 5/100, collapsed by step 500). Same protocol (euler-10, seeds 0-99) on v2's step_000500 save (exists since ~10:45Z, box archive): if v2's flow beats the 4-5/100 band at its own step 500, the corpus/table pairing was the lever and the collapse mechanism is confirmed as table-misfit-from-step-0. Cheap (~1.4 GPU-h sharded or ~3 h single-GPU).
+
+</details>
+
+---
+
+**`grasp-sft-v2-endpoint-boundary`** · `cpu`
+
+grasp_sft_v2_DEMOSONLY endpoint boundary (RE-POINTED 11:4xZ: mixed run killed by owner at ~1150, successor grasp_sft_v2_demosonly_8xa100 live since 11:38:30Z unit fontaine-grasp-sft-v2-demosonly, ETA ~15:1xZ): on unit inactive +…
+
+**boundary:** Queued 10:3xZ 08-17. Runnable at run completion (~13:3xZ; this work session rides it if the clock allows, else the run_work_next tick chain owns it). Gate facts + anchors live in babysit.toml entry grasp_sft_v2_joint_8xa100. | RE-POINTED 11:4xZ at the demos-only successor: boundary ~15:1xZ (after this work session's 14:19Z kill) — the run_work_next tick chain owns it; kit staged on box needs the name swap (v2_joint -&gt; v2_demosonly) in CKPT/OUT/DEST before use. Per-dataset breakdown table trivial (1 dataset); decisive read = MAE shape (flat-to-falling vs drift) + endpoint flow vs probe 44 band. | LIKELY MOOT 13:2xZ: drift reproduced on demosonly; if the owner kills, this item closes unexecuted and the discriminator (see grasp-sft-v2-demosonly-run boundary) takes the box. | CLOSED UNEXECUTED 13:3xZ: run killed mid-flight by owner steering; no endpoint exists. Kit scripts remain staged for whatever run next reaches an endpoint. · [pre-reg](posts/2026-08-17-prereg-grasp-sft-v2-joint.md)
+
+<details><summary>full record</summary>
+
+grasp_sft_v2_DEMOSONLY endpoint boundary (RE-POINTED 11:4xZ: mixed run killed by owner at ~1150, successor grasp_sft_v2_demosonly_8xa100 live since 11:38:30Z unit fontaine-grasp-sft-v2-demosonly, ETA ~15:1xZ): on unit inactive + step 3000 saved — (1) final eval read + per-dataset MAE breakdown (breakdown curves are the real-slice watch item: run-2 gap was 8.15 train vs 15.77 eval at 8% share); (2) checkpoint upload weights-only same-session (standing rule); (3) sharded sim100 on the box via eval_box_grasp_sft_v2_joint_sim100.sh ADAPTED to demosonly names (CKPT/OUT/log), BOTH legs valid (flow euler-10 + token greedy — the b779ba4 merged-table decode fix is in the deployed tree): vs the pre-reg grid: flow &gt;= probe band 44 =&gt; demos were the lever; flow ~5 =&gt; data not the lever, banked --per-dataset-flow-norm cell is the next arm; token vs the &gt;=20/100 bar; (4) RSYNC sim100 jsons+videos LOCAL before ANY box cleanup (08-17 wipe lesson); (5) HTML report (grasp_sft_joint_unseen_report.py --preset to add) + consolidated chart-led post.
+
+</details>
+
+---
 
 **`sft-v1-flow-regression-isolation`** · `cpu`
 
@@ -365,6 +421,20 @@ Isolate the sft-v1 FLOW regression (5/100 box + 0/20 local replication vs probe 
 <details><summary>full record</summary>
 
 Isolate the sft-v1 FLOW regression (5/100 box + 0/20 local replication vs probe 44/100; serving audited clean 03:3xZ 08-17, commit b779ba4 — the fault is in the trained model, not the table path). Run-2 deltas vs the 44/100 probe: (a) joint objective (CE weight 1.0, insulate-flow) vs flow-only; (b) 3-dataset sim+real mix vs demos-only; (c) --recompute-stats pooled table vs demos-only table. Named candidate mechanism (c'): pooling real+sim widens the wrist_flex normalized window (q01 -52.35 pooled vs +23.0 demos-only) =&gt; sim wrist targets compress into a sub-interval of [-1,1] =&gt; less effective flow-MSE weight on exactly the grasp-critical channel (reaches-but-cannot-grasp shape). CHEAP DISCRIMINATORS, no training: (1) sim20 the archived run-1b remap-only saves (_run1_remaponly on box, trained WITHOUT recompute-stats, has (a)+(b) but not (c)) — if run-1b grasps, (c) is the lever; (2) per-channel normalized-space MSE breakdown of run 2's eval (train_log has per-dataset; a wrist_flex-heavy residual on sim supports c'). Then the v2 recipe decision (per-dataset action normalization / demos-oriented table / drop the flag) goes to the owner with evidence.
+
+</details>
+
+---
+
+**`bijou-train-per-dataset-flow-norm`** · `cpu`
+
+Per-dataset flow-target normalization in bijou.train (the isolation verdict's recipe enabler, 07:28Z 08-17 post 1538811601153425469): normalize each item's flow targets under its OWN dataset's q01/q99 row (per_dataset_stats alrea…
+
+**boundary:** Queued 07:3xZ 08-17 at the isolation verdict. GATED on the owner's recipe call (per-dataset norm vs demos-native table vs drop the flag — asked in the verdict post); implementation is the same plumbing for the first two options. Do BEFORE grasp-sft-v2-joint-run locks its pre-reg. | DONE (landed 6a6a0aa, check.py 988 green: --per-dataset-flow-norm flag, section tag q01q99_per_dataset, serve-side rows carried, pooled-vs-per-dataset fixture + exact round-trip oracle). Owner recipe call 09:23Z: NOT used for v2 — flag stays BANKED as the next isolation arm if v2's flow stays in the 5/100 band. STATUS CORRECTED 10:3xZ (was still 'queued' — same killall'ed session).
+
+<details><summary>full record</summary>
+
+Per-dataset flow-target normalization in bijou.train (the isolation verdict's recipe enabler, 07:28Z 08-17 post 1538811601153425469): normalize each item's flow targets under its OWN dataset's q01/q99 row (per_dataset_stats already ride metadata) instead of one pooled/foreign table, and serve the same way (the b779ba4 train/serve-consistency lesson: the flow decoder must denormalize under the row the item was trained with — sim rollouts use the sim row). Flag-gated alongside --recompute-stats, default off; oracle: a two-dataset synthetic fixture where pooled vs per-dataset normalization produce measurably different normalized targets, round-trip exact. Feeds grasp-sft-v2-joint-run: with per-dataset norm the v2 run is the clean 4th isolation cell (3-mix + sim-fit table) — if it grasps, the mix (b) is exonerated for free.
 
 </details>
 
@@ -393,6 +463,20 @@ Serving-path normalization audit (from the 5/100 sim100 verdict, post 1538738118
 <details><summary>full record</summary>
 
 Serving-path normalization audit (from the 5/100 sim100 verdict, post 1538738118151249940): trace the action de-normalization table end-to-end at rollout (checkpoint metadata.json vs dataset-side stats vs any cached constants) for the recomputed channels (wrist_roll +-157, wrist_flex -52/95, lift -124.8); verify what rollout_sim actually applied on the box legs; then re-run 20 unseen seeds LOCALLY (owner: local sim100s) with the verified table. Decisive + cheap: if the mismatch is real, expect a large jump; if not, the 16x-data model genuinely regressed and the v2 pipeline needs the fault isolated BEFORE grasp-sft-v2 trains with the same flag.
+
+</details>
+
+---
+
+**`grasp-sft-v2-joint-run`** · `cpu`
+
+Grasp-SFT v2 joint run (owner order 00:45:29Z 08-17): SAME hyperparameters as grasp_sft_v1_joint run 2 (bijou.train --objective joint --joint-ce-weight 1.0 --insulate-flow --recompute-stats, eff-96, 3000 steps, eval 250 breakdown…
+
+**boundary:** Queued 01:5xZ 08-17 at the owner order. BLOCKED on grasp-demos-v2-regen (dataset uploaded + receipts). Pre-reg before launch per charter. Pre-reg REQUIRED before launch (prereg field null until posted). | 03:3xZ 08-17: serving-norm audit DONE — serving path now trustworthy (token decode fix b779ba4); flow-regression isolation (new item) is the remaining pre-v2 question. | LAUNCHED 09:57:39Z 08-17 on the box (unit fontaine-grasp-sft-v2-joint, 8xA100, pre-reg posted 1538846657901498390 BEFORE launch; owner 'skip the smoke, asap' 09:47Z; recipe call locked 09:23Z: one merged recompute-stats table, NO per-dataset norm). First steps GREEN (step10 loss 3.98, 96-98% util); 4.08 s/step at step 110 -&gt; endpoint ~13:3xZ. Babysit-registered, 40 GPU-h gate. STATUS CORRECTED 10:3xZ (was still 'queued' — launch session was owner-killall'ed mid-bookkeeping). | KILLED BY OWNER 11:27Z 08-17 at step ~1150 (~2.6/40 GPU-h): MAE rising monotone INCLUDING the train slice (eval 3.85/3.96/4.95/6.29, train 4.24/4.45/4.76/6.48 at 250/500/750/1000 — run-1b signature under a fresh merged table). step500 sim20 read: 0/20 (band, not better). Superseded by grasp-sft-v2-demosonly run (launched 11:38:30Z, owner order: rig datasets out, demos-native table). step_000500/1000 saves kept on box + step500 local. · [pre-reg](posts/2026-08-17-prereg-grasp-sft-v2-joint.md)
+
+<details><summary>full record</summary>
+
+Grasp-SFT v2 joint run (owner order 00:45:29Z 08-17): SAME hyperparameters as grasp_sft_v1_joint run 2 (bijou.train --objective joint --joint-ce-weight 1.0 --insulate-flow --recompute-stats, eff-96, 3000 steps, eval 250 breakdown, save 500 async, same seed policy) on the v2 regen corpus. Anchors: run-2 endpoint sim100 (this boundary) + the 44/100 probe; run-2 real-slice caveat (v2 train 8.15 vs eval 15.77 — 2x generalization gap at 8% share) is the watch item.
 
 </details>
 
@@ -463,6 +547,20 @@ Top-cam disk visibility: measured real-vs-sim contrast read (feeds the owner's 1
 <details><summary>full record</summary>
 
 Top-cam disk visibility: measured real-vs-sim contrast read (feeds the owner's 17:07Z 'cylinder does not render' item + my 18:01Z option (b)): extract real rig top frames from ~/datasets/mcobzarenco/so101_pick_place_v2 (the plate-mining source), locate the real wooden disk, measure its luminance/chroma contrast vs surrounding table; same measure on sim top composites (segmentation-masked, done: sim +20% lum, ~1.4k px). If the real disk is markedly more visible, the sim disk material is mis-calibrated -&gt; propose the retint with numbers + side-by-side crops for the owner call; if comparable, close as sim2real-faithful (no change).
+
+</details>
+
+---
+
+**`grasp-sft-v1-endpoint-boundary`** · `cpu`
+
+grasp_sft_v1_joint endpoint boundary — RE-POINTED at run 2 (RESTART --recompute-stats, unit grasp-sft-v1c live since 21:14:48Z 08-16, owner order 20:51:19Z; run 1b killed at ~1900, saves archived _run1_remaponly): on unit inactiv…
+
+**boundary:** Queued 18:1xZ 08-16 at launch; re-pointed 21:1xZ after the owner-ordered restart. Runnable at run-2 completion; the armed run_work_next tick chain owns it if no session is live. | EXECUTED 01:0x-02:3xZ 08-17 (work session): final eval 5.41 + per-dataset table (real v2 train 8.15 / eval 15.77 - 2x gap) posted; ckpt uploaded + byte-verified (grasp_sft_v1_joint_step3000); sim100 both legs merged on the box: FLOW 5/100, TOKEN 0/100 vs anchors 44/9/28 + bar 20 =&gt; pre-reg band flow&lt;25 = seam/serving investigation FIRST (verdict post 1538738118151249940; flow moved 51/100 median final 8.7cm - reaches, cannot grasp =&gt; prime suspect wrist-channel norm mismatch in serving). REMAINING (next tick): rsync merged jsons+videos local, re-run endpoint report for sim_strip, HTML report --preset v1endpoint on box + rsync, finalize results-page FINALIZE slots, blog build + Space push. | TAIL CLOSED 10:3xZ 08-17 work session (d464ac6): the box outputs/ wipe (05:5xZ session's rm -rf ~/flow-matching/outputs before the demo-gen v2 driver) had deleted the merged sim100 jsons+videos BEFORE the rsync-local step — per-seed data reconstructed exactly from the surviving ~/eval__sft_v1_*.log shard tables (reconstruct_sim100_from_logs.py; 5/100, 0/100, moved 51, median 8.65 all match the posted verdict), real sim_strip regenerated, v1endpoint HTML report built from the reconstruction + live on the reports Space, results-page FINALIZE slots filled with integrity note. Videos = the only unrecoverable artifact (deterministic rollouts, re-renderable from the uploaded ckpt on demand). · [pre-reg](posts/2026-08-16-amendment-grasp-sft-route-c-joint.md)
+
+<details><summary>full record</summary>
+
+grasp_sft_v1_joint endpoint boundary — RE-POINTED at run 2 (RESTART --recompute-stats, unit grasp-sft-v1c live since 21:14:48Z 08-16, owner order 20:51:19Z; run 1b killed at ~1900, saves archived _run1_remaponly): on unit inactive + step 3000 saved — (1) final eval read + per-dataset MAE breakdown table to the chart-led report page (grasp_sft_v1_endpoint_report.py, NOTE: wandb run id changes — update WANDB_RUN before --extract; absolute MAE not comparable to run 1, different normalization); (2) checkpoint upload (upload_grasp_sft_v1_joint_checkpoint.py ON the box, weights-only) same-session; (3) sharded sim100 on the box (staged_endpoint/eval_box_grasp_sft_v1_joint_sim100.sh smoke then full, merge_rollout_shards.py, reads vs probe anchors 44/100 flow / R2 bar &gt;=20 token); (4) HTML report --preset v1endpoint + wandb link + consolidated post. ETA ~00:3x-00:5xZ 08-17.
 
 </details>
 
