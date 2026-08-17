@@ -47,6 +47,9 @@ SHARED_PROVENANCE_KEYS = (
     "spawn_version",
     "tint_band",
     "spawn_v2_prereg",
+    "bracket_appearance",
+    "wrist_pose",
+    "retreat_tail",
 )
 
 
