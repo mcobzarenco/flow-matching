@@ -16,9 +16,13 @@ both slices — opposite of the drift signature so far.***
 ~3.8 s/step, 8×99% util, losses falling (0.67); @750 ridden
 in-session: eval MAE **9.15** / train **4.03** — eval wobbled up from
 @500's 8.82 (still below @250's 9.24; holdout is 6 episodes) while
-train fell monotone 5.53→4.62→4.03. NOT the drift signature (that
-needs BOTH slices rising monotone; every drifting run's train slice
-rose too). Full curve read @1000 verdict ~15:0xZ — the next tick or the
+train fell monotone 5.53→4.62→4.03. @1000 landed 14:52Z at the
+session wire: eval **9.51** / train **4.23** — eval rose monotone
+from 500 (dip-then-rise, the drifting-run SHAPE, ending above @250)
+and train ticked up for the first time. AMBIGUOUS-LEANING-DRIFT
+posted honestly (magnitude +0.69 vs demosonly's +2.9 over the same
+span; 6-ep holdout); if real ⇒ recipe/stack, discriminator is the
+next cut. Full verdict + charts owed by the chained work session — the next tick or the
 chained work session posts the full MAE-curve verdict (healthy =
 corpus implicated, drifting = recipe/stack convicted; then the staged
 1-GPU discriminator is the complementary cut, owner decides). Local
