@@ -6,7 +6,7 @@
 
 **Depth call:** depth 1 queued (discriminator pre-reg post draft, CPU) after the postproc-kit close: the experimental frontier stays deliberately owner-gated — the drift investigation has one designed next cut (the staged 1-GPU discriminator, BLOCKED on the owner go asked in-channel 15:1xZ 08-17) and pre-registering further runs before that verdict would violate run-only-what-changes-the-next-decision. Both GPUs idle by design pending that word (local H100 freed 16:2x-16:4xZ when the owner's policy server came down).
 
-**23 open** (Live 0 · Queued 2 · Blocked 21 · Done 210)
+**23 open** (Live 0 · Queued 2 · Blocked 21 · Done 211)
 
 ## 🔴 Live (0)
 
@@ -18,15 +18,15 @@
 
 *ready — waiting on a window or a boundary*
 
-**`merge-main-ebaa8e0-family-norm`** · `cpu`
+**`prereg-draft-per-dataset-flow-norm-rerun`** · `cpu`
 
-Merge main ebaa8e0 (owner note 17:05:31Z 08-17, /tmp/owner_note_main.txt banked to fontaine/notes/): normalization family-owned
+Pre-reg DRAFT for the --per-dataset-flow-norm rerun (the 08-17 isolation verdict's recipe recommendation, posted 1538811601153425469): the per-channel occupancy analysis showed the pooled/merged table crushes wrist_flex to 0.24x…
 
-**boundary:** Queued 17:1xZ 08-17 during the box-evacuation ride. Owner note says v2 pipeline needs no re-pin beyond the rebase. Execute as next session's infra-debt item (or on owner priority call); box evacuation outranks it this session.
+**boundary:** Queued 18:0xZ 08-17 work session at the ebaa8e0-merge close (refill, charter section 4). GATED behind the discriminator verdict (sft-drift-discriminator-run, owner-GO pending since 15:14Z 08-17): the verdict decides whether distributed machinery or recipe deltas own the drift, which fixes this rerun's baseline arm + platform. Draft is CPU-only; posting+launch owner-gated as always.
 
 <details><summary>full record</summary>
 
-Merge main ebaa8e0 (owner note 17:05:31Z 08-17, /tmp/owner_note_main.txt banked to fontaine/notes/): normalization family-owned — QuantileStats owns raw&lt;-&gt;normalized, decoders pure normalized-space; supersedes my interim b779ba4 serving-norm threading. Mechanical rebase checklist from the note: (1) ARSuffixDecoder.predict_chunk requires quantiles= kwarg (direct callers only; batch_action_quantiles / action_quantiles.rows helpers); (2) normalize_state/unnormalize_action -&gt; stats.normalize/denormalize (grep both names + molmoact2_processing re-exports); (3) family ctors take action_quantiles= (molmoact2_action_quantiles(metadata)); loading.molmoact2_action_table deleted; (4) MolmoFlowDecoder.predict_chunk -&gt; sample_chunk, returns NORMALIZED; molmo_flow_loss takes actions_norm=; (5) gemma FlowDecoder.predict_chunk -&gt; gemma_flow.decode_chunk; flow/snapflow losses take state_norm=/actions_norm=; (6) encoder action_table stash deleted, Collator quantiles CE-only. Oracle-gated like merge-main phases 5-7: loss oracles + predict-path MAEs must reproduce bitwise per the note's zero-numeric-change claim.
+Pre-reg DRAFT for the --per-dataset-flow-norm rerun (the 08-17 isolation verdict's recipe recommendation, posted 1538811601153425469): the per-channel occupancy analysis showed the pooled/merged table crushes wrist_flex to 0.24x weight and overflows wrist_roll 288% under the rig table — the enabler (6a6a0aa) is now LIVE on the merged family-norm stack (d3dd4d0: family-level branch, section tag q01q99_per_dataset, serving reads the recorded fact at load). Draft the pre-reg for a demosonly (or mixed-v2, pending the discriminator verdict's recipe implications) grasp-SFT rerun with --per-dataset-flow-norm: frozen recipe delta = ONE flag vs the matched baseline run, primary read = same MAE probe windows vs the baseline curve + k4l2 panel paired at endpoint, platform local H100 single-GPU (act-ckpt fit preflight per the 08-08 OOM ladder note if eff-batch above discriminator's 96).
 
 </details>
 
@@ -340,9 +340,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (210)
+## ✅ Done (211)
 
 *closed — the full record stays in each fold*
+
+**`merge-main-ebaa8e0-family-norm`** · `cpu`
+
+Merge main ebaa8e0 (owner note 17:05:31Z 08-17, /tmp/owner_note_main.txt banked to fontaine/notes/): normalization family-owned
+
+**boundary:** Queued 17:1xZ 08-17 during the box-evacuation ride. Owner note says v2 pipeline needs no re-pin beyond the rebase. Execute as next session's infra-debt item (or on owner priority call); box evacuation outranks it this session. || DONE 18:0xZ 08-17 work session (17:42 boot, commit d3dd4d0): merged with 4 conflicts (policies/interface/molmo_flow/sections) — b779ba4 interim threading superseded structurally (those files now upstream-identical; merged-table override + item_action_stats carrier DELETED, batch.action_stats honest per-item again); 6a6a0aa --per-dataset-flow-norm PORTED to family level (flow_normalize_targets/flow_denormalize_chunk + item_flow_quantiles + per_dataset_flow_scheme in models.molmoact2_flow; both molmoact2 families branch, decoder pure normalized; fast.molmoact2 normalize/unnormalize_q01q99_rows single-source; section tag kept + validated + read at from_checkpoint; oracle suite rewritten, 5 tests). All 6 note deltas swept clean across fontaine/+probes/+sim/ (zero direct callers of any moved API). Gates: check.py 992 green; gradflow oracles EXACT flow 1.6948 / ar_backbone 27.8546; discriminator launcher FULL-PARSE green vs merged CLI (family-inferred molmoact2_joint, frozen params intact — GO-&gt;launch path re-verified post-merge); released ckpt loads via new family-norm surface (descending shoulder pair preserved); parents[3] carry stands (goldens untouched by ebaa8e0).
+
+<details><summary>full record</summary>
+
+Merge main ebaa8e0 (owner note 17:05:31Z 08-17, /tmp/owner_note_main.txt banked to fontaine/notes/): normalization family-owned — QuantileStats owns raw&lt;-&gt;normalized, decoders pure normalized-space; supersedes my interim b779ba4 serving-norm threading. Mechanical rebase checklist from the note: (1) ARSuffixDecoder.predict_chunk requires quantiles= kwarg (direct callers only; batch_action_quantiles / action_quantiles.rows helpers); (2) normalize_state/unnormalize_action -&gt; stats.normalize/denormalize (grep both names + molmoact2_processing re-exports); (3) family ctors take action_quantiles= (molmoact2_action_quantiles(metadata)); loading.molmoact2_action_table deleted; (4) MolmoFlowDecoder.predict_chunk -&gt; sample_chunk, returns NORMALIZED; molmo_flow_loss takes actions_norm=; (5) gemma FlowDecoder.predict_chunk -&gt; gemma_flow.decode_chunk; flow/snapflow losses take state_norm=/actions_norm=; (6) encoder action_table stash deleted, Collator quantiles CE-only. Oracle-gated like merge-main phases 5-7: loss oracles + predict-path MAEs must reproduce bitwise per the note's zero-numeric-change claim.
+
+</details>
+
+---
 
 **`sft-drift-discriminator-postproc-kit`** · `cpu`
 
