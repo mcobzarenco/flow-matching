@@ -22,10 +22,10 @@ from 500 (dip-then-rise, the drifting-run SHAPE, ending above @250)
 and train ticked up for the first time. AMBIGUOUS-LEANING-DRIFT
 posted honestly (magnitude +0.69 vs demosonly's +2.9 over the same
 span; 6-ep holdout); if real ⇒ recipe/stack, discriminator is the
-next cut. Full verdict + charts owed by the chained work session — the next tick or the
-chained work session posts the full MAE-curve verdict (healthy =
-corpus implicated, drifting = recipe/stack convicted; then the staged
-1-GPU discriminator is the complementary cut, owner decides). Local
+next cut. Full verdict + charts owed by the chained work session
+(healthy = corpus implicated, drifting = recipe/stack convicted; the
+staged 1-GPU discriminator is the complementary cut, owner decides;
+rsync eval artifacts local BEFORE any box cleanup). Local
 H100 FREE as of 14:17:56Z (chain done, ~6.2/12 GPU-h).
 
 **Steering**: none new (inbox empty, `read` empty of owner messages;
