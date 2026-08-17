@@ -1,6 +1,67 @@
 # Now
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-16 22:43 → 08-17 02:4xZ (real `date -u` at first
+write: 01:56) — work session: **run 2 COMPLETE at step 3000 (01:07Z,
+~31/40 GPU-h, zero tracebacks) — endpoint banked to the Hub, sim100
+sharded on the box; three owner steering threads executed live (wrist
+refit prioritized + stages 1–3 first pass DONE on local, pipeline
+order queued: 5k regen → SFT v2); `outputs/` audit freed 434 GB.***
+
+**Status**: `grasp_sft_v1_joint_8xa100` run 2 **COMPLETE** 01:07:43Z
+at 3000/3000 (~31 GPU-h wall×8 vs the 40 gate; final eval 5.41,
+train 5.27). Checkpoint **banked + byte-verified**:
+`fontaine-checkpoints/grasp_sft_v1_joint_step3000` (weights-only +
+train_log). Eval curve oscillated all run: 4.05 → 4.54 → 3.74 → 5.00
+→ 5.09 → **3.62 @1500** → **6.64 @1750** → 5.49 → 6.36 → 5.48 → 5.52
+→ 5.41 @3000; per-dataset @3000: sim 5.06/4.99 (eval/train), **real
+v2 15.77/8.15 — a 2× train/eval gap on real data** (the boundary
+caveat, sharper than run-1b's rise). sim100 (flow+token, 4×25 exact
+shards) LIVE on the box under unit `sft-v1-sim100`, ~10/25 seeds per
+shard at 01:53Z, ETA ~02:2xZ — verdict vs the 44/100 flow anchor +
+≥20 token bar lands in this session's tail or the next tick. Local
+GPU idle after refit renders.
+
+**Steering** (3 threads, all replied + acked, inbox clear): (1)
+23:06Z wrist-cam status ask → full status reply; (2) 23:56Z
+**"prioritise this work, use the local machine"** → refit stages 1–3
+first pass executed same-session (below); (3) 00:45Z **pipeline
+order**: after the run, regen 5k demos with all improvements + wrist
+angle "definitely" in the new demos, then SFT v2 same hyperparameters;
+sim100s on local going forward → queued `grasp-demos-v2-regen` +
+`grasp-sft-v2-joint-run` (sequenced behind the refit), flagged that
+this sim100 was already mid-flight on the box (finishes faster there,
+box idle after for the regen).
+
+**Done** (commits `bba830b`…`ee7f789` + close, checks green): (a)
+**`outputs/` audit + prune 486 → 52 GB** (owner cleanup thread
+closed: GRPO full-state .pts with Hub-verified weights-only endpoints,
+measurement-run step dirs, optimizer.pt + intermediates of banked
+runs; disk 239 → 673 GB free, report in-channel); (b) **wrist-cam
+refit stages 1–3 first pass**: matched-pairs instrument
+(`wrist_cam_matched_pairs.py`, 312 pairs replaying rig-v2 states into
+the sim at identical kinematics, composite posted) + measurements
+(per-pair jaw-angle discrepancy 63° mean, sim bottom-band occupancy
+0.050 vs real 0.115) + rotation-only grid fit **measured insufficient**
+(held-out 7.56 → 7.41; degenerate jaw-hiding first winner fixed by a
+dominating visibility penalty) — registered next: position offsets +
+glare-robust angle metric; (c) run 2 ridden end-to-end with trend
+posts at 1000/1250-1500/1750; (d) boundary executed: final eval +
+per-dataset table, Hub upload verified, sim100 launched (2 unit
+relaunches — systemd-run cwd defaults to $HOME, cd/abs-path fix),
+results page rewritten for run 2 (sim100 numbers pending); (e) queue
++2 owner-pipeline items, wrist refit item updated with stage-1 done.
+
+**Next**: `queue_cli.py next` → finish the boundary (merge shards →
+reads → sim100 verdict into the page + HTML report + consolidated
+post) as soon as the shards land; then `wrist-cam-pose-refit`
+(position-offset fit, leads next work session, on the regen's
+critical path) → `grasp-demos-v2-regen` (pre-reg first) →
+`grasp-sft-v2-joint-run`. `run_work_next` re-armed at close.
+Owner-pending unchanged: disk composite exemption 👍, approach
+redesign go, v2.1 bands, ckpt-format, morning-veto items.*
 
 *Updated 2026-08-16 22:37–22:4xZ (real `date -u` at stamp: 22:42) —
 tick: **run 2 alive and clean at step 1010/3000 (8×100%, loss falling
@@ -108,35 +169,18 @@ Next work session: `wrist-cam-pose-refit`. Owner-pending unchanged:
 disk composite exemption 👍, approach redesign go, v2.1 bands,
 ckpt-format, morning-veto items.
 
-*Updated 2026-08-16 19:12–19:2xZ (real `date -u` at stamp: 19:19) —
-tick: **SFT healthy through eval-750 — MAE monotone 14.53 → 14.04 →
-13.85, all 8 GPUs 78–100%, zero tracebacks; no steering; work
-session stays chained for the endpoint boundary.***
-
-**Status**: `grasp_sft_v1_joint_8xa100` LIVE (unit `grasp-sft-v1b`),
-step 770+/3000 at 19:18Z, window 13.4 steps/min (≈3.9 s/step incl.
-eval pauses), VRAM steady ~64.5 GiB/rank, cumulative projection 7.6
-vs the 40 GPU-h babysit gate, 0 tracebacks. Evals monotone:
-14.53@250 → 14.04@500 → **13.85@750** (train_mae 13.97). Tick held
-open through the eval-750 boundary before closing (charter §6). ETA
-unchanged ~21:4x–22:0xZ. Local GPU idle (owner-released).
-
-**Steering**: none — read + inbox empty, no new reactions on the
-last 5 posts (v1.1 sample videos unreacted so far; disk `realcal`
-exemption still awaits the owner's 👍).
-
-**Done**: routine babysit tick — two babysit polls (19:13, 19:18)
-bracketing eval-750, remote-log eval read, queue validate (depth 1
-with recorded reason, 20 open), body + footer roll to
-archive/now-2026-08-16.md.
-
-**Next**: `run_work_next` stays ARMED (armed 19:03 by the work
-session close; box busy + `grasp-sft-v1-endpoint-boundary` queued
-for run completion ~21:4x–22:0xZ). Owner-pending unchanged: disk
-composite exemption 👍, v2.1 bands, ckpt-format, morning-veto
-items.*
-
 ## Utilization footer
+
+Session 2026-08-16 22:43 → 08-17 02:4xZ (work, exploit; box: run-2
+ride 22:43→01:07 complete ≈ +19.2 GPU-h in-window (run-2 total ~31/40
+gate) + sim100 sharded eval ≈ +4–5 GPU-h to its ~02:2x end; local
+~0.2 GPU-h refit renders/fit): **run 2 COMPLETE + endpoint banked
+(final eval 5.41, real-v2 2× train/eval gap the headline caveat),
+sim100 verdict in the tail or next tick; owner pipeline queued (5k
+regen with fitted wrist pose → SFT v2 same hparams); wrist refit
+stages 1–3 first pass on local (312 matched pairs, defect measured,
+rotation-only fit an honest negative); outputs/ prune freed 434 GB**
+— queue depth 4, inbox clear, `run_work_next` re-armed.
 
 Session 2026-08-16 22:37–22:4xZ (tick; box run-2 riding ≈ +0.9
 GPU-h during the window, local idle): **run 2 clean at 1010/3000
