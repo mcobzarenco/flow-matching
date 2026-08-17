@@ -139,3 +139,33 @@ def test_bracket_real_is_render_only() -> None:
         v1.reset(seed)
         real.reset(seed)
         assert np.array_equal(v1.data.qpos, real.data.qpos), f"seed {seed}"
+
+
+def test_wrist_pose_validated() -> None:
+    with pytest.raises(ValueError, match="wrist_pose"):
+        SO101Sim(wrist_pose="v2")
+
+
+def test_wrist_pose_refit_is_camera_only() -> None:
+    # wrist_pose='refit' (queue wrist-cam-pose-refit, fitted 2026-08-17):
+    # a camera pos/quat change only — the settled physics state must stay
+    # bit-identical to v1, the v1 pose oracle-pinned, and the refit pose
+    # must match the shipped fit record (outputs/sim/wrist_refit/fit.json).
+    v1 = _physics_only(SO101Sim())
+    refit = _physics_only(SO101Sim(wrist_pose="refit"))
+
+    cam_v1 = v1.model.camera("wrist_cam")
+    cam_refit = refit.model.camera("wrist_cam")
+    assert cam_v1.pos == pytest.approx((0.02416, -0.05504, 0.03225))
+    assert cam_v1.quat == pytest.approx((-0.24345, -0.05192, 0.02663, 0.96816))
+    assert cam_refit.pos == pytest.approx((0.00475, -0.08292, 0.00056))
+    assert cam_refit.quat == pytest.approx((-0.14755, -0.10195, -0.20516, 0.96216))
+    # the fitted quat ships normalized, and the lens-source fovy is frozen
+    # across the flag (the fisheye init owns it; the pose never touches it)
+    assert float(np.linalg.norm(cam_refit.quat)) == pytest.approx(1.0, abs=1e-4)
+    assert cam_refit.fovy[0] == cam_v1.fovy[0]
+
+    for seed in (0, 3):
+        v1.reset(seed)
+        refit.reset(seed)
+        assert np.array_equal(v1.data.qpos, refit.data.qpos), f"seed {seed}"

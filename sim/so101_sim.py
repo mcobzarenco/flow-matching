@@ -265,6 +265,7 @@ class SO101Sim:
         tint_band: str = "rig_gray",
         disk_appearance: str = "v1",
         bracket_appearance: str = "v1",
+        wrist_pose: str = "v1",
     ) -> None:
         if render_style not in ("v0", "v1", "v2", "v3", "v4"):
             raise ValueError(
@@ -320,6 +321,9 @@ class SO101Sim:
                 f"bracket_appearance {bracket_appearance!r} not in ('v1', 'real')",
             )
         self.bracket_appearance = bracket_appearance
+        if wrist_pose not in ("v1", "refit"):
+            raise ValueError(f"wrist_pose {wrist_pose!r} not in ('v1', 'refit')")
+        self.wrist_pose = wrist_pose
         self.spawn_version = spawn_version
         self.tint_band = tint_band
         # Spawn-v2 (pre-reg 2026-08-16, finalized): disk uniform over
@@ -501,11 +505,33 @@ class SO101Sim:
         -0.004, 0.160), ~55 deg), which under the 72-deg v1 source
         filled the bottom ~40% of frame with the gripper body — real
         start frames show only slim jaw tips in the bottom quarter
-        over full-frame table."""
+        over full-frame table.
+
+        wrist_pose='refit' (queue wrist-cam-pose-refit, fitted
+        2026-08-17 by fontaine/scripts/wrist_cam_pose_fit.py on 216
+        rig-v2 matched pairs, validated on 96 held-out): the periphery
+        re-tune overcorrected — at the v1 pose the FIXED jaw is never
+        in frame (0/312 pairs) while the real wrist camera sees both
+        jaws in 93% of frames. Fitted mount-local delta: pitch -23 /
+        yaw +14 / roll -9.5 deg, camera-frame offset (+3.3, +1.3,
+        -3.0) cm. Held-out: moving-jaw centroid error 0.119 -> 0.066
+        (-44.5%, registered G1 -50% NOT met — residual is the
+        lens-model/detector floor), both-jaws-visible 0% -> 100% (real
+        90.3%, G2 met), bottom-band occupancy delta 0.100 -> 0.035
+        (G3 met). Fit record: outputs/sim/wrist_refit/fit.json.
+        REGEN-ONLY: the pose changes recorded wrist frames, so it must
+        never flip under a banked dataset silently."""
+        refit = self.wrist_pose == "refit"
+        pos = (0.00475, -0.08292, 0.00056) if refit else (0.02416, -0.05504, 0.03225)
+        quat = (
+            (-0.14755, -0.10195, -0.20516, 0.96216)
+            if refit
+            else (-0.24345, -0.05192, 0.02663, 0.96816)
+        )
         for prefix in ("", "leader-"):
             cam = self.model.camera(prefix + "wrist_cam")
-            cam.pos[:] = (0.02416, -0.05504, 0.03225)
-            cam.quat[:] = (-0.24345, -0.05192, 0.02663, 0.96816)
+            cam.pos[:] = pos
+            cam.quat[:] = quat
             self.model.cam_sensorsize[cam.id] = 0.0
             cam.fovy[0] = 52.0
 
