@@ -122,7 +122,7 @@ work that followed pinned it: both broken runs normalized flow targets
 under a window that mis-fits a wrist channel (run 2's pooled recompute
 gives wrist_flex 0.24× weight; run 1b's rig table clips wrist_roll at
 ~±66° vs the ±157° the demos use), the probe's table fits, and a
-step-500 sim100 read (2/100) dates the collapse to the first 500
+step-500 sim100 read (4/100) dates the collapse to the first 500
 steps — **broken from the start, not degraded from competence**. The
 5/100 is a normalization result, not a data-scaling result; v2 (live
 now, on the regenerated corpus whose own pooled table fits sim) is
@@ -160,7 +160,7 @@ The successor run is already live:
 [grasp-demos-v2](https://huggingface.co/datasets/mcobzarenco/fontaine-grasp-demos-v2)
 corpus (smoother expert v1.3, 1.88M frames), whose own recomputed
 pooled table fits the sim demos. Its step-500 save is the first
-checkpoint that can beat the 2/100 step-500 band and pin the corpus
+checkpoint that can beat the 4/100 step-500 band and pin the corpus
 as the lever. In parallel the eval chain finishes the run-2 story:
 step-500 token (leg 2, running) and the endpoint token head under the
 serving fix on all 100 seeds (leg 3). Owner-gated items and the full

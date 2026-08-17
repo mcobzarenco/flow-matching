@@ -1072,23 +1072,31 @@ value = 12.0
 # not a death. Box idle again; next box claim = grasp-sft-v2-joint-run
 # (pre-reg blocked on the owner's normalization-recipe call).
 
+# grasp_sft_v2_joint_8xa100 entry PRUNED 11:3xZ 08-17 — KILLED by owner
+# order 11:27Z at step ~1150 (~2.6/40 GPU-h): train MAE rising again
+# incl. the train slice (run-1b signature); owner call = drop their rig
+# datasets entirely and retrain demos-only. step_000500/1000 saves
+# remain in ~/checkpoints/finetune/grasp_sft_v2_joint_8xa100 (step500
+# copied local by the owner, sim20 read 0/20 posted 1538874281784508466).
+# Successor entry below.
+
 [[run]]
-name = "grasp_sft_v2_joint_8xa100"
+name = "grasp_sft_v2_demosonly_8xa100"
 kind = "train-jsonl"
 host = "147.224.218.164"
 pgrep = "bijou.train"
 pgrep_min = 8
 gpu_indices = [0, 1, 2, 3, 4, 5, 6, 7]
 gpu_mem_min_mib = 20000
-jsonl = "/home/ubuntu/checkpoints/finetune/grasp_sft_v2_joint_8xa100/train_log.jsonl"
+jsonl = "/home/ubuntu/checkpoints/finetune/grasp_sft_v2_demosonly_8xa100/train_log.jsonl"
 total_steps = 3000
-started_utc = "2026-08-17T09:57:39+00:00"
+started_utc = "2026-08-17T11:38:30+00:00"
 gpu_hours_per_wall_hour = 8.0
-boundary = "save-every 500 (async) of 3000 steps; eval-250 with dataset breakdown. Run-2 verbatim recipe, two deltas: v2 regen corpus + run name; NO per-dataset norm (owner call 09:23Z). Owner 09:47Z: smoke SKIPPED on their order - orphaned smoke killed 09:57Z, real run straight up."
+boundary = "save-every 500 (async) of 3000 steps; eval-250 (breakdown trivially single-dataset). Owner order 11:27-11:28Z: v2 corpus ONLY (both rig datasets out, --dataset-repeat dropped), same recipe otherwise, --recompute-stats = the demos-native table cell of the isolation grid; no smoke. Launched 11:38:30Z unit fontaine-grasp-sft-v2-demosonly. At boundary: endpoint kit staged (adapt names from v2 scripts); rsync eval artifacts local BEFORE any box cleanup."
 anchors = [
     "run-2 spent ~31/40 GPU-h at ~3.9 s/step, same shape expected; rate materially above ~4 s/step = investigate input starvation",
-    "run-2 endpoint flow 5/100 box / 0/20 local; token-fixed 3/20; joint-corrected probe 44/100 - endpoint grid: flow >= probe band => demos were the lever; flow ~5/100 => data not the lever, banked per-dataset-norm cell is next arm",
-    "watch run-2's real-slice gap (8.15 train vs 15.77 eval at 8% share) via breakdown curves",
+    "the fishy signature this run tests: v2 mixed run's MAE rose monotone from step 250 - eval 3.85/4.95/6.29 and TRAIN 4.24/4.76/6.48 at 250/750/1000 (train rising = not overfitting, the objective itself drifting); demos-native table should hold MAE flat-to-falling if the mixed table was the poison",
+    "endpoint grid: flow >= probe band 44 => corpus+native table fixed it (mix was the poison); flow ~4-5/100 => table/mix NOT the lever, suspicion moves to corpus or deeper seam; v2-mixed step500 sim20 was 0/20 (band, not better)",
 ]
 [[run.gates]]
 kind = "gpu_hours_max"
