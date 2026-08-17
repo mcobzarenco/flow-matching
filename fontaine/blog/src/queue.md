@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-17T19:36:00Z
+**Updated:** 2026-08-17T22:57:00Z
 
 **Depth call:** depth 2 queued (per-dataset-flow-norm pre-reg draft, gated on the discriminator verdict ~23:0xZ; queue-box-kill-audit CPU unblocked) after the utilization-ledger-rebase close.
 
-**23 open** (Live 1 · Queued 2 · Blocked 20 · Done 214)
+**22 open** (Live 1 · Queued 2 · Blocked 19 · Done 217)
 
 ## 🔴 Live (1)
 
@@ -30,15 +30,15 @@
 
 *ready — waiting on a window or a boundary*
 
-**`queue-box-kill-audit`** · `cpu`
+**`disc-verdict-checkpoint-upload`** · `cpu`
 
-Box-kill re-disposition audit of the blocked queue tail: every blocked item that names the killed A100 box as its execution host (box-home-sweep, arm-a-img280, idea17-molmo2-vision-unfreeze-execution, actckpt-lineage-flip-ladder,…
+Upload the discriminator's verdict-evidence checkpoints to fontaine-checkpoints (owner standing rule: banked/consumable checkpoints leave the box/host same-session, weights-only unless seeding training): step_000500 + step_001000…
 
-**boundary:** Queued 19:3xZ 08-17 work session (refill at utilization-ledger-rebase close, charter section 4). CPU-only, unblocked; per the audit-queue-items-against-git standing practice — boundary texts drift from reality, and the 08-17 box kill invalidated every 'box' host reference in one stroke. No dispositions are launches: anything re-platformed still rides its own gate/pre-reg rules.
+**boundary:** Queued 22:5xZ 08-17 work session (refill at stack-parity-probe-instrument close). Executable after step 1000 writes save-1000 (~01:1xZ 08-18); network-only, no GPU. Pattern: upload_grasp_sft_v2_demosonly_checkpoint.py precedent (extend/parametrize for the two steps). · [pre-reg](posts/2026-08-17-prereg-sft-drift-discriminator.md)
 
 <details><summary>full record</summary>
 
-Box-kill re-disposition audit of the blocked queue tail: every blocked item that names the killed A100 box as its execution host (box-home-sweep, arm-a-img280, idea17-molmo2-vision-unfreeze-execution, actckpt-lineage-flip-ladder, demo-gen-v1.1-regen, rig-mixture-screen-exec, idea4-fjoint-rung-finalize-exec at minimum — grep for the rest) gets an explicit call: OBSOLETE-close (box-only ops like the home sweep), re-platform to the local H100 with adjusted cost gates, or stays blocked with the boundary text updated to name the real blocker (owner compute call for a future box, not the dead one).
+Upload the discriminator's verdict-evidence checkpoints to fontaine-checkpoints (owner standing rule: banked/consumable checkpoints leave the box/host same-session, weights-only unless seeding training): step_000500 + step_001000 of grasp_sft_v2_demosonly_1gpu_disc under grasp_sft_v2_demosonly_1gpu_disc/{step_000500,step_001000}, weights-only (drop optimizer.pt), plus the fresh train_log.jsonl + train_log_attempt1_oom250.jsonl as run records. These saves are Amendment 1's disambiguation substrate (stack-parity probe evaluates them) — they are evidence, not just artifacts.
 
 </details>
 
@@ -58,7 +58,7 @@ Pre-reg DRAFT for the --per-dataset-flow-norm rerun (the 08-17 isolation verdict
 
 ---
 
-## 🟡 Blocked (20)
+## 🟡 Blocked (19)
 
 *waiting on a prerequisite, a boundary, or the owner*
 
@@ -80,7 +80,7 @@ Approach-leg smoothing done right (owner ask 19:42Z 08-16, drop-in ease measured
 
 Demo-gen v1.1 regen on the box (owner 17:07Z: 'develop the next version of the demos with much smoother trajectories'): same sharded driver + protocol as v1 (spawn v2.1, mix70, 5k kept, seeds fresh stride) with the landed v1.1 ex…
 
-**boundary:** Queued 18:1xZ 08-16. On box-free + owner answers: rerun collect ladder (2-shard smoke merge oracle first), merge, quantile rewrite, upload as fontaine-grasp-demos-v1.1, card + visualizer link. GPU gate: 30 GPU-h (v1 used 16.9 at worse yield). · [pre-reg](posts/2026-08-16-prereg-sim-spawn-v2.md)
+**boundary:** Queued 18:1xZ 08-16. On box-free + owner answers: rerun collect ladder (2-shard smoke merge oracle first), merge, quantile rewrite, upload as fontaine-grasp-demos-v1.1, card + visualizer link. GPU gate: 30 GPU-h (v1 used 16.9 at worse yield). || BOX-KILL AUDIT 22:5xZ 08-17 (queue-box-kill-audit): STAYS BLOCKED, host VOID. Blocker (1) ('box busy until ~21:xxZ 08-16') is superseded — the box is DEAD, so the gpu-a100 class currently has NO host at all. Surviving blockers: (2) owner sign-off on the disk-visibility realcal exemption and (3) smoothness steering (both already on the owner-pending list), PLUS a new compute call: future box, or local-1xH100 re-platform (v1 spent 16.9 GPU-h sharded on 8x; single-H100 serial is a long exclusive window competing with the training queue + owner policy-server — an explicit owner trade-off, not a default). · [pre-reg](posts/2026-08-16-prereg-sim-spawn-v2.md)
 
 <details><summary>full record</summary>
 
@@ -218,7 +218,7 @@ CONDITIONAL follow-up (lens gate read 03:4xZ 08-13): jointly refit the wrist cam
 
 #4 F-then-joint rung FINALIZE + EXECUTE (per the posted DRAFT posts/2026-08-09-prereg-fjoint-rung.md): (1) CPU instrument DONE 15:0xZ 08-09 (check.py 596 green, 12 new oracles tests/test_fjoint_init.py): materialize_fjoint_init.p…
 
-**boundary:** instrument LANDED 15:0xZ 08-09 (draft Instrument section updated in place — finalization condition 1 satisfied); LAUNCH gated on owner go (draft finalization condition 2) + box free after the adamc_100k endpoint + chained panel (~08-12 ~17:00Z+); sequencing vs the adamc stage-2 frozen attach is an owner call at finalization — do NOT launch on the default | RE-STATUSED blocked/owner_hold 23:0xZ 08-09 queue audit: its own text gates launch on an explicit owner go + box-free; ALSO STALE: 'post-adamc-endpoint ~08-12' predates the adamc owner-kill — box is now er-60k's to ~08-11 ~12:00Z, and F2's '0.92 s/step measured' cost row is attach_F-class (correct for the frozen F2 arm, but re-check the J-arm assumption at finalization). · [pre-reg](posts/2026-08-09-prereg-fjoint-rung.md)
+**boundary:** instrument LANDED 15:0xZ 08-09 (draft Instrument section updated in place — finalization condition 1 satisfied); LAUNCH gated on owner go (draft finalization condition 2) + box free after the adamc_100k endpoint + chained panel (~08-12 ~17:00Z+); sequencing vs the adamc stage-2 frozen attach is an owner call at finalization — do NOT launch on the default | RE-STATUSED blocked/owner_hold 23:0xZ 08-09 queue audit: its own text gates launch on an explicit owner go + box-free; ALSO STALE: 'post-adamc-endpoint ~08-12' predates the adamc owner-kill — box is now er-60k's to ~08-11 ~12:00Z, and F2's '0.92 s/step measured' cost row is attach_F-class (correct for the frozen F2 arm, but re-check the J-arm assumption at finalization). || BOX-KILL AUDIT 22:5xZ 08-17 (queue-box-kill-audit): STAYS BLOCKED (owner_hold). Box dead: 'box execution post-adamc-endpoint' and 'box free' clauses are VOID. The CPU instrument (materializer + guards, landed 15:0xZ 08-09) survives intact. Cost rows are box-A100-measured (F2 0.92 s/step, J ~4.0 assumed) — re-measure on the actual host at finalization. Real blocker: owner go + a compute call (future box, or an explicit local-1xH100 re-platform with a J-config fit preflight — never fit-tested single-GPU). · [pre-reg](posts/2026-08-09-prereg-fjoint-rung.md)
 
 <details><summary>full record</summary>
 
@@ -246,7 +246,7 @@ Docs pass tail (from the 08-09 staleness audit, deferred at my discretion): (1) 
 
 #20 activation-checkpointing lineage-flip LADDER execution (gpu-box, &lt;= 2 GPU-h gate): run the 4-rung box ladder per 2026-08-09-prereg-actckpt-lineage-flip.md (control B12c6 no-ckpt / ckpt-c6 / ckpt-c1 candidate / record-only max…
 
-**boundary:** blocked on BOTH: (a) attach screen (F then K) off the box, (b) a scheduled fresh non-attach AR-trunk launch to ride (100k continuation / arch-batch arm / #17 vision-unfreeze, whichever the owner green-lights); result rides that launch's pre-reg as a named amendment · [pre-reg](posts/2026-08-09-prereg-actckpt-lineage-flip.md)
+**boundary:** blocked on BOTH: (a) attach screen (F then K) off the box, (b) a scheduled fresh non-attach AR-trunk launch to ride (100k continuation / arch-batch arm / #17 vision-unfreeze, whichever the owner green-lights); result rides that launch's pre-reg as a named amendment || BOX-KILL AUDIT 22:5xZ 08-17 (queue-box-kill-audit): STAYS BLOCKED, RE-SCOPED. Both original blockers are VOID (the attach screen chain and any 'scheduled box launch to ride' died with the box). The ladder itself is platform-specific instrumentation (s/step + alloc-peak on box A100s) — its measurements do NOT transfer to the H100. Real blocker restated: a scheduled launch ON ANY PLATFORM that needs activation-checkpointing to fit (nearest candidate: the per-dataset-flow-norm rerun if its eff-batch exceeds the discriminator-96 fit). At finalization: re-pin baselines and re-derive the 4 rungs on the actual host; the frozen decision rule (ADOPT iff r2 &lt;= 1.02*r0 AND alloc peak bound) carries, the box-derived 63-GiB constant does not. · [pre-reg](posts/2026-08-09-prereg-actckpt-lineage-flip.md)
 
 <details><summary>full record</summary>
 
@@ -260,7 +260,7 @@ Docs pass tail (from the 08-09 staleness audit, deferred at my discretion): (1) 
 
 #17 molmo2 vision-unfreeze warm-start two-arm screen EXECUTION (box, 4xDDP, sequential frozen-first)
 
-**boundary:** opens after the attach-screen chain (~08-09+) AND an explicit owner go (owner-steered execution per the 17:04Z steering disposition); needs a free box window and the finalization amendment posted first · [pre-reg](posts/2026-08-07-prereg-molmo2-vision-unfreeze.md)
+**boundary:** opens after the attach-screen chain (~08-09+) AND an explicit owner go (owner-steered execution per the 17:04Z steering disposition); needs a free box window and the finalization amendment posted first || BOX-KILL AUDIT 22:5xZ 08-17 (queue-box-kill-audit): STAYS BLOCKED (owner_hold). Box dead =&gt; the registered 4xDDP platform is gone and the box-resident step_040000 source now lives only in the HF evacuation (verify presence in fontaine-checkpoints at reopen). vu5k_mem_ready and both prepared launchers are box-A100-specific — the 150-step memory smoke and ladder-rung choice must be REDONE on whatever platform a reopen names. Real blocker: owner compute call (multi-GPU box) + owner go; this cannot re-platform to the local 1xH100 as registered (4xDDP sequential two-arm design). · [pre-reg](posts/2026-08-07-prereg-molmo2-vision-unfreeze.md)
 
 <details><summary>full record</summary>
 
@@ -274,23 +274,11 @@ Docs pass tail (from the 08-09 staleness audit, deferred at my discretion): (1) 
 
 arch-batch arm A img280 40k (box) — HELD: fresh owner go required before launch
 
-**boundary:** box GPUs occupied by molmo2_ar40k until ~2026-08-08 regardless of hold · [pre-reg](posts/2026-08-06-prereg-arch-batch-1.md)
+**boundary:** box GPUs occupied by molmo2_ar40k until ~2026-08-08 regardless of hold || BOX-KILL AUDIT 22:5xZ 08-17 (queue-box-kill-audit): STAYS BLOCKED (owner_hold). The old boundary ('box GPUs occupied by molmo2_ar40k until ~08-08') is VOID — the box is dead. Real blocker: fresh owner go AND a compute call — a future box, or an explicit local-1xH100 re-platform which would need a fit preflight first (the arch-batch img280 recipe was never fit-tested single-GPU) and a re-derived cost gate. · [pre-reg](posts/2026-08-06-prereg-arch-batch-1.md)
 
 <details><summary>full record</summary>
 
 arch-batch arm A img280 40k (box) — HELD: fresh owner go required before launch
-
-</details>
-
----
-
-**`box-home-sweep`** · `cpu` · **⛔ owner hold**
-
-Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era mainline artifacts)
-
-<details><summary>full record</summary>
-
-Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era mainline artifacts) — HELD: charter Loaned-compute READ-ONLY rule; needs explicit owner all-clear (asked in-channel 03:1xZ 08-07)
 
 </details>
 
@@ -328,7 +316,7 @@ molmo_flow migration STEP 1 — CLI inferred-args rule (CPU, per owner design re
 
 Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft posts/2026-08-11-prereg-er60k-rig-mixture.md posted + in-channel 08-11): finalize the pre-reg (freeze probe bars, panel band, param sheet in-channel, obje…
 
-**boundary:** BLOCKED on the owner compute decision (ask posted in-channel 08-11 ~17:0xZ); unblock by flipping owner_hold when the owner picks A/B or provisions compute. UPDATE 17:4xZ 08-11: option-B preflight FITS (69.2 GiB peak, ~12.0 s/step =&gt; ~33.5 h for 10k steps single-H100; --dataset-repeat live-fired, 4.49% combined share vs ~4.97% pre-reg estimate — reconcile before exec) BUT the owner sim pivot (17:07Z) dedicates the local GPU to inference =&gt; treated as C-defer unless the owner calls A (new box); results posted in-channel 17:35Z. · [pre-reg](posts/2026-08-11-prereg-er60k-rig-mixture.md)
+**boundary:** BLOCKED on the owner compute decision (ask posted in-channel 08-11 ~17:0xZ); unblock by flipping owner_hold when the owner picks A/B or provisions compute. UPDATE 17:4xZ 08-11: option-B preflight FITS (69.2 GiB peak, ~12.0 s/step =&gt; ~33.5 h for 10k steps single-H100; --dataset-repeat live-fired, 4.49% combined share vs ~4.97% pre-reg estimate — reconcile before exec) BUT the owner sim pivot (17:07Z) dedicates the local GPU to inference =&gt; treated as C-defer unless the owner calls A (new box); results posted in-channel 17:35Z. || BOX-KILL AUDIT 22:5xZ 08-17 (queue-box-kill-audit): STAYS BLOCKED (owner_hold). Real blocker restated post-box-kill: option A now explicitly means PROVISIONING A FUTURE BOX (the 08-11 'new 4x box ~28 GPU-h gate 32' pricing survives as the template — no current box exists); option B local-1xH100 remains technically valid (08-11 preflight: fits at 69.2 GiB peak, ~33.5 h wall) but the local GPU is contended (owner policy-server + our run queue) and the owner sim pivot made C-defer the standing state. Unblock = an explicit owner A/B call. · [pre-reg](posts/2026-08-11-prereg-er60k-rig-mixture.md)
 
 <details><summary>full record</summary>
 
@@ -338,9 +326,37 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (214)
+## ✅ Done (217)
 
 *closed — the full record stays in each fold*
+
+**`stack-parity-probe-instrument`** · `cpu`
+
+Stack-parity probe instrument (CPU prep for Amendment 1's disambiguator): a runnable script/procedure that re-evaluates the discriminator's saved step-500/step-1000 checkpoints' probe MAE on the PRE-MERGE stats surface (the merge…
+
+**boundary:** Queued 22:5xZ 08-17 work session (refill at queue-box-kill-audit close, charter section 4). CPU prep only; the actual parity EVAL is a small GPU job (~minutes) that runs only after step 1000 frees the H100 and only if the verdict branch calls for it. Instrument work is pre-registered-compatible: Amendment 1 names the stack-parity probe as the disambiguator; this item just makes it executable. || CLOSED 22:5xZ 08-17 same session: fontaine/scripts/stack_parity_probe.sh landed — prepare mode builds the 9094e60 (d3dd4d0^1) worktree env and DRY-RAN GREEN: the pre-merge stack parses the step-500 save (family molmoact2_joint, chunk 30, per_dataset_flow_norm=False, schema 2 unchanged across the merge — checkpoint.py/vla.py/validate_checkpoint.py zero-diff), and the checkpoint table's source-oriented shoulder pair (q01[1]=55.71 &gt; q99[1]=-113.50) is confirmed as the surface the old MolmoNorm.CHECKPOINT eval path reads. run mode = old-stack bijou.eval, probe-matched pins (holdout 0.1 / split-seed 0 / 256 samples seed 0 / chunk 30 / euler-10 / batch 12 = the OOM-fixed micro size applied by flag since the old stack predates the fix), GPU-guarded (owner policy-server), executable the moment step 1000 frees the H100. · [pre-reg](posts/2026-08-17-prereg-sft-drift-discriminator.md)
+
+<details><summary>full record</summary>
+
+Stack-parity probe instrument (CPU prep for Amendment 1's disambiguator): a runnable script/procedure that re-evaluates the discriminator's saved step-500/step-1000 checkpoints' probe MAE on the PRE-MERGE stats surface (the merged-table override units every 8x comparator ran under, pre-d3dd4d0) so an AMBIGUOUS-BY-INSTRUMENT verdict — or a negative-delta HEALTHY needing the descent-asymmetry confirmation (in-channel 1539039813804498984) — can be disambiguated the same session instead of stalling on tooling. Deliverable: the exact invocation (env/flag/stats-table pin) + a dry-run on the step-500 save; probe batching at the OOM-fixed micro size both ends.
+
+</details>
+
+---
+
+**`queue-box-kill-audit`** · `cpu`
+
+Box-kill re-disposition audit of the blocked queue tail: every blocked item that names the killed A100 box as its execution host (box-home-sweep, arm-a-img280, idea17-molmo2-vision-unfreeze-execution, actckpt-lineage-flip-ladder,…
+
+**boundary:** Queued 19:3xZ 08-17 work session (refill at utilization-ledger-rebase close, charter section 4). CPU-only, unblocked; per the audit-queue-items-against-git standing practice — boundary texts drift from reality, and the 08-17 box kill invalidated every 'box' host reference in one stroke. No dispositions are launches: anything re-platformed still rides its own gate/pre-reg rules. || CLOSED 22:5xZ 08-17 work session: all 7 box-hosted blocked items dispositioned — box-home-sweep OBSOLETE-CLOSED (nothing left to sweep); rig-mixture-screen-exec, arm-a-img280, idea17-molmo2-vision-unfreeze-execution, actckpt-lineage-flip-ladder, idea4-fjoint-rung-finalize-exec, demo-gen-v1.1-regen STAY BLOCKED with boundaries rewritten to name the real blocker (owner compute call for a FUTURE box or an explicit local-H100 re-platform + re-preflight; dead-box clauses marked VOID; box-A100-measured cost rows flagged non-transferable). Grep swept the full open tail: gpu-local items (grasp-sft-bootstrap, grasp-sft-token-sft-arm, grpo-r2-post-sft, sim100-v1-rerun) mention the box only in historical audit notes — hosts unaffected, no re-disposition. No dispositions are launches; every re-platform still rides its own gate/pre-reg rules.
+
+<details><summary>full record</summary>
+
+Box-kill re-disposition audit of the blocked queue tail: every blocked item that names the killed A100 box as its execution host (box-home-sweep, arm-a-img280, idea17-molmo2-vision-unfreeze-execution, actckpt-lineage-flip-ladder, demo-gen-v1.1-regen, rig-mixture-screen-exec, idea4-fjoint-rung-finalize-exec at minimum — grep for the rest) gets an explicit call: OBSOLETE-close (box-only ops like the home sweep), re-platform to the local H100 with adjusted cost gates, or stays blocked with the boundary text updated to name the real blocker (owner compute call for a future box, not the dead one).
+
+</details>
+
+---
 
 **`local-dataset-mirrors-restore`** · `cpu`
 
@@ -2715,6 +2731,20 @@ draws10_t1 frozen-read script — SCRIPT LANDED 2026-08-07 ~07:5xZ (draws10_t1_r
 <details><summary>full record</summary>
 
 draws10_t1 frozen-read script — SCRIPT LANDED 2026-08-07 ~07:5xZ (draws10_t1_results.py: reads 1-5 one command, oracle-gated all branches + 11 hard-abort guards; q4-fallback index join + molmo2-arm explicit paths supported)
+
+</details>
+
+---
+
+**`box-home-sweep`** · `cpu`
+
+Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era mainline artifacts)
+
+**boundary:** BOX-KILL AUDIT 22:5xZ 08-17 (queue-box-kill-audit): OBSOLETE-CLOSED — the box (and the ~ this item would sweep) was killed by the owner 08-17 after the verified HF evacuation; there is nothing left to tidy. The pending owner all-clear ask (03:1xZ 08-07) is moot; no reply needed.
+
+<details><summary>full record</summary>
+
+Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era mainline artifacts) — HELD: charter Loaned-compute READ-ONLY rule; needs explicit owner all-clear (asked in-channel 03:1xZ 08-07)
 
 </details>
 
