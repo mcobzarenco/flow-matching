@@ -3,6 +3,37 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-17 05:51–05:5xZ (real `date -u` at write: 05:52) —
+tick: **quiet tick — no live runs (local + box idle by design), inbox
+clear, no new messages or reactions on the 04:01/05:46Z refit
+pre-reg/results posts; `run_work_next` confirmed armed for the regen
+pre-reg.***
+
+**Status**: no training run live; local GPU idle (owner policy-server
+holds ~13 GiB at 0% util — left alone), box idle awaiting the regen.
+`grasp-demos-v2-regen` is the queue head and UNBLOCKED (wrist refit
+shipped `4b14b1f`); pre-reg REQUIRED before launch — that is the
+chained work session's first item.
+
+**Steering**: none new (inbox empty, `read` empty; history check — no
+reactions yet on the refit results post or the G1-miss ship-and-ride
+question).
+
+**Done**: routine tick — Discord read + history, queue validate (OK
+depth 3, 24 open, updated 05:47Z), GPU/unit/state check (no fontaine
+units live, `run_work_next` already armed), 03:43Z + 02:42Z entries
+and footer notes rolled to the
+[08-17 archive](archive/now-2026-08-17.md).
+
+**Next**: chained work session — `grasp-demos-v2-regen` pre-reg
+(expert v1.3 receipt, bracket_appearance=real, wrist_pose='refit',
+kept-rate anchor 45.9%) then launch on the box; boundary results page
++ HTML with the corrected sim100 verdict;
+`sft-v1-flow-regression-isolation` before the SFT-v2 recipe locks.
+Owner-pending: G1-miss ship-and-ride 👍/veto, disk composite
+exemption, approach redesign go, v2.1 bands, ckpt-format,
+morning-veto items.*
+
 *Updated 2026-08-17 03:47–05:5xZ (real `date -u` at write: 05:47) —
 work session: **wrist-cam-pose-refit stages 2+3 DONE (the regen's
 critical-path item) — measured on 312 matched pairs, fitted, held-out
@@ -46,84 +77,15 @@ locks. Owner-pending: G1-miss ship-and-ride 👍/veto, disk composite
 exemption, approach redesign go, v2.1 bands, ckpt-format,
 morning-veto items.*
 
-*Updated 2026-08-17 03:43–03:4xZ (real `date -u` at write: 03:45) —
-tick: **quiet tick — no live runs (local + box idle by design; the
-13 GiB on the local H100 is the owner's policy-server process, not
-ours), inbox clear, no new messages or reactions since the 03:39Z
-audit-verdict post.***
-
-**Status**: no training run live; local GPU idle (owner policy-server
-holds ~13 GiB at 0% util — left alone), box idle awaiting the regen.
-Serving-norm audit closed last session (`b779ba4`): token 0/100 was
-our decode bug (fixed + proven 3/20), flow 5/100 verified real —
-`sft-v1-flow-regression-isolation` queued as the cheap discriminator
-before SFT-v2 recipes lock.
-
-**Steering**: none new (inbox empty, `read` empty; history check —
-no reactions yet on the 02:35/02:38/03:39Z posts; the 01:35Z 👍
-already recorded).
-
-**Done**: routine tick — Discord read + history, queue validate (OK
-depth 4, 25 open, updated 03:38Z), GPU/unit check (no fontaine units,
-policy-server identified as the memory holder), `run_work_next`
-confirmed armed, 08-16 entry + 02:39Z tick entry rolled to the
-archive ([08-16](archive/now-2026-08-16.md),
-[08-17](archive/now-2026-08-17.md)).
-
-**Next**: chained work session per queue order —
-`wrist-cam-pose-refit` (position-offset fit; on the regen's critical
-path), boundary results page + HTML with the corrected sim100
-verdict, `sft-v1-flow-regression-isolation` (run-1b remap-only sim20
-discriminator), then `grasp-demos-v2-regen` pre-reg →
-`grasp-sft-v2-joint-run`. Owner-pending unchanged: disk composite
-exemption 👍, approach redesign go, v2.1 bands, ckpt-format,
-morning-veto items.*
-
-*Updated 2026-08-17 02:42–03:4xZ (real `date -u` at write: 03:39) —
-work session: **serving-norm audit DONE (the queue's gating item) —
-sim100's token 0/100 was OUR serving bug (found + fixed, `b779ba4`);
-flow 5/100 verified REAL model regression. 20-seed local proof:
-token-with-fix 3/20 vs box 0/100; flow 0/20 replication.***
-
-**Status**: no training run live; local GPU idle again after the two
-20-seed audit legs (units norm-audit-{token,flow}, 02:42–03:27Z, ~1.1
-GPU-h, strikes 0); box idle. Audit verdict: (1) TOKEN leg — inference
-collator couldn't carry the merged action table (codec-required
-guard), AR decode fell back to per-item quantiles = real-v2 row in
-the sim harness while training tokenized under the recomputed merged
-row; merged lift pair descending (+44.26→−124.8) vs v2 ascending ⇒
-every token lift command decoded **sign-inverted**. Fixed
-(`molmoact2_action_table` pinned family-gated in BijouPolicy, guard
-removed, test added; checks green). (2) FLOW leg — table path audited
-clean end-to-end (decoder-owned baked row empirically == metadata
-merged after load; state clamp affine-consistent; box code
-byte-identical to HEAD): **5/100 stands as a model result**.
-
-**Steering**: none new this session (inbox empty at boot and at every
-babysit poll; owner 👍 on sequencing already recorded 02:39Z).
-
-**Done**: (a) box forensics — sim100 shard configs + code hashes
-(both legs ran `stats_repo_id=so101_pick_place_v2` at 07f6de5, files
-== local HEAD); (b) end-to-end table trace + empirical load check of
-the banked endpoint (Hub download → local); (c) the bijou fix +
-regression test, commit `b779ba4`; (d) 20-seed × 2-leg local re-run
-(seeds 100–119, disjoint from box 0–99): **token 3/20 with the fix,
-flow 0/20** — seam confirmed for token, parity confirmed for flow
-(median final 8.9 vs box 8.7 cm); (e) queue: audit item DONE,
-`sft-v1-flow-regression-isolation` queued (named suspect: pooled
-table dilutes wrist_flex flow-MSE weight; discriminator = sim20 of
-run-1b remap-only saves, no training); registry pruned; verdict
-posted in-channel (1538754170457428018).
-
-**Next**: `queue_cli.py next` → `wrist-cam-pose-refit`
-(position-offset fit; on the regen's critical path), then boundary
-results page + HTML with the corrected verdict, then
-`grasp-demos-v2-regen` (pre-reg first) → `grasp-sft-v2-joint-run`
-(recipe waits on the flow-isolation read). Owner-pending unchanged:
-disk composite exemption 👍, approach redesign go, v2.1 bands,
-ckpt-format, morning-veto items.*
-
 ## Utilization footer
+
+Session 2026-08-17 05:51–05:5xZ (tick; GPUs idle by design, box +
+local — no live runs; local 13 GiB = owner policy-server, not ours):
+**quiet tick — inbox clear, no new messages/reactions on the refit
+pre-reg/results posts; queue depth 3 with `grasp-demos-v2-regen` at
+the head (unblocked, pre-reg required), `run_work_next` confirmed
+armed for the regen pre-reg; 03:43Z + 02:42Z entries/notes rolled to
+the archive.**
 
 Session 2026-08-17 03:47–05:5xZ (work, exploit; ~0 GPU-h — render-only
 segmentation passes on the shared local H100, box idle): **wrist-cam
@@ -132,21 +94,6 @@ in the v1 sim frame, 0/312 vs real 92.9%), pre-reg'd 6-param fit,
 held-out G2+G3 PASS / G1 −44.5% vs −50% bar (disclosed), shipped
 flag-gated `wrist_pose='refit'` (`4b14b1f`), regen unblocked** — queue
 depth 3, inbox clear, `run_work_next` armed for the regen pre-reg.
-
-Session 2026-08-17 03:43–03:4xZ (tick; GPUs idle by design, box +
-local — no live runs; local 13 GiB = owner policy-server, not ours):
-**quiet tick — inbox clear, no new messages/reactions after the
-03:39Z audit verdict; queue depth 4, `run_work_next` confirmed armed
-for the wrist refit + boundary page/HTML; archive roll (08-16 entry,
-08-17 page created).**
-
-Session 2026-08-17 02:42–03:4xZ (work, exploit; local ~1.1 GPU-h —
-two parallel 20-seed rollout legs 02:42–03:27Z on the shared H100;
-box idle): **serving-norm audit closed same-session — token-leg
-decode bug found/fixed/proven (0/100 → 3/20), flow regression
-verified real (0/20 replication), fix + test + registry landed
-`b779ba4`, isolation item queued** — queue depth 4, inbox clear,
-`run_work_next` armed for the wrist refit.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
