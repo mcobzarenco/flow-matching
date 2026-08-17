@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-17T19:17:00Z
+**Updated:** 2026-08-17T19:36:00Z
 
-**Depth call:** depth 1 queued (discriminator pre-reg post draft, CPU) after the postproc-kit close: the experimental frontier stays deliberately owner-gated — the drift investigation has one designed next cut (the staged 1-GPU discriminator, BLOCKED on the owner go asked in-channel 15:1xZ 08-17) and pre-registering further runs before that verdict would violate run-only-what-changes-the-next-decision. Both GPUs idle by design pending that word (local H100 freed 16:2x-16:4xZ when the owner's policy server came down).
+**Depth call:** depth 2 queued (per-dataset-flow-norm pre-reg draft, gated on the discriminator verdict ~23:0xZ; queue-box-kill-audit CPU unblocked) after the utilization-ledger-rebase close.
 
-**23 open** (Live 1 · Queued 2 · Blocked 20 · Done 213)
+**23 open** (Live 1 · Queued 2 · Blocked 20 · Done 214)
 
 ## 🔴 Live (1)
 
@@ -30,6 +30,20 @@
 
 *ready — waiting on a window or a boundary*
 
+**`queue-box-kill-audit`** · `cpu`
+
+Box-kill re-disposition audit of the blocked queue tail: every blocked item that names the killed A100 box as its execution host (box-home-sweep, arm-a-img280, idea17-molmo2-vision-unfreeze-execution, actckpt-lineage-flip-ladder,…
+
+**boundary:** Queued 19:3xZ 08-17 work session (refill at utilization-ledger-rebase close, charter section 4). CPU-only, unblocked; per the audit-queue-items-against-git standing practice — boundary texts drift from reality, and the 08-17 box kill invalidated every 'box' host reference in one stroke. No dispositions are launches: anything re-platformed still rides its own gate/pre-reg rules.
+
+<details><summary>full record</summary>
+
+Box-kill re-disposition audit of the blocked queue tail: every blocked item that names the killed A100 box as its execution host (box-home-sweep, arm-a-img280, idea17-molmo2-vision-unfreeze-execution, actckpt-lineage-flip-ladder, demo-gen-v1.1-regen, rig-mixture-screen-exec, idea4-fjoint-rung-finalize-exec at minimum — grep for the rest) gets an explicit call: OBSOLETE-close (box-only ops like the home sweep), re-platform to the local H100 with adjusted cost gates, or stays blocked with the boundary text updated to name the real blocker (owner compute call for a future box, not the dead one).
+
+</details>
+
+---
+
 **`prereg-draft-per-dataset-flow-norm-rerun`** · `cpu`
 
 Pre-reg DRAFT for the --per-dataset-flow-norm rerun (the 08-17 isolation verdict's recipe recommendation, posted 1538811601153425469): the per-channel occupancy analysis showed the pooled/merged table crushes wrist_flex to 0.24x…
@@ -39,20 +53,6 @@ Pre-reg DRAFT for the --per-dataset-flow-norm rerun (the 08-17 isolation verdict
 <details><summary>full record</summary>
 
 Pre-reg DRAFT for the --per-dataset-flow-norm rerun (the 08-17 isolation verdict's recipe recommendation, posted 1538811601153425469): the per-channel occupancy analysis showed the pooled/merged table crushes wrist_flex to 0.24x weight and overflows wrist_roll 288% under the rig table — the enabler (6a6a0aa) is now LIVE on the merged family-norm stack (d3dd4d0: family-level branch, section tag q01q99_per_dataset, serving reads the recorded fact at load). Draft the pre-reg for a demosonly (or mixed-v2, pending the discriminator verdict's recipe implications) grasp-SFT rerun with --per-dataset-flow-norm: frozen recipe delta = ONE flag vs the matched baseline run, primary read = same MAE probe windows vs the baseline curve + k4l2 panel paired at endpoint, platform local H100 single-GPU (act-ckpt fit preflight per the 08-08 OOM ladder note if eff-batch above discriminator's 96).
-
-</details>
-
----
-
-**`utilization-ledger-rebase`** · `cpu`
-
-Rebase the now.md utilization footer's trailing-7-day GPU-hours figure: the baseline is dated 2026-08-06 23:3xZ (11 days stale) and the 'since then' narrative accretes per-run fragments instead of a number
-
-**boundary:** Queued 19:1xZ 08-17 work session (refill at local-dataset-mirrors-restore close, charter section 4). CPU-only, unblocked; sources are all in-repo (archive pages are verbatim rolls, so the dated GPU-h notes survive). Instrument-first if arithmetic gets non-trivial: a small script over the archive pages beats hand-summing.
-
-<details><summary>full record</summary>
-
-Rebase the now.md utilization footer's trailing-7-day GPU-hours figure: the baseline is dated 2026-08-06 23:3xZ (11 days stale) and the 'since then' narrative accretes per-run fragments instead of a number. Recompute the true trailing-7-day window (08-10 onward) from the dated session notes in the now archive pages + babysit registry prune records (box runs end at the 08-17 box kill), split experiments/total as before, rewrite the footer baseline to the fresh as-of stamp, and prune the accreted narrative to the standard 2-note form.
 
 </details>
 
@@ -338,7 +338,7 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (213)
+## ✅ Done (214)
 
 *closed — the full record stays in each fold*
 
@@ -3317,6 +3317,20 @@ P1 EXECUTE (allocation landed 12:26:52Z 08-16: 'machine is all yours'
 <details><summary>full record</summary>
 
 P1 EXECUTE (allocation landed 12:26:52Z 08-16: 'machine is all yours' — 8xA100-80GB box 147.224.218.164 provisioned-access, verified idle, 240 cores/1.77TB/19TB, SSH BatchMode green): demo-gen sharding readiness — (1) shard driver for sim.collect_demos: N processes, disjoint seed ranges, per-shard --out + resume state, EGL context per shard round-robined over GPUs; (2) LeRobot v3 shard-merge into one dataset (episode/frame reindex + meta/provenance union, kept-seed lists concatenated); (3) HF dataset upload path (hub repo fontaine/*, same huggingface_hub route as checkpoints); (4) benchy tint-band knob: rig-gray band (current) vs wide-hue, mixed-slice config (70/30 APPROVED 12:21:03Z); target ~5,000 kept episodes; spawn protocol = spawn-v2 annulus + upright, OWNER-APPROVED 12:21:03Z ('agree with v1 with just the boat upright in the annulus'); finalize against the posted SS5 proposed-freeze table, objection window open until the box lands. All CPU-implementable now; oracles: 2-shard smoke merge bit-identical to single-run on same seeds, upload dry-run. EXECUTION extension: provision the box (repo+uv+assets per checklist), measure per-EGL-context render throughput then size shard count (240 cores &gt;&gt; the 16-32 estimate), launch v1 generation (spawn-v2 annulus + upright +/-180 yaw, 70/30 tint mix, ~5k kept), HF upload + dataset card post. Long-running remote job: launch detached on the box (systemd-run --user or setsid+nohup over ssh), babysit.toml entry at launch. NOTE: class taxonomy has no entry for the new A100 box yet (validator: gpu-local/gpu-box/cpu) — carried as cpu; work session adds a class for 147.224.218.164 to queue_cli validation as part of provisioning.
+
+</details>
+
+---
+
+**`utilization-ledger-rebase`** · `cpu`
+
+Rebase the now.md utilization footer's trailing-7-day GPU-hours figure: the baseline is dated 2026-08-06 23:3xZ (11 days stale) and the 'since then' narrative accretes per-run fragments instead of a number
+
+**boundary:** DONE 19:3xZ 08-17 work session: trailing-7-day figure recomputed per-run over the 08-10 00:00Z -&gt; 08-17 19:45Z window (babysit prune records authoritative for detached runs; archive session notes for foreground spends; window-crossers pro-rated at the 08-10 edge from their own babysit accrual readings). Result: local ~80.0/~80.2 (discriminator ~1.0 accruing at stamp), box ~250/~254 FINAL at the box kill. Footer baseline rewritten to the fresh stamp + 2-note form; superseded 08-06 baseline rolled verbatim to archive/now-2026-08-17.md; receipts fontaine/notes/utilization-rebase-2026-08-17.md; instrument fontaine/scripts/util_ledger_extract.py (rerunnable at the next rebase).
+
+<details><summary>full record</summary>
+
+Rebase the now.md utilization footer's trailing-7-day GPU-hours figure: the baseline is dated 2026-08-06 23:3xZ (11 days stale) and the 'since then' narrative accretes per-run fragments instead of a number. Recompute the true trailing-7-day window (08-10 onward) from the dated session notes in the now archive pages + babysit registry prune records (box runs end at the 08-17 box kill), split experiments/total as before, rewrite the footer baseline to the fresh as-of stamp, and prune the accreted narrative to the standard 2-note form.
 
 </details>
 

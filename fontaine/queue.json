@@ -1,15 +1,15 @@
 {
- "updated_utc": "2026-08-17T19:17:00Z",
- "depth_reason": "depth 1 queued (discriminator pre-reg post draft, CPU) after the postproc-kit close: the experimental frontier stays deliberately owner-gated — the drift investigation has one designed next cut (the staged 1-GPU discriminator, BLOCKED on the owner go asked in-channel 15:1xZ 08-17) and pre-registering further runs before that verdict would violate run-only-what-changes-the-next-decision. Both GPUs idle by design pending that word (local H100 freed 16:2x-16:4xZ when the owner's policy server came down).",
+ "updated_utc": "2026-08-17T19:36:00Z",
+ "depth_reason": "depth 2 queued (per-dataset-flow-norm pre-reg draft, gated on the discriminator verdict ~23:0xZ; queue-box-kill-audit CPU unblocked) after the utilization-ledger-rebase close.",
  "items": [
   {
    "id": "utilization-ledger-rebase",
    "class": "cpu",
-   "status": "queued",
+   "status": "done",
    "prereg": null,
    "owner_hold": false,
    "title": "Rebase the now.md utilization footer's trailing-7-day GPU-hours figure: the baseline is dated 2026-08-06 23:3xZ (11 days stale) and the 'since then' narrative accretes per-run fragments instead of a number. Recompute the true trailing-7-day window (08-10 onward) from the dated session notes in the now archive pages + babysit registry prune records (box runs end at the 08-17 box kill), split experiments/total as before, rewrite the footer baseline to the fresh as-of stamp, and prune the accreted narrative to the standard 2-note form.",
-   "boundary": "Queued 19:1xZ 08-17 work session (refill at local-dataset-mirrors-restore close, charter section 4). CPU-only, unblocked; sources are all in-repo (archive pages are verbatim rolls, so the dated GPU-h notes survive). Instrument-first if arithmetic gets non-trivial: a small script over the archive pages beats hand-summing."
+   "boundary": "DONE 19:3xZ 08-17 work session: trailing-7-day figure recomputed per-run over the 08-10 00:00Z -> 08-17 19:45Z window (babysit prune records authoritative for detached runs; archive session notes for foreground spends; window-crossers pro-rated at the 08-10 edge from their own babysit accrual readings). Result: local ~80.0/~80.2 (discriminator ~1.0 accruing at stamp), box ~250/~254 FINAL at the box kill. Footer baseline rewritten to the fresh stamp + 2-note form; superseded 08-06 baseline rolled verbatim to archive/now-2026-08-17.md; receipts fontaine/notes/utilization-rebase-2026-08-17.md; instrument fontaine/scripts/util_ledger_extract.py (rerunnable at the next rebase)."
   },
   {
    "id": "demo-gen-sharded-a100",
@@ -2131,7 +2131,16 @@
    "owner_hold": false,
    "title": "Restore local dataset mirrors post-box-kill (CPU/network, no GPU): the box deletion (owner 18:09Z 08-17) left grasp_demos_v1 with NO local copy (~/datasets/fontaine has only grasp_sft_demos_v0; v2 re-pulled 18:2xZ for the discriminator). Pull mcobzarenco/fontaine-grasp-demos-v1 (28.1 GB at evacuation-verify) -> ~/datasets/fontaine/grasp_demos_v1/merged via snapshot_download; verify file count + size vs HF. First audit which held gpu-local items (grasp-sft-bootstrap / grasp-sft-token-sft-arm / grpo-r2-post-sft) reference v1-era paths and record the mapping in their boundaries — pull what their launch gaps need, not speculatively beyond v1.",
    "boundary": "Queued 18:3xZ 08-17 work session (refill at prereg-draft close). Blocked on nothing; disk has ~490 GB free after the v2 pull. Do NOT delete the HF mirrors ever — they are now the only durable copies. || CLOSED 19:1xZ 08-17 work session: AUDIT first — none of the three held gpu-local items needs the v1 corpus (bootstrap + token-SFT arm train over grasp_sft_demos_v0, on-disk verified; grpo-r2 consumes a checkpoint) — mapping recorded in their boundaries; pull was pure durability redundancy (HF was the ONLY v1 copy post-box-kill). snapshot_download -> ~/datasets/fontaine/grasp_demos_v1/merged in 1m42s, VERIFIED EXACT vs HF manifest: 232 files, 28,099,973,012 bytes (26.17 GiB), data/meta/videos present. Disk 458 GB free after. HF mirror untouched (never delete)."
+  },
+  {
+   "id": "queue-box-kill-audit",
+   "class": "cpu",
+   "status": "queued",
+   "prereg": null,
+   "owner_hold": false,
+   "title": "Box-kill re-disposition audit of the blocked queue tail: every blocked item that names the killed A100 box as its execution host (box-home-sweep, arm-a-img280, idea17-molmo2-vision-unfreeze-execution, actckpt-lineage-flip-ladder, demo-gen-v1.1-regen, rig-mixture-screen-exec, idea4-fjoint-rung-finalize-exec at minimum — grep for the rest) gets an explicit call: OBSOLETE-close (box-only ops like the home sweep), re-platform to the local H100 with adjusted cost gates, or stays blocked with the boundary text updated to name the real blocker (owner compute call for a future box, not the dead one).",
+   "boundary": "Queued 19:3xZ 08-17 work session (refill at utilization-ledger-rebase close, charter section 4). CPU-only, unblocked; per the audit-queue-items-against-git standing practice — boundary texts drift from reality, and the 08-17 box kill invalidated every 'box' host reference in one stroke. No dispositions are launches: anything re-platformed still rides its own gate/pre-reg rules."
   }
  ],
- "updated": "2026-08-17T19:17:00Z"
+ "updated": "2026-08-17T19:36:00Z"
 }
