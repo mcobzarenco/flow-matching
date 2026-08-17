@@ -32,6 +32,7 @@ def main() -> int:
     parser.add_argument("--spawn-version", default="v2.1")
     parser.add_argument("--tint-band", default="mix70")
     parser.add_argument("--bracket-appearance", default="v1")
+    parser.add_argument("--wrist-pose", default="v1")
     parser.add_argument("--prefix", default="sample")
     args = parser.parse_args()
 
@@ -43,6 +44,7 @@ def main() -> int:
         spawn_version=args.spawn_version,
         tint_band=args.tint_band,
         bracket_appearance=args.bracket_appearance,
+        wrist_pose=args.wrist_pose,
     )
     source = expert_episode_source(sim)
     args.out_dir.mkdir(parents=True, exist_ok=True)
