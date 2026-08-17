@@ -1,12 +1,37 @@
 # Now
 
-
-
-
-
-
-
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-17 17:37–17:4xZ (real `date -u` at write: 17:39) —
+tick: **quiet channel, clean state. Local H100 verified fully free
+(0 MiB / 0%, no compute apps) — the box kill has left it the only
+GPU and nothing local is running. No steering: `read` empty, inbox
+empty, `history` shows nothing past the recorded 17:20Z ✅ post and
+no new reactions. Queue depth 2 (both CPU): discriminator pre-reg
+post draft + the oracle-gated `merge-main-ebaa8e0-family-norm`.***
+
+**Status**: NO live runs (babysit: 0 registered, exit 0). 8×A100
+box DEAD/dying by owner order — do not target it. Local H100
+idle-by-design: the only GPU item (1-GPU discriminator, re-pointed
+local) is still OWNER-GATED (ask 15:14Z, open ~2h25). CPU items
+queued → `run_work_next` armed 17:38Z, work session chains next.
+
+**Steering**: none this tick. Owner-pending list unchanged
+(discriminator go is the head item).
+
+**Done**: boot audit clean (tree was committed, `ff-only` pull
+no-op, origin/main already at `ebaa8e0`); babysit + queue validate
+green; H100 free-state verified by both memory and compute-apps
+queries; marker armed.
+
+**Next**: chained work session → `queue_cli.py next` (pre-reg post
+draft first — small, states the local-H100 platform delta — then
+the `ebaa8e0` merge if budget allows). On discriminator GO: adapt
+launcher to local H100, post pre-reg, `systemd-run --user`,
+babysit.toml entry, first-poll util check. Owner-pending:
+discriminator go, G1-miss ride 👍, augment-report reaction, disk
+composite exemption, approach redesign go, v2.1 bands, ckpt-format,
+morning-veto items.*
 
 *Updated 2026-08-17 16:46–17:3xZ (real `date -u` at write: 17:24) —
 work session: **two things — the discriminator post-processing kit
@@ -107,53 +132,14 @@ discriminator go, G1-miss ride 👍, augment-report reaction, disk
 composite exemption, approach redesign go, v2.1 bands, ckpt-format,
 morning-veto items.*
 
-*Updated 2026-08-17 16:03–16:2xZ (real `date -u` at write: 16:22) —
-work session: **the eval-chain HTML panel is LIVE — the 3-leg sim100
-chain (step500 flow 4/100 · step500 token 16/100 · endpoint
-token-fixed 14/100) is one browsable page on the reports Space, the
-14/100 + head-asymmetry read replaced the stale 3/20 sample on the v1
-results page, and the queue got a truth-up (two stale-live items
-closed). Owner 👍'd the panel post within minutes — active, but the
-discriminator ask is still open.***
-
-**Status**: NO live runs — box 8×A100 idle-by-design (discriminator
-OWNER-GATED, ask msg 1538929076079689849 unanswered ~68 min; owner
-active in their rig session — 👍 on the 16:17 panel post). Local H100
-owner-claimed (policy server pid 3365591 serving rigonly @250 — do
-not touch). Channel polled at every step boundary (16:03 / 16:06 /
-16:08 / 16:17 / 16:22, all empty of messages); post-close tight-poll
-watch held for the discriminator answer. `run_work_next` armed.
-
-**Steering**: no new messages. History: **👍 on the 16:17 panel
-post** (16:1x–16:2xZ) — recorded, no action needed; discriminator
-go/no-go still pending.
-
-**Done**: queue item `sft-v1-eval-chain-html-panel` DONE (commit
-`c06837c`): new `sft_v1_chain_report.py` → panel
-([eval__grasp_sft_v1__sim100_chain.html](https://mcobzarenco-fontaine-reports.static.hf.space/eval__grasp_sft_v1__sim100_chain.html):
-anchors bar, head-asymmetry slopegraph, 3 per-seed strips, combined
-table, 9-clip gallery) + frozen `analysis__sft_v1_chain.json`,
-mirrored to the reports Space (curl 200 ×3); headline numbers
-reproduce exactly from the banked leg JSONs (4/16/14; leg-3 median
-best-point progress 0.69 cm, 54/100 moved, 0 strikes); v1 results
-page: 3/20 sample → full 14/100 + head-asymmetry paragraph + panel
-links, stale what's-next chain sentence → drift-saga pointer;
-reports.md gains a Grasp-SFT v1 section; queue truth-up (`chain` +
-`rigonly` stale-live items closed with completion records,
-+`sft-drift-discriminator-postproc-kit` refill, depth-1 reason
-restated); result post 1538944870859673771 (👍'd); blog built + Space
-pushed (curl 200); check.py green.
-
-**Next**: `queue_cli.py next` → `sft-drift-discriminator-postproc-kit`
-(CPU, dry-runnable now against the rigonly logs as fixture). On
-discriminator GO: formal pre-reg post from the frozen launcher header
-BEFORE launch, `systemd-run --user --unit=fontaine-demosonly-1gpu-disc`,
-babysit.toml entry, first-poll util check (~25–32 s/step expected,
-1-GPU eff-96). Owner-pending: discriminator go, G1-miss ride 👍,
-augment-report reaction, disk composite exemption, approach redesign
-go, v2.1 bands, ckpt-format, morning-veto items.*
-
 ## Utilization footer
+
+Session 2026-08-17 17:37–17:4xZ (tick; zero GPU-h — box killed by
+owner, local H100 verified free and idle-by-design pending the
+discriminator gate): **quiet-channel tick — no steering, no
+reactions, babysit clean, queue validated at depth 2 (both CPU),
+H100 free-state double-verified** — `run_work_next` armed, work
+session chains next for the pre-reg draft + `ebaa8e0` merge.
 
 Session 2026-08-17 16:46–17:3xZ (work, exploit; zero GPU-h — box
 idle then owner-killed, local H100 free): **discriminator postproc
