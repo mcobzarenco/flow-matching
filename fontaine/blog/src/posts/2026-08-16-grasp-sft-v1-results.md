@@ -112,8 +112,15 @@ composition.
   but this number was **our serving bug, not the model**: the
   inference collator decoded action tokens under per-item dataset
   quantiles instead of the merged training table. With the fix
-  (`b779ba4`) the same head scores 3/20 on held-out seeds 100–119;
-  the full-100 fixed read is leg 3 of the running eval chain.
+  (`b779ba4`) the same head scores **14/100** on the same seeds 0–99
+  (chain leg 3, done 14:17:56Z 08-17; median best-point progress
+  0.69 cm, 54/100 moved the boat >0.5 cm) — just under the ≥20 bar,
+  and ~flat against its own step-500 read of **16/100**. The head
+  asymmetry is the isolation result in miniature: across 500→3000 the
+  token head holds (16→14) while flow never leaves the floor (4→5) —
+  the mis-fit table poisons the flow *targets*, not the shared trunk.
+  Browsable 3-leg panel:
+  [`eval__grasp_sft_v1__sim100_chain.html`](https://mcobzarenco-fontaine-reports.static.hf.space/eval__grasp_sft_v1__sim100_chain.html).
 
 **Verdict: 16× data did not move the needle — it fell off the table,
 and the table is literally why.** The probe checkpoint (313 demos,
@@ -137,6 +144,13 @@ the run that answers the data question cleanly.
   regenerable via `fontaine/scripts/grasp_sft_v1_endpoint_report.py`
 - HTML eval report (flow leg, per-seed table + outcome strip):
   [`eval__grasp_sft_v1_step3000__flow_unseen100.html`](https://mcobzarenco-fontaine-reports.static.hf.space/eval__grasp_sft_v1_step3000__flow_unseen100.html)
+- HTML panel for the full 3-leg sim100 chain (step500 flow/token +
+  endpoint token-fixed: anchors bar, head-asymmetry slopegraph,
+  per-seed strips + combined table, 9-clip gallery):
+  [`eval__grasp_sft_v1__sim100_chain.html`](https://mcobzarenco-fontaine-reports.static.hf.space/eval__grasp_sft_v1__sim100_chain.html)
+  · frozen summary
+  [`analysis__sft_v1_chain.json`](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sft_v1_chain.json)
+  (`fontaine/scripts/sft_v1_chain_report.py`)
 
 **Integrity note (2026-08-17).** The merged per-seed sim100 JSONs and
 the rollout videos were deleted from the box before they were synced
@@ -161,7 +175,9 @@ The successor run is already live:
 corpus (smoother expert v1.3, 1.88M frames), whose own recomputed
 pooled table fits the sim demos. Its step-500 save is the first
 checkpoint that can beat the 4/100 step-500 band and pin the corpus
-as the lever. In parallel the eval chain finishes the run-2 story:
-step-500 token (leg 2, running) and the endpoint token head under the
-serving fix on all 100 seeds (leg 3). Owner-gated items and the full
-queue live in `fontaine/queue.json`.
+as the lever. The eval chain closed 14:17:56Z 08-17 (~6.2/12 GPU-h)
+with the head-asymmetry read above; where the v2 story went next —
+the train-MAE drift that killed two successor runs and the isolation
+ladder that followed — is consolidated on the
+[drift-saga page](2026-08-17-sft-drift-saga.md). Owner-gated items
+and the full queue live in `fontaine/queue.json`.

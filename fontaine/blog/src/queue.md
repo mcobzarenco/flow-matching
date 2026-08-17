@@ -2,57 +2,31 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-17T15:12:39Z
+**Updated:** 2026-08-17T16:09:42Z
 
-**Depth call:** depth 1 (sft-v1-eval-chain-html-panel, CPU): the experimental frontier is deliberately owner-gated — the drift investigation has one designed next cut (the staged 1-GPU discriminator, item sft-drift-discriminator-run BLOCKED on the owner go asked in-channel 15:1xZ 08-17) and pre-registering further runs before that verdict would violate the run-only-what-changes-the-next-decision rule. Both GPUs idle by design pending that word.
+**Depth call:** depth 1 (sft-drift-discriminator-postproc-kit, CPU): the experimental frontier is deliberately owner-gated — the drift investigation has one designed next cut (the staged 1-GPU discriminator, BLOCKED on the owner go asked in-channel 15:1xZ 08-17) and pre-registering further runs before that verdict would violate the run-only-what-changes-the-next-decision rule. Both GPUs idle by design pending that word (local H100 owner-claimed by their policy server).
 
-**24 open** (Live 2 · Queued 1 · Blocked 21 · Done 206)
+**22 open** (Live 0 · Queued 1 · Blocked 21 · Done 209)
 
-## 🔴 Live (2)
+## 🔴 Live (0)
 
 *running right now (GPU or owner-window)*
 
-**`grasp-sft-rigonly-run`** · `gpu-box`
-
-grasp_sft_rigonly_8xa100 (owner-designed data-axis cut, order 13:30Z 08-17, launched 13:34:08Z unit fontaine-grasp-sft-rigonly): rig datasets ONLY (pick_place_v2 + clean, 2 ds / 51 eps / 32,431 frames ~3 epochs at 1000 steps), re…
-
-**boundary:** Registration: recipe base = the v2 pre-reg page; deltas (rig-only data, 1000 steps, save-250) are the owner's verbatim 13:30Z order, restated in-channel 13:34 (post 1538903937078263858) and in the launcher header. | Live 13:34:08Z, 1000 steps ~1.2 h stepping + init =&gt; boundary ~15:0xZ (tick chain owns it; session window ends 14:1xZ). At boundary: post MAE curve verdict vs the banked drifting-run signature; next cut = the staged 1-GPU discriminator (launch_box_grasp_sft_v2_demosonly_1gpu_discriminator.sh) or owner's pick per the verdict. babysit entry grasp_sft_rigonly_8xa100 (12 GPU-h gate). · [pre-reg](posts/2026-08-17-prereg-grasp-sft-v2-joint.md)
-
-<details><summary>full record</summary>
-
-grasp_sft_rigonly_8xa100 (owner-designed data-axis cut, order 13:30Z 08-17, launched 13:34:08Z unit fontaine-grasp-sft-rigonly): rig datasets ONLY (pick_place_v2 + clean, 2 ds / 51 eps / 32,431 frames ~3 epochs at 1000 steps), recipe otherwise verbatim incl. full distributed stack; --recompute-stats = rig-native table; save+eval every 250. Decides the data axis with the stack held constant: drift on known-good rig data =&gt; recipe/stack convicted; health =&gt; sim-demo corpus implicated.
-
-</details>
-
----
-
-**`sft-v1-step500-sim100`** · `cpu`
-
-sim100 on run-2's step_000500 (owner order 08:03:49Z 08-17, msg 1538820633826299954): pull step_000500 weights from the box archive (~/checkpoints/finetune/grasp_sft_v1_joint_8xa100), run locally as detached units
-
-**boundary:** Queued 08:0xZ 08-17 at the order; reply posted 1538821253362745426. | LAUNCHED 08:09:57Z as unit sft-v1-eval-chain (ONE chained unit, 3 legs sequential w/ file log outputs/sim/grasp_sft/step500_sim100/chain.log): step500 flow sim100 -&gt; step500 token-fixed sim100 -&gt; ENDPOINT token-fixed sim100 (the 07:43Z ask). step500 weights pulled to outputs/train/_boxdl/run2_step500. Babysit entry sft_v1_eval_chain registered (12 GPU-h gate). First poll 08:44Z: leg 1 at seed 27/100, profile matches the audit legs. On ALL DONE: HTML panel + verdict post vs anchors (endpoint flow 5/100 box / 0/20 local, probe 44/100, token-fixed 3/20).
-
-<details><summary>full record</summary>
-
-sim100 on run-2's step_000500 (owner order 08:03:49Z 08-17, msg 1538820633826299954): pull step_000500 weights from the box archive (~/checkpoints/finetune/grasp_sft_v1_joint_8xa100), run locally as detached units — flow leg first (euler-10, seeds 0-99, the regression under investigation), then token-with-fix greedy leg; HTML panel + verdict vs anchors (endpoint flow 5/100 box / 0/20 local, probe 44/100, token-fixed 3/20). Feeds the isolation story: the degradation curve — did run 2 ever grasp before the table damage compounded. Also chained: full sim100 of the ENDPOINT token-with-fix (owner 07:43Z ask), after the step500 legs on the same GPU.
-
-</details>
-
----
+*(empty)*
 
 ## 🟢 Queued (1)
 
 *ready — waiting on a window or a boundary*
 
-**`sft-v1-eval-chain-html-panel`** · `cpu`
+**`sft-drift-discriminator-postproc-kit`** · `cpu`
 
-Eval-chain HTML panel + results-page integration: browsable panel for the 3-leg sim100 chain (step500 flow 4/100, step500 token 16/100, endpoint token-fixed 14/100, seeds 0-99) per the HTML-reports rule
+Discriminator post-processing kit (CPU, pre-staged so a GO turns around fast): extend sft_drift_saga_charts.py with a discriminator overlay
 
-**boundary:** Queued 14:3xZ 08-17 tick at chain ALL DONE 14:17:56Z (verdict posted 1538917693032243293; babysit entry pruned same tick). Chain cost ~6.2/12 GPU-h. Local H100 free.
+**boundary:** Queued 16:1xZ 08-17 work session at panel-item close. Blocked on nothing (fixture = rigonly logs); the run it will read is sft-drift-discriminator-run (owner-gated).
 
 <details><summary>full record</summary>
 
-Eval-chain HTML panel + results-page integration: browsable panel for the 3-leg sim100 chain (step500 flow 4/100, step500 token 16/100, endpoint token-fixed 14/100, seeds 0-99) per the HTML-reports rule — report --run v1chain or equivalent preset, dark-mode, linked from reports/; fold the 14/100 endpoint token number + head-asymmetry read into the v1 results page (which carries the 3/20 sample today). Data: outputs/sim/grasp_sft/step500_sim100/ + endpoint_token_fixed_sim100/token_s0.json.
+Discriminator post-processing kit (CPU, pre-staged so a GO turns around fast): extend sft_drift_saga_charts.py with a discriminator overlay — the 1-GPU run's eval/train MAE curve drawn against the banked demosonly/mixedv2/rigonly drift bands and run-2's healthy curve (same indexed-drift instrument), plus the verdict read (drifting =&gt; distributed stack exonerated, single-GPU path implicated; healthy =&gt; distributed machinery convicted). Consumes the babysit-rsynced train_log.jsonl only; dry-runnable now against the rigonly artifacts as a fixture.
 
 </details>
 
@@ -352,9 +326,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (206)
+## ✅ Done (209)
 
 *closed — the full record stays in each fold*
+
+**`sft-v1-eval-chain-html-panel`** · `cpu`
+
+Eval-chain HTML panel + results-page integration: browsable panel for the 3-leg sim100 chain (step500 flow 4/100, step500 token 16/100, endpoint token-fixed 14/100, seeds 0-99) per the HTML-reports rule
+
+**boundary:** Queued 14:3xZ 08-17 tick at chain ALL DONE 14:17:56Z (verdict posted 1538917693032243293; babysit entry pruned same tick). Chain cost ~6.2/12 GPU-h. Local H100 free. | DONE 16:1xZ 08-17 work session: sft_v1_chain_report.py -&gt; eval__grasp_sft_v1__sim100_chain.html (anchors bar, head-asymmetry slopegraph, 3 per-seed strips, combined table, 9-clip gallery) + analysis__sft_v1_chain.json, all mirrored to the reports Space (curl 200); headline numbers reproduce exactly from banked JSONs (4/16/14, leg-3 median 0.69 cm / 54 moved); 14/100 + head-asymmetry folded into the v1 results page (3/20 sample replaced), reports.md gets a Grasp-SFT v1 section.
+
+<details><summary>full record</summary>
+
+Eval-chain HTML panel + results-page integration: browsable panel for the 3-leg sim100 chain (step500 flow 4/100, step500 token 16/100, endpoint token-fixed 14/100, seeds 0-99) per the HTML-reports rule — report --run v1chain or equivalent preset, dark-mode, linked from reports/; fold the 14/100 endpoint token number + head-asymmetry read into the v1 results page (which carries the 3/20 sample today). Data: outputs/sim/grasp_sft/step500_sim100/ + endpoint_token_fixed_sim100/token_s0.json.
+
+</details>
+
+---
 
 **`sft-drift-saga-report-page`** · `cpu`
 
@@ -365,6 +353,20 @@ Chart-led drift-saga page (owner preference: chart-led consolidated reports): th
 <details><summary>full record</summary>
 
 Chart-led drift-saga page (owner preference: chart-led consolidated reports): the grasp-SFT MAE-drift investigation as one page — the isolation grid (run-1b remap / run-2 pooled / mixed-v2 merged / demosonly native / rigonly cut), the banked MAE curves per run (all four drifting curves + the healthy probe), the two-rulers mechanism (normalized-loss vs raw-degree MAE, 1/(q99-q01)^2 weighting), the head asymmetry (step500 flow 4/100 vs token 16/100), and the config-delta table (distributed/augment/batch/table-mode/init). Curves are already banked in logs/queue; the page can be drafted now and finalizes when the rigonly (+discriminator) verdicts land. Dark-mode charts, plain-words opener per papers rule.
+
+</details>
+
+---
+
+**`grasp-sft-rigonly-run`** · `gpu-box`
+
+grasp_sft_rigonly_8xa100 (owner-designed data-axis cut, order 13:30Z 08-17, launched 13:34:08Z unit fontaine-grasp-sft-rigonly): rig datasets ONLY (pick_place_v2 + clean, 2 ds / 51 eps / 32,431 frames ~3 epochs at 1000 steps), re…
+
+**boundary:** Registration: recipe base = the v2 pre-reg page; deltas (rig-only data, 1000 steps, save-250) are the owner's verbatim 13:30Z order, restated in-channel 13:34 (post 1538903937078263858) and in the launcher header. | Live 13:34:08Z, 1000 steps ~1.2 h stepping + init =&gt; boundary ~15:0xZ (tick chain owns it; session window ends 14:1xZ). At boundary: post MAE curve verdict vs the banked drifting-run signature; next cut = the staged 1-GPU discriminator (launch_box_grasp_sft_v2_demosonly_1gpu_discriminator.sh) or owner's pick per the verdict. babysit entry grasp_sft_rigonly_8xa100 (12 GPU-h gate). | DONE (status truth-up 16:1xZ 08-17; was stale-live): closed clean 14:52Z 08-17, 1000/1000, ~10.5/12 GPU-h; ambiguous-leaning-drift verdict posted (owner agreed 15:07Z), folded into the drift-saga page; train logs rsynced pre-cleanup, saves kept on box. · [pre-reg](posts/2026-08-17-prereg-grasp-sft-v2-joint.md)
+
+<details><summary>full record</summary>
+
+grasp_sft_rigonly_8xa100 (owner-designed data-axis cut, order 13:30Z 08-17, launched 13:34:08Z unit fontaine-grasp-sft-rigonly): rig datasets ONLY (pick_place_v2 + clean, 2 ds / 51 eps / 32,431 frames ~3 epochs at 1000 steps), recipe otherwise verbatim incl. full distributed stack; --recompute-stats = rig-native table; save+eval every 250. Decides the data axis with the stack held constant: drift on known-good rig data =&gt; recipe/stack convicted; health =&gt; sim-demo corpus implicated.
 
 </details>
 
@@ -463,6 +465,20 @@ Image-augmentation HTML report (owner order 07:55:24Z 08-17, msg 153881851590817
 <details><summary>full record</summary>
 
 Image-augmentation HTML report (owner order 07:55:24Z 08-17, msg 1538818515908173824): sample real frames from the demo corpus, render a few augmented draws per frame under the frozen --image-augment v0 recipe (pre-reg posts/2026-08-15-prereg-image-augment-sim2real.md), grid them in a browsable HTML report on fontaine-reports for owner review.
+
+</details>
+
+---
+
+**`sft-v1-step500-sim100`** · `cpu`
+
+sim100 on run-2's step_000500 (owner order 08:03:49Z 08-17, msg 1538820633826299954): pull step_000500 weights from the box archive (~/checkpoints/finetune/grasp_sft_v1_joint_8xa100), run locally as detached units
+
+**boundary:** Queued 08:0xZ 08-17 at the order; reply posted 1538821253362745426. | LAUNCHED 08:09:57Z as unit sft-v1-eval-chain (ONE chained unit, 3 legs sequential w/ file log outputs/sim/grasp_sft/step500_sim100/chain.log): step500 flow sim100 -&gt; step500 token-fixed sim100 -&gt; ENDPOINT token-fixed sim100 (the 07:43Z ask). step500 weights pulled to outputs/train/_boxdl/run2_step500. Babysit entry sft_v1_eval_chain registered (12 GPU-h gate). First poll 08:44Z: leg 1 at seed 27/100, profile matches the audit legs. On ALL DONE: HTML panel + verdict post vs anchors (endpoint flow 5/100 box / 0/20 local, probe 44/100, token-fixed 3/20). | DONE (status truth-up 16:1xZ 08-17; was stale-live): chain ALL DONE 14:17:56Z, verdict posted 1538917693032243293, ~6.2/12 GPU-h; HTML panel landed by sft-v1-eval-chain-html-panel.
+
+<details><summary>full record</summary>
+
+sim100 on run-2's step_000500 (owner order 08:03:49Z 08-17, msg 1538820633826299954): pull step_000500 weights from the box archive (~/checkpoints/finetune/grasp_sft_v1_joint_8xa100), run locally as detached units — flow leg first (euler-10, seeds 0-99, the regression under investigation), then token-with-fix greedy leg; HTML panel + verdict vs anchors (endpoint flow 5/100 box / 0/20 local, probe 44/100, token-fixed 3/20). Feeds the isolation story: the degradation curve — did run 2 ever grasp before the table damage compounded. Also chained: full sim100 of the ENDPOINT token-with-fix (owner 07:43Z ask), after the step500 legs on the same GPU.
 
 </details>
 

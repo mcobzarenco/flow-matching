@@ -898,6 +898,26 @@ the baseline the visual-matching lever must move.
 - Weights: [`molmoact2_grasp_sft_joint_corrected_step2000`](https://huggingface.co/mcobzarenco/fontaine-checkpoints/tree/main/molmoact2_grasp_sft_joint_corrected_step2000)
   (weights-only, corrected table baked)
 
+## Grasp-SFT v1 `grasp_sft_v1_joint_8xa100` @3000 ([results](posts/2026-08-16-grasp-sft-v1-results.md) · [flow isolation](posts/2026-08-17-sft-v1-flow-isolation.md) · [drift saga](posts/2026-08-17-sft-drift-saga.md))
+
+- [3-leg sim100 chain panel](https://mcobzarenco-fontaine-reports.static.hf.space/eval__grasp_sft_v1__sim100_chain.html)
+  — the chain that dated the collapse and separated the heads
+  (14:17:56Z 08-17, ~6.2/12 GPU-h): step500 flow **4/100** / step500
+  token **16/100** / endpoint token under the serving fix `b779ba4`
+  **14/100** vs probe flow 44 and endpoint flow 5 — token ~flat
+  across training while flow never leaves the floor ⇒ the mis-fit
+  normalization table poisons the flow targets, not the shared
+  trunk; anchors bar, head-asymmetry slopegraph, per-seed strips,
+  combined table, 9-clip gallery
+- [frozen chain summary JSON](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sft_v1_chain.json)
+  (`sft_v1_chain_report.py` — headline numbers reproduce from the
+  banked leg JSONs)
+- [endpoint flow-head unseen-100 report](https://mcobzarenco-fontaine-reports.static.hf.space/eval__grasp_sft_v1_step3000__flow_unseen100.html)
+  — **5/100** vs probe 44 (per-seed data log-reconstructed after the
+  box wipe; see the results page's integrity note)
+- Weights: [`grasp_sft_v1_joint_step3000`](https://huggingface.co/mcobzarenco/fontaine-checkpoints/tree/main/grasp_sft_v1_joint_step3000)
+  (weights-only, byte-verified post-upload)
+
 ## Cross-family analyses
 
 - [flow-vs-AR paired per-step read](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__flow_vs_ar_paired_k4l2.json)
