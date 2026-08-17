@@ -205,11 +205,13 @@ def main() -> int:
 
     args.gallery_dir.mkdir(parents=True, exist_ok=True)
     gallery_html = ""
+    copied = 0
     for label, e in picks:
         name = f"rollout_seed{e['seed']:03d}.mp4"
         src = args.video_dir / name
         if not src.exists():
             continue
+        copied += 1
         shutil.copy2(src, args.gallery_dir / name)
         gallery_html += (
             f'<figure><video src="{args.gallery_dir.name}/{name}" controls '
@@ -222,6 +224,13 @@ def main() -> int:
                 else ""
             )
             + "</figcaption></figure>\n"
+        )
+    if not gallery_html:
+        gallery_html = (
+            '<p class="meta">No clips: the rollout videos were lost with the'
+            " box <code>outputs/</code> wipe of 2026-08-17 before they were"
+            " synced off; per-seed numbers on this page are reconstructed"
+            " from the surviving shard logs (0.1 cm print precision).</p>\n"
         )
 
     rows_html = ""
@@ -296,7 +305,7 @@ def main() -> int:
 </body></html>"""
     args.out_html.write_text(page)
     print(f"wrote {args.out_html} ({args.out_html.stat().st_size / 1024:.0f} KiB)")
-    print(f"gallery: {args.gallery_dir} ({len(picks)} clips)")
+    print(f"gallery: {args.gallery_dir} ({copied} of {len(picks)} picks copied)")
     return 0
 
 

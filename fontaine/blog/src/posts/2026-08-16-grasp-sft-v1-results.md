@@ -29,7 +29,9 @@ real range, and the real-robot slice of the eval was getting *worse*
 as training went on. The restart recomputed that table from the data
 itself. The question the run answers: does 16× more demonstration
 data move the 44/100 success rate of the smaller-data model?
-⟨FINALIZE: one-sentence answer⟩
+**No — it collapsed it: 5/100 on the same seeds, and the follow-up
+[isolation work](2026-08-17-sft-v1-flow-isolation.md) traced the
+collapse to a mis-fit normalization table, not to the data.**
 
 ## The run
 
@@ -102,11 +104,29 @@ across the box's GPUs — exact, because every rollout stochastic
 stream is keyed by the (seed, replan, draw) triple, invariant to batch
 composition.
 
-- **Flow, unseen**: ⟨FINALIZE⟩/100 vs the probe checkpoint's 44/100
-  (and base 9, corrupt-table 28).
-- **Token, unseen**: ⟨FINALIZE⟩/100 vs the R2 competence bar ≥20/100.
+- **Flow, unseen**: **5**/100 vs the probe checkpoint's 44/100
+  (and base 9, corrupt-table 28). The strip shows the shape: 51/100
+  episodes moved the boat >0.5 cm, median final distance 8.7 cm — the
+  policy *reaches* competently and cannot grasp.
+- **Token, unseen**: **0**/100 vs the R2 competence bar ≥20/100 —
+  but this number was **our serving bug, not the model**: the
+  inference collator decoded action tokens under per-item dataset
+  quantiles instead of the merged training table. With the fix
+  (`b779ba4`) the same head scores 3/20 on held-out seeds 100–119;
+  the full-100 fixed read is leg 3 of the running eval chain.
 
-⟨FINALIZE: verdict paragraph — did 16× data move the needle⟩
+**Verdict: 16× data did not move the needle — it fell off the table,
+and the table is literally why.** The probe checkpoint (313 demos,
+same joint objective) grasps 44/100; this run, 5/100. The isolation
+work that followed pinned it: both broken runs normalized flow targets
+under a window that mis-fits a wrist channel (run 2's pooled recompute
+gives wrist_flex 0.24× weight; run 1b's rig table clips wrist_roll at
+~±66° vs the ±157° the demos use), the probe's table fits, and a
+step-500 sim100 read (2/100) dates the collapse to the first 500
+steps — **broken from the start, not degraded from competence**. The
+5/100 is a normalization result, not a data-scaling result; v2 (live
+now, on the regenerated corpus whose own pooled table fits sim) is
+the run that answers the data question cleanly.
 
 ## Artifacts
 
@@ -115,8 +135,33 @@ composition.
   (byte-verified against the box post-upload)
 - Banked reads: `reports/analysis__grasp_sft_v1_endpoint.json`,
   regenerable via `fontaine/scripts/grasp_sft_v1_endpoint_report.py`
-- ⟨FINALIZE: HTML eval report link⟩
+- HTML eval report (flow leg, per-seed table + outcome strip):
+  [`eval__grasp_sft_v1_step3000__flow_unseen100.html`](https://mcobzarenco-fontaine-reports.static.hf.space/eval__grasp_sft_v1_step3000__flow_unseen100.html)
+
+**Integrity note (2026-08-17).** The merged per-seed sim100 JSONs and
+the rollout videos were deleted from the box before they were synced
+off: a session preparing the demo-gen v2 launch ran `rm -rf
+~/flow-matching/outputs` to clear stale state, unaware the endpoint
+artifacts were still pending their rsync. The per-seed numbers above
+and in the HTML report are **reconstructed from the surviving shard
+stdout logs** (`reconstruct_sim100_from_logs.py` — every summary
+table survived in `~`, outside the wiped tree; 0.1 cm print
+precision). The reconstruction reproduces every previously posted
+headline exactly (5/100, 0/100, moved 51/100, median final 8.7 cm ≈
+8.65). The videos are the one unrecoverable artifact; the rollouts
+are deterministic (triple-keyed noise), so any seed can be re-rendered
+from the uploaded checkpoint if ever needed.
 
 ## What's next
 
-⟨FINALIZE: next pointer — queue state, owner-gated items⟩
+The successor run is already live:
+[`grasp_sft_v2_joint_8xa100`](2026-08-17-prereg-grasp-sft-v2-joint.md)
+— the run-2 recipe verbatim on the regenerated
+[grasp-demos-v2](https://huggingface.co/datasets/mcobzarenco/fontaine-grasp-demos-v2)
+corpus (smoother expert v1.3, 1.88M frames), whose own recomputed
+pooled table fits the sim demos. Its step-500 save is the first
+checkpoint that can beat the 2/100 step-500 band and pin the corpus
+as the lever. In parallel the eval chain finishes the run-2 story:
+step-500 token (leg 2, running) and the endpoint token head under the
+serving fix on all 100 seeds (leg 3). Owner-gated items and the full
+queue live in `fontaine/queue.json`.
