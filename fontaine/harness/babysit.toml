@@ -1094,5 +1094,49 @@
 # + charts = drift-saga report page (this session); next cut = the
 # staged 1-GPU discriminator (owner decides, ask posted).
 
-no_live_runs_reason = "declared 15:0xZ 08-17 work session: rigonly COMPLETE 14:52Z and pruned (ambiguous-leaning-drift verdict, artifacts rsynced local). Box 8×A100 idle + local H100 idle; next GPU leg = the staged 1-GPU discriminator (launch_box_grasp_sft_v2_demosonly_1gpu_discriminator.sh, single delta: distributed machinery removed) — OWNER-GATED, ask posted in-channel this session."
+# (no_live_runs_reason cleared 18:44Z 08-17 tick — discriminator
+# launched below on the owner GO 18:40:56Z ("You can do whatever you
+# want", replying to the GO-gap post; ask open since 15:14Z). PRIOR:
+# "declared 15:0xZ 08-17 work session: rigonly COMPLETE 14:52Z and
+# pruned (ambiguous-leaning-drift verdict, artifacts rsynced local).
+# Box 8×A100 idle + local H100 idle; next GPU leg = the staged 1-GPU
+# discriminator — OWNER-GATED, ask posted in-channel.")
+
+# LIVE — SFT-drift discriminator (LOCAL H100, unit
+# fontaine-demosonly-1gpu-disc, launched 18:44:15Z 08-17; pre-reg
+# 2026-08-17-prereg-sft-drift-discriminator.md POSTED pre-launch on
+# the owner GO). demosonly recipe on ONE GPU, single delta =
+# distributed machinery removed (torchrun+zero1+chunk-grad-allreduce).
+# eff-96 = micro-12 x 8 backward-chunks, seed 0, augment 0.8,
+# recompute-stats, init molmoact2-so101-released — command block
+# byte-identical to the frozen box script. Post-merge (d3dd4d0) jsonl
+# vocabulary: loss_action_flow / loss_action_ar / loss_narration.
+[[run]]
+name = "grasp_sft_v2_demosonly_1gpu_disc"
+kind = "train-jsonl"
+host = "local"
+pgrep = "grasp_sft_v2_demosonly_1gpu_disc"
+pgrep_min = 1                      # single-process 1-GPU (bash+tee+python under the unit)
+gpu_indices = [0]
+gpu_mem_min_mib = 20000
+jsonl = "/home/ubuntu/flow-matching/outputs/train/grasp_sft_v2_demosonly_1gpu_disc/train_log.jsonl"
+total_steps = 1000
+probe_key = "eval_chunk_mae"
+vram_key = "vram_alloc_peak_gib"
+started_utc = "2026-08-17T18:44:15Z"
+gpu_hours_per_wall_hour = 1.0
+boundary = "1000 steps, probes every 250, saves every 500; box-pace estimate ~25-32 s/step for the full eff-96 step (~7-9 h wall) — H100 should match or beat; VERDICT READ AT 1000 (not a mid-run kill): delta eval MAE (1000 vs own 500) <= +0.30 => HEALTHY, distributed CONVICTED; >= +1.0158 => same-drift, distributed EXONERATED; else AMBIGUOUS (sft_drift_saga_charts.py --discriminator, bounds frozen pre-launch)"
+anchors = [
+    "this is a REPLICATION arm — drift here is the EXPECTED-INTERESTING outcome, not an anomaly to kill: NO probe-kill bars, ride to 1000 unless liveness/NaN/gate",
+    "drifting 8x comparators (same recipe): demosonly eval 3.46->3.24->4.22->5.27->6.17 at 250..1250 (monotone from 500); healthy 1-GPU family stayed flat — judge shape vs these, verdict only at 1000",
+    "first poll standing rule: GPU util + s/step (fix input starvation) + free -g (loader workers 8 x prefetch 4 at batch-96 single-process is the host-RAM watch; 221 GB total, ~197 available at launch)",
+    "owner policy-server guard fired at launch preflight (GPU was clean); if the server reappears mid-run DO NOT kill it or the run — escalate in-channel",
+    "recompute-stats at launch = the drifting runs' own recipe (deliberately kept, it is on the suspect list only if EXONERATED)",
+]
+[[run.gates]]
+kind = "vram_max_gib"
+value = 78.0
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 12.0
 

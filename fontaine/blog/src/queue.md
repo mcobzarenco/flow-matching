@@ -6,13 +6,25 @@
 
 **Depth call:** depth 1 queued (discriminator pre-reg post draft, CPU) after the postproc-kit close: the experimental frontier stays deliberately owner-gated — the drift investigation has one designed next cut (the staged 1-GPU discriminator, BLOCKED on the owner go asked in-channel 15:1xZ 08-17) and pre-registering further runs before that verdict would violate run-only-what-changes-the-next-decision. Both GPUs idle by design pending that word (local H100 freed 16:2x-16:4xZ when the owner's policy server came down).
 
-**23 open** (Live 0 · Queued 2 · Blocked 21 · Done 212)
+**23 open** (Live 1 · Queued 2 · Blocked 20 · Done 212)
 
-## 🔴 Live (0)
+## 🔴 Live (1)
 
 *running right now (GPU or owner-window)*
 
-*(empty)*
+**`sft-drift-discriminator-run`** · `gpu-local`
+
+1-GPU drift discriminator (OWNER-GATED, staged on box: launch_box_grasp_sft_v2_demosonly_1gpu_discriminator.sh): demosonly recipe on ONE box GPU, same eff-96/micro-12/seed/augment/recompute-stats/init
+
+**boundary:** Queued 15:1xZ 08-17 at the rigonly close (ambiguous-leaning-drift verdict posted; ask in-channel). BLOCKED on the owner's go — box is idle, launch is one systemd-run command (header of the staged script). | RE-PLATFORMED 17:2xZ 08-17: owner killing the 8xA100 box (order 16:59:20Z; evacuation complete + verified 17:20Z, all needed ckpts/datasets on HF). On GO the run targets the LOCAL H100 instead — same 1-GPU recipe, adapt the launcher paths (train data from fontaine-grasp-demos-v2 or local copy, init from local molmoact2 released ckpt); expected pace on H100 similar order to the A100 estimate. | STAGED-LOCAL 18:3xZ 08-17: everything pre-positioned, GO-&gt;launch is minutes. Launcher fontaine/scripts/launch_local_grasp_sft_v2_demosonly_1gpu_disc_h100.sh (command block byte-identical to the frozen box script; full-parse green vs merged d3dd4d0 CLI; aborts if any compute app holds the GPU — owner policy-server guard). Train data local: ~/datasets/fontaine/grasp_demos_v2/merged (35 GiB HF snapshot); init ckpt local. ON GO: date the draft post -&gt; add to SUMMARY.md -&gt; build+push blog -&gt; post in-channel -&gt; systemd-run per the launcher header -&gt; babysit.toml entry -&gt; first poll: util/rate + free -g (loader is workers 8 x prefetch 4 at batch-96 single-process; rescale declared as machinery-only knob if host RAM pressure). GPU-h gate 12. | GO 18:40:56Z 08-17 (owner: 'You can do whatever you want' in reply to the GO-gap post; ask open since 15:14Z) — tick session executing the ON-GO checklist: pre-reg dated+posted (2026-08-17-prereg-sft-drift-discriminator.md, in SUMMARY), launched via systemd-run unit fontaine-demosonly-1gpu-disc on the local H100. · [pre-reg](posts/2026-08-17-prereg-sft-drift-discriminator.md)
+
+<details><summary>full record</summary>
+
+1-GPU drift discriminator (OWNER-GATED, staged on box: launch_box_grasp_sft_v2_demosonly_1gpu_discriminator.sh): demosonly recipe on ONE box GPU, same eff-96/micro-12/seed/augment/recompute-stats/init — single delta = distributed machinery removed (torchrun+zero1+chunk-grad-allreduce). Every drifting run (run-1b/run-2/mixedv2/demosonly, + rigonly ambiguous) is 8x distributed; every healthy run (44/100 probe, 28/100 stage-C) was 1-GPU. Read: MAE probes every 250; flat-through-1000 convicts the distributed path, same-drift exonerates it (remaining deltas: augment/batch-geometry/recompute-at-launch/init). ~7-9 GPU-h, ~7-9 h wall on gpu0. On completion: verdict to the drift-saga page finalize slot + in-channel. NOTE: prereg field points at the staged frozen launcher (recipe + read rule in its header); cut a formal pre-reg post from it BEFORE launch on the owner go.
+
+</details>
+
+---
 
 ## 🟢 Queued (2)
 
@@ -46,23 +58,9 @@ Pre-reg DRAFT for the --per-dataset-flow-norm rerun (the 08-17 isolation verdict
 
 ---
 
-## 🟡 Blocked (21)
+## 🟡 Blocked (20)
 
 *waiting on a prerequisite, a boundary, or the owner*
-
-**`sft-drift-discriminator-run`** · `gpu-local` · **⛔ owner hold**
-
-1-GPU drift discriminator (OWNER-GATED, staged on box: launch_box_grasp_sft_v2_demosonly_1gpu_discriminator.sh): demosonly recipe on ONE box GPU, same eff-96/micro-12/seed/augment/recompute-stats/init
-
-**boundary:** Queued 15:1xZ 08-17 at the rigonly close (ambiguous-leaning-drift verdict posted; ask in-channel). BLOCKED on the owner's go — box is idle, launch is one systemd-run command (header of the staged script). | RE-PLATFORMED 17:2xZ 08-17: owner killing the 8xA100 box (order 16:59:20Z; evacuation complete + verified 17:20Z, all needed ckpts/datasets on HF). On GO the run targets the LOCAL H100 instead — same 1-GPU recipe, adapt the launcher paths (train data from fontaine-grasp-demos-v2 or local copy, init from local molmoact2 released ckpt); expected pace on H100 similar order to the A100 estimate. | STAGED-LOCAL 18:3xZ 08-17: everything pre-positioned, GO-&gt;launch is minutes. Launcher fontaine/scripts/launch_local_grasp_sft_v2_demosonly_1gpu_disc_h100.sh (command block byte-identical to the frozen box script; full-parse green vs merged d3dd4d0 CLI; aborts if any compute app holds the GPU — owner policy-server guard). Train data local: ~/datasets/fontaine/grasp_demos_v2/merged (35 GiB HF snapshot); init ckpt local. ON GO: date the draft post -&gt; add to SUMMARY.md -&gt; build+push blog -&gt; post in-channel -&gt; systemd-run per the launcher header -&gt; babysit.toml entry -&gt; first poll: util/rate + free -g (loader is workers 8 x prefetch 4 at batch-96 single-process; rescale declared as machinery-only knob if host RAM pressure). GPU-h gate 12. · [pre-reg](posts/2026-08-xx-prereg-sft-drift-discriminator.md)
-
-<details><summary>full record</summary>
-
-1-GPU drift discriminator (OWNER-GATED, staged on box: launch_box_grasp_sft_v2_demosonly_1gpu_discriminator.sh): demosonly recipe on ONE box GPU, same eff-96/micro-12/seed/augment/recompute-stats/init — single delta = distributed machinery removed (torchrun+zero1+chunk-grad-allreduce). Every drifting run (run-1b/run-2/mixedv2/demosonly, + rigonly ambiguous) is 8x distributed; every healthy run (44/100 probe, 28/100 stage-C) was 1-GPU. Read: MAE probes every 250; flat-through-1000 convicts the distributed path, same-drift exonerates it (remaining deltas: augment/batch-geometry/recompute-at-launch/init). ~7-9 GPU-h, ~7-9 h wall on gpu0. On completion: verdict to the drift-saga page finalize slot + in-channel. NOTE: prereg field points at the staged frozen launcher (recipe + read rule in its header); cut a formal pre-reg post from it BEFORE launch on the owner go.
-
-</details>
-
----
 
 **`expert-approach-quasistatic-redesign`** · `cpu` · **⛔ owner hold**
 
@@ -362,7 +360,7 @@ Merge main ebaa8e0 (owner note 17:05:31Z 08-17, /tmp/owner_note_main.txt banked 
 
 Formal discriminator pre-reg post DRAFT (CPU, pre-staged so the GO-&gt;launch gap is minutes): cut posts/2026-08-xx-prereg-sft-drift-discriminator.md from the frozen launcher header (fontaine/scripts/box/launch_box_grasp_sft_v2_demo…
 
-**boundary:** Queued 16:5xZ 08-17 work session at kit close. Blocked on nothing (draft file only); posting+launch remain owner-gated via sft-drift-discriminator-run. | NOTE 17:2xZ: draft must state the platform change (local H100, box killed) as a delta vs the frozen box launcher header; read rule + bounds unchanged. | DONE 18:3xZ 08-17 work session: draft cut at fontaine/blog/src/posts/2026-08-xx-prereg-sft-drift-discriminator.md (dated 2026-08-xx + NOT in SUMMARY.md until the GO posting — drafting is not posting). Platform delta stated per the 17:2xZ note; bounds quoted verbatim from the kit (healthy &lt;= +0.30 / drift &gt;= +1.0158 = 0.5 x demosonly +2.0317; fixture rigonly +0.6929 AMBIGUOUS agrees). GO-gap shrunk beyond the draft: local launcher STAGED (fontaine/scripts/launch_local_grasp_sft_v2_demosonly_1gpu_disc_h100.sh, command block byte-identical to the frozen box script by diff, full-parse green vs merged CLI: molmoact2_joint, per_dataset_flow_norm=False, seed 0; GPU-busy guard for the owner policy-server) and the v2 dataset PULLED LOCAL (~/datasets/fontaine/grasp_demos_v2/merged, 35 GiB snapshot of mcobzarenco/fontaine-grasp-demos-v2, data/meta/videos layout verified).
+**boundary:** Queued 16:5xZ 08-17 work session at kit close. Blocked on nothing (draft file only); posting+launch remain owner-gated via sft-drift-discriminator-run. | NOTE 17:2xZ: draft must state the platform change (local H100, box killed) as a delta vs the frozen box launcher header; read rule + bounds unchanged. | DONE 18:3xZ 08-17 work session: draft cut at fontaine/blog/src/posts/2026-08-17-prereg-sft-drift-discriminator.md (dated 2026-08-xx + NOT in SUMMARY.md until the GO posting — drafting is not posting). Platform delta stated per the 17:2xZ note; bounds quoted verbatim from the kit (healthy &lt;= +0.30 / drift &gt;= +1.0158 = 0.5 x demosonly +2.0317; fixture rigonly +0.6929 AMBIGUOUS agrees). GO-gap shrunk beyond the draft: local launcher STAGED (fontaine/scripts/launch_local_grasp_sft_v2_demosonly_1gpu_disc_h100.sh, command block byte-identical to the frozen box script by diff, full-parse green vs merged CLI: molmoact2_joint, per_dataset_flow_norm=False, seed 0; GPU-busy guard for the owner policy-server) and the v2 dataset PULLED LOCAL (~/datasets/fontaine/grasp_demos_v2/merged, 35 GiB snapshot of mcobzarenco/fontaine-grasp-demos-v2, data/meta/videos layout verified).
 
 <details><summary>full record</summary>
 

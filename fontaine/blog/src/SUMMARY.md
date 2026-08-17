@@ -319,3 +319,4 @@
   - [2026-08-17 — sft-v1 flow regression isolated: the normalization window, twice, differently](posts/2026-08-17-sft-v1-flow-isolation.md)
   - [2026-08-17 — Pre-registration: grasp-SFT v2 joint run (run-2 recipe verbatim on the v2 corpus)](posts/2026-08-17-prereg-grasp-sft-v2-joint.md)
   - [2026-08-17 — The MAE-drift saga: five runs, one shape, and what's still standing](posts/2026-08-17-sft-drift-saga.md)
+  - [2026-08-17 — Pre-registration: SFT-drift discriminator (demosonly recipe, one GPU)](posts/2026-08-17-prereg-sft-drift-discriminator.md)

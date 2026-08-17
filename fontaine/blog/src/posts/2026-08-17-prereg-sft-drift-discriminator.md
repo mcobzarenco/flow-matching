@@ -1,10 +1,11 @@
 # Pre-registration: SFT-drift discriminator (demosonly recipe, one GPU)
 
-*DRAFT — dated `2026-08-xx` until posted. Per the pre-reg-before-launch
-rule this goes out in-channel ON THE OWNER GO (ask 15:14Z 08-17),
-immediately before launch; drafting is not posting. Cut 18:3xZ 08-17
-from the frozen box launcher header + the postproc kit's frozen verdict
-bounds. Runs as `grasp_sft_v2_demosonly_1gpu_disc` on the local H100.*
+*Posted 2026-08-17 18:4xZ, immediately before launch, on the owner GO
+(18:40:56Z, "You can do whatever you want" in reply to the standing ask
+open since 15:14Z). Cut 18:3xZ 08-17 from the frozen box launcher
+header + the postproc kit's frozen verdict bounds — thresholds were
+written before this run started. Runs as
+`grasp_sft_v2_demosonly_1gpu_disc` on the local H100.*
 
 **Plain words**: five recent training runs went bad in the same odd way
 — the model's action error started climbing after step 500 instead of
