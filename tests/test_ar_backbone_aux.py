@@ -43,6 +43,7 @@ from bijou.modelling.decoders.ar_gemma import GemmaARDecoder
 from bijou.modelling.decoders.ar_suffix import ar_backbone_loss, ar_backbone_losses
 from bijou.modelling.gemma4.model import Gemma4Model
 from bijou.modelling.nn import AttentionBackend
+from bijou.models.ar_suffix_ops import batch_action_quantiles
 
 
 def aux_config() -> AuxDecodeConfig:
@@ -169,6 +170,7 @@ def test_request_decode_is_budgeted_and_always_yields_chunks() -> None:
         backbone,
         memory,
         sample,
+        quantiles=batch_action_quantiles(sample),
         generate=request,
     )
     assert actions.shape == (BATCH, loaded.time_horizon, loaded.action_dim)
@@ -199,10 +201,12 @@ def test_zero_budget_forces_terminator_and_counts_fallback(
     )
     backbone, decoder = build_with_aux()
     loaded = codec()
+    sample = batch(loaded)
     actions, generations = decoder.predict_chunk(
         backbone,
         encode_memory(backbone),
-        batch(loaded),
+        sample,
+        quantiles=batch_action_quantiles(sample),
         generate=(AuxField.SUBGOAL,),
     )
     assert actions.shape[1] == loaded.time_horizon
@@ -226,11 +230,13 @@ def test_construction_requires_tokenizer() -> None:
 
 def test_out_of_order_generate_is_rejected() -> None:
     backbone, decoder = build_with_aux()
+    sample = batch(codec())
     with pytest.raises(ValueError, match="template order"):
         decoder.predict_chunk(
             backbone,
             encode_memory(backbone),
-            batch(codec()),
+            sample,
+            quantiles=batch_action_quantiles(sample),
             generate=(AuxField.HOLDING, AuxField.SUBGOAL),
         )
 

@@ -48,7 +48,6 @@ import numpy as np
 import torch
 
 from bijou.data import EpisodeSplit, select_datasets
-from bijou.fast.molmoact2 import normalize_state
 from bijou.grpo_replay import MolmoAct2DiscreteStack
 from bijou.loading import MOLMOACT2_FAST_TOKENIZER_REF
 from bijou.modelling.interface import (
@@ -146,7 +145,7 @@ def main() -> int:
             )
             for key in sorted(k for k in item if k.startswith("observation.images."))
         )
-        normalized_state = normalize_state(item["observation.state"], stack.state_stats)
+        normalized_state = stack.state_stats.normalize(item["observation.state"])
         inputs = collator(
             [
                 PromptInputs(

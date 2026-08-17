@@ -29,6 +29,7 @@ from bijou.modelling.interface import CollatedBatch, NormStats
 from bijou.modelling.molmo2.config import Molmo2Config
 from bijou.modelling.molmo2.model import Molmo2Model, build_multimodal_mask, load_model
 from bijou.modelling.molmo2.testing import tiny_config_json, write_tiny_text_checkpoint
+from bijou.models.ar_suffix_ops import batch_action_quantiles
 from bijou.models.molmo2_ar import Molmo2ARVLA
 from bijou.models.objectives import ARObjective
 from bijou.models.serving import ARServing
@@ -438,7 +439,12 @@ def test_predict_chunk_decodes_a_valid_chunk(
     encoder = build_encoder(tiny_checkpoint)
     sample = batch(loaded, tiny_inputs())
     memory = encode_memory(encoder, model)
-    actions, generations = decoder.predict_chunk(model, memory, sample)
+    actions, generations = decoder.predict_chunk(
+        model,
+        memory,
+        sample,
+        quantiles=batch_action_quantiles(sample),
+    )
     assert actions.shape == (
         BATCH,
         loaded.time_horizon,

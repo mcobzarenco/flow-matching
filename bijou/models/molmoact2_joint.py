@@ -5,7 +5,12 @@ jointly (L = mean(flow) + ce_weight·mean(CE)).
 Assembly: the molmoact2 flow family's parts plus the discrete decoder
 riding the same prefix cache. The rider owns ZERO parameters (trunk-
 native rows), so it contributes no checkpoint section file and no
-optimizer parameters — its trainable surface is the trunk.
+optimizer parameters — its trainable surface is the trunk. ONE
+family-owned merged q01/q99 table (``action_quantiles``, a
+:class:`~bijou.fast.molmoact2.QuantileStats`) feeds both heads: flow
+targets normalize and samples denormalize through it, and the discrete
+decode detokenizes under its rows — the heads-share-one-table
+invariant is structural, not a discipline.
 
 Objective: :class:`JointObjective` (defined here — family-unique),
 optionally with the flow gradients stopped at the KV seam so the trunk
@@ -22,6 +27,7 @@ import torch.distributed as dist
 from torch import Tensor, nn
 
 from ..checkpoint import read_metadata
+from ..fast.molmoact2 import QuantileStats
 from ..modelling.decoders.ar_molmoact2 import MolmoAct2ARDecoder
 from ..modelling.decoders.ar_suffix import ar_backbone_counts, ar_backbone_loss_sums
 from ..modelling.decoders.molmo_flow import MolmoFlowDecoder, molmo_flow_loss_sums
@@ -50,6 +56,7 @@ from .molmoact2_ar import build_molmoact2_ar_component
 from .molmoact2_flow import (
     build_molmoact2_flow_component,
     load_molmoact2_backbone,
+    molmoact2_action_quantiles,
     molmoact2_prompt_of,
 )
 from .serving import FlowServing
@@ -107,6 +114,7 @@ class MolmoAct2JointVLA(ARVLA[MolmoAct2Inputs], FlowVLA[MolmoAct2Inputs]):
         flow_decoder: MolmoFlowDecoder,
         ar_decoder: MolmoAct2ARDecoder,
         *,
+        action_quantiles: QuantileStats,
         objective: JointObjective,
         serving: FlowServing,
     ) -> None:
@@ -118,6 +126,7 @@ class MolmoAct2JointVLA(ARVLA[MolmoAct2Inputs], FlowVLA[MolmoAct2Inputs]):
         # registration matters for dispatch, never for the optimizer,
         # DDP buckets, or state-dict contents.
         self.ar_decoder = ar_decoder
+        self.action_quantiles = action_quantiles
         self.objective = objective
         self.serving = serving
 
@@ -189,7 +198,7 @@ class MolmoAct2JointVLA(ARVLA[MolmoAct2Inputs], FlowVLA[MolmoAct2Inputs]):
         flow_sum, flow_count = molmo_flow_loss_sums(
             self.flow_decoder,
             memory,
-            batch,
+            actions_norm=self.action_quantiles.normalize(batch.actions),
             insulate=self.objective.insulate_flow,
         )
         with torch.autocast(device_type, torch.bfloat16, enabled=autocast_on):
@@ -236,14 +245,18 @@ class MolmoAct2JointVLA(ARVLA[MolmoAct2Inputs], FlowVLA[MolmoAct2Inputs]):
         generator: torch.Generator | None = None,
     ) -> FlowPrediction:
         memory = self._encode(batch, with_grad=False)
-        actions, drawn = self.flow_decoder.predict_chunk(
+        chunk, drawn = self.flow_decoder.sample_chunk(
             memory,
-            batch,
             generator=generator,
             noise=noise,
             num_steps=num_steps,
             method=method,
         )
+        # The reference's output dtype path: denormalize in fp32, cast
+        # BACK to the sampled dtype, then fp32 — the bf16 quantization
+        # is part of the reference output when the expert runs bf16.
+        unnormalized = self.action_quantiles.denormalize(chunk.cpu())
+        actions = unnormalized.to(chunk.dtype).to(torch.float32)
         return FlowPrediction(actions=actions, noise=drawn)
 
     @override
@@ -260,6 +273,9 @@ class MolmoAct2JointVLA(ARVLA[MolmoAct2Inputs], FlowVLA[MolmoAct2Inputs]):
             self.ar_decoder,
             self._encode(batch, with_grad=False),
             batch,
+            # Both heads share the ONE family table: the discrete decode
+            # detokenizes under the same rows the flow head clamps to.
+            quantiles=self.action_quantiles.rows(batch.state.shape[0]),
             sampling=sampling,
             capture=capture,
         )
@@ -346,6 +362,7 @@ class MolmoAct2JointVLA(ARVLA[MolmoAct2Inputs], FlowVLA[MolmoAct2Inputs]):
             encoder,
             flow_decoder,
             ar_decoder,
+            action_quantiles=molmoact2_action_quantiles(metadata),
             objective=parse_joint_objective(metadata.objective),
             serving=FlowServing.from_dict(metadata.serving),
         )

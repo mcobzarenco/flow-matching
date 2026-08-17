@@ -5,16 +5,20 @@ Assembly: the full Molmo2 trunk speaking the MolmoAct2 prompt format
 (discrete state tokens, uint8 single-view images — the encoder owns no
 parameters), and a
 :class:`~bijou.modelling.decoders.molmo_flow.MolmoFlowDecoder`
-conditioning on the whole prefix cache. Normalization is decoder-owned
-(the recorded q01/q99 clamp table); the trunk trains only when
-optimizer policy unfreezes it.
+conditioning on the whole prefix cache. The decoder is a pure
+normalized-space program; the FAMILY owns the raw↔normalized boundary
+through its ``action_quantiles``
+(:class:`~bijou.fast.molmoact2.QuantileStats` — the checkpoint's
+recorded merged q01/q99 table, one object shared by every head). The
+trunk trains only when optimizer policy unfreezes it.
 
 Objective: :class:`~bijou.models.objectives.FlowObjective`.
 
 The three MolmoAct2 families share their assembly through this module's
 free functions (:func:`load_molmoact2_backbone`,
-:func:`build_molmoact2_flow_component`) — composition, never a shared
-base class."""
+:func:`build_molmoact2_flow_component`,
+:func:`molmoact2_action_quantiles`) — composition, never a shared base
+class."""
 
 from __future__ import annotations
 
@@ -32,6 +36,7 @@ from ..checkpoint import (
     read_metadata,
     tokenizer_directory,
 )
+from ..fast.molmoact2 import QuantileStats
 from ..modelling.decoders.molmo_flow import (
     MolmoFlowDecoder,
     load_expert_state,
@@ -99,6 +104,33 @@ def load_molmoact2_backbone(
     return backbone, encoder, tokenizer_dir
 
 
+def molmoact2_action_quantiles(metadata: VLAMetadata) -> QuantileStats:
+    """The ONE merged q01/q99 ACTION table (the molmoact2 shared-table
+    scheme) as the family-owned :class:`QuantileStats`: the rows CE
+    targets tokenize under at training AND the rows every decode —
+    flow denormalization, discrete detokenization — inverts at serving.
+    Every molmoact2 family builds its table through this helper, so the
+    two sides cannot drift (per-item dataset quantiles would
+    clamp/detokenize another rig's ranges). A row without quantiles is
+    a hard stop: mean/std cannot drive a quantile-normalized head."""
+    stats = metadata.stats
+    if stats.action_q01 is None or stats.action_q99 is None:
+        raise SystemExit(
+            "the checkpoint's normalization row carries no action "
+            "q01/q99 — the molmoact2 families normalize actions against "
+            "the recorded merged table, and this table predates it",
+        )
+    if len(stats.action_q01) != metadata.action_dim:
+        raise SystemExit(
+            f"normalization action rows are {len(stats.action_q01)}-wide "
+            f"but the checkpoint records action_dim={metadata.action_dim}",
+        )
+    return QuantileStats(
+        q01=torch.tensor(stats.action_q01, dtype=torch.float32),
+        q99=torch.tensor(stats.action_q99, dtype=torch.float32),
+    )
+
+
 def build_molmoact2_flow_component(
     checkpoint: Path,
     metadata: VLAMetadata,
@@ -106,11 +138,11 @@ def build_molmoact2_flow_component(
     device: torch.device | str,
 ) -> MolmoFlowDecoder:
     """The flow decoder from its recorded section + trained weights:
-    geometry/t-law/serving from the section, the q01/q99 clamp table
-    from the metadata's normalization row, converter-export weights
+    geometry/t-law/serving from the section, converter-export weights
     injected through :func:`load_expert_state` (compat tensors added
     exactly like the reference loader). fp32 — the expert's precision
-    by design."""
+    by design. Normalization is NOT built here — the family owns it
+    (:func:`molmoact2_action_quantiles`)."""
     section = parse_decoder_config(metadata.components["flow_decoder"]["config"])
     if not isinstance(section, MolmoFlowDecoderConfig):
         raise SystemExit(
@@ -120,7 +152,6 @@ def build_molmoact2_flow_component(
         )
     decoder = build_molmo_flow_decoder(
         section,
-        metadata.stats,
         device=device,
         dtype=torch.float32,
     )
@@ -158,6 +189,7 @@ class MolmoAct2FlowVLA(FlowVLA[MolmoAct2Inputs]):
         encoder: MolmoAct2Encoder,
         flow_decoder: MolmoFlowDecoder,
         *,
+        action_quantiles: QuantileStats,
         objective: FlowObjective,
         serving: FlowServing,
     ) -> None:
@@ -165,6 +197,7 @@ class MolmoAct2FlowVLA(FlowVLA[MolmoAct2Inputs]):
         self.backbone = backbone
         self.encoder = encoder
         self.flow_decoder = flow_decoder
+        self.action_quantiles = action_quantiles
         self.objective = objective
         self.serving = serving
 
@@ -215,7 +248,11 @@ class MolmoAct2FlowVLA(FlowVLA[MolmoAct2Inputs]):
                 inputs,
                 with_grad=live,
             )
-        loss_sum, count = molmo_flow_loss_sums(self.flow_decoder, memory, batch)
+        loss_sum, count = molmo_flow_loss_sums(
+            self.flow_decoder,
+            memory,
+            actions_norm=self.action_quantiles.normalize(batch.actions),
+        )
         world = dist.get_world_size() if dist.is_initialized() else 1
         objective = loss_sum * world / counts["action_flow"]
         return LossReport(
@@ -247,14 +284,18 @@ class MolmoAct2FlowVLA(FlowVLA[MolmoAct2Inputs]):
             batch.encoder_inputs,
             with_grad=False,
         )
-        actions, drawn = self.flow_decoder.predict_chunk(
+        chunk, drawn = self.flow_decoder.sample_chunk(
             memory,
-            batch,
             generator=generator,
             noise=noise,
             num_steps=num_steps,
             method=method,
         )
+        # The reference's output dtype path: denormalize in fp32, cast
+        # BACK to the sampled dtype, then fp32 — the bf16 quantization
+        # is part of the reference output when the expert runs bf16.
+        unnormalized = self.action_quantiles.denormalize(chunk.cpu())
+        actions = unnormalized.to(chunk.dtype).to(torch.float32)
         return FlowPrediction(actions=actions, noise=drawn)
 
     @override
@@ -316,6 +357,7 @@ class MolmoAct2FlowVLA(FlowVLA[MolmoAct2Inputs]):
             backbone,
             encoder,
             decoder,
+            action_quantiles=molmoact2_action_quantiles(metadata),
             objective=parse_flow_objective(metadata.objective),
             serving=FlowServing.from_dict(metadata.serving),
         )

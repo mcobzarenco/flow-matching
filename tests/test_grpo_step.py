@@ -32,7 +32,8 @@ from test_ar_backbone import batch, encode_memory
 from test_token_rows import greedy_rows, rngs, unpack
 
 from bijou.eval.policies import TokenRow, token_rows_from_capture
-from bijou.modelling.interface import ActionCaptureStep, ARSampling, CollatedBatch
+from bijou.modelling.interface import ActionCaptureStep, ARSampling
+from bijou.models.ar_suffix_ops import CollatedBatch, batch_action_quantiles
 from bijou.train_grpo import (
     GRPOConfig,
     grammar_masks_from_ids,
@@ -74,10 +75,12 @@ def test_train_mask_equals_rollout_mask() -> None:
     del memory
     loaded = decoder.codec
     capture: list[ActionCaptureStep] = []
+    sample = batch(loaded)
     decoder.predict_chunk(
         backbone,
         encode_memory(backbone),
-        batch(loaded),
+        sample,
+        quantiles=batch_action_quantiles(sample),
         sampling=ARSampling(temperature=2.0, rngs=rngs(0)),
         action_capture=capture,
     )

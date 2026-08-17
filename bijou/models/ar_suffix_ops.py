@@ -80,21 +80,49 @@ def ar_suffix_report[B: nn.Module, M: PrefixMemory](
     return LossReport(objective=objective, components=components)
 
 
+def batch_action_quantiles(batch: CollatedBatch[Any]) -> tuple[Tensor, Tensor]:
+    """The PER-DATASET table policy (gemma/molmo2 AR): each row
+    detokenizes under its own dataset's q01/q99, loudly refused when the
+    batch carries none (old checkpoint stats tables cannot drive AR
+    inference). Merged-table families never call this — they pass their
+    model-owned quantile-table rows instead.
+
+    Shapes:
+    - returns: ([B, action_dim], [B, action_dim]) float32
+    """
+    stats = batch.action_stats
+    if stats.q01 is None or stats.q99 is None:
+        raise SystemExit(
+            "batch stats carry no action quantiles — AR decoding needs "
+            "the exact q01/q99 the tokenizer was fitted under (old "
+            "checkpoint stats tables cannot drive AR inference)",
+        )
+    return stats.q01, stats.q99
+
+
 def ar_block_prediction[B: nn.Module, M: PrefixMemory](
     backbone: B,
     decoder: ARSuffixDecoder[B, M],
     memory: M,
     batch: CollatedBatch[Any],
     *,
+    quantiles: tuple[Tensor, Tensor],
     sampling: ARSampling | None,
     capture: list[ActionCaptureStep] | None,
 ) -> ARPrediction:
     """The action-block decode (``generate=()`` — never any text; the
-    empty-request generations are discarded, not surfaced)."""
+    empty-request generations are discarded, not surfaced).
+
+    Shapes:
+    - ``quantiles``: ([B, action_dim], [B, action_dim]) float32 — the
+      family-resolved detokenization table (see
+      :func:`batch_action_quantiles`)
+    """
     actions, _ = decoder.predict_chunk(
         backbone,
         memory,
         batch,
+        quantiles=quantiles,
         generate=(),
         sampling=sampling,
         action_capture=capture,
@@ -129,12 +157,17 @@ def narrated_prediction[B: nn.Module, M: PrefixMemory](
     memory: M,
     batch: CollatedBatch[Any],
     *,
+    quantiles: tuple[Tensor, Tensor],
     generate: tuple[AuxField, ...],
 ) -> NarratedPrediction:
     """The narrated pass: value lines then actions, one decode. The
     decoder validates the request against its TRAINED fields and
     template order; an empty request is refused here (action-only
-    inference is the block decode)."""
+    inference is the block decode).
+
+    Shapes:
+    - ``quantiles``: ([B, action_dim], [B, action_dim]) float32
+    """
     if not generate:
         raise ValueError(
             "predict_narrated needs a non-empty generate request — "
@@ -144,6 +177,7 @@ def narrated_prediction[B: nn.Module, M: PrefixMemory](
         backbone,
         memory,
         batch,
+        quantiles=quantiles,
         generate=generate,
     )
     return NarratedPrediction(actions=actions, generations=generations)
@@ -155,6 +189,7 @@ def value_candidates[B: nn.Module, M: PrefixMemory](
     memory: M,
     batch: CollatedBatch[Any],
     *,
+    quantiles: tuple[Tensor, Tensor],
     field: AuxField,
     generate: tuple[AuxField, ...],
     draws: int,
@@ -175,6 +210,7 @@ def value_candidates[B: nn.Module, M: PrefixMemory](
         backbone,
         memory,
         batch,
+        quantiles=quantiles,
         generate=generate,
     )
     rows: list[list[ValueCandidate]] = [[] for _ in range(batch.state.shape[0])]

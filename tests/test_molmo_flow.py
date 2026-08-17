@@ -22,6 +22,7 @@ import numpy as np
 import pytest
 import torch
 
+from bijou.fast.molmoact2 import QuantileStats
 from bijou.modelling.decoders.molmo_flow import (
     MolmoFlowConfig,
     MolmoFlowDecoder,
@@ -29,8 +30,6 @@ from bijou.modelling.decoders.molmo_flow import (
     TimeLaw,
     flow_matching_loss_sums,
     load_expert_state,
-    normalize_targets,
-    unnormalize_chunk,
 )
 
 PARITY_FIXTURE = Path("tests/fixtures/molmo_flow_parity/port_outputs.npz")
@@ -352,19 +351,35 @@ def test_loss_masks_padded_dims_and_sum_form() -> None:
 
 def test_normalize_unnormalize_tail() -> None:
     """Their clamp order on both ends: targets clamp AFTER normalizing,
-    chunks clamp BEFORE unnormalizing — predictions can never leave the
-    quantile box."""
-    q01 = torch.tensor([-2.0, 0.0])
-    q99 = torch.tensor([2.0, 10.0])
+    chunks clamp BEFORE denormalizing — predictions can never leave the
+    quantile box. The maps are the family-owned quantile table's."""
+    table = QuantileStats(
+        q01=torch.tensor([-2.0, 0.0]),
+        q99=torch.tensor([2.0, 10.0]),
+    )
     raw = torch.tensor([[0.0, 5.0], [-4.0, 20.0]])  # second row out of range
-    norm = normalize_targets(raw, q01, q99)
+    norm = table.normalize(raw)
     assert torch.allclose(norm[0], torch.tensor([0.0, 0.0]))
     assert torch.allclose(norm[1], torch.tensor([-1.0, 1.0]))  # clamped
-    back = unnormalize_chunk(torch.tensor([[0.0, 0.0], [-3.0, 3.0]]), q01, q99)
+    back = table.denormalize(torch.tensor([[0.0, 0.0], [-3.0, 3.0]]))
     assert torch.allclose(back[0], torch.tensor([0.0, 5.0]))
     assert torch.allclose(back[1], torch.tensor([-2.0, 10.0]))  # clamped to box
     # Round trip inside the box is exact.
-    assert torch.allclose(unnormalize_chunk(norm[0], q01, q99), raw[0])
+    assert torch.allclose(table.denormalize(norm[:1])[0], raw[0])
+
+
+def test_decoders_never_read_batch_stats() -> None:
+    """The purity tripwire: no decoder module consults batch stats —
+    normalization policy is family-owned (per-dataset resolution or the
+    checkpoint quantile table), and a decoder that reaches for
+    ``action_stats``/``state_stats`` has re-crossed the seam."""
+    decoders = Path("bijou/modelling/decoders")
+    offenders = [
+        path.name
+        for path in sorted(decoders.glob("*.py"))
+        if "action_stats" in path.read_text() or "state_stats" in path.read_text()
+    ]
+    assert offenders == [], f"decoder modules read batch stats: {offenders}"
 
 
 def test_load_expert_state_injects_compat_and_freezes() -> None:

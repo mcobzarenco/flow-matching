@@ -217,8 +217,9 @@ class TrainArgs:
     # Replace the init-from checkpoint's global normalization table with
     # exact pooled quantiles over the run's train datasets, oriented
     # like the source table (molmoact2 families only — theirs is the
-    # decoder-owned-global scheme; per-dataset-normalizing families
-    # don't consume the global row at train time).
+    # model-owned-global scheme, the family's quantile table; per-
+    # dataset-normalizing families don't consume the global row at
+    # train time).
     recompute_stats: bool
     self_attention_mode: str
     time_conditioning: str
@@ -526,8 +527,8 @@ class TrainArgs:
         if self.recompute_stats and not self.family.startswith("molmoact2"):
             raise ValueError(
                 "--recompute-stats is the molmoact2 families' "
-                "decoder-owned-GLOBAL normalization scheme; "
-                f"{self.family} normalizes per dataset at collate time "
+                "model-owned GLOBAL normalization scheme (the family's "
+                f"quantile table); {self.family} normalizes per dataset "
                 "and does not consume the global row in training",
             )
         if self.family != "gemma_flow" and self.time_conditioning != "additive":

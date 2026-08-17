@@ -58,6 +58,7 @@ from .ar_suffix_ops import (
     ar_block_prediction,
     ar_loss_counts,
     ar_suffix_report,
+    batch_action_quantiles,
     narrated_prediction,
     value_candidates,
 )
@@ -164,6 +165,7 @@ class Molmo2ARVLA(ARVLA[Molmo2Inputs], NarratingVLA[Molmo2Inputs]):
             self.ar_decoder,
             self._encode(batch, with_grad=False),
             batch,
+            quantiles=batch_action_quantiles(batch),
             sampling=sampling,
             capture=capture,
         )
@@ -195,6 +197,7 @@ class Molmo2ARVLA(ARVLA[Molmo2Inputs], NarratingVLA[Molmo2Inputs]):
             self.ar_decoder,
             self._encode(batch, with_grad=False),
             batch,
+            quantiles=batch_action_quantiles(batch),
             generate=generate,
         )
 
@@ -214,6 +217,7 @@ class Molmo2ARVLA(ARVLA[Molmo2Inputs], NarratingVLA[Molmo2Inputs]):
             self.ar_decoder,
             self._encode(batch, with_grad=False),
             batch,
+            quantiles=batch_action_quantiles(batch),
             field=field,
             generate=generate,
             draws=draws,

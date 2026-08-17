@@ -75,6 +75,7 @@ from bijou.modelling.molmo2.config import Molmo2Config
 from bijou.modelling.molmo2.model import Molmo2Model, build_multimodal_mask, load_model
 from bijou.modelling.molmo2.testing import tiny_config_json, write_tiny_text_checkpoint
 from bijou.modelling.molmo2.tokenizer import Molmo2TextTokenizer
+from bijou.models.ar_suffix_ops import batch_action_quantiles
 from bijou.models.molmoact2_ar import MolmoAct2ARVLA
 
 FAST_FIXTURE = Path(__file__).parent / "fixtures" / "molmoact2_fast_tokenizer"
@@ -458,6 +459,7 @@ def test_predict_chunk_masked_decode_and_capture(
             model,
             encode_memory(model),
             sample,
+            quantiles=batch_action_quantiles(sample),
             action_capture=capture,
         )
     assert actions.shape == (BATCH, T, D)
@@ -503,6 +505,7 @@ def test_sampled_decode_is_keyed_deterministic(
                 model,
                 encode_memory(model),
                 sample,
+                quantiles=batch_action_quantiles(sample),
                 sampling=sampling,
             )[0]
 

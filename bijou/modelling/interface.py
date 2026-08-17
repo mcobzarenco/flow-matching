@@ -286,10 +286,15 @@ class InputsCollator[I: BatchInputs](Protocol):
 # the backbone itself), and every consumer goes through the family's
 # trait surface. Shared conventions: training objectives are
 # module-level functions beside each decoder (``flow_matching_loss``,
-# ``ar_backbone_loss``), and ``predict_chunk`` returns its NATURAL raw
-# product — RAW-unit chunks [B, chunk, action_dim] plus the decode's
-# other output (the integrated noise draw / the per-row generations) —
-# which the family wraps into its typed prediction struct (bijou.vla).
+# ``ar_backbone_loss``) consuming NORMALIZED targets, and decoders
+# operate in normalized space end to end — they never read batch stats
+# or choose a table. The FAMILY owns the raw↔normalized boundary (its
+# per-sample stats policy, or its checkpoint-recorded quantile table —
+# the merged-table families' ``action_quantiles``) and wraps the
+# decode into its typed prediction struct (bijou.vla). The one nuance:
+# the discrete suffix decode emits raw chunks because detokenization is
+# one fused map — its q01/q99 pair is an explicit caller argument, so
+# the table CHOICE still lives with the family.
 
 _IMAGE_KEY_PREFIX = IMAGE_KEY_PREFIX
 
@@ -387,19 +392,14 @@ class Collator[I: BatchInputs]:
     # byte-identical. Both-or-neither, checked at construction.
     state_q01: Tensor | None = None
     state_q99: Tensor | None = None
-    # The molmoact2-format ACTION table (retirement phase 3, --objective
-    # ar/joint): when set ([action_dim] fp32 each), action tokenization
-    # AND the batch action_stats quantile rows use this ONE merged table
-    # — their shared-table training convention and molmo_flow's
-    # decision-6 decoder table, kept on one source so CE targets, the
-    # in-train greedy decode and the flow clamp can never disagree.
-    # Inference sets the table WITHOUT a codec (nothing to tokenize):
-    # there it drives only the action_stats quantile rows, so the AR
-    # block decode detokenizes under the row training tokenized with
-    # instead of per-item dataset quantiles (the sim100 token-leg seam,
-    # 2026-08-17). None keeps every existing path byte-identical
-    # (Gemma/Molmo2 AR tokenize with per-sample dataset quantiles).
-    # Both-or-neither.
+    # The molmoact2-format ACTION table: when set ([action_dim] fp32
+    # each), CE action targets tokenize under this ONE merged table —
+    # the shared-table training convention, sourced from the family's
+    # quantile table so encode can never drift from the decode/clamp
+    # side (which the family applies itself; batch stats never drive a
+    # decode). Collate-time only, hence codec-required; None keeps
+    # every existing path byte-identical (Gemma/Molmo2 AR tokenize with
+    # per-sample dataset quantiles). Both-or-neither.
     action_q01: Tensor | None = None
     action_q99: Tensor | None = None
     _generator: torch.Generator | None = dataclasses.field(
@@ -450,6 +450,12 @@ class Collator[I: BatchInputs]:
             raise ValueError(
                 "action_q01/action_q99 travel together (the merged action "
                 "table) — got one without the other",
+            )
+        if self.action_q01 is not None and self.action_codec is None:
+            raise ValueError(
+                "a merged action table without an action codec has "
+                "nothing to tokenize — decode-side tables are the "
+                "family's quantile table, never collator state",
             )
         if self.aux is not None and (
             self.camera_filter is not None or self.max_cameras is not None
@@ -655,21 +661,6 @@ class Collator[I: BatchInputs]:
                 f"batch mixes items with and without {modality} quantile "
                 "stats — items from datasets always carry them, items from "
                 "an old checkpoint's stats table never do; do not mix",
-            )
-        if (
-            modality == "action"
-            and self.action_q01 is not None
-            and self.action_q99 is not None
-        ):
-            # The merged-table override: the batch stats' quantile rows
-            # carry THE table tokenization used, so the decode side
-            # (predict_chunk reads batch.action_stats) can never
-            # disagree with the CE targets.
-            return NormStats(
-                mean=torch.stack([item["action_mean"] for item in items]),
-                std=torch.stack([item["action_std"] for item in items]),
-                q01=self.action_q01.expand(len(items), -1).clone(),
-                q99=self.action_q99.expand(len(items), -1).clone(),
             )
         return NormStats(
             mean=torch.stack([item[f"{modality}_mean"] for item in items]),

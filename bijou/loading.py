@@ -202,27 +202,6 @@ class CheckpointTrainArgs:
         )
 
 
-def molmoact2_action_table(normalization: DatasetStats) -> tuple[Tensor, Tensor]:
-    """The ONE merged q01/q99 ACTION table (the molmoact2 ar/joint
-    shared-table convention) as fp32 CPU tensors — the row CE targets
-    tokenize under at training AND the row the AR block decode must
-    detokenize under at serving. Eval builds its collator through this
-    helper so the decode side can never fall back to per-item dataset
-    quantiles (another rig's ranges — the sim100 token-leg seam,
-    2026-08-17: a v2-table decode of merged-table tokens sign-inverted
-    the lift channel)."""
-    if normalization.action_q01 is None or normalization.action_q99 is None:
-        raise SystemExit(
-            "molmoact2 ar/joint serving needs action q01/q99 in the "
-            "checkpoint's normalization table (the merged action scheme) "
-            "— this table carries none",
-        )
-    return (
-        torch.tensor(normalization.action_q01, dtype=torch.float32),
-        torch.tensor(normalization.action_q99, dtype=torch.float32),
-    )
-
-
 def molmo_flow_state_table(normalization: DatasetStats) -> tuple[Tensor, Tensor]:
     """The merged q01/q99 STATE clamp table (§8.13) as the
     Collator's ``state_q01``/``state_q99`` pair — [state_dim] fp32 CPU

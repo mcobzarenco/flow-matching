@@ -99,7 +99,7 @@ from ..data import (
     select_datasets,
     worker_init,
 )
-from ..fast.molmoact2 import MolmoAct2FastTokenizer
+from ..fast.molmoact2 import MolmoAct2FastTokenizer, QuantileStats
 from ..loading import molmo_flow_state_table
 from ..modelling.aux_text import (
     AUX_TEMPLATE_VERSION,
@@ -137,7 +137,11 @@ from ..models.gemma_ar import GemmaARVLA
 from ..models.gemma_flow import GemmaFlowVLA
 from ..models.molmo2_ar import Molmo2ARVLA
 from ..models.molmoact2_ar import MolmoAct2ARVLA
-from ..models.molmoact2_flow import MolmoAct2FlowVLA, molmoact2_prompt_of
+from ..models.molmoact2_flow import (
+    MolmoAct2FlowVLA,
+    molmoact2_action_quantiles,
+    molmoact2_prompt_of,
+)
 from ..models.molmoact2_joint import JointObjective, MolmoAct2JointVLA
 from ..models.objectives import ARObjective, FlowObjective, SnapflowObjective
 from ..models.serving import ARServing, FlowServing
@@ -950,8 +954,9 @@ def main() -> int:
         )
         # Every rank computes the same table (exact pooled quantiles are
         # deterministic and order-independent) - no artifact, no sync.
-        # Every downstream consumer reads source_metadata: the CE codec
-        # table, molmo_flow's clamp build, the state table, and the save
+        # Every downstream consumer reads source_metadata: the family's
+        # quantile table (CE tokenization, flow clamp, block
+        # detokenization — one object), the state table, and the save
         # side (which reads the tables back off the built model and
         # records recompute_note) - one swap covers the run end to end.
         source_metadata = dataclasses.replace(
@@ -960,14 +965,17 @@ def main() -> int:
             stats_note=recompute_note,
         )
 
-    # The molmoact2 ar/joint pathways tokenize CE targets through the
-    # released codec under the ONE merged table (their shared-table
-    # convention, and molmo_flow's clamp table — same row, one source of
-    # truth). The decoder itself resolves the codec at build; the
-    # COLLATOR needs the same tables to tokenize targets.
-    molmoact2_action_table: tuple[Tensor, Tensor] | None = None
+    # The molmoact2 families normalize against the ONE merged table
+    # (their shared-table convention): the family-owned quantile table
+    # feeds the flow clamp and the block detokenization inside the
+    # model, and — for the CE pathways — the COLLATOR tokenizes targets
+    # under the same rows (collate-time work, codec-required).
+    molmoact2_quantiles: QuantileStats | None = None
+    if args.family in MOLMOACT2_FAMILIES:
+        assert source_metadata is not None
+        molmoact2_quantiles = molmoact2_action_quantiles(source_metadata)
     if args.family in ("molmoact2_ar", "molmoact2_joint"):
-        assert molmoact2_ar_section is not None and source_metadata is not None
+        assert molmoact2_ar_section is not None
         assert action_codec is None  # --fast-tokenizer refused for the family
         action_codec = MolmoAct2ActionCodec(
             MolmoAct2FastTokenizer.load(
@@ -981,20 +989,6 @@ def main() -> int:
             # harnesses; a training run cannot die on a data artifact
             # the released tokenizer itself produces.
             allow_quantization_holes=True,
-        )
-        source_normalization = source_metadata.stats
-        if (
-            source_normalization.action_q01 is None
-            or source_normalization.action_q99 is None
-        ):
-            raise SystemExit(
-                "the source checkpoint's normalization row carries no "
-                "action q01/q99 — the discrete head tokenizes under the "
-                "merged table; this table predates it",
-            )
-        molmoact2_action_table = (
-            torch.tensor(source_normalization.action_q01, dtype=torch.float32),
-            torch.tensor(source_normalization.action_q99, dtype=torch.float32),
         )
     aux_decode_config: AuxDecodeConfig | None = None
     aux_spec: AuxSpec | None = None
@@ -1094,11 +1088,18 @@ def main() -> int:
         image_augment=args.image_augment,
         state_q01=state_table[0] if state_table is not None else None,
         state_q99=state_table[1] if state_table is not None else None,
+        # CE tokenization only (codec-required): the ar/joint pathways
+        # tokenize under the family table; the flow family has nothing
+        # to tokenize and its table rides the model.
         action_q01=(
-            molmoact2_action_table[0] if molmoact2_action_table is not None else None
+            molmoact2_quantiles.q01
+            if molmoact2_quantiles is not None and action_codec is not None
+            else None
         ),
         action_q99=(
-            molmoact2_action_table[1] if molmoact2_action_table is not None else None
+            molmoact2_quantiles.q99
+            if molmoact2_quantiles is not None and action_codec is not None
+            else None
         ),
     )
     if is_main and args.state_dropout > 0:
@@ -1315,13 +1316,9 @@ def main() -> int:
             tuple(state_table[0].tolist()),
             tuple(state_table[1].tolist()),
         )
-        if molmoact2_action_table is not None:
-            # The ar-run save side reads the action table off the
-            # encoder stash (flow/joint read the decoder's own tables).
-            molmoact2_encoder.action_table = (
-                tuple(molmoact2_action_table[0].tolist()),
-                tuple(molmoact2_action_table[1].tolist()),
-            )
+        # The save side reads the ACTION table off the family's
+        # quantile table — no stash needed.
+        assert molmoact2_quantiles is not None  # built with the collator
         molmo2_text_config = Molmo2Config.from_dict(trunk_config_json).text
         if args.family == "molmoact2_ar":
             assert molmoact2_ar_section is not None
@@ -1341,6 +1338,7 @@ def main() -> int:
                 molmoact2_backbone,
                 molmoact2_encoder,
                 ar_decoder,
+                action_quantiles=molmoact2_quantiles,
                 objective=objective,
                 serving=serving,
             )
@@ -1362,7 +1360,6 @@ def main() -> int:
             )
             flow_decoder = build_molmo_flow_decoder(
                 molmo_flow_section,
-                source_metadata.stats,
                 device=device,
                 dtype=torch.float32,
             )
@@ -1372,6 +1369,7 @@ def main() -> int:
                     molmoact2_backbone,
                     molmoact2_encoder,
                     flow_decoder,
+                    action_quantiles=molmoact2_quantiles,
                     objective=objective,
                     serving=serving,
                 )
@@ -1388,6 +1386,7 @@ def main() -> int:
                         molmo2_text_config,
                         tokenizer_dir,
                     ),
+                    action_quantiles=molmoact2_quantiles,
                     objective=objective,
                     serving=serving,
                 )

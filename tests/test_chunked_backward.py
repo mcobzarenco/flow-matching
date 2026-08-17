@@ -56,6 +56,7 @@ from bijou.modelling.interface import (
     MemoryStream,
     NormStats,
 )
+from bijou.models.gemma_flow import normalized_actions, normalized_state
 from bijou.train import ChunkedBatch, ChunkingCollator
 
 
@@ -288,10 +289,22 @@ def test_flow_sums_reconstruct_mean() -> None:
     )
     # Same RNG consumption (identical shapes) => identical noise/tau
     # draws => the identity is exact, not just distributional.
+    state_norm = normalized_state(sample)
+    actions_norm = normalized_actions(sample)
     torch.manual_seed(11)
-    mean = flow_matching_loss(decoder, memory, sample)
+    mean = flow_matching_loss(
+        decoder,
+        memory,
+        state_norm=state_norm,
+        actions_norm=actions_norm,
+    )
     torch.manual_seed(11)
-    loss_sum, count = flow_matching_loss_sums(decoder, memory, sample)
+    loss_sum, count = flow_matching_loss_sums(
+        decoder,
+        memory,
+        state_norm=state_norm,
+        actions_norm=actions_norm,
+    )
     assert int(count) == actions.numel()
     assert torch.allclose(loss_sum / count, mean, atol=1e-6)
 

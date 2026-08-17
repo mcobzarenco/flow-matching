@@ -432,12 +432,6 @@ class MolmoAct2Encoder(nn.Module):
         # the (quantile-less) run aggregate.
         self.prompt_schema: dict[str, Any] | None = None
         self.state_table: tuple[tuple[float, ...], tuple[float, ...]] | None = None
-        # The merged ACTION table under --objective ar (retirement phase
-        # 3): flow/joint runs read the decoder's own decision-6 tables at
-        # save time; an ar run has no flow decoder, so the table the
-        # collator tokenized with is stashed here for the written
-        # normalization row.
-        self.action_table: tuple[tuple[float, ...], tuple[float, ...]] | None = None
 
     def inputs_collator(self) -> InputsCollator[MolmoAct2Inputs]:
         return MolmoAct2InputsCollator(

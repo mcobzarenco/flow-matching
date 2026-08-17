@@ -44,17 +44,14 @@ from __future__ import annotations
 import math
 from collections.abc import Iterator, Sequence
 from dataclasses import dataclass
-from typing import Any, cast, override
+from typing import cast, override
 
 import torch
 import torch.nn.functional as F
 from torch import Tensor, nn
 
 from ..encoders.molmo2 import Molmo2Memory
-from ..interface import (
-    CollatedBatch,
-    SamplingMethod,
-)
+from ..interface import SamplingMethod
 
 
 def _modulate(x: Tensor, shift: Tensor, scale: Tensor) -> Tensor:
@@ -709,61 +706,24 @@ class MolmoFlowDecoder(nn.Module):
             config.max_action_dim,
         )
         # Deployment configuration (``configure``): the loader supplies
-        # the checkpoint's action geometry + t-law, the q01/q99 clamp
-        # table, and the write-side schema dict (loading owns the
-        # schema; a decoder cannot import it, so the dict is stashed
-        # here by the loader). The table is PLAIN fp32 CPU tensors —
-        # deliberately NOT buffers: ``module.to(bfloat16)`` would sweep
-        # buffers to bf16 and round the denorm constants (~3 significant
-        # digits over quantile spans up to ~280 raw units — a measured
-        # 0.027 pooled divergence vs the reference on the released arm,
-        # step-5 gate diagnosis 2026-08-11). The reference unnormalizes
-        # with fp32 JSON values; so do we, at every expert dtype. The
-        # table's serialized home is the checkpoint metadata's
-        # normalization row, stored ONCE.
+        # the checkpoint's action geometry + t-law and the write-side
+        # schema dict (loading owns the schema; a decoder cannot import
+        # it, so the dict is stashed here by the loader). The q01/q99
+        # table deliberately does NOT live here: this decoder is a pure
+        # normalized-space program — the family owns the raw boundary
+        # through its quantile table (fast.molmoact2.QuantileStats).
         self.runtime: MolmoFlowRuntime | None = None
         self.checkpoint_schema: dict[str, object] | None = None
-        self.action_q01 = torch.zeros(config.max_action_dim, dtype=torch.float32)
-        self.action_q99 = torch.zeros(config.max_action_dim, dtype=torch.float32)
         self.reset_parameters()
 
     def configure(
         self,
         runtime: MolmoFlowRuntime,
         *,
-        action_q01: Tensor,
-        action_q99: Tensor,
         checkpoint_schema: dict[str, object],
     ) -> None:
         """Attach the deployment facts (loader-called; predict/loss refuse
-        an unconfigured decoder loudly).
-
-        Shapes:
-        - ``action_q01``/``action_q99``: [action_dim] raw-unit quantiles
-          (the checkpoint normalization row's, or the run's recomputed
-          merge — padded here to max_action_dim with 0/1 inert rows)
-        """
-        if action_q01.shape != (runtime.action_dim,) or action_q99.shape != (
-            runtime.action_dim,
-        ):
-            raise ValueError(
-                f"expected [{runtime.action_dim}] quantile rows, got "
-                f"{tuple(action_q01.shape)} / {tuple(action_q99.shape)}",
-            )
-        pad = self.config.max_action_dim - runtime.action_dim
-        self.action_q01 = F.pad(
-            action_q01.to(torch.float32).cpu(),
-            (0, pad),
-            value=0.0,
-        )
-        # Padded dims get a unit-width box (0..1) so the normalize/
-        # unnormalize maps stay finite there; the dim mask keeps them
-        # out of every loss and the sampler zeroes them anyway.
-        self.action_q99 = F.pad(
-            action_q99.to(torch.float32).cpu(),
-            (0, pad),
-            value=1.0,
-        )
+        an unconfigured decoder loudly)."""
         self.runtime = runtime
         self.checkpoint_schema = checkpoint_schema
 
@@ -771,8 +731,8 @@ class MolmoFlowDecoder(nn.Module):
         if self.runtime is None:
             raise ValueError(
                 "MolmoFlowDecoder is unconfigured — the loader must call "
-                "configure() with the checkpoint's action geometry and "
-                "q01/q99 table before predict/loss",
+                "configure() with the checkpoint's action geometry "
+                "before sampling/loss",
             )
         return self.runtime
 
@@ -786,35 +746,32 @@ class MolmoFlowDecoder(nn.Module):
         return mask
 
     @torch.no_grad()
-    def predict_chunk(
+    def sample_chunk(
         self,
         memory: Molmo2Memory,
-        batch: CollatedBatch[Any],
         *,
         generator: torch.Generator | None = None,
         noise: Tensor | None = None,
         num_steps: int | None = None,
         method: SamplingMethod = SamplingMethod.EULER,
     ) -> tuple[Tensor, Tensor]:
-        """RAW-unit chunk prediction — their serving tail on our seam:
-        extract per-layer KV off the prefix cache, integrate (default =
-        the checkpoint's recorded ``num_flow_steps``, Euler — their
-        deployment operating point), slice the real action width, clamp
-        + q01/q99-unnormalize, and the reference's dtype round-trip.
-        ``batch`` stats are deliberately unused — normalization is
-        decoder-owned (§8.13 decision 6).
+        """NORMALIZED chunk sampling — their serving tail up to the raw
+        boundary: extract per-layer KV off the prefix cache, integrate
+        (default = the checkpoint's recorded ``num_flow_steps``, Euler —
+        their deployment operating point), and slice the real action
+        width. The family denormalizes through its quantile table and
+        owns the reference's dtype round-trip.
 
-        Returns ``(actions, noise)`` — the raw natural product; the
-        family wraps it. ``noise`` is ALWAYS the initial draw the
-        solver integrated (supplied or drawn).
+        Returns ``(chunk, noise)``; ``noise`` is ALWAYS the initial draw
+        the solver integrated (supplied or drawn) — paired re-decodes
+        must reuse it.
 
         Shapes:
         - ``noise`` (given or returned): [B, action_horizon,
           max_action_dim] — the decoder's own geometry
-        - returns actions: [B, n_action_steps, action_dim] fp32 raw
-          units
+        - returns chunk: [B, n_action_steps, action_dim] normalized
+          units, the sampler's dtype
         """
-        del batch  # stats intentionally unused; signature mirrors flow's
         runtime = self._configured()
         kv_states = layer_kv_pairs(memory, num_blocks=len(self.blocks))
         conditioning = conditioning_mask_of(memory)
@@ -837,16 +794,7 @@ class MolmoFlowDecoder(nn.Module):
             noise=noise,
         )
         sliced = chunk[:, : runtime.n_action_steps, : runtime.action_dim]
-        unnormalized = unnormalize_chunk(
-            sliced.cpu(),
-            self.action_q01[: runtime.action_dim].cpu(),
-            self.action_q99[: runtime.action_dim].cpu(),
-        )
-        # The reference's output dtype path: unnormalize in fp32, cast
-        # BACK to the sampled dtype, then fp32 — the bf16 quantization is
-        # part of the reference output when the expert runs bf16.
-        actions = unnormalized.to(sliced.dtype).to(torch.float32)
-        return actions, noise
+        return sliced, noise
 
     def iter_blocks(self) -> Iterator[MolmoFlowBlock]:
         for block in self.blocks:
@@ -1249,28 +1197,28 @@ def conditioning_mask_of(memory: Molmo2Memory) -> Tensor | None:
 def molmo_flow_loss_sums(
     decoder: MolmoFlowDecoder,
     memory: Molmo2Memory,
-    batch: CollatedBatch[Any],
     *,
+    actions_norm: Tensor,
     insulate: bool = False,
     times: Tensor | None = None,
     noise: Tensor | None = None,
 ) -> tuple[Tensor, Tensor]:
-    """The batch-facing objective (the molmoact2 families compose it):
-    extract
-    KV off the prefix cache (detached under ``insulate`` — their
-    post-train KI), q01/q99-clamp-normalize the RAW batch actions with
-    the DECODER'S table (decision 6: per-sample stats deliberately
-    unused), pad to max_action_dim, draw t from the RECORDED law and
-    ε ~ N(0, I) (ambient RNG — the trainer's seeded stream, matching
-    every other decoder's loss), and return the sum-form objective.
-    ``times``/``noise`` overrides are for oracles.
+    """The memory-facing objective (the molmoact2 families compose it):
+    extract KV off the prefix cache (detached under ``insulate`` —
+    knowledge insulation), pad the already-NORMALIZED targets to
+    max_action_dim, draw t from the RECORDED law and ε ~ N(0, I)
+    (ambient RNG — the trainer's seeded stream, matching every other
+    decoder's loss), and return the sum-form objective. The family owns
+    normalization (its quantile table); ``times``/``noise`` overrides
+    are for oracles.
 
     Episode-end repeated actions train as real targets — the same call
     as flow.py's loss and their reference wrapper (lerobot's clamped
     delta-timestamps already hold the reach-and-hold target).
 
     Shapes:
-    - ``batch.actions``: [B, T == action_horizon, action_dim] raw units
+    - ``actions_norm``: [B, T == action_horizon, action_dim] float32 in
+      [-1, 1]
     - returns: (scalar loss sum with graph, scalar position count B*T)
     """
     runtime = decoder._configured()
@@ -1280,25 +1228,20 @@ def molmo_flow_loss_sums(
         detach=insulate,
     )
     enc_mask = conditioning_mask_of(memory)
-    actions = batch.actions.to(torch.float32)
+    actions = actions_norm.to(torch.float32)
     if actions.shape[-1] != runtime.action_dim:
         raise ValueError(
-            f"batch action width {actions.shape[-1]} != the configured "
+            f"target action width {actions.shape[-1]} != the configured "
             f"action_dim {runtime.action_dim}",
         )
     if actions.shape[1] != runtime.action_horizon:
         raise ValueError(
-            f"batch chunk length {actions.shape[1]} != the configured "
+            f"target chunk length {actions.shape[1]} != the configured "
             f"action_horizon {runtime.action_horizon} — --chunk-size must "
             "match the checkpoint's horizon",
         )
-    normalized = normalize_targets(
-        actions,
-        decoder.action_q01[: runtime.action_dim].to(actions.device),
-        decoder.action_q99[: runtime.action_dim].to(actions.device),
-    )
     padded = F.pad(
-        normalized,
+        actions,
         (0, decoder.config.max_action_dim - runtime.action_dim),
     )
     dim_is_pad = decoder.dim_pad_mask().to(actions.device).expand(actions.shape[0], -1)
@@ -1320,8 +1263,8 @@ def molmo_flow_loss_sums(
 def molmo_flow_loss(
     decoder: MolmoFlowDecoder,
     memory: Molmo2Memory,
-    batch: CollatedBatch[Any],
     *,
+    actions_norm: Tensor,
     insulate: bool = False,
 ) -> Tensor:
     """Mean form of :func:`molmo_flow_loss_sums` — the unchunked
@@ -1329,7 +1272,7 @@ def molmo_flow_loss(
     loss_sum, count = molmo_flow_loss_sums(
         decoder,
         memory,
-        batch,
+        actions_norm=actions_norm,
         insulate=insulate,
     )
     return loss_sum / count
@@ -1437,37 +1380,6 @@ def flow_matching_loss_sums(
         dtype=torch.float32,
     )
     return per_position.sum(), count
-
-
-def normalize_targets(actions: Tensor, q01: Tensor, q99: Tensor) -> Tensor:
-    """Their input-side action path: q01/q99 normalize then clamp to
-    [-1, 1] (zero-width ranges replaced by eps, their guard).
-
-    Shapes:
-    - ``actions``: [..., D] raw units
-    - ``q01``/``q99``: [D]
-    - returns: [..., D] float32 in [-1, 1]
-    """
-    actions = torch.as_tensor(actions, dtype=torch.float32)
-    denom = q99 - q01
-    denom = torch.where(denom == 0, torch.tensor(1e-8, dtype=torch.float32), denom)
-    return (2.0 * (actions - q01) / denom - 1.0).clamp(-1.0, 1.0)
-
-
-def unnormalize_chunk(chunk: Tensor, q01: Tensor, q99: Tensor) -> Tensor:
-    """Their output tail, in their order: clamp the sampled normalized
-    chunk to [-1, 1], then invert the q01/q99 map back to raw units in
-    fp32 (the caller applies the reference's dtype round-trip).
-
-    Shapes:
-    - ``chunk``: [..., D] sampled normalized chunk
-    - ``q01``/``q99``: [D]
-    - returns: [..., D] float32 raw units
-    """
-    chunk = torch.as_tensor(chunk, dtype=torch.float32).clamp(-1.0, 1.0)
-    denom = q99 - q01
-    denom = torch.where(denom == 0, torch.tensor(1e-8, dtype=torch.float32), denom)
-    return (chunk + 1.0) * denom / 2.0 + q01
 
 
 def load_expert_state(

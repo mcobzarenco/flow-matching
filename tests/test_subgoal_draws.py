@@ -72,6 +72,7 @@ from bijou.eval.subgoal_scoring import (
 )
 from bijou.modelling.aux_text import AuxField, AuxGeneration
 from bijou.modelling.interface import ARSampling, ValueCandidate
+from bijou.models.ar_suffix_ops import batch_action_quantiles
 from bijou.vla import NarratedPrediction
 
 # ------------------------------------------------------------- scorers
@@ -565,10 +566,12 @@ def test_greedy_candidate_matches_full_pass_off_restored_prefill() -> None:
     loaded = codec()
     memory = encode_memory(backbone)
     snapshot = decoder.cache_snapshot(memory)
+    sample = tiny_batch(loaded)
     _, generations = decoder.predict_chunk(
         backbone,
         memory,
-        tiny_batch(loaded),
+        sample,
+        quantiles=batch_action_quantiles(sample),
         generate=(AuxField.SUBGOAL,),
     )
     decoder.cache_restore(memory, snapshot)

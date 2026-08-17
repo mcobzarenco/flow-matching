@@ -47,14 +47,13 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any, cast, override
+from typing import cast, override
 
 import torch
 from torch import Tensor, nn
 
 from ..encoders.gemma4 import GemmaMemory
 from ..interface import (
-    CollatedBatch,
     MemoryStream,
     SamplingMethod,
     kv_stream_name,
@@ -543,7 +542,8 @@ class FlowDecoder(nn.Module):
 
         Pass ``noise`` (or a seeded ``generator``) for deterministic
         evaluation. ``state`` and the returned chunk are NORMALIZED units
-        (the raw-unit wrapper is :meth:`predict_chunk`).
+        (the raw boundary is the family's —
+        ``bijou.models.gemma_flow.decode_chunk``).
 
         ``target_time`` (φ_s-extended models only): constant SnapFlow
         shortcut conditioning s passed to every solver forward; None =
@@ -697,100 +697,17 @@ class FlowDecoder(nn.Module):
             return actions, logprob
         return actions
 
-    @torch.no_grad()
-    def predict_chunk(
-        self,
-        memory: GemmaMemory,
-        batch: CollatedBatch[Any],
-        *,
-        generator: torch.Generator | None = None,
-        noise: Tensor | None = None,
-        num_steps: int = 5,
-        method: SamplingMethod = SamplingMethod.HEUN,
-        target_time: float | None = None,
-        sde_noise_level: float | None = None,
-        sde_step_noise: Tensor | None = None,
-    ) -> tuple[Tensor, Tensor]:
-        """RAW-unit chunk prediction: normalize the batch's state with its
-        per-sample stats, integrate the field, and unnormalize with the
-        action stats. ``num_steps``/``method``/``target_time`` are
-        flow-specific solver knobs (other decoder kinds have none).
-
-        Returns ``(actions, noise)`` — the raw natural product; the
-        family wraps it into its prediction struct. ``noise`` is ALWAYS
-        the initial draw the solver actually integrated (supplied or
-        drawn) — paired re-decodes must reuse it, or sampling variance
-        floors any conditioning-sensitivity signal.
-
-        ``sde_noise_level`` routes the decode through
-        :meth:`sample_actions_sde` (Euler-only, no φ_s) with the same
-        normalization seam — ``method`` must be EULER and ``target_time``
-        None so an SDE read can never silently wear ODE solver knobs.
-
-        Shapes:
-          - returns actions: [B, chunk, action_dim] — RAW action units
-          - returns noise: [B, chunk, action_dim] — normalized units
-        """
-        state = (batch.state - batch.state_stats.mean) / batch.state_stats.std
-        if noise is None:
-            # The identical draw sample_actions would make (same shape/
-            # dtype/device/generator ⇒ bit-exact result and generator
-            # consumption) — made here so the return can carry it.
-            noise = torch.randn(
-                state.shape[0],
-                self.config.chunk_size,
-                self.config.action_dim,
-                dtype=state.dtype,
-                device=state.device,
-                generator=generator,
-            )
-        if sde_noise_level is not None:
-            if method is not SamplingMethod.EULER:
-                raise ValueError(
-                    "the SDE decode is Euler-only (a Heun corrector breaks "
-                    f"the Gaussian transition), got method={method.name}",
-                )
-            if target_time is not None:
-                raise ValueError(
-                    "sample_actions_sde offers no φ_s shortcut conditioning "
-                    f"— target_time must be None, got {target_time}",
-                )
-            sampled = self.sample_actions_sde(
-                memory,
-                state,
-                noise_level=sde_noise_level,
-                num_steps=num_steps,
-                noise=noise,
-                step_noise=sde_step_noise,
-                generator=generator,
-            )
-            assert isinstance(sampled, Tensor)  # return_logprob not requested
-        elif sde_step_noise is not None:
-            raise ValueError("sde_step_noise without sde_noise_level")
-        else:
-            sampled = self.sample_actions(
-                memory,
-                state,
-                num_steps=num_steps,
-                method=method,
-                noise=noise,
-                generator=generator,
-                target_time=target_time,
-            )
-        chunks = (
-            sampled.float() * batch.action_stats.std[:, None, :]
-            + batch.action_stats.mean[:, None, :]
-        )
-        return chunks, noise
-
 
 def flow_matching_loss(
     decoder: FlowDecoder,
     memory: GemmaMemory,
-    batch: CollatedBatch[Any],
+    *,
+    state_norm: Tensor,
+    actions_norm: Tensor,
 ) -> Tensor:
-    """``batch`` must already be device-resident; no transfers happen here.
-    Actions/state are normalized with each sample's own dataset stats.
+    """Inputs must already be device-resident; no transfers happen here.
+    Actions/state arrive NORMALIZED — the family owns the boundary (its
+    per-sample stats policy).
 
     Episode-boundary chunks train on the full ``chunk`` length with
     repeat-last-action targets: lerobot's delta-timestamps query clamps
@@ -805,15 +722,15 @@ def flow_matching_loss(
     loss paths compose it); training's single DDP wrapper hooks gradients
     at the family level, so the decoder is always the raw module.
 
-    Shapes (batch fields in CollatedBatch's docstring):
+    Shapes:
       - memory.streams[name]: key/value each [B, kv_heads, P, head_dim]
+      - ``state_norm``: [B, state_dim] normalized units
+      - ``actions_norm``: [B, chunk, action_dim] normalized units
       - velocity/target: [B, chunk, action_dim]; tau: [B]
       - returns: scalar loss
     """
-    actions = (
-        batch.actions - batch.action_stats.mean[:, None, :]
-    ) / batch.action_stats.std[:, None, :]
-    state = (batch.state - batch.state_stats.mean) / batch.state_stats.std
+    actions = actions_norm
+    state = state_norm
 
     noise = torch.randn_like(actions)
     # π0's time distribution: Beta(1.5, 1) squeezed into (0, 1).
@@ -834,7 +751,9 @@ def flow_matching_loss(
 def flow_matching_loss_sums(
     decoder: FlowDecoder,
     memory: GemmaMemory,
-    batch: CollatedBatch[Any],
+    *,
+    state_norm: Tensor,
+    actions_norm: Tensor,
 ) -> tuple[Tensor, Tensor]:
     """Sum-form objective for chunked backward: (squared-error SUM with
     graph, element count). Dividing by the FULL-batch element count and
@@ -843,11 +762,14 @@ def flow_matching_loss_sums(
     — every element weighs equally, so the count is just numel. Noise
     and tau draw per CALL: a chunked step consumes the RNG stream in
     chunk-shaped draws (a different, equally-distributed realization
-    than one full-batch draw — same law, not the same bytes)."""
-    actions = (
-        batch.actions - batch.action_stats.mean[:, None, :]
-    ) / batch.action_stats.std[:, None, :]
-    state = (batch.state - batch.state_stats.mean) / batch.state_stats.std
+    than one full-batch draw — same law, not the same bytes).
+
+    Shapes:
+      - ``state_norm``: [B, state_dim] normalized units
+      - ``actions_norm``: [B, chunk, action_dim] normalized units
+    """
+    actions = actions_norm
+    state = state_norm
 
     noise = torch.randn_like(actions)
     tau = (
@@ -868,7 +790,9 @@ def flow_matching_loss_sums(
 def _snapflow_squared_errors(
     decoder: FlowDecoder,
     memory: GemmaMemory,
-    batch: CollatedBatch[Any],
+    *,
+    state_norm: Tensor,
+    actions_norm: Tensor,
 ) -> tuple[Tensor, Tensor]:
     """Per-element squared errors of the two SnapFlow terms, each
     [B, chunk, action_dim]: (flow-matching, shortcut). Shared machinery
@@ -886,10 +810,8 @@ def _snapflow_squared_errors(
     expert forwards (2 sg + 1 grad) per shortcut sample, all against the
     ONE observation memory the caller encoded — the prefix encode is
     shared across every term."""
-    actions = (
-        batch.actions - batch.action_stats.mean[:, None, :]
-    ) / batch.action_stats.std[:, None, :]
-    state = (batch.state - batch.state_stats.mean) / batch.state_stats.std
+    actions = actions_norm
+    state = state_norm
 
     # Flow-matching term: identical draws/machinery to flow_matching_loss.
     noise = torch.randn_like(actions)
@@ -924,8 +846,9 @@ def _snapflow_squared_errors(
 def snapflow_distill_loss(
     decoder: FlowDecoder,
     memory: GemmaMemory,
-    batch: CollatedBatch[Any],
     *,
+    state_norm: Tensor,
+    actions_norm: Tensor,
     alpha: float,
     shortcut_weight: float,
 ) -> Tensor:
@@ -938,7 +861,8 @@ def snapflow_distill_loss(
     fm_squared, shortcut_squared = _snapflow_squared_errors(
         decoder,
         memory,
-        batch,
+        state_norm=state_norm,
+        actions_norm=actions_norm,
     )
     return (
         alpha * fm_squared.mean()
@@ -949,8 +873,9 @@ def snapflow_distill_loss(
 def snapflow_distill_loss_sums(
     decoder: FlowDecoder,
     memory: GemmaMemory,
-    batch: CollatedBatch[Any],
     *,
+    state_norm: Tensor,
+    actions_norm: Tensor,
     alpha: float,
     shortcut_weight: float,
 ) -> tuple[Tensor, Tensor]:
@@ -963,7 +888,8 @@ def snapflow_distill_loss_sums(
     fm_squared, shortcut_squared = _snapflow_squared_errors(
         decoder,
         memory,
-        batch,
+        state_norm=state_norm,
+        actions_norm=actions_norm,
     )
     weighted_sum = (
         alpha * fm_squared.sum()
