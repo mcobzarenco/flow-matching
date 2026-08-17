@@ -1031,6 +1031,37 @@
 # merge (sim.merge_demo_shards) -> upload (upload_demo_dataset.py to
 # mcobzarenco/fontaine-grasp-demos-v2, public) -> dataset card +
 # results post with the kept-rate verdict vs the 45.9% v1 anchor.
+# sft_v1_eval_chain: owner orders 07:43Z + 08:03Z 08-17 (msgs
+# 1538815542755069993 / 1538820633826299954, replies 1538821195233890364
+# / 1538821253362745426): three chained local sim100 legs in ONE unit
+# (sft-v1-eval-chain, launched 08:09:57Z 08-17) — (1) run-2 step_000500
+# FLOW (the degradation-curve read the isolation needs), (2) step_000500
+# token-with-fix, (3) ENDPOINT step3000 token-with-fix (the 07:43
+# comparison ask). Seeds 0-99 (frozen eval holdout), euler-10, bf16
+# decoder, ~2-3 h/leg. Checkpoint: step500 pulled from box archive
+# (weights-only) to outputs/train/_boxdl/run2_step500. On ALL DONE
+# (chain.log): HTML panel + verdict post vs anchors.
+[[run]]
+name = "sft_v1_eval_chain"
+kind = "progress-log"
+host = "local"
+pgrep = "rollout_sim"
+pgrep_min = 1
+gpu_indices = [0]
+gpu_mem_min_mib = 10000
+log = "/home/ubuntu/flow-matching/outputs/sim/grasp_sft/step500_sim100/chain.log"
+progress_re = "seed [0-9]+"
+started_utc = "2026-08-17T08:09:57+00:00"
+gpu_hours_per_wall_hour = 1.0
+boundary = "3 legs sequential (~2-3 h each): step500 flow -> step500 token -> endpoint token-fixed; chain.log says which leg + ALL DONE. Anchors: endpoint flow 5/100 box / 0/20 local; probe 44/100; token-fixed 3/20 (seeds 100-119)."
+anchors = [
+    "step500 flow read: >= a handful of grasps means run 2 degraded FROM competence (table damage compounds with training); ~0 means broken from the start",
+    "leg 3 endpoint token-fixed vs the 3/20 sample: the full-100 number the owner asked for at 07:43Z",
+]
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 12.0
+
 [[run]]
 name = "demo_gen_v2"
 kind = "progress-log"

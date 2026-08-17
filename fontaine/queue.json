@@ -1942,9 +1942,10 @@
   },
   {
    "id": "grasp-demos-v2-regen",
-   "status": "live",
+   "status": "done",
+   "done_utc": "2026-08-17T08:40:03Z",
    "title": "Grasp demos v2: 5k regen with all demo improvements (owner order 00:45:29Z 08-17): expert v1.3 (1.5 cm centering, retreat glide 5deg/tick, tail 450) + bracket_appearance=real + the FITTED wrist-cam pose (owner: \"definitely include an adjusted wrist camera angle to match the rig\" => BLOCKED on wrist-cam-pose-refit landing its validated pose). Same collector path/scale as demo_gen_v1 (5000 kept episodes, sharded on the box), then upload public as fontaine-grasp-demos-v2. Box is free after the v1 endpoint sim100 (~02:1xZ 08-17).",
-   "boundary": "Queued 01:5xZ 08-17 at the owner order. Sequenced: wrist-cam-pose-refit (validated pose) -> this regen -> grasp-sft-v2-joint-run. Pre-reg the regen params (expert version receipt, wrist pose flag, kept-rate anchor 45.9%) before launch. Pre-reg REQUIRED before launch (prereg field null until posted). | 03:3xZ 08-17: serving-norm audit DONE — serving path now trustworthy (token decode fix b779ba4); flow-regression isolation (new item) is the remaining pre-v2 question. | LAUNCHED 06:16:38Z 08-17 (work session): pre-reg posted 06:16:31Z BEFORE launch (msg 1538793633703268372), collector plumbing landed (7078cf0: --bracket-appearance + --wrist-pose pass-through, manifest-carried), dry-run verified, unit demo_gen_v2 on the box (96 shards x 8 GPUs, same seeds 10000+ as v1, spawn v2.1 + mix70 + expert v1.3 9ba7d30 + bracket real 4a9bf5c + wrist refit 4b14b1f, launch HEAD 7078cf0). Babysit entry registered (40 GPU-h gate, halt bar kept<40% past 500 attempted vs 45.9% v1 anchor). On DONE: merge -> upload public fontaine-grasp-demos-v2 -> card + kept-rate verdict post.",
+   "boundary": "Queued 01:5xZ 08-17 at the owner order. Sequenced: wrist-cam-pose-refit (validated pose) -> this regen -> grasp-sft-v2-joint-run. Pre-reg the regen params (expert version receipt, wrist pose flag, kept-rate anchor 45.9%) before launch. Pre-reg REQUIRED before launch (prereg field null until posted). | 03:3xZ 08-17: serving-norm audit DONE — serving path now trustworthy (token decode fix b779ba4); flow-regression isolation (new item) is the remaining pre-v2 question. | LAUNCHED 06:16:38Z 08-17 (work session): pre-reg posted 06:16:31Z BEFORE launch (msg 1538793633703268372), collector plumbing landed (7078cf0: --bracket-appearance + --wrist-pose pass-through, manifest-carried), dry-run verified, unit demo_gen_v2 on the box (96 shards x 8 GPUs, same seeds 10000+ as v1, spawn v2.1 + mix70 + expert v1.3 9ba7d30 + bracket real 4a9bf5c + wrist refit 4b14b1f, launch HEAD 7078cf0). Babysit entry registered (40 GPU-h gate, halt bar kept<40% past 500 attempted vs 45.9% v1 anchor). On DONE: merge -> upload public fontaine-grasp-demos-v2 -> card + kept-rate verdict post. | DONE 08:30Z + boundary EXECUTED same-session (verdict post 1538829754055266364): 5000/5000 kept, 0 failed shards, 10,084 attempted = 49.6% vs the 45.9% anchor, 2h13m wall ~17.8/40 GPU-h. Merged (5000 eps / 1,942,375 frames, quantiles exact, provenance united), uploaded PUBLIC to mcobzarenco/fontaine-grasp-demos-v2 (200, private=false, card w/ visual knobs). Integrity correction disclosed in-channel: shard expert_head 07f6de5 was the box's stale .git HEAD (rsync excludes .git) — merged provenance corrected to true launch HEAD 7078cf0 + note, box .git bundle-synced; merge tool now carries bracket_appearance/wrist_pose/retreat_tail (8591b99). Unblocks grasp-sft-v2-joint-run on data (recipe call still pending).",
    "class": "cpu",
    "owner_hold": false,
    "prereg": "fontaine/blog/src/posts/2026-08-17-prereg-grasp-demos-v2-regen.md"
@@ -1970,20 +1971,21 @@
   {
    "id": "sft-v1-step500-sim100",
    "class": "cpu",
-   "status": "queued",
+   "status": "live",
    "owner_hold": false,
    "prereg": null,
    "title": "sim100 on run-2's step_000500 (owner order 08:03:49Z 08-17, msg 1538820633826299954): pull step_000500 weights from the box archive (~/checkpoints/finetune/grasp_sft_v1_joint_8xa100), run locally as detached units — flow leg first (euler-10, seeds 0-99, the regression under investigation), then token-with-fix greedy leg; HTML panel + verdict vs anchors (endpoint flow 5/100 box / 0/20 local, probe 44/100, token-fixed 3/20). Feeds the isolation story: the degradation curve — did run 2 ever grasp before the table damage compounded. Also chained: full sim100 of the ENDPOINT token-with-fix (owner 07:43Z ask), after the step500 legs on the same GPU.",
-   "boundary": "Queued 08:0xZ 08-17 at the order; reply posted 1538821253362745426. Launch this session (work session 05:54Z owns it); babysit entries at launch; results likely land at a later tick/session (~3 h/leg)."
+   "boundary": "Queued 08:0xZ 08-17 at the order; reply posted 1538821253362745426. | LAUNCHED 08:09:57Z as unit sft-v1-eval-chain (ONE chained unit, 3 legs sequential w/ file log outputs/sim/grasp_sft/step500_sim100/chain.log): step500 flow sim100 -> step500 token-fixed sim100 -> ENDPOINT token-fixed sim100 (the 07:43Z ask). step500 weights pulled to outputs/train/_boxdl/run2_step500. Babysit entry sft_v1_eval_chain registered (12 GPU-h gate). First poll 08:44Z: leg 1 at seed 27/100, profile matches the audit legs. On ALL DONE: HTML panel + verdict post vs anchors (endpoint flow 5/100 box / 0/20 local, probe 44/100, token-fixed 3/20)."
   },
   {
    "id": "image-augment-html-report",
    "class": "cpu",
-   "status": "queued",
+   "status": "done",
+   "done_utc": "2026-08-17T08:44:45Z",
    "owner_hold": false,
    "prereg": null,
    "title": "Image-augmentation HTML report (owner order 07:55:24Z 08-17, msg 1538818515908173824): sample real frames from the demo corpus, render a few augmented draws per frame under the frozen --image-augment v0 recipe (pre-reg posts/2026-08-15-prereg-image-augment-sim2real.md), grid them in a browsable HTML report on fontaine-reports for owner review.",
-   "boundary": "Queued 08:0xZ 08-17 at the order; reply posted 1538821252431609988. Execute this session after the regen boundary if budget allows, else next session top."
+   "boundary": "Queued 08:0xZ 08-17 at the order; reply posted 1538821252431609988. | DONE same-session 08:44Z (post 1538830870021152841): fontaine/scripts/image_augment_report.py (reusable, smoke-tested on v0 locally), report generated ON THE BOX from grasp-demos-v2's encoded videos (4 front + 4 wrist frames x 4 seeded draws, collator-identical call), uploaded to fontaine-reports, curl 200: augment__image_augment_v0_grid.html. Offered a v0.1 range amendment path if any op reads too strong/weak."
   },
   {
    "id": "bijou-train-per-dataset-flow-norm",
@@ -2005,5 +2007,5 @@
    "boundary": "Queued 03:3xZ 08-17 at the audit verdict. Gates the grasp-sft-v2 recipe choice (same flag question); grasp-demos-v2-regen itself is NOT gated (no dependency on the table). | DONE 07:28Z 08-17 (in-flight during the demo_gen_v2 ride): discriminator (1) EXECUTED — run-1b remap-only step_002000 (weights pulled from box ~/checkpoints, sim20 seeds 100-119 local): 0/20, median final 9.18 cm == run-2's collapse (0/20, 8.9). Pooling NOT the sole lever. Probe provenance pinned: 44/100 = joint_corrected/step_002000 (joint+insulate-flow, demos-only, demos-native corrected table) => (a) joint objective EXONERATED. Discriminator (2) executed as table analysis (per-channel occupancy of the sim demos' window, reports/analysis__sft_v1_flow_isolation_tables.json, on the Space): run-2 pooled compresses ONLY wrist_flex (48.9% occupancy => 0.24x flow-MSE weight, all others ~1.0x); run-1b rig table OVERFLOWS wrist_roll (288% => targets clip at +-1, serving capped at |66| deg vs expert +-157). Unifying read: every broken run normalized sim actions under a sim-misfit window (different channel each time); the only sim-fit-table run grasps. (b) mix not formally exonerated (rides in both broken runs) — SFT-v2 with per-dataset norm is the free 4th cell. Verdict + recipe rec posted msg 1538811601153425469 (owner call pending on per-dataset norm vs demos-native table)."
   }
  ],
- "updated": "2026-08-17T07:30:00Z"
+ "updated": "2026-08-17T08:47:00Z"
 }

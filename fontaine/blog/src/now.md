@@ -3,6 +3,62 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-17 05:54–08:5xZ (real `date -u` at write: 08:47) —
+work session: **grasp-demos-v2 REGEN executed END-TO-END same-session
+— pre-reg'd, launched, ridden, merged, SHIPPED PUBLIC (49.6% kept vs
+45.9% anchor); flow-regression ISOLATED in-flight; owner morning
+burst (4 messages) all served: step-500 eval chain launched +
+image-augment report delivered.***
+
+**Status**: `sft-v1-eval-chain` LIVE on the local H100 since 08:09:57Z
+(babysit-registered; 3 sequential legs: step500 flow sim100 → step500
+token-fixed → endpoint token-fixed; first poll 08:44Z leg 1 at seed
+27/100, ~2–3 h/leg → ALL DONE ~late afternoon). Box idle again after
+the regen (DONE 08:30Z, 17.8/40 GPU-h). Owner policy-server still
+holds ~13 GiB local, untouched.
+
+**Steering** (4 messages 07:43–08:03Z, all replied + acked
+same-hour): (1) sim100-after-token-fix ask → answered (sim20 was the
+proof; full endpoint sim100 = leg 3 of the eval chain); (2)
+"figure it out before the next run" → isolation verdict + recipe ask
+posted (per-dataset norm vs demos-native table — **the SFT-v2 pre-reg
+blocks on this call**); (3) image-augment HTML report order →
+DELIVERED 08:44Z
+([grid](https://mcobzarenco-fontaine-reports.static.hf.space/augment__image_augment_v0_grid.html)),
+v0.1 amendment path offered; (4) step-500 sim100 order → running as
+eval-chain leg 1.
+
+**Done**: (a) **grasp-demos-v2** (`7078cf0` plumbing, pre-reg msg
+1538793633703268372 + posts page BEFORE launch, verdict post
+1538829754055266364): 5,000/5,000 kept, 0 failed shards, 49.6%
+kept-rate vs 45.9% anchor, 2h13m/17.8 GPU-h ≤ 40 gate; merged
+1,942,375 frames, PUBLIC at
+[fontaine-grasp-demos-v2](https://huggingface.co/datasets/mcobzarenco/fontaine-grasp-demos-v2);
+config-reaches-pixels check posted at first poll (local re-render,
+both jaws in the refit wrist frame); integrity correction disclosed —
+stale box .git stamped expert_head 07f6de5, merged provenance
+corrected to true launch HEAD `7078cf0`, box .git bundle-synced,
+merge tool now carries the knob fields (`8591b99`). (b)
+**sft-v1-flow-regression-isolation DONE in-flight** (`66ae72a`,
+verdict 1538811601153425469 + blog page): run-1b remap-only sim20
+**0/20** == run-2's collapse ⇒ pooling not the sole lever; probe
+pinned as joint_corrected ⇒ **joint objective exonerated**;
+per-channel occupancy analysis (wrist_flex **0.24×** weight under
+pooled / wrist_roll **288%** overflow under rig table) banked to the
+reports Space — every broken run mis-fit a wrist channel's window.
+(c) image-augment report script (reusable) + report from v2's real
+encoded frames. (d) near-miss memory banked: rsync --delete +
+box-artifact layout rule.
+
+**Next**: `queue_cli.py next` → `grasp-sft-v2-joint-run` — pre-reg
+BLOCKS on the owner's normalization-recipe call (asked 07:28Z;
+per-dataset norm recommended; `bijou-train-per-dataset-flow-norm`
+queued as the enabler). Eval-chain boundary (~3 legs, ticks ride it
+via babysit): HTML panel + verdict vs 5/100 / 44/100 / 3/20 anchors.
+Owner-pending: recipe call, G1-miss ride 👍 (riding per rec),
+augment-report reaction, disk composite exemption, approach redesign
+go, v2.1 bands, ckpt-format, morning-veto items.*
+
 *Updated 2026-08-17 05:51–05:5xZ (real `date -u` at write: 05:52) —
 tick: **quiet tick — no live runs (local + box idle by design), inbox
 clear, no new messages or reactions on the 04:01/05:46Z refit
@@ -78,6 +134,17 @@ exemption, approach redesign go, v2.1 bands, ckpt-format,
 morning-veto items.*
 
 ## Utilization footer
+
+Session 2026-08-17 05:54–08:5xZ (work, exploit; box ~17.8 GPU-h ≤ 40
+gate on the regen + local ~0.5 GPU-h on the run-1b sim20, eval chain
+ongoing on local at close): **grasp-demos-v2 shipped public
+end-to-end same-session (5,000/5,000 kept, 49.6% vs 45.9% anchor);
+flow regression isolated in-flight (joint exonerated, table-misfit
+mechanism ×2 quantified); owner 4-message burst served — step-500
+3-leg eval chain launched (live at close), image-augment report
+delivered** — queue depth 2, inbox clear, `run_work_next` armed for
+the eval-chain ride + the SFT-v2 pre-reg (blocked on the recipe
+call).
 
 Session 2026-08-17 05:51–05:5xZ (tick; GPUs idle by design, box +
 local — no live runs; local 13 GiB = owner policy-server, not ours):
