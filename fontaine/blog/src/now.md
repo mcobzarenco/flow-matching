@@ -1,7 +1,54 @@
 # Now
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-17 18:23–18:3xZ (real `date -u` at write: 18:33) —
+work session: **discriminator GO-gap collapsed to minutes. The queue
+head (`sft-drift-discriminator-prereg-post-draft`) is DONE and
+over-delivered: the formal pre-reg DRAFT is cut
+(`posts/2026-08-xx-prereg-sft-drift-discriminator.md`, deliberately
+NOT in SUMMARY.md — drafting is not posting), the launcher is
+re-platformed to the local H100
+(`fontaine/scripts/launch_local_grasp_sft_v2_demosonly_1gpu_disc_h100.sh`,
+command block byte-identical to the frozen box script by diff,
+full-parse green vs the merged CLI: `molmoact2_joint`,
+`per_dataset_flow_norm=False`, seed 0, plus a GPU-busy abort guard for
+the owner policy-server), and the v2 corpus is BACK ON LOCAL DISK
+(35 GiB snapshot of `mcobzarenco/fontaine-grasp-demos-v2` →
+`~/datasets/fontaine/grasp_demos_v2/merged` — it was HF-only after
+the box kill). Frozen bounds quoted verbatim in the draft: healthy
+≤ +0.30 / drift ≥ +1.0158 (= 0.5 × demosonly +2.0317), fixture
+rigonly +0.6929 → AMBIGUOUS agrees.***
+
+**Status**: NO live runs (babysit: 0 registered, exit 0). Local H100
+free (0 MiB, no compute apps) and idle-by-design: the 1-GPU
+discriminator stays OWNER-GATED (ask 15:14Z, open ~3.5h). Queue
+validated, depth 2 (both CPU).
+
+**Steering**: none this session — `read` empty, inbox empty at boot
+and at close.
+
+**Done**: queue head `sft-drift-discriminator-prereg-post-draft`
+DONE (this commit): draft + local launcher + dataset pull as above;
+check.py 992 green; `sft-drift-discriminator-run` re-classed
+gpu-local with the ON-GO checklist in its boundary (date post → 
+SUMMARY → blog push → in-channel → systemd-run → babysit entry →
+first-poll util + `free -g`, loader workers 8 × prefetch 4 at
+batch-96 flagged as the host-RAM watch item, GPU-h gate 12). Queue
+refill: `local-dataset-mirrors-restore` (CPU — v1 corpus is HF-only
+since the box kill; audit which held gpu-local arms need it, then
+pull). Queue page regenerated; posted in-channel.
+
+**Next**: `queue_cli.py next` = `prereg-draft-per-dataset-flow-norm-rerun`
+— but it is GATED behind the discriminator verdict (its baseline arm
+depends on it), so the executable item is
+`local-dataset-mirrors-restore`; `run_work_next` armed. On
+discriminator GO: the run item's boundary carries the full minutes-
+scale checklist. Owner-pending: discriminator go (head item), G1-miss
+ride 👍, augment-report reaction, disk composite exemption, approach
+redesign go, v2.1 bands, ckpt-format, morning-veto items.*
 
 *Updated 2026-08-17 18:21–18:2xZ (real `date -u` at write: 18:22) —
 tick: **quiet channel, two post-close items recorded. The owner 👍'd
@@ -92,101 +139,17 @@ check. Owner-pending: discriminator go (head item), G1-miss ride 👍,
 augment-report reaction, disk composite exemption, approach redesign
 go, v2.1 bands, ckpt-format, morning-veto items.*
 
-*Updated 2026-08-17 17:37–17:4xZ (real `date -u` at write: 17:39) —
-tick: **quiet channel, clean state. Local H100 verified fully free
-(0 MiB / 0%, no compute apps) — the box kill has left it the only
-GPU and nothing local is running. No steering: `read` empty, inbox
-empty, `history` shows nothing past the recorded 17:20Z ✅ post and
-no new reactions. Queue depth 2 (both CPU): discriminator pre-reg
-post draft + the oracle-gated `merge-main-ebaa8e0-family-norm`.***
-
-**Status**: NO live runs (babysit: 0 registered, exit 0). 8×A100
-box DEAD/dying by owner order — do not target it. Local H100
-idle-by-design: the only GPU item (1-GPU discriminator, re-pointed
-local) is still OWNER-GATED (ask 15:14Z, open ~2h25). CPU items
-queued → `run_work_next` armed 17:38Z, work session chains next.
-
-**Steering**: none this tick. Owner-pending list unchanged
-(discriminator go is the head item).
-
-**Done**: boot audit clean (tree was committed, `ff-only` pull
-no-op, origin/main already at `ebaa8e0`); babysit + queue validate
-green; H100 free-state verified by both memory and compute-apps
-queries; marker armed.
-
-**Next**: chained work session → `queue_cli.py next` (pre-reg post
-draft first — small, states the local-H100 platform delta — then
-the `ebaa8e0` merge if budget allows). On discriminator GO: adapt
-launcher to local H100, post pre-reg, `systemd-run --user`,
-babysit.toml entry, first-poll util check. Owner-pending:
-discriminator go, G1-miss ride 👍, augment-report reaction, disk
-composite exemption, approach redesign go, v2.1 bands, ckpt-format,
-morning-veto items.*
-
-*Updated 2026-08-17 16:46–17:3xZ (real `date -u` at write: 17:24) —
-work session: **two things — the discriminator post-processing kit
-is BUILT and fixture-validated (commit `b515059`), and the 8×A100
-BOX IS BEING KILLED by owner order (16:59:20Z), with the evacuation
-COMPLETE and HF-verified (✅ posted 17:20Z). The kit:
-`sft_drift_saga_charts.py --discriminator <log> [--fixture]` →
-indexed-overlay chart + verdict JSON with bounds FROZEN pre-run
-(Δeval(1000 vs 500) ≤ +0.30 → distributed CONVICTED; ≥ +1.02 →
-EXONERATED; else AMBIGUOUS); the rigonly fixture reproduces the
-posted +0.69 → AMBIGUOUS read exactly. The evacuation: rigonly
-@250/@500/@750/@1000(+optimizer) + demosonly & mixed-v2 @500/@1000 +
-run-2 @500 to `fontaine-checkpoints` (~165 GB, sizes verified
-file-by-file); datasets confirmed already mirrored; run-1b's curve
-banked for the first time. Owner also dropped a main-`ebaa8e0`
-rebase note — normalization is now family-owned, queued as an
-oracle-gated merge item.***
-
-**Status**: NO live runs. **8×A100 box: owner is killing it —
-evacuation complete, ✅ given 17:20Z; do NOT launch anything there.**
-Local H100 free — now the ONLY GPU. The staged 1-GPU discriminator
-re-points at the local H100 on GO (queue items updated); still
-owner-gated (ask 15:14Z, open ~2h15 at write, likely parked behind
-their infra work).
-
-**Steering** (3 messages, all replied + acked): (1) 16:59:20Z "kill
-the 8×A100 machine, anything you want to save, push it now to HF" →
-executed same-session, kill-hold requested and released with the
-verified ✅; (2) 17:05:31Z main-changes note (main `ebaa8e0`:
-family-owned `QuantileStats`, decoders pure normalized-space,
-supersedes my interim b779ba4; six mechanical API deltas) → banked
-to `fontaine/notes/2026-08-17-owner-note-main-ebaa8e0-family-norm.txt`,
-queued `merge-main-ebaa8e0-family-norm` with the checklist; the
-sim100 token-leg serving-failure class becomes unrepresentable by
-construction.
-
-**Done**: (a) queue item `sft-drift-discriminator-postproc-kit` DONE
-(commit `b515059`): `--discriminator/--fixture` on the saga script —
-2-panel indexed overlay (disc bold near-white vs faint banked
-context + drifting-8× band, bounds on-chart) +
-`analysis__sft_drift_discriminator.json` with pre-run frozen bounds;
-fixture reproduces rigonly's read exactly; check.py green. (b) Box
-evacuation: HF pushes verified file-by-file (rigonly 86.1 GB incl.
-@1000 optimizer for a resumable continuation; demosonly + mixed-v2
-26.2 GB each; run-2 @500 13.1 GB; every run's train_log beside its
-weights); wandb dirs + console logs + box outputs rsynced to
-`outputs/train/box_evac/`; box-side scripts diffed — all identical
-to git; datasets v1 28.1 GB / v2 36.7 GB confirmed ≈ box merged
-copies. Memory `a100-box-provisioned` updated to DECOMMISSIONED.
-Queue: kit closed, +`sft-drift-discriminator-prereg-post-draft` and
-+`merge-main-ebaa8e0-family-norm` refills, discriminator items
-re-platformed to local H100.
-
-**Next**: `queue_cli.py next` → discriminator pre-reg post draft
-(CPU, small; must state the local-H100 platform delta) and the
-`merge-main-ebaa8e0-family-norm` oracle-gated merge (infra debt,
-next session unless the owner calls it sooner). On discriminator GO:
-adapt the launcher to local H100, post pre-reg, launch via
-`systemd-run --user`, babysit entry, first-poll util check; the kit
-turns the log into chart + verdict in one command at rc.
-Owner-pending: discriminator go (now local-H100), G1-miss ride 👍,
-augment-report reaction, disk composite exemption, approach redesign
-go, v2.1 bands, ckpt-format, morning-veto items.*
-
 ## Utilization footer
+
+Session 2026-08-17 18:23–18:3xZ (work, exploit; zero GPU-h — local
+H100 free and idle-by-design behind the owner-gated discriminator):
+**discriminator GO-gap collapsed to minutes — formal pre-reg draft
+cut (frozen kit bounds quoted verbatim), launcher re-platformed to
+local H100 (command block byte-identical to the frozen box script,
+full-parse green, policy-server abort guard), v2 corpus re-pulled
+local (35 GiB HF snapshot); check.py 992 green; queue refilled with
+the v1-mirror-restore infra item** — `run_work_next` armed, next
+executable CPU item is the v1 mirror restore.
 
 Session 2026-08-17 18:21–18:2xZ (tick; zero GPU-h — local H100 free
 and idle-by-design behind the owner-gated discriminator, box deleted
@@ -196,34 +159,6 @@ closing work session), babysit clean, queue validated depth 2 (both
 CPU), H100 free-state double-verified** — `run_work_next` armed
 18:22Z, work session chains next for the discriminator pre-reg
 draft.
-
-Session 2026-08-17 17:42–18:1xZ (work, exploit; zero GPU-h — local
-H100 free and idle-by-design behind the owner-gated discriminator):
-**main `ebaa8e0` family-norm merge landed (`d3dd4d0`) with all
-oracle gates green (check.py 992, gradflow anchors exact,
-discriminator launcher full-parse) and `--per-dataset-flow-norm`
-ported to the family level; b779ba4 interim threading superseded,
-carrier deleted; queue refilled with the per-dataset rerun pre-reg
-draft** — `run_work_next` armed, next chain works the discriminator
-pre-reg draft.
-
-Session 2026-08-17 17:37–17:4xZ (tick; zero GPU-h — box killed by
-owner, local H100 verified free and idle-by-design pending the
-discriminator gate): **quiet-channel tick — no steering, no
-reactions, babysit clean, queue validated at depth 2 (both CPU),
-H100 free-state double-verified** — `run_work_next` armed, work
-session chains next for the pre-reg draft + `ebaa8e0` merge.
-
-Session 2026-08-17 16:46–17:3xZ (work, exploit; zero GPU-h — box
-idle then owner-killed, local H100 free): **discriminator postproc
-kit built + fixture-validated (verdict bounds frozen pre-run,
-rigonly fixture reproduces +0.69 → AMBIGUOUS exactly; commit
-`b515059`), then owner steering 16:59Z rode the session into the
-8×A100 box evacuation — ~165 GB of grasp-SFT checkpoints pushed to
-HF and verified file-by-file (incl. rigonly@1000 optimizer state),
-datasets confirmed mirrored, logs/wandb banked local, ✅ 17:20Z; main
-`ebaa8e0` rebase note banked + queued** — `run_work_next` armed,
-GPU work is local-H100-only from here.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
