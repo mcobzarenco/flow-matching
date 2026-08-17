@@ -1942,12 +1942,12 @@
   },
   {
    "id": "grasp-demos-v2-regen",
-   "status": "queued",
+   "status": "live",
    "title": "Grasp demos v2: 5k regen with all demo improvements (owner order 00:45:29Z 08-17): expert v1.3 (1.5 cm centering, retreat glide 5deg/tick, tail 450) + bracket_appearance=real + the FITTED wrist-cam pose (owner: \"definitely include an adjusted wrist camera angle to match the rig\" => BLOCKED on wrist-cam-pose-refit landing its validated pose). Same collector path/scale as demo_gen_v1 (5000 kept episodes, sharded on the box), then upload public as fontaine-grasp-demos-v2. Box is free after the v1 endpoint sim100 (~02:1xZ 08-17).",
-   "boundary": "Queued 01:5xZ 08-17 at the owner order. Sequenced: wrist-cam-pose-refit (validated pose) -> this regen -> grasp-sft-v2-joint-run. Pre-reg the regen params (expert version receipt, wrist pose flag, kept-rate anchor 45.9%) before launch. Pre-reg REQUIRED before launch (prereg field null until posted). | 03:3xZ 08-17: serving-norm audit DONE \u2014 serving path now trustworthy (token decode fix b779ba4); flow-regression isolation (new item) is the remaining pre-v2 question.",
+   "boundary": "Queued 01:5xZ 08-17 at the owner order. Sequenced: wrist-cam-pose-refit (validated pose) -> this regen -> grasp-sft-v2-joint-run. Pre-reg the regen params (expert version receipt, wrist pose flag, kept-rate anchor 45.9%) before launch. Pre-reg REQUIRED before launch (prereg field null until posted). | 03:3xZ 08-17: serving-norm audit DONE \u2014 serving path now trustworthy (token decode fix b779ba4); flow-regression isolation (new item) is the remaining pre-v2 question. | LAUNCHED 06:16:38Z 08-17 (work session): pre-reg posted 06:16:31Z BEFORE launch (msg 1538793633703268372), collector plumbing landed (7078cf0: --bracket-appearance + --wrist-pose pass-through, manifest-carried), dry-run verified, unit demo_gen_v2 on the box (96 shards x 8 GPUs, same seeds 10000+ as v1, spawn v2.1 + mix70 + expert v1.3 9ba7d30 + bracket real 4a9bf5c + wrist refit 4b14b1f, launch HEAD 7078cf0). Babysit entry registered (40 GPU-h gate, halt bar kept<40% past 500 attempted vs 45.9% v1 anchor). On DONE: merge -> upload public fontaine-grasp-demos-v2 -> card + kept-rate verdict post.",
    "class": "cpu",
    "owner_hold": false,
-   "prereg": null
+   "prereg": "fontaine/blog/src/posts/2026-08-17-prereg-grasp-demos-v2-regen.md"
   },
   {
    "id": "grasp-sft-v2-joint-run",
@@ -1977,5 +1977,5 @@
    "boundary": "Queued 03:3xZ 08-17 at the audit verdict. Gates the grasp-sft-v2 recipe choice (same flag question); grasp-demos-v2-regen itself is NOT gated (no dependency on the table)."
   }
  ],
- "updated": "2026-08-17T05:47:03Z"
+ "updated": "2026-08-17T06:18:17Z"
 }

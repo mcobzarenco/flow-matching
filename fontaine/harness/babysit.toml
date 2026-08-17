@@ -1017,4 +1017,37 @@
 
 # (no_live_runs_reason cleared 03:0xZ 08-17 work session — norm_audit_legs live above. PRIOR: "declared 02:0xZ 08-17 work session — no training run live: grasp_sft_v1_joint run 2 COMPLETE 01:07:43Z and pruned above; sim100 eval finishes on the box (~02:2xZ, unit sft-v1-sim100, session/tick owns the boundary read); local GPU idle. Next GPU legs: grasp-demos-v2-regen (pre-reg first, blocked on wrist-cam-pose-refit) then grasp-sft-v2-joint-run.")
 
-no_live_runs_reason = "declared 03:3xZ 08-17 work session — no training run live, local GPU idle again: norm_audit_legs complete + pruned above (token-fix 3/20 / flow 0/20 verdicts in-channel). Box idle since sim100. Next GPU legs: grasp-demos-v2-regen (pre-reg first, blocked on wrist-cam-pose-refit) then grasp-sft-v2-joint-run; sft-v1-flow-regression-isolation sim20 of run-1b saves is a cheap local leg when picked up."
+# (no_live_runs_reason cleared 06:16Z 08-17 work session — demo_gen_v2 launched on the box below. PRIOR: "declared 03:3xZ 08-17 work session — no training run live, local GPU idle again: norm_audit_legs complete + pruned above (token-fix 3/20 / flow 0/20 verdicts in-channel). Box idle since sim100. Next GPU legs: grasp-demos-v2-regen (pre-reg first, blocked on wrist-cam-pose-refit) then grasp-sft-v2-joint-run; sft-v1-flow-regression-isolation sim20 of run-1b saves is a cheap local leg when picked up.")
+
+# demo_gen_v2: the v2 5k demo REGEN on the A100 box (queue
+# grasp-demos-v2-regen, owner order 00:45:29Z 08-17; pre-reg msg
+# 1538793633703268372, posted 06:16:31Z BEFORE launch). Same plan as
+# v1 — 96 shards x 8 GPUs, spawn v2.1 + tint mix70, seeds from 10000
+# stride 2000 (SAME seed universe as v1 for attribution), target 5000
+# kept — plus the three v2 changes: expert v1.3 (9ba7d30),
+# bracket_appearance='real' (4a9bf5c), wrist_pose='refit' (4b14b1f).
+# Launch HEAD 7078cf0 (banked as expert_head in provenance).
+# Launched 06:16:38Z 08-17 (unit demo_gen_v2). On DONE:
+# merge (sim.merge_demo_shards) -> upload (upload_demo_dataset.py to
+# mcobzarenco/fontaine-grasp-demos-v2, public) -> dataset card +
+# results post with the kept-rate verdict vs the 45.9% v1 anchor.
+[[run]]
+name = "demo_gen_v2"
+kind = "progress-log"
+host = "147.224.218.164"
+pgrep = "collect_demos_sharded"
+pgrep_min = 1
+gpu_indices = [0, 1, 2, 3, 4, 5, 6, 7]
+gpu_mem_min_mib = 300
+log = "/home/ubuntu/datasets/fontaine/grasp_demos_v2/logs/driver.log"
+progress_re = "[0-9]+/5000 kept"
+started_utc = "2026-08-17T06:16:38+00:00"
+gpu_hours_per_wall_hour = 8.0
+boundary = "5000 kept (or seed/wall budget); driver exits when all 96 shards hit target; v1 took 2h07m wall at 45.9% kept — v1.3's bench 52.5% should run same or faster"
+anchors = [
+    "kept-rate anchor: v1 realized 45.9% (5000/10,883, SAME seeds); expert v1.3 bench 52.5% n=120 — sustained aggregate below the pre-reg'd 40% bar past 500 attempted means a render/protocol regression: halt and diagnose, do not ride",
+    "resume: rerun the same driver command (manifest-guarded; manifest now carries bracket_appearance + wrist_pose); merge only after driver DONE",
+]
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 40.0
