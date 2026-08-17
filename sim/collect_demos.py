@@ -358,9 +358,24 @@ def main() -> int:
         choices=("rig_gray", "wide", "mix70"),
         default="rig_gray",
     )
+    parser.add_argument(
+        "--bracket-appearance",
+        choices=("v1", "real"),
+        default="v1",
+    )
+    parser.add_argument(
+        "--wrist-pose",
+        choices=("v1", "refit"),
+        default="v1",
+    )
     args = parser.parse_args()
 
-    sim = SO101Sim(spawn_version=args.spawn_version, tint_band=args.tint_band)
+    sim = SO101Sim(
+        spawn_version=args.spawn_version,
+        tint_band=args.tint_band,
+        bracket_appearance=args.bracket_appearance,
+        wrist_pose=args.wrist_pose,
+    )
     collect(
         args.out.expanduser(),
         expert_episode_source(sim, max_ticks=args.max_ticks),
@@ -372,6 +387,8 @@ def main() -> int:
         extra_provenance={
             "spawn_version": args.spawn_version,
             "tint_band": args.tint_band,
+            "bracket_appearance": args.bracket_appearance,
+            "wrist_pose": args.wrist_pose,
             "retreat_tail": "post-success retreat to HOME recorded; success "
             "re-verified after the tail (owner steering 2026-08-16 13:46Z)",
             "spawn_v2_prereg": "posts/2026-08-16-prereg-sim-spawn-v2.md"

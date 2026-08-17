@@ -92,6 +92,8 @@ def _driver_args(root: Path, **overrides: Any) -> argparse.Namespace:
         "seeds_per_shard": 100,
         "spawn_version": "v2",
         "tint_band": "mix70",
+        "bracket_appearance": "v1",
+        "wrist_pose": "v1",
         "max_wall_hours": 1.0,
         "max_ticks": 600,
         "gpus": [0],
@@ -112,6 +114,8 @@ def test_driver_refuses_changed_plan(tmp_path: Path) -> None:
         "repo_id": args.repo_id,
         "spawn_version": args.spawn_version,
         "tint_band": args.tint_band,
+        "bracket_appearance": args.bracket_appearance,
+        "wrist_pose": args.wrist_pose,
         "target_kept": args.target_kept,
         "shards": [
             spec.__dict__

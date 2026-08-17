@@ -112,6 +112,10 @@ def shard_command(spec: ShardSpec, root: Path, args: argparse.Namespace) -> list
         args.spawn_version,
         "--tint-band",
         args.tint_band,
+        "--bracket-appearance",
+        args.bracket_appearance,
+        "--wrist-pose",
+        args.wrist_pose,
     ]
 
 
@@ -163,6 +167,8 @@ def run(args: argparse.Namespace) -> int:
         "repo_id": args.repo_id,
         "spawn_version": args.spawn_version,
         "tint_band": args.tint_band,
+        "bracket_appearance": args.bracket_appearance,
+        "wrist_pose": args.wrist_pose,
         "target_kept": args.target_kept,
         "shards": [asdict(s) for s in specs],
     }
@@ -239,6 +245,16 @@ def main() -> int:
     parser.add_argument("--seed-start", type=int, required=True)
     parser.add_argument("--seeds-per-shard", type=int, default=2000)
     parser.add_argument("--spawn-version", choices=("v1", "v2", "v2.1"), default="v2")
+    parser.add_argument(
+        "--bracket-appearance",
+        choices=("v1", "real"),
+        default="v1",
+    )
+    parser.add_argument(
+        "--wrist-pose",
+        choices=("v1", "refit"),
+        default="v1",
+    )
     parser.add_argument(
         "--tint-band",
         choices=("rig_gray", "wide", "mix70"),
