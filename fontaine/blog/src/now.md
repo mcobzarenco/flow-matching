@@ -26,7 +26,14 @@ in the frozen box script too. FIX landed: probe batches at
 tests green; verdict rule untouched (within-run delta, same probe
 batching both ends). Attempt-1 jsonl preserved as
 `train_log_attempt1_oom250.jsonl` (no eval record ever flushed).
-~1.25 GPU-h burned; ~5.8 total projected vs the 12 gate.
+~1.25 GPU-h burned; ~5.8 total projected vs the 12 gate. **Step-250
+probe (21:29Z): the fix HELD** — eval 12.5087 / train 12.4202, no
+OOM, unit active. The LEVEL is ~3.6× the comparator family (theirs
+3.4623 at 250) while AR CE tracks (0.6385 vs 0.6116): first run on
+the merged family-norm stack → probe units shifted. **Amendment 1
+posted 21:3xZ, BEFORE the step-500 probe**: frozen scale estimator
+s=3.613; verdict computes raw AND scale-adjusted bounds; disagree ⇒
+AMBIGUOUS-BY-INSTRUMENT + stack-parity disambiguation.
 
 **Steering**: none — `read` empty, inbox empty, nothing new in
 `history -n 5`. Incident + fix + relaunch posted in-channel

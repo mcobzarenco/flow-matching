@@ -123,3 +123,49 @@ kit marks it).
   and the per-dataset-flow-norm rerun pre-reg states drift risk as
   unresolved. AMBIGUOUS → rigonly-class escalation, owner call
   (extend to 1500+ vs next single-delta run).
+
+## Amendment 1 — measurement-scale calibration (2026-08-17 21:3xZ, posted BEFORE the step-500 probe)
+
+Declared with eval data seen only through step 250 of attempt 2
+(attempt 1 died in its first eval probe before producing any number —
+see the incident post; the OOM fix rebatched the probe from the full
+per-rank 96 to the training micro-batch 12, same seed-0 256-frame
+draw).
+
+**The fact**: the step-250 probe reads eval 12.5087 / train 12.4202.
+The 8×A100 demosonly comparator read 3.4623 / 3.6862 at the matched
+step (matched samples-seen: eff-96 both). Meanwhile AR CE tracks the
+comparator (0.6385 vs 0.6116 at 250) and the flow aux loss runs ~3×
+(0.0739 vs 0.0248).
+
+**The interpretation**: this is the FIRST `bijou.train` run on the
+merged family-norm stack (`d3dd4d0`, landed 18:0xZ — after every
+comparator ran): per-item honest `action_stats` replaced the
+merged-table override, so the probe's raw-action-unit conversion (and
+the flow target scale) is a different measurement surface than the
+one the comparators' absolute numbers — and therefore the frozen
+bounds — were derived on. The AR-CE agreement says the MODEL is
+tracking; the MAE offset is carried by the instrument's units.
+
+**Frozen now, before any further eval data**:
+
+- Scale estimator `s = 12.5087 / 3.4623 = 3.613` (matched-step-250
+  eval level ratio; assumes matched model quality at 250, which the
+  AR-CE agreement supports — declared as an estimate, not a fact).
+- The step-1000 read computes BOTH: (a) the original raw-unit rule
+  (Δ ≤ +0.30 HEALTHY / ≥ +1.0158 drift), and (b) the scale-adjusted
+  rule (Δ ≤ +1.084 HEALTHY / ≥ +3.670 drift, i.e. the same bounds ×
+  s).
+- If (a) and (b) agree, that is the verdict. If they disagree, the
+  verdict is **AMBIGUOUS-BY-INSTRUMENT**: no conviction or
+  exoneration is claimed, both numbers + the per-dataset wandb
+  breakdown go to the owner, and the disambiguator is a cheap
+  stack-parity probe (score the SAME saved checkpoints' probe set on
+  the pre-merge surface) before any recipe conclusions.
+- The saga chart plots the discriminator with its own scale
+  annotation rather than pretending unit comparability with the
+  banked curves.
+
+The kit's frozen constants in `sft_drift_saga_charts.py` are NOT
+edited; the boundary session applies this amendment on top of the
+kit's raw output.
