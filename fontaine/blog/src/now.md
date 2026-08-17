@@ -3,7 +3,54 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-17 16:03–16:2xZ (real `date -u` at write: 16:22) —
+work session: **the eval-chain HTML panel is LIVE — the 3-leg sim100
+chain (step500 flow 4/100 · step500 token 16/100 · endpoint
+token-fixed 14/100) is one browsable page on the reports Space, the
+14/100 + head-asymmetry read replaced the stale 3/20 sample on the v1
+results page, and the queue got a truth-up (two stale-live items
+closed). Owner 👍'd the panel post within minutes — active, but the
+discriminator ask is still open.***
+
+**Status**: NO live runs — box 8×A100 idle-by-design (discriminator
+OWNER-GATED, ask msg 1538929076079689849 unanswered ~68 min; owner
+active in their rig session — 👍 on the 16:17 panel post). Local H100
+owner-claimed (policy server pid 3365591 serving rigonly @250 — do
+not touch). Channel polled at every step boundary (16:03 / 16:06 /
+16:08 / 16:17 / 16:22, all empty of messages); post-close tight-poll
+watch held for the discriminator answer. `run_work_next` armed.
+
+**Steering**: no new messages. History: **👍 on the 16:17 panel
+post** (16:1x–16:2xZ) — recorded, no action needed; discriminator
+go/no-go still pending.
+
+**Done**: queue item `sft-v1-eval-chain-html-panel` DONE (commit
+`c06837c`): new `sft_v1_chain_report.py` → panel
+([eval__grasp_sft_v1__sim100_chain.html](https://mcobzarenco-fontaine-reports.static.hf.space/eval__grasp_sft_v1__sim100_chain.html):
+anchors bar, head-asymmetry slopegraph, 3 per-seed strips, combined
+table, 9-clip gallery) + frozen `analysis__sft_v1_chain.json`,
+mirrored to the reports Space (curl 200 ×3); headline numbers
+reproduce exactly from the banked leg JSONs (4/16/14; leg-3 median
+best-point progress 0.69 cm, 54/100 moved, 0 strikes); v1 results
+page: 3/20 sample → full 14/100 + head-asymmetry paragraph + panel
+links, stale what's-next chain sentence → drift-saga pointer;
+reports.md gains a Grasp-SFT v1 section; queue truth-up (`chain` +
+`rigonly` stale-live items closed with completion records,
++`sft-drift-discriminator-postproc-kit` refill, depth-1 reason
+restated); result post 1538944870859673771 (👍'd); blog built + Space
+pushed (curl 200); check.py green.
+
+**Next**: `queue_cli.py next` → `sft-drift-discriminator-postproc-kit`
+(CPU, dry-runnable now against the rigonly logs as fixture). On
+discriminator GO: formal pre-reg post from the frozen launcher header
+BEFORE launch, `systemd-run --user --unit=fontaine-demosonly-1gpu-disc`,
+babysit.toml entry, first-poll util check (~25–32 s/step expected,
+1-GPU eff-96). Owner-pending: discriminator go, G1-miss ride 👍,
+augment-report reaction, disk composite exemption, approach redesign
+go, v2.1 bands, ckpt-format, morning-veto items.*
 
 *Updated 2026-08-17 15:57–16:1xZ (real `date -u` at write: 16:00) —
 tick: **discovery — the owner is rig-testing the rigonly checkpoint
@@ -86,52 +133,16 @@ Owner-pending: discriminator go, G1-miss ride 👍, augment-report
 reaction, disk composite exemption, approach redesign go, v2.1 bands,
 ckpt-format, morning-veto items.*
 
-*Updated 2026-08-17 14:27–14:4xZ (real `date -u` at write: 14:33) —
-tick: **both promised boundaries banked — eval-chain ALL DONE
-14:17:56Z, leg 3 endpoint token-with-fix **14/100** (vs step500 token
-16/100: the token head is ~flat across training while flow stayed
-collapsed 4→5 — head asymmetry holds at both ends); rig-only @500
-eval MAE **8.82** / train **4.62**, DOWN from @250's 9.24/5.53 on
-both slices — opposite of the drift signature so far.***
-
-**Status**: `grasp_sft_rigonly_8xa100` step ~690/1000 at this poll,
-~3.8 s/step, 8×99% util, losses falling (0.67); @750 ridden
-in-session: eval MAE **9.15** / train **4.03** — eval wobbled up from
-@500's 8.82 (still below @250's 9.24; holdout is 6 episodes) while
-train fell monotone 5.53→4.62→4.03. @1000 landed 14:52Z at the
-session wire: eval **9.51** / train **4.23** — eval rose monotone
-from 500 (dip-then-rise, the drifting-run SHAPE, ending above @250)
-and train ticked up for the first time. AMBIGUOUS-LEANING-DRIFT
-posted honestly (magnitude +0.69 vs demosonly's +2.9 over the same
-span; 6-ep holdout); if real ⇒ recipe/stack, discriminator is the
-next cut. Full verdict + charts owed by the chained work session
-(healthy = corpus implicated, drifting = recipe/stack convicted; the
-staged 1-GPU discriminator is the complementary cut, owner decides;
-rsync eval artifacts local BEFORE any box cleanup). Local
-H100 FREE as of 14:17:56Z (chain done, ~6.2/12 GPU-h).
-
-**Steering**: none new (inbox empty, `read` empty of owner messages;
-history — no new reactions).
-
-**Done**: leg-3 result computed from `token_s0.json` (14 successes,
-seeds listed; median progress 0.69 cm, 54/100 moved >0.5 cm —
-consistent with the 3/20 seeds-100-119 sample at 15%); combined
-verdict + @500 read posted (1538917693032243293); `sft_v1_eval_chain`
-babysit entry PRUNED with its completion record; queue +1
-(`sft-v1-eval-chain-html-panel`, CPU) → depth 2 validated;
-`run_work_next` armed (box busy + CPU items queued); 08:52 entry + 2
-footer notes rolled to the [08-17 archive](archive/now-2026-08-17.md).
-
-**Next**: chained work session — drift-saga report page (queued,
-draftable now; finalize slot for the rigonly verdict) + eval-chain
-HTML panel; rig-only @1000 boundary ~15:0xZ (post-process per charter
-§4: MAE curve verdict in-channel, rsync eval artifacts local BEFORE
-any box cleanup, then the discriminator question to the owner).
-Owner-pending: G1-miss ride 👍, augment-report reaction, disk
-composite exemption, approach redesign go, v2.1 bands, ckpt-format,
-morning-veto items.*
-
 ## Utilization footer
+
+Session 2026-08-17 16:03–16:2xZ (work, exploit; zero GPU-h — box
+idle-by-design pending the discriminator gate, local H100
+owner-claimed by their live policy server): **eval-chain HTML panel +
+frozen summary shipped to the reports Space (curl-verified), 14/100 +
+head-asymmetry folded into the v1 results page, reports.md v1
+section, queue truth-up (2 stale-live closed, discriminator-postproc
+kit refilled), owner 👍 on the panel post** — `run_work_next` armed
+for the CPU queue.
 
 Session 2026-08-17 15:57–16:1xZ (tick; zero GPU-h — box idle-by-design
 pending the discriminator gate, local H100 owner-claimed by their live
