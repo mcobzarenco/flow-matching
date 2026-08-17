@@ -3,6 +3,43 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-17 08:52–08:5xZ (real `date -u` at write: 08:54) —
+tick: **eval-chain ride, leg 1 healthy (seed 34/100, ~0.9 seeds/min,
+leg boundary ~10:1xZ) — plus one registry cleanup: the closing work
+session missed pruning `demo_gen_v2` from babysit.toml after the run
+shipped, so this tick's babysit exit-1 was a false alarm (completed
+run, box 0 MiB ×8 by design), diagnosed and pruned.***
+
+**Status**: `sft-v1-eval-chain` LIVE on the local H100 (leg 1 of 3,
+step500 flow sim100): seed 34/100 at this poll, 27→34 since the
+08:44Z poll ≈ 0.9 seeds/min → leg-1 boundary ~10:1xZ, all 3 legs
+still on the ~late-afternoon track; 3 procs, 26 GiB / ~44% util
+(rollout-shaped, rate on trend), gate projection 0.7 of 12 GPU-h.
+Box idle by design (SFT-v2 pre-reg blocked on the owner's
+normalization-recipe call). Owner policy-server still holds ~13 GiB
+local, untouched.
+
+**Steering**: none new (inbox empty, `read` empty; history check —
+no reactions yet on the 08:40Z v2-shipped post, the 08:44Z
+augment report, or the recipe ask).
+
+**Done**: routine tick — babysit exit-1 diagnosed as the stale
+`demo_gen_v2` entry (run COMPLETE 08:30Z + shipped, prune missed at
+session close), entry pruned with its completion record, babysit
+re-run exit 0 with the eval chain healthy; Discord read + history;
+queue validate (OK depth 2, 24 open); `run_work_next` confirmed
+armed; 03:47–05:5xZ entry + two oldest footer notes rolled to the
+[08-17 archive](archive/now-2026-08-17.md).
+
+**Next**: chained work session — ride the eval chain (at the leg-1
+boundary: bank the step500 flow number against the anchor — ~0 =
+broken from the start vs a-handful = degraded from competence — and
+post the read), CPU queue items while the H100 is busy; SFT-v2
+pre-reg stays blocked on the recipe call. Owner-pending: recipe
+call, G1-miss ride 👍, augment-report reaction, disk composite
+exemption, approach redesign go, v2.1 bands, ckpt-format,
+morning-veto items.*
+
 *Updated 2026-08-17 05:54–08:5xZ (real `date -u` at write: 08:47) —
 work session: **grasp-demos-v2 REGEN executed END-TO-END same-session
 — pre-reg'd, launched, ridden, merged, SHIPPED PUBLIC (49.6% kept vs
@@ -90,50 +127,15 @@ Owner-pending: G1-miss ship-and-ride 👍/veto, disk composite
 exemption, approach redesign go, v2.1 bands, ckpt-format,
 morning-veto items.*
 
-*Updated 2026-08-17 03:47–05:5xZ (real `date -u` at write: 05:47) —
-work session: **wrist-cam-pose-refit stages 2+3 DONE (the regen's
-critical-path item) — measured on 312 matched pairs, fitted, held-out
-validated, shipped flag-gated as `SO101Sim(wrist_pose='refit')`
-(`4b14b1f`); `grasp-demos-v2-regen` is now UNBLOCKED.***
-
-**Status**: no training run live; local GPU idle (owner policy-server
-holds ~13 GiB at 0% util — left alone), box idle awaiting the regen.
-All fit/measure work this session was render-only on the shared H100
-(~0 GPU-h, segmentation passes).
-
-**Steering**: none new (inbox empty at boot and at every poll; no new
-reactions on the 03:39Z audit posts).
-
-**Done**: (a) stage-2 instrument
-(`fontaine/scripts/wrist_cam_pose_measure.py`): real both-jaws-visible
-**92.9%** vs sim **0.0%** — the fixed jaw was NEVER in the sim wrist
-frame at the v1 pose; detectors QC'd (salmon seed + bounded
-blown-highlight growth; dark∪blue-gray fixed jaw, proximity-gated —
-mount prints are the same color family); (b) pre-reg posted BEFORE the
-fit (msg 1538759641591324747: params, split, G1–G3 gates); (c) stage-3
-fit (`wrist_cam_pose_fit.py`): pitch −23° / yaw +14° / roll −9.5°,
-camera-frame offset (+3.3, +1.3, −3.0) cm; held-out (96 pairs, 8
-unseen eps): **G2 PASS** (both-jaws 0%→100% vs real 90.3%), **G3
-PASS** (bottom-occ |Δ| −65%), **G1 MISS** (centroid −44.5% vs the −50%
-bar; residual = lens-model/detector floor, axis err 42.5°→15.9°);
-deviations disclosed (pattern search not NM; miss penalty repriced
-0.08→0.5 after the first run found the degenerate point-away optimum);
-(d) shipped flag-gated, default v1 untouched, physics bit-identical,
-oracles added, check.py green, commit `4b14b1f`; (e) composite + fit
-record on fontaine-reports (curl 200/302→200), results post
-1538786116956594250 with a ship-and-ride recommendation on the G1
-miss; (f) queue: item DONE with the full boundary record.
-
-**Next**: `queue_cli.py next` → `grasp-demos-v2-regen` (NOW UNBLOCKED:
-expert v1.3 + bracket_appearance=real + wrist_pose='refit'; pre-reg
-REQUIRED before launch — params, expert receipt, kept-rate anchor
-45.9%), then boundary results page + HTML with the corrected sim100
-verdict, `sft-v1-flow-regression-isolation` before the SFT-v2 recipe
-locks. Owner-pending: G1-miss ship-and-ride 👍/veto, disk composite
-exemption, approach redesign go, v2.1 bands, ckpt-format,
-morning-veto items.*
-
 ## Utilization footer
+
+Session 2026-08-17 08:52–08:5xZ (tick; local H100 busy with the
+owner's eval chain — ridden, not claimed; box idle by design):
+**eval-chain leg 1 healthy at seed 34/100 (~0.9 seeds/min, boundary
+~10:1xZ, 0.7/12 GPU-h projected); stale `demo_gen_v2` babysit entry
+pruned (completed+shipped run, prune missed at close — exit-1 false
+alarm diagnosed, re-run green); inbox clear, queue depth 2,
+`run_work_next` armed.**
 
 Session 2026-08-17 05:54–08:5xZ (work, exploit; box ~17.8 GPU-h ≤ 40
 gate on the regen + local ~0.5 GPU-h on the run-1b sim20, eval chain
@@ -145,22 +147,6 @@ mechanism ×2 quantified); owner 4-message burst served — step-500
 delivered** — queue depth 2, inbox clear, `run_work_next` armed for
 the eval-chain ride + the SFT-v2 pre-reg (blocked on the recipe
 call).
-
-Session 2026-08-17 05:51–05:5xZ (tick; GPUs idle by design, box +
-local — no live runs; local 13 GiB = owner policy-server, not ours):
-**quiet tick — inbox clear, no new messages/reactions on the refit
-pre-reg/results posts; queue depth 3 with `grasp-demos-v2-regen` at
-the head (unblocked, pre-reg required), `run_work_next` confirmed
-armed for the regen pre-reg; 03:43Z + 02:42Z entries/notes rolled to
-the archive.**
-
-Session 2026-08-17 03:47–05:5xZ (work, exploit; ~0 GPU-h — render-only
-segmentation passes on the shared local H100, box idle): **wrist-cam
-pose refit CLOSED same-session — 312-pair instrument (fixed jaw never
-in the v1 sim frame, 0/312 vs real 92.9%), pre-reg'd 6-param fit,
-held-out G2+G3 PASS / G1 −44.5% vs −50% bar (disclosed), shipped
-flag-gated `wrist_pose='refit'` (`4b14b1f`), regen unblocked** — queue
-depth 3, inbox clear, `run_work_next` armed for the regen pre-reg.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box

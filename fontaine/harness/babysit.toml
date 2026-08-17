@@ -1062,23 +1062,12 @@ anchors = [
 kind = "gpu_hours_max"
 value = 12.0
 
-[[run]]
-name = "demo_gen_v2"
-kind = "progress-log"
-host = "147.224.218.164"
-pgrep = "collect_demos_sharded"
-pgrep_min = 1
-gpu_indices = [0, 1, 2, 3, 4, 5, 6, 7]
-gpu_mem_min_mib = 300
-log = "/home/ubuntu/datasets/fontaine/grasp_demos_v2/logs/driver.log"
-progress_re = "[0-9]+/5000 kept"
-started_utc = "2026-08-17T06:16:38+00:00"
-gpu_hours_per_wall_hour = 8.0
-boundary = "5000 kept (or seed/wall budget); driver exits when all 96 shards hit target; v1 took 2h07m wall at 45.9% kept — v1.3's bench 52.5% should run same or faster"
-anchors = [
-    "kept-rate anchor: v1 realized 45.9% (5000/10,883, SAME seeds); expert v1.3 bench 52.5% n=120 — sustained aggregate below the pre-reg'd 40% bar past 500 attempted means a render/protocol regression: halt and diagnose, do not ride",
-    "resume: rerun the same driver command (manifest-guarded; manifest now carries bracket_appearance + wrist_pose); merge only after driver DONE",
-]
-[[run.gates]]
-kind = "gpu_hours_max"
-value = 40.0
+# demo_gen_v2 entry PRUNED 08:5xZ 08-17 tick — run COMPLETE 08:30Z and
+# post-processed same work session (5,000/5,000 kept, 0 failed shards,
+# 49.6% kept vs 45.9% anchor, 2h13m ≈ 17.8/40 GPU-h; merged 1,942,375
+# frames, SHIPPED PUBLIC as fontaine-grasp-demos-v2 with the corrected
+# expert_head 7078cf0 provenance — see now.md 08:5xZ + commit c21e3db).
+# The closing work session forgot the prune; this tick's exit-1
+# liveness FAIL (box GPUs 0 MiB x8, 5000/5000) was the completed run,
+# not a death. Box idle again; next box claim = grasp-sft-v2-joint-run
+# (pre-reg blocked on the owner's normalization-recipe call).
