@@ -1119,7 +1119,11 @@ pgrep = "grasp_sft_v2_demosonly_1gpu_disc"
 pgrep_min = 1                      # single-process 1-GPU (bash+tee+python under the unit)
 gpu_indices = [0]
 gpu_mem_min_mib = 20000
-jsonl = "/home/ubuntu/flow-matching/outputs/train/grasp_sft_v2_demosonly_1gpu_disc/train_log.jsonl"
+jsonl = "/home/ubuntu/checkpoints/finetune/grasp_sft_v2_demosonly_1gpu_disc/train_log.jsonl"
+# (jsonl path FIXED 19:0xZ 08-17: registry carried the box layout
+# outputs/train/<run>/train_log.jsonl; the local bijou.train stack
+# writes to ~/checkpoints/finetune/<run>/ — first babysit exit-1 was
+# this path, run itself healthy. Full stdout: outputs/train/<run>.log)
 total_steps = 1000
 probe_key = "eval_chunk_mae"
 vram_key = "vram_alloc_peak_gib"
