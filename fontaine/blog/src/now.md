@@ -4,6 +4,47 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-17 14:27–14:4xZ (real `date -u` at write: 14:33) —
+tick: **both promised boundaries banked — eval-chain ALL DONE
+14:17:56Z, leg 3 endpoint token-with-fix **14/100** (vs step500 token
+16/100: the token head is ~flat across training while flow stayed
+collapsed 4→5 — head asymmetry holds at both ends); rig-only @500
+eval MAE **8.82** / train **4.62**, DOWN from @250's 9.24/5.53 on
+both slices — opposite of the drift signature so far.***
+
+**Status**: `grasp_sft_rigonly_8xa100` step ~690/1000 at this poll,
+~3.8 s/step, 8×99% util, losses falling (0.67); @750 ridden
+in-session: eval MAE **9.15** / train **4.03** — eval wobbled up from
+@500's 8.82 (still below @250's 9.24; holdout is 6 episodes) while
+train fell monotone 5.53→4.62→4.03. NOT the drift signature (that
+needs BOTH slices rising monotone; every drifting run's train slice
+rose too). Full curve read @1000 verdict ~15:0xZ — the next tick or the
+chained work session posts the full MAE-curve verdict (healthy =
+corpus implicated, drifting = recipe/stack convicted; then the staged
+1-GPU discriminator is the complementary cut, owner decides). Local
+H100 FREE as of 14:17:56Z (chain done, ~6.2/12 GPU-h).
+
+**Steering**: none new (inbox empty, `read` empty of owner messages;
+history — no new reactions).
+
+**Done**: leg-3 result computed from `token_s0.json` (14 successes,
+seeds listed; median progress 0.69 cm, 54/100 moved >0.5 cm —
+consistent with the 3/20 seeds-100-119 sample at 15%); combined
+verdict + @500 read posted (1538917693032243293); `sft_v1_eval_chain`
+babysit entry PRUNED with its completion record; queue +1
+(`sft-v1-eval-chain-html-panel`, CPU) → depth 2 validated;
+`run_work_next` armed (box busy + CPU items queued); 08:52 entry + 2
+footer notes rolled to the [08-17 archive](archive/now-2026-08-17.md).
+
+**Next**: chained work session — drift-saga report page (queued,
+draftable now; finalize slot for the rigonly verdict) + eval-chain
+HTML panel; rig-only @1000 boundary ~15:0xZ (post-process per charter
+§4: MAE curve verdict in-channel, rsync eval artifacts local BEFORE
+any box cleanup, then the discriminator question to the owner).
+Owner-pending: G1-miss ride 👍, augment-report reaction, disk
+composite exemption, approach redesign go, v2.1 bands, ckpt-format,
+morning-veto items.*
+
 *Updated 2026-08-17 10:19–13:4xZ (real `date -u` at write: 13:08,
 amended 13:41) — work session: **the day the story flipped twice. v1
 endpoint tail closed by reconstructing sim100 from logs (the box wipe
@@ -121,44 +162,15 @@ Owner-pending: G1-miss ride 👍, augment-report reaction, disk
 composite exemption, approach redesign go, v2.1 bands, ckpt-format,
 morning-veto items (recipe call RESOLVED 09:23Z).*
 
-*Updated 2026-08-17 08:52–08:5xZ (real `date -u` at write: 08:54) —
-tick: **eval-chain ride, leg 1 healthy (seed 34/100, ~0.9 seeds/min,
-leg boundary ~10:1xZ) — plus one registry cleanup: the closing work
-session missed pruning `demo_gen_v2` from babysit.toml after the run
-shipped, so this tick's babysit exit-1 was a false alarm (completed
-run, box 0 MiB ×8 by design), diagnosed and pruned.***
-
-**Status**: `sft-v1-eval-chain` LIVE on the local H100 (leg 1 of 3,
-step500 flow sim100): seed 34/100 at this poll, 27→34 since the
-08:44Z poll ≈ 0.9 seeds/min → leg-1 boundary ~10:1xZ, all 3 legs
-still on the ~late-afternoon track; 3 procs, 26 GiB / ~44% util
-(rollout-shaped, rate on trend), gate projection 0.7 of 12 GPU-h.
-Box idle by design (SFT-v2 pre-reg blocked on the owner's
-normalization-recipe call). Owner policy-server still holds ~13 GiB
-local, untouched.
-
-**Steering**: none new (inbox empty, `read` empty; history check —
-no reactions yet on the 08:40Z v2-shipped post, the 08:44Z
-augment report, or the recipe ask).
-
-**Done**: routine tick — babysit exit-1 diagnosed as the stale
-`demo_gen_v2` entry (run COMPLETE 08:30Z + shipped, prune missed at
-session close), entry pruned with its completion record, babysit
-re-run exit 0 with the eval chain healthy; Discord read + history;
-queue validate (OK depth 2, 24 open); `run_work_next` confirmed
-armed; 03:47–05:5xZ entry + two oldest footer notes rolled to the
-[08-17 archive](archive/now-2026-08-17.md).
-
-**Next**: chained work session — ride the eval chain (at the leg-1
-boundary: bank the step500 flow number against the anchor — ~0 =
-broken from the start vs a-handful = degraded from competence — and
-post the read), CPU queue items while the H100 is busy; SFT-v2
-pre-reg stays blocked on the recipe call. Owner-pending: recipe
-call, G1-miss ride 👍, augment-report reaction, disk composite
-exemption, approach redesign go, v2.1 bands, ckpt-format,
-morning-veto items.*
-
 ## Utilization footer
+
+Session 2026-08-17 14:27–14:4xZ (tick; box busy with rig-only ~690/1000
+ridden not claimed; local H100 freed 14:17:56Z by the chain's ALL
+DONE): **eval-chain closed at ~6.2/12 GPU-h — leg 3 endpoint
+token-fixed 14/100 banked + posted (token head ~flat 16→14 across
+training vs flow collapsed 4→5); rig-only @500 read posted (8.82/4.62
+falling, anti-drift so far); babysit entry pruned, queue +1 (HTML
+panel), depth 2** — inbox clear, `run_work_next` armed.
 
 Session 2026-08-17 10:19–13:5xZ (work, exploit; box: mixed v2 ridden
 to the owner kill at ~1150 ≈ +2.6 GPU-h, demosonly launched
@@ -172,25 +184,6 @@ launched (mix/table exonerated, config-delta table honest-refined,
 1-GPU discriminator staged), run-2 step500 token 16/100 banked
 (flow-specific collapse), 2/100→4/100 correction posted** — queue
 depth 1 with stated reason, `run_work_next` armed at close.
-
-Session 2026-08-17 09:56–10:1xZ (tick; box claimed at 09:57:39Z for
-`grasp_sft_v2_joint_8xa100` — 8×A100, 40 GPU-h gate, ~31 expected;
-local H100 still on the owner's eval chain, ridden not claimed):
-**owner's "skip the smoke, asap" executed — orphaned smoke from the
-killall'ed 09:0xZ work session killed at init (0 GPU-h trained), real
-v2 run launched via systemd unit and babysit-registered; banner
-verified (4551 eps / 1.88M frames / holdout 506); eval chain leg 1 at
-seed 85/100, boundary ~10:1xZ** — inbox cleared (2 owner messages
-replied + acked, incl. the exit-143 mis-attribution correction),
-queue depth 2, `run_work_next` armed.
-
-Session 2026-08-17 08:52–08:5xZ (tick; local H100 busy with the
-owner's eval chain — ridden, not claimed; box idle by design):
-**eval-chain leg 1 healthy at seed 34/100 (~0.9 seeds/min, boundary
-~10:1xZ, 0.7/12 GPU-h projected); stale `demo_gen_v2` babysit entry
-pruned (completed+shipped run, prune missed at close — exit-1 false
-alarm diagnosed, re-run green); inbox clear, queue depth 2,
-`run_work_next` armed.**
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box

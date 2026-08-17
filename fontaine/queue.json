@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-17T13:40:30Z",
+ "updated_utc": "2026-08-17T14:33:30Z",
  "depth_reason": "depth 1: drift-saga report page (CPU, draftable now). Next experimental work is boundary-gated (rigonly verdict ~15:0xZ, leg 3 ~14:1xZ) with the 1-GPU discriminator pre-staged as the next arm; the follow-up choice is owner-gated on those verdicts. Both GPUs carry live ridden runs.",
  "items": [
   {
@@ -2059,6 +2059,15 @@
    "prereg": null,
    "title": "Chart-led drift-saga page (owner preference: chart-led consolidated reports): the grasp-SFT MAE-drift investigation as one page \u2014 the isolation grid (run-1b remap / run-2 pooled / mixed-v2 merged / demosonly native / rigonly cut), the banked MAE curves per run (all four drifting curves + the healthy probe), the two-rulers mechanism (normalized-loss vs raw-degree MAE, 1/(q99-q01)^2 weighting), the head asymmetry (step500 flow 4/100 vs token 16/100), and the config-delta table (distributed/augment/batch/table-mode/init). Curves are already banked in logs/queue; the page can be drafted now and finalizes when the rigonly (+discriminator) verdicts land. Dark-mode charts, plain-words opener per papers rule.",
    "boundary": "Queued 13:40Z 08-17. Draftable now (CPU); FINALIZE slots for the rigonly/discriminator verdicts. Feeds the eventual fix pre-reg."
+  },
+  {
+   "id": "sft-v1-eval-chain-html-panel",
+   "title": "Eval-chain HTML panel + results-page integration: browsable panel for the 3-leg sim100 chain (step500 flow 4/100, step500 token 16/100, endpoint token-fixed 14/100, seeds 0-99) per the HTML-reports rule \u2014 report --run v1chain or equivalent preset, dark-mode, linked from reports/; fold the 14/100 endpoint token number + head-asymmetry read into the v1 results page (which carries the 3/20 sample today). Data: outputs/sim/grasp_sft/step500_sim100/ + endpoint_token_fixed_sim100/token_s0.json.",
+   "class": "cpu",
+   "status": "queued",
+   "prereg": null,
+   "owner_hold": false,
+   "boundary": "Queued 14:3xZ 08-17 tick at chain ALL DONE 14:17:56Z (verdict posted 1538917693032243293; babysit entry pruned same tick). Chain cost ~6.2/12 GPU-h. Local H100 free."
   }
  ]
 }

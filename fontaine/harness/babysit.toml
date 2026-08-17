@@ -1041,26 +1041,17 @@
 # decoder, ~2-3 h/leg. Checkpoint: step500 pulled from box archive
 # (weights-only) to outputs/train/_boxdl/run2_step500. On ALL DONE
 # (chain.log): HTML panel + verdict post vs anchors.
-[[run]]
-name = "sft_v1_eval_chain"
-kind = "progress-log"
-host = "local"
-pgrep = "rollout_sim"
-pgrep_min = 1
-gpu_indices = [0]
-gpu_mem_min_mib = 10000
-log = "/home/ubuntu/flow-matching/outputs/sim/grasp_sft/step500_sim100/chain.log"
-progress_re = "seed [0-9]+"
-started_utc = "2026-08-17T08:09:57+00:00"
-gpu_hours_per_wall_hour = 1.0
-boundary = "3 legs sequential (~2-3 h each): step500 flow -> step500 token -> endpoint token-fixed; chain.log says which leg + ALL DONE. Anchors: endpoint flow 5/100 box / 0/20 local; probe 44/100; token-fixed 3/20 (seeds 100-119)."
-anchors = [
-    "step500 flow read: >= a handful of grasps means run 2 degraded FROM competence (table damage compounds with training); ~0 means broken from the start",
-    "leg 3 endpoint token-fixed vs the 3/20 sample: the full-100 number the owner asked for at 07:43Z",
-]
-[[run.gates]]
-kind = "gpu_hours_max"
-value = 12.0
+# sft_v1_eval_chain entry PRUNED 14:3xZ 08-17 tick — ALL DONE 14:17:56Z
+# rc clean, ~6.2/12 GPU-h. Leg results (seeds 0-99, euler-10): leg 1
+# step500 FLOW 4/100 (corrected from tick-posted 2/100); leg 2 step500
+# TOKEN 16/100; leg 3 ENDPOINT token-with-fix 14/100 (median progress
+# 0.69 cm, 54/100 moved >0.5 cm; consistent with the 3/20 seeds-100-119
+# sample). READ: token head ~flat 16->14 across training while flow
+# stayed collapsed 4->5 — head asymmetry holds at both ends; the table
+# damage hit the flow head's loss weighting specifically. Verdict
+# posted 1538917693032243293. HTML panel = work-session item. Local
+# H100 FREE as of 14:17:56Z. Result json:
+# outputs/sim/grasp_sft/endpoint_token_fixed_sim100/token_s0.json.
 
 # demo_gen_v2 entry PRUNED 08:5xZ 08-17 tick — run COMPLETE 08:30Z and
 # post-processed same work session (5,000/5,000 kept, 0 failed shards,
