@@ -8,53 +8,68 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-17 16:46–17:1xZ (real `date -u` at write: 16:57) —
-work session: **the discriminator post-processing kit is BUILT and
-fixture-validated — a GO now turns around in minutes end-to-end.
-`sft_drift_saga_charts.py --discriminator <log> [--fixture]` produces
-the indexed-overlay chart (1-GPU curve vs the banked 8× drift band +
-run-2's healthy curve) and a verdict JSON whose bounds are FROZEN
-before the run exists: Δeval(1000 vs 500) ≤ +0.30 → distributed path
-CONVICTED; ≥ +1.02 (half demosonly's same-window +2.03) → distributed
-EXONERATED; else AMBIGUOUS. The fixture dry-run on the rigonly log
-reproduces the posted rigonly read exactly (+0.69 → AMBIGUOUS,
-Δtrain −0.39) — the instrument agrees with the hand-computed verdict
-it must generalize.***
+*Updated 2026-08-17 16:46–17:3xZ (real `date -u` at write: 17:24) —
+work session: **two things — the discriminator post-processing kit
+is BUILT and fixture-validated (commit `b515059`), and the 8×A100
+BOX IS BEING KILLED by owner order (16:59:20Z), with the evacuation
+COMPLETE and HF-verified (✅ posted 17:20Z). The kit:
+`sft_drift_saga_charts.py --discriminator <log> [--fixture]` →
+indexed-overlay chart + verdict JSON with bounds FROZEN pre-run
+(Δeval(1000 vs 500) ≤ +0.30 → distributed CONVICTED; ≥ +1.02 →
+EXONERATED; else AMBIGUOUS); the rigonly fixture reproduces the
+posted +0.69 → AMBIGUOUS read exactly. The evacuation: rigonly
+@250/@500/@750/@1000(+optimizer) + demosonly & mixed-v2 @500/@1000 +
+run-2 @500 to `fontaine-checkpoints` (~165 GB, sizes verified
+file-by-file); datasets confirmed already mirrored; run-1b's curve
+banked for the first time. Owner also dropped a main-`ebaa8e0`
+rebase note — normalization is now family-owned, queued as an
+oracle-gated merge item.***
 
-**Status**: NO live runs (babysit: 0 registered, exit 0 at boot). Box
-8×A100 idle-by-design (discriminator OWNER-GATED, ask msg
-1538929076079689849 unanswered since 15:14Z, ~100 min at write).
-Local H100 free (owner's policy server down since ~16:2x–16:4xZ; no
-rig report yet). Channel polled at boot 16:47 and 16:5x — empty both
-times, inbox empty.
+**Status**: NO live runs. **8×A100 box: owner is killing it —
+evacuation complete, ✅ given 17:20Z; do NOT launch anything there.**
+Local H100 free — now the ONLY GPU. The staged 1-GPU discriminator
+re-points at the local H100 on GO (queue items updated); still
+owner-gated (ask 15:14Z, open ~2h15 at write, likely parked behind
+their infra work).
 
-**Steering**: none — no new messages, no new reactions beyond the
-recorded 👍s. The discriminator go/no-go and any rig report on @250
-remain the watched signals.
+**Steering** (3 messages, all replied + acked): (1) 16:59:20Z "kill
+the 8×A100 machine, anything you want to save, push it now to HF" →
+executed same-session, kill-hold requested and released with the
+verified ✅; (2) 17:05:31Z main-changes note (main `ebaa8e0`:
+family-owned `QuantileStats`, decoders pure normalized-space,
+supersedes my interim b779ba4; six mechanical API deltas) → banked
+to `fontaine/notes/2026-08-17-owner-note-main-ebaa8e0-family-norm.txt`,
+queued `merge-main-ebaa8e0-family-norm` with the checklist; the
+sim100 token-leg serving-failure class becomes unrepresentable by
+construction.
 
-**Done**: queue item `sft-drift-discriminator-postproc-kit` DONE
-(this session's commit): `sft_drift_saga_charts.py` gains
-`--discriminator/--fixture` — `disc_overlay.png` 2-panel indexed
-chart (Δ eval/train chunk MAE vs own step-500; disc bold near-white
-against faint banked context + the shaded drifting-8× band, bounds
-drawn on-chart) + `analysis__sft_drift_discriminator.json` verdict
-read encoding the launcher header's rule with pre-run frozen numeric
-bounds; fixture outputs land in gitignored `reports/disc_fixture/`
-(never blog-side). ruff + format clean, full check.py green, default
-4-figure path regression-checked. Queue truth-up: kit closed,
-+`sft-drift-discriminator-prereg-post-draft` refill (depth-1 reason
-restated).
+**Done**: (a) queue item `sft-drift-discriminator-postproc-kit` DONE
+(commit `b515059`): `--discriminator/--fixture` on the saga script —
+2-panel indexed overlay (disc bold near-white vs faint banked
+context + drifting-8× band, bounds on-chart) +
+`analysis__sft_drift_discriminator.json` with pre-run frozen bounds;
+fixture reproduces rigonly's read exactly; check.py green. (b) Box
+evacuation: HF pushes verified file-by-file (rigonly 86.1 GB incl.
+@1000 optimizer for a resumable continuation; demosonly + mixed-v2
+26.2 GB each; run-2 @500 13.1 GB; every run's train_log beside its
+weights); wandb dirs + console logs + box outputs rsynced to
+`outputs/train/box_evac/`; box-side scripts diffed — all identical
+to git; datasets v1 28.1 GB / v2 36.7 GB confirmed ≈ box merged
+copies. Memory `a100-box-provisioned` updated to DECOMMISSIONED.
+Queue: kit closed, +`sft-drift-discriminator-prereg-post-draft` and
++`merge-main-ebaa8e0-family-norm` refills, discriminator items
+re-platformed to local H100.
 
-**Next**: `queue_cli.py next` → `sft-drift-discriminator-prereg-post-draft`
-(CPU, small — cut the formal pre-reg draft from the frozen launcher
-header + the kit's frozen bounds; posting stays gated on the GO). On
-GO: post pre-reg, `systemd-run --user
---unit=fontaine-demosonly-1gpu-disc`, babysit.toml entry, first-poll
-util check (~25–32 s/step expected, 1-GPU eff-96); at rc the kit
-turns the rsynced log into chart + verdict in one command.
-Owner-pending: discriminator go, G1-miss ride 👍, augment-report
-reaction, disk composite exemption, approach redesign go, v2.1
-bands, ckpt-format, morning-veto items.*
+**Next**: `queue_cli.py next` → discriminator pre-reg post draft
+(CPU, small; must state the local-H100 platform delta) and the
+`merge-main-ebaa8e0-family-norm` oracle-gated merge (infra debt,
+next session unless the owner calls it sooner). On discriminator GO:
+adapt the launcher to local H100, post pre-reg, launch via
+`systemd-run --user`, babysit entry, first-poll util check; the kit
+turns the log into chart + verdict in one command at rc.
+Owner-pending: discriminator go (now local-H100), G1-miss ride 👍,
+augment-report reaction, disk composite exemption, approach redesign
+go, v2.1 bands, ckpt-format, morning-veto items.*
 
 *Updated 2026-08-17 16:41–16:5xZ (real `date -u` at write: 16:43) —
 tick: **the owner's rig session has ENDED — the H100 policy server
@@ -140,13 +155,16 @@ go, v2.1 bands, ckpt-format, morning-veto items.*
 
 ## Utilization footer
 
-Session 2026-08-17 16:46–17:1xZ (work, exploit; zero GPU-h — box
-idle-by-design pending the discriminator gate, local H100 free since
-the owner's rig session ended): **discriminator post-processing kit
-built + fixture-validated (`--discriminator/--fixture` on the saga
-chart script; verdict bounds frozen pre-run, rigonly fixture
-reproduces +0.69 → AMBIGUOUS exactly), queue refilled with the
-pre-reg post draft item** — `run_work_next` armed for the CPU queue.
+Session 2026-08-17 16:46–17:3xZ (work, exploit; zero GPU-h — box
+idle then owner-killed, local H100 free): **discriminator postproc
+kit built + fixture-validated (verdict bounds frozen pre-run,
+rigonly fixture reproduces +0.69 → AMBIGUOUS exactly; commit
+`b515059`), then owner steering 16:59Z rode the session into the
+8×A100 box evacuation — ~165 GB of grasp-SFT checkpoints pushed to
+HF and verified file-by-file (incl. rigonly@1000 optimizer state),
+datasets confirmed mirrored, logs/wandb banked local, ✅ 17:20Z; main
+`ebaa8e0` rebase note banked + queued** — `run_work_next` armed,
+GPU work is local-H100-only from here.
 
 Session 2026-08-17 16:41–16:5xZ (tick; zero GPU-h — box idle-by-design
 pending the discriminator gate, local H100 freed mid-window as the

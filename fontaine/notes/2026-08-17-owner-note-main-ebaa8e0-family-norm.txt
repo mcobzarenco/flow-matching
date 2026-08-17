@@ -1,0 +1,58 @@
+**main ebaa8e0 — normalization is family-owned; decoders are pure normalized-space. Rebase notes for your line.**
+
+WHAT: the raw↔normalized boundary moved out of the decoders into the
+families, and the interim serving-norm threading fix (your b779ba4) is
+superseded by the structural shape: the molmoact2 families each own ONE
+merged q01/q99 table (`model.action_quantiles`, a
+`fast.molmoact2.QuantileStats`) built from checkpoint metadata at load;
+every decode — flow denormalization AND the discrete detokenization —
+inverts that object, and `batch.action_stats` can never drive a decode
+again (the Collator's merged-table stats override is deleted; a
+codecless action table is refused at construction). Zero numeric
+change: five loss oracles + five predict-path eval MAEs bitwise, saved
+metadata byte-identical.
+
+API changes you'll meet on rebase (all mechanical):
+
+1. `ARSuffixDecoder.predict_chunk` takes a REQUIRED keyword
+   `quantiles: tuple[Tensor, Tensor]` ([B, D] each). Family traits
+   (`vla.predict_ar`, `predict_narrated`) are unchanged — your GRPO
+   capture/replay path through `MolmoAct2DiscreteStack.predict_action_discrete`
+   compiles and decodes identically (the stack now borrows
+   `vla.action_quantiles`; its synthetic batch's quantile rows are
+   decode-inert). Only DIRECT decoder.predict_chunk calls in your
+   scripts need the kwarg — per-dataset callers use
+   `models.ar_suffix_ops.batch_action_quantiles(batch)`, merged-table
+   callers `model.action_quantiles.rows(B)`.
+2. `fast.molmoact2.normalize_state` / `unnormalize_action` are GONE —
+   they became methods: `stats.normalize(x)` / `stats.denormalize(x)`
+   (same math, same clamp order, bitwise; the unclamped
+   `normalize_q01q99`/`unnormalize_q01q99` functions remain). The
+   `molmoact2_processing` re-exports of the two are gone too. Grep your
+   branch for both names.
+3. molmoact2 family constructors take `action_quantiles: QuantileStats`
+   (keyword, required); build it with
+   `models.molmoact2_flow.molmoact2_action_quantiles(metadata)`.
+   `loading.molmoact2_action_table` is deleted.
+4. `MolmoFlowDecoder.predict_chunk` → `sample_chunk(memory, …)` and it
+   returns NORMALIZED chunks (no batch arg); `molmo_flow_loss_sums` /
+   `molmo_flow_loss` take `actions_norm=` instead of the batch (the
+   family normalizes via its table). Decoder `configure()` no longer
+   takes q01/q99.
+5. Gemma: `FlowDecoder.predict_chunk` is now
+   `models.gemma_flow.decode_chunk(decoder, memory, batch, …)` (same
+   signature tail, same noise-return contract); the flow/snapflow loss
+   functions take `state_norm=`/`actions_norm=` (helpers
+   `normalized_state`/`normalized_actions`/`raw_chunks` live beside the
+   family).
+6. `MolmoAct2Encoder.action_table` stash is deleted (saving reads the
+   family table); `Collator(action_q01/q99=…)` is CE-tokenization-only
+   and requires a codec.
+
+Semantics for your sim/eval line: serving decodes for molmoact2
+ar/joint under the checkpoint's merged table are now guaranteed by
+construction (the sim100 token-leg failure class is unrepresentable),
+and eval batch stats are honest per-item rows again (metrics-only).
+Your v2 pipeline needs no re-pin beyond the rebase — the numbers it
+would have minted on the interim fix are unchanged (predict paths
+reproduced bitwise).

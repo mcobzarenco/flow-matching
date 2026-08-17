@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-17T16:55:00Z
+**Updated:** 2026-08-17T17:22:30Z
 
 **Depth call:** depth 1 queued (discriminator pre-reg post draft, CPU) after the postproc-kit close: the experimental frontier stays deliberately owner-gated — the drift investigation has one designed next cut (the staged 1-GPU discriminator, BLOCKED on the owner go asked in-channel 15:1xZ 08-17) and pre-registering further runs before that verdict would violate run-only-what-changes-the-next-decision. Both GPUs idle by design pending that word (local H100 freed 16:2x-16:4xZ when the owner's policy server came down).
 
-**22 open** (Live 0 · Queued 1 · Blocked 21 · Done 210)
+**23 open** (Live 0 · Queued 2 · Blocked 21 · Done 210)
 
 ## 🔴 Live (0)
 
@@ -14,15 +14,29 @@
 
 *(empty)*
 
-## 🟢 Queued (1)
+## 🟢 Queued (2)
 
 *ready — waiting on a window or a boundary*
+
+**`merge-main-ebaa8e0-family-norm`** · `cpu`
+
+Merge main ebaa8e0 (owner note 17:05:31Z 08-17, /tmp/owner_note_main.txt banked to fontaine/notes/): normalization family-owned
+
+**boundary:** Queued 17:1xZ 08-17 during the box-evacuation ride. Owner note says v2 pipeline needs no re-pin beyond the rebase. Execute as next session's infra-debt item (or on owner priority call); box evacuation outranks it this session.
+
+<details><summary>full record</summary>
+
+Merge main ebaa8e0 (owner note 17:05:31Z 08-17, /tmp/owner_note_main.txt banked to fontaine/notes/): normalization family-owned — QuantileStats owns raw&lt;-&gt;normalized, decoders pure normalized-space; supersedes my interim b779ba4 serving-norm threading. Mechanical rebase checklist from the note: (1) ARSuffixDecoder.predict_chunk requires quantiles= kwarg (direct callers only; batch_action_quantiles / action_quantiles.rows helpers); (2) normalize_state/unnormalize_action -&gt; stats.normalize/denormalize (grep both names + molmoact2_processing re-exports); (3) family ctors take action_quantiles= (molmoact2_action_quantiles(metadata)); loading.molmoact2_action_table deleted; (4) MolmoFlowDecoder.predict_chunk -&gt; sample_chunk, returns NORMALIZED; molmo_flow_loss takes actions_norm=; (5) gemma FlowDecoder.predict_chunk -&gt; gemma_flow.decode_chunk; flow/snapflow losses take state_norm=/actions_norm=; (6) encoder action_table stash deleted, Collator quantiles CE-only. Oracle-gated like merge-main phases 5-7: loss oracles + predict-path MAEs must reproduce bitwise per the note's zero-numeric-change claim.
+
+</details>
+
+---
 
 **`sft-drift-discriminator-prereg-post-draft`** · `cpu`
 
 Formal discriminator pre-reg post DRAFT (CPU, pre-staged so the GO-&gt;launch gap is minutes): cut posts/2026-08-xx-prereg-sft-drift-discriminator.md from the frozen launcher header (fontaine/scripts/box/launch_box_grasp_sft_v2_demo…
 
-**boundary:** Queued 16:5xZ 08-17 work session at kit close. Blocked on nothing (draft file only); posting+launch remain owner-gated via sft-drift-discriminator-run.
+**boundary:** Queued 16:5xZ 08-17 work session at kit close. Blocked on nothing (draft file only); posting+launch remain owner-gated via sft-drift-discriminator-run. | NOTE 17:2xZ: draft must state the platform change (local H100, box killed) as a delta vs the frozen box launcher header; read rule + bounds unchanged.
 
 <details><summary>full record</summary>
 
@@ -40,7 +54,7 @@ Formal discriminator pre-reg post DRAFT (CPU, pre-staged so the GO-&gt;launch ga
 
 1-GPU drift discriminator (OWNER-GATED, staged on box: launch_box_grasp_sft_v2_demosonly_1gpu_discriminator.sh): demosonly recipe on ONE box GPU, same eff-96/micro-12/seed/augment/recompute-stats/init
 
-**boundary:** Queued 15:1xZ 08-17 at the rigonly close (ambiguous-leaning-drift verdict posted; ask in-channel). BLOCKED on the owner's go — box is idle, launch is one systemd-run command (header of the staged script). · `fontaine/scripts/box/launch_box_grasp_sft_v2_demosonly_1gpu_discriminator.sh`
+**boundary:** Queued 15:1xZ 08-17 at the rigonly close (ambiguous-leaning-drift verdict posted; ask in-channel). BLOCKED on the owner's go — box is idle, launch is one systemd-run command (header of the staged script). | RE-PLATFORMED 17:2xZ 08-17: owner killing the 8xA100 box (order 16:59:20Z; evacuation complete + verified 17:20Z, all needed ckpts/datasets on HF). On GO the run targets the LOCAL H100 instead — same 1-GPU recipe, adapt the launcher paths (train data from fontaine-grasp-demos-v2 or local copy, init from local molmoact2 released ckpt); expected pace on H100 similar order to the A100 estimate. · `fontaine/scripts/box/launch_box_grasp_sft_v2_demosonly_1gpu_discriminator.sh`
 
 <details><summary>full record</summary>
 

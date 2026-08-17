@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-17T16:55:00Z",
+ "updated_utc": "2026-08-17T17:22:30Z",
  "depth_reason": "depth 1 queued (discriminator pre-reg post draft, CPU) after the postproc-kit close: the experimental frontier stays deliberately owner-gated \u2014 the drift investigation has one designed next cut (the staged 1-GPU discriminator, BLOCKED on the owner go asked in-channel 15:1xZ 08-17) and pre-registering further runs before that verdict would violate run-only-what-changes-the-next-decision. Both GPUs idle by design pending that word (local H100 freed 16:2x-16:4xZ when the owner's policy server came down).",
  "items": [
   {
@@ -2076,7 +2076,7 @@
    "owner_hold": true,
    "prereg": "fontaine/scripts/box/launch_box_grasp_sft_v2_demosonly_1gpu_discriminator.sh",
    "title": "1-GPU drift discriminator (OWNER-GATED, staged on box: launch_box_grasp_sft_v2_demosonly_1gpu_discriminator.sh): demosonly recipe on ONE box GPU, same eff-96/micro-12/seed/augment/recompute-stats/init \u2014 single delta = distributed machinery removed (torchrun+zero1+chunk-grad-allreduce). Every drifting run (run-1b/run-2/mixedv2/demosonly, + rigonly ambiguous) is 8x distributed; every healthy run (44/100 probe, 28/100 stage-C) was 1-GPU. Read: MAE probes every 250; flat-through-1000 convicts the distributed path, same-drift exonerates it (remaining deltas: augment/batch-geometry/recompute-at-launch/init). ~7-9 GPU-h, ~7-9 h wall on gpu0. On completion: verdict to the drift-saga page finalize slot + in-channel. NOTE: prereg field points at the staged frozen launcher (recipe + read rule in its header); cut a formal pre-reg post from it BEFORE launch on the owner go.",
-   "boundary": "Queued 15:1xZ 08-17 at the rigonly close (ambiguous-leaning-drift verdict posted; ask in-channel). BLOCKED on the owner's go \u2014 box is idle, launch is one systemd-run command (header of the staged script)."
+   "boundary": "Queued 15:1xZ 08-17 at the rigonly close (ambiguous-leaning-drift verdict posted; ask in-channel). BLOCKED on the owner's go \u2014 box is idle, launch is one systemd-run command (header of the staged script). | RE-PLATFORMED 17:2xZ 08-17: owner killing the 8xA100 box (order 16:59:20Z; evacuation complete + verified 17:20Z, all needed ckpts/datasets on HF). On GO the run targets the LOCAL H100 instead \u2014 same 1-GPU recipe, adapt the launcher paths (train data from fontaine-grasp-demos-v2 or local copy, init from local molmoact2 released ckpt); expected pace on H100 similar order to the A100 estimate."
   },
   {
    "id": "sft-drift-discriminator-postproc-kit",
@@ -2094,7 +2094,16 @@
    "prereg": null,
    "owner_hold": false,
    "title": "Formal discriminator pre-reg post DRAFT (CPU, pre-staged so the GO->launch gap is minutes): cut posts/2026-08-xx-prereg-sft-drift-discriminator.md from the frozen launcher header (fontaine/scripts/box/launch_box_grasp_sft_v2_demosonly_1gpu_discriminator.sh) + the postproc kit's FROZEN verdict bounds (sft_drift_saga_charts.py discriminator section: healthy <= +0.30 / drift >= +1.02 at read@1000, fixture-validated on rigonly). Post goes out ON THE OWNER GO immediately before launch, per the pre-reg-before-launch rule; drafting is not posting.",
-   "boundary": "Queued 16:5xZ 08-17 work session at kit close. Blocked on nothing (draft file only); posting+launch remain owner-gated via sft-drift-discriminator-run."
+   "boundary": "Queued 16:5xZ 08-17 work session at kit close. Blocked on nothing (draft file only); posting+launch remain owner-gated via sft-drift-discriminator-run. | NOTE 17:2xZ: draft must state the platform change (local H100, box killed) as a delta vs the frozen box launcher header; read rule + bounds unchanged."
+  },
+  {
+   "id": "merge-main-ebaa8e0-family-norm",
+   "class": "cpu",
+   "status": "queued",
+   "prereg": null,
+   "owner_hold": false,
+   "title": "Merge main ebaa8e0 (owner note 17:05:31Z 08-17, /tmp/owner_note_main.txt banked to fontaine/notes/): normalization family-owned \u2014 QuantileStats owns raw<->normalized, decoders pure normalized-space; supersedes my interim b779ba4 serving-norm threading. Mechanical rebase checklist from the note: (1) ARSuffixDecoder.predict_chunk requires quantiles= kwarg (direct callers only; batch_action_quantiles / action_quantiles.rows helpers); (2) normalize_state/unnormalize_action -> stats.normalize/denormalize (grep both names + molmoact2_processing re-exports); (3) family ctors take action_quantiles= (molmoact2_action_quantiles(metadata)); loading.molmoact2_action_table deleted; (4) MolmoFlowDecoder.predict_chunk -> sample_chunk, returns NORMALIZED; molmo_flow_loss takes actions_norm=; (5) gemma FlowDecoder.predict_chunk -> gemma_flow.decode_chunk; flow/snapflow losses take state_norm=/actions_norm=; (6) encoder action_table stash deleted, Collator quantiles CE-only. Oracle-gated like merge-main phases 5-7: loss oracles + predict-path MAEs must reproduce bitwise per the note's zero-numeric-change claim.",
+   "boundary": "Queued 17:1xZ 08-17 during the box-evacuation ride. Owner note says v2 pipeline needs no re-pin beyond the rebase. Execute as next session's infra-debt item (or on owner priority call); box evacuation outranks it this session."
   }
  ]
 }
