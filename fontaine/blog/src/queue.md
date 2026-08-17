@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-17T16:09:42Z
+**Updated:** 2026-08-17T16:55:00Z
 
-**Depth call:** depth 1 (sft-drift-discriminator-postproc-kit, CPU): the experimental frontier is deliberately owner-gated — the drift investigation has one designed next cut (the staged 1-GPU discriminator, BLOCKED on the owner go asked in-channel 15:1xZ 08-17) and pre-registering further runs before that verdict would violate the run-only-what-changes-the-next-decision rule. Both GPUs idle by design pending that word (local H100 owner-claimed by their policy server).
+**Depth call:** depth 1 queued (discriminator pre-reg post draft, CPU) after the postproc-kit close: the experimental frontier stays deliberately owner-gated — the drift investigation has one designed next cut (the staged 1-GPU discriminator, BLOCKED on the owner go asked in-channel 15:1xZ 08-17) and pre-registering further runs before that verdict would violate run-only-what-changes-the-next-decision. Both GPUs idle by design pending that word (local H100 freed 16:2x-16:4xZ when the owner's policy server came down).
 
-**22 open** (Live 0 · Queued 1 · Blocked 21 · Done 209)
+**22 open** (Live 0 · Queued 1 · Blocked 21 · Done 210)
 
 ## 🔴 Live (0)
 
@@ -18,15 +18,15 @@
 
 *ready — waiting on a window or a boundary*
 
-**`sft-drift-discriminator-postproc-kit`** · `cpu`
+**`sft-drift-discriminator-prereg-post-draft`** · `cpu`
 
-Discriminator post-processing kit (CPU, pre-staged so a GO turns around fast): extend sft_drift_saga_charts.py with a discriminator overlay
+Formal discriminator pre-reg post DRAFT (CPU, pre-staged so the GO-&gt;launch gap is minutes): cut posts/2026-08-xx-prereg-sft-drift-discriminator.md from the frozen launcher header (fontaine/scripts/box/launch_box_grasp_sft_v2_demo…
 
-**boundary:** Queued 16:1xZ 08-17 work session at panel-item close. Blocked on nothing (fixture = rigonly logs); the run it will read is sft-drift-discriminator-run (owner-gated).
+**boundary:** Queued 16:5xZ 08-17 work session at kit close. Blocked on nothing (draft file only); posting+launch remain owner-gated via sft-drift-discriminator-run.
 
 <details><summary>full record</summary>
 
-Discriminator post-processing kit (CPU, pre-staged so a GO turns around fast): extend sft_drift_saga_charts.py with a discriminator overlay — the 1-GPU run's eval/train MAE curve drawn against the banked demosonly/mixedv2/rigonly drift bands and run-2's healthy curve (same indexed-drift instrument), plus the verdict read (drifting =&gt; distributed stack exonerated, single-GPU path implicated; healthy =&gt; distributed machinery convicted). Consumes the babysit-rsynced train_log.jsonl only; dry-runnable now against the rigonly artifacts as a fixture.
+Formal discriminator pre-reg post DRAFT (CPU, pre-staged so the GO-&gt;launch gap is minutes): cut posts/2026-08-xx-prereg-sft-drift-discriminator.md from the frozen launcher header (fontaine/scripts/box/launch_box_grasp_sft_v2_demosonly_1gpu_discriminator.sh) + the postproc kit's FROZEN verdict bounds (sft_drift_saga_charts.py discriminator section: healthy &lt;= +0.30 / drift &gt;= +1.02 at read@1000, fixture-validated on rigonly). Post goes out ON THE OWNER GO immediately before launch, per the pre-reg-before-launch rule; drafting is not posting.
 
 </details>
 
@@ -326,9 +326,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (209)
+## ✅ Done (210)
 
 *closed — the full record stays in each fold*
+
+**`sft-drift-discriminator-postproc-kit`** · `cpu`
+
+Discriminator post-processing kit (CPU, pre-staged so a GO turns around fast): extend sft_drift_saga_charts.py with a discriminator overlay
+
+**boundary:** Queued 16:1xZ 08-17 work session at panel-item close. Blocked on nothing (fixture = rigonly logs); the run it will read is sft-drift-discriminator-run (owner-gated). | DONE 16:5xZ 08-17 work session: sft_drift_saga_charts.py gains --discriminator/--fixture (commit pending this session) — disc_overlay 2-panel indexed chart (delta eval/train MAE vs own step-500, disc bold near-white vs faint banked context + drifting-8x band) + analysis__sft_drift_discriminator.json verdict read with bounds FROZEN pre-run (healthy &lt;= +0.30 -&gt; distributed CONVICTED; drift &gt;= 0.5x demosonly same-window ref (+1.02) -&gt; distributed EXONERATED; else AMBIGUOUS). Fixture dry-run on the rigonly log reproduces the posted rigonly read exactly: +0.69 -&gt; AMBIGUOUS, dtrain -0.39; ruff+format clean.
+
+<details><summary>full record</summary>
+
+Discriminator post-processing kit (CPU, pre-staged so a GO turns around fast): extend sft_drift_saga_charts.py with a discriminator overlay — the 1-GPU run's eval/train MAE curve drawn against the banked demosonly/mixedv2/rigonly drift bands and run-2's healthy curve (same indexed-drift instrument), plus the verdict read (drifting =&gt; distributed stack exonerated, single-GPU path implicated; healthy =&gt; distributed machinery convicted). Consumes the babysit-rsynced train_log.jsonl only; dry-runnable now against the rigonly artifacts as a fixture.
+
+</details>
+
+---
 
 **`sft-v1-eval-chain-html-panel`** · `cpu`
 

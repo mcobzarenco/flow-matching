@@ -17,14 +17,33 @@ Figures -> fontaine/blog/src/img/grasp_sft_drift/:
   4. head_asymmetry.png — sim100 successes, flow vs token head at
      step500/endpoint + probe anchor
 
+Discriminator post-processing (sft-drift-discriminator-run kit): once
+the owner-gated 1-GPU run exists, point --discriminator at its
+babysit-rsynced train_log.jsonl to get
+  5. disc_overlay.png — the 1-GPU curve on the indexed-drift
+     instrument (delta eval/train MAE vs own step-500) against the
+     banked 8x drift band + run-2's healthy pooled curve
+  6. reports/analysis__sft_drift_discriminator.json + a printed
+     verdict block (the launcher header's read rule, operationalized
+     BEFORE the run: falls/holds through 1000 -> distributed path
+     CONVICTED; same-drift -> distributed EXONERATED, remaining
+     suspects augment/eff-96/recompute-stats/init/corpus-scale)
+
 Usage:
   uv run python fontaine/scripts/sft_drift_saga_charts.py --extract
   uv run python fontaine/scripts/sft_drift_saga_charts.py
+  uv run python fontaine/scripts/sft_drift_saga_charts.py \
+      --discriminator outputs/train/disc_artifacts/train_log.jsonl
+  # dry run against the rigonly log (writes *_fixture outputs only):
+  uv run python fontaine/scripts/sft_drift_saga_charts.py \
+      --discriminator outputs/train/rigonly_artifacts/train_log.jsonl \
+      --fixture
 """
 
 from __future__ import annotations
 
 import argparse
+import itertools
 import json
 from pathlib import Path
 
@@ -42,6 +61,9 @@ MAGENTA = "#dc267f"  # eval slice / the drifting emphasis
 BLUE = "#648fff"  # train slice / secondary series
 GOLD = "#ffb000"  # rigonly (the run under verdict on this page)
 GRAY = "#9aa0a8"
+DISC = "#e8eaed"  # the 1-GPU discriminator run: near-white, lightness-
+# separated from every context hue under all CVD types; identity also
+# carried by weight (bold vs faint context) + markers + direct labels
 
 REPO = Path("/home/ubuntu/flow-matching")
 REPORTS = REPO / "reports"
@@ -64,29 +86,30 @@ def _fig(w: float, h: float) -> plt.Figure:
     return plt.figure(figsize=(w, h), facecolor=PAGE)
 
 
-def extract() -> dict:
-    def curve(path: Path) -> dict:
-        steps, ev, tr, loss_s, loss_v = [], [], [], [], []
-        for line in Path(path).read_text().splitlines():
-            line = line.strip()
-            if not line.startswith("{"):
-                continue
-            d = json.loads(line)
-            if "eval_chunk_mae" in d:
-                steps.append(d["step"])
-                ev.append(d["eval_chunk_mae"])
-                tr.append(d["train_mae"])
-            elif "loss" in d and "step" in d:
-                loss_s.append(d["step"])
-                loss_v.append(d["loss"])
-        return {
-            "steps": steps,
-            "eval": ev,
-            "train": tr,
-            "loss_steps": loss_s,
-            "loss": loss_v,
-        }
+def curve(path: Path) -> dict:
+    steps, ev, tr, loss_s, loss_v = [], [], [], [], []
+    for line in Path(path).read_text().splitlines():
+        line = line.strip()
+        if not line.startswith("{"):
+            continue
+        d = json.loads(line)
+        if "eval_chunk_mae" in d:
+            steps.append(d["step"])
+            ev.append(d["eval_chunk_mae"])
+            tr.append(d["train_mae"])
+        elif "loss" in d and "step" in d:
+            loss_s.append(d["step"])
+            loss_v.append(d["loss"])
+    return {
+        "steps": steps,
+        "eval": ev,
+        "train": tr,
+        "loss_steps": loss_s,
+        "loss": loss_v,
+    }
 
+
+def extract() -> dict:
     wandb = json.loads((REPORTS / "curve__grasp_sft_v1_wandb.json").read_text())
     r2s, r2e, r2t = [], [], []
     for row in wandb["rows"]:
@@ -403,12 +426,252 @@ def chart_heads(bank: dict) -> None:
     plt.close(fig)
 
 
+# --- discriminator kit (sft-drift-discriminator-run post-processing) ---
+# Verdict operationalization, FROZEN before the run exists (this is the
+# numeric form of the launcher header's read rule; the formal pre-reg
+# post cut on the owner GO references these bounds verbatim):
+#   instrument  delta(s) = eval_chunk_mae(s) - eval_chunk_mae(500),
+#               primary read at s = 1000 (the endpoint probe)
+#   HEALTHY     delta(1000) <= +0.30  -> distributed path CONVICTED
+#               (+0.30 sits above healthy-curve probe wiggle — run-2's
+#               pooled curve moved -0.92 over the same window — and far
+#               below every drifting run)
+#   SAME-DRIFT  delta(1000) >= 0.5 x demosonly's delta over the same
+#               offset window (+2.03 => bound ~+1.01) -> distributed
+#               EXONERATED; remaining suspects: image-augment, eff-96,
+#               recompute-stats-at-launch, init checkpoint, corpus scale
+#   else        AMBIGUOUS (the rigonly class: its +0.69 lands here,
+#               matching its posted ambiguous-leaning-drift verdict —
+#               that agreement is the fixture check)
+# Train-slice delta and monotone-rise flags are reported as
+# corroboration, not gates.
+HEALTHY_BOUND = 0.30
+DRIFT_FRACTION = 0.5
+
+
+def _delta_at(run: dict, offset: int) -> float | None:
+    steps = list(run["steps"])
+    if 500 not in steps or 500 + offset not in steps:
+        return None
+    ev = run["eval"]
+    return ev[steps.index(500 + offset)] - ev[steps.index(500)]
+
+
+def disc_verdict(bank: dict, disc: dict, label: str, *, fixture: bool) -> dict:
+    steps = disc["steps"]
+    if 500 not in steps:
+        raise SystemExit(f"no step-500 eval probe in the log ({steps=})")
+    probes = [s for s in steps if s >= 500]
+    last = probes[-1]
+    provisional = last < 1000
+    read_at = last - 500
+    d_eval = _delta_at(disc, read_at)
+    i500 = steps.index(500)
+    d_train = disc["train"][steps.index(last)] - disc["train"][i500]
+    demos_ref = _delta_at(bank["runs"]["demosonly"], read_at)
+    drift_bound = DRIFT_FRACTION * demos_ref
+    if d_eval <= HEALTHY_BOUND:
+        verdict = "HEALTHY"
+        text = (
+            "falls/holds through the read point -> the DISTRIBUTED PATH IS "
+            "CONVICTED (torchrun + zero1 + chunk-grad-allreduce is the delta "
+            "that separates every drifting run from every healthy one)"
+        )
+    elif d_eval >= drift_bound:
+        verdict = "SAME-DRIFT"
+        text = (
+            "drifts like the 8x runs -> distributed machinery EXONERATED; "
+            "remaining suspects: image-augment, eff-96 batch geometry, "
+            "recompute-stats-at-launch, init checkpoint, corpus scale"
+        )
+    else:
+        verdict = "AMBIGUOUS"
+        text = (
+            "between the bounds (the rigonly class) -> no conviction either "
+            "way; escalation is an owner call (extend past 1000 or cut the "
+            "next single-delta run)"
+        )
+    ev_tail = [disc["eval"][steps.index(s)] for s in probes]
+    tr_tail = [disc["train"][steps.index(s)] for s in probes]
+    refs = {
+        k: _delta_at(bank["runs"][k], read_at)
+        for k in ("demosonly", "mixedv2", "run2_pooled", "rigonly")
+    }
+    return {
+        "run": label,
+        "fixture": fixture,
+        "read_step": last,
+        "provisional": provisional,
+        "delta_eval_vs_500": round(d_eval, 4),
+        "delta_train_vs_500": round(d_train, 4),
+        "eval_monotone_rise_from_500": all(
+            b > a for a, b in itertools.pairwise(ev_tail)
+        ),
+        "train_monotone_rise_from_500": all(
+            b > a for a, b in itertools.pairwise(tr_tail)
+        ),
+        "bounds": {
+            "healthy_max": HEALTHY_BOUND,
+            "drift_min": round(drift_bound, 4),
+            "demosonly_ref_same_window": round(demos_ref, 4),
+        },
+        "references_same_window": {
+            k: round(d, 4) if d is not None else None for k, d in refs.items()
+        },
+        "verdict": verdict,
+        "verdict_text": text,
+    }
+
+
+def chart_disc_overlay(
+    bank: dict,
+    disc: dict,
+    label: str,
+    out_png: Path,
+    *,
+    fixture: bool,
+) -> None:
+    runs = bank["runs"]
+    context = [
+        ("demosonly", MAGENTA, "-"),
+        ("mixedv2", BLUE, "-"),
+        ("run2_pooled", GRAY, "--"),
+        ("rigonly", GOLD, "-"),
+    ]
+    fig = _fig(9.6, 4.6)
+    ax_e, ax_t = fig.subplots(1, 2, sharex=True)
+    for ax, slice_key, ylab in (
+        (ax_e, "eval", "Δ eval chunk MAE vs own step-500 (deg)"),
+        (ax_t, "train", "Δ train chunk MAE vs own step-500 (deg)"),
+    ):
+        _style(ax, None)
+        ax.axhline(0, color=GRID, linewidth=1.2)
+        band = []
+        for key, hue, ls in context:
+            r = runs[key]
+            steps = np.array(r["steps"], dtype=float)
+            v = np.array(r[slice_key], dtype=float)
+            m = (steps >= 500) & (steps <= 1250)
+            base = v[steps == 500][0]
+            x, y = steps[m] - 500, v[m] - base
+            if key in ("demosonly", "mixedv2"):
+                band.append((x, y))
+            ax.plot(x, y, color=hue, linewidth=1.4, linestyle=ls, alpha=0.5)
+            ax.annotate(
+                r["label"].split(" (")[0],
+                (x[-1], y[-1]),
+                textcoords="offset points",
+                xytext=(5, -2),
+                color=hue,
+                fontsize=7.5,
+                alpha=0.9,
+            )
+        common = sorted(set(band[0][0]) & set(band[1][0]))
+        lo = [min(b[1][list(b[0]).index(s)] for b in band) for s in common]
+        hi = [max(b[1][list(b[0]).index(s)] for b in band) for s in common]
+        ax.fill_between(common, lo, hi, color=MAGENTA, alpha=0.08, linewidth=0)
+        steps = np.array(disc["steps"], dtype=float)
+        v = np.array(disc[slice_key], dtype=float)
+        m = steps >= 500
+        x, y = steps[m] - 500, v[m] - v[steps == 500][0]
+        ax.plot(
+            x,
+            y,
+            color=DISC,
+            linewidth=2.6,
+            marker="D",
+            markersize=5.5,
+            zorder=5,
+        )
+        ax.annotate(
+            f"{label}  {y[-1]:+.2f}",
+            (x[-1], y[-1]),
+            textcoords="offset points",
+            xytext=(-2, 9),
+            ha="right",
+            color=DISC,
+            fontsize=9,
+            fontweight="bold",
+        )
+        ax.set_xlabel("steps since step 500", color=META, fontsize=9)
+        ax.set_ylabel(ylab, color=META, fontsize=9)
+        ax.margins(x=0.24)
+    demos_ref = _delta_at(runs["demosonly"], 500)
+    for bound, name in (
+        (HEALTHY_BOUND, "healthy bound"),
+        (DRIFT_FRACTION * demos_ref, "same-drift bound"),
+    ):
+        ax_e.axhline(bound, color=TEXT, linewidth=0.8, linestyle=":", alpha=0.55)
+        ax_e.annotate(
+            f"{name} {bound:+.2f}",
+            (0, bound),
+            textcoords="offset points",
+            xytext=(2, 3),
+            color=META,
+            fontsize=7.5,
+        )
+    stamp = "  —  FIXTURE DRY-RUN (rigonly log as stand-in)" if fixture else ""
+    fig.suptitle(
+        f"1-GPU discriminator vs the banked curves — indexed to each run's "
+        f"own step-500{stamp}\n"
+        "(shaded band: the two unambiguous drifting 8× runs; bounds frozen "
+        "before the run — see analysis JSON)",
+        color=TEXT,
+        fontsize=10,
+        x=0.02,
+        ha="left",
+    )
+    fig.tight_layout(rect=[0, 0, 1, 0.90])
+    fig.savefig(out_png, dpi=160, facecolor=PAGE)
+    plt.close(fig)
+
+
+def run_discriminator(bank: dict, log_path: Path, *, fixture: bool) -> None:
+    disc = curve(log_path)
+    label = "1-GPU disc (fixture: rigonly)" if fixture else "1-GPU disc"
+    suffix = "_fixture" if fixture else ""
+    out_dir = REPORTS / "disc_fixture" if fixture else IMG_OUT
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_png = out_dir / f"disc_overlay{suffix}.png"
+    chart_disc_overlay(bank, disc, label, out_png, fixture=fixture)
+    verdict = disc_verdict(bank, disc, label, fixture=fixture)
+    verdict["log"] = str(log_path)
+    out_json = REPORTS / f"analysis__sft_drift_discriminator{suffix}.json"
+    out_json.write_text(json.dumps(verdict, indent=1))
+    print(f"overlay -> {out_png}\nverdict -> {out_json}")
+    print(
+        f"\nVERDICT [{verdict['verdict']}"
+        f"{' PROVISIONAL' if verdict['provisional'] else ''}] "
+        f"read@{verdict['read_step']}: "
+        f"Δeval {verdict['delta_eval_vs_500']:+.2f} "
+        f"(healthy ≤ +{HEALTHY_BOUND:.2f}, drift ≥ "
+        f"+{verdict['bounds']['drift_min']:.2f}), "
+        f"Δtrain {verdict['delta_train_vs_500']:+.2f}\n"
+        f"{verdict['verdict_text']}",
+    )
+
+
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--extract", action="store_true")
+    p.add_argument(
+        "--discriminator",
+        type=Path,
+        default=None,
+        metavar="TRAIN_LOG_JSONL",
+        help="1-GPU discriminator run's rsynced train_log.jsonl",
+    )
+    p.add_argument(
+        "--fixture",
+        action="store_true",
+        help="dry-run: label as fixture, write *_fixture outputs only",
+    )
     args = p.parse_args()
-    IMG_OUT.mkdir(parents=True, exist_ok=True)
     bank = extract() if args.extract else json.loads(BANK.read_text())
+    if args.discriminator is not None:
+        run_discriminator(bank, args.discriminator, fixture=args.fixture)
+        return
+    IMG_OUT.mkdir(parents=True, exist_ok=True)
     chart_grid(bank)
     chart_indexed(bank)
     chart_twin_rulers(bank)

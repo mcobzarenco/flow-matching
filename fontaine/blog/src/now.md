@@ -5,7 +5,56 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-17 16:46–17:1xZ (real `date -u` at write: 16:57) —
+work session: **the discriminator post-processing kit is BUILT and
+fixture-validated — a GO now turns around in minutes end-to-end.
+`sft_drift_saga_charts.py --discriminator <log> [--fixture]` produces
+the indexed-overlay chart (1-GPU curve vs the banked 8× drift band +
+run-2's healthy curve) and a verdict JSON whose bounds are FROZEN
+before the run exists: Δeval(1000 vs 500) ≤ +0.30 → distributed path
+CONVICTED; ≥ +1.02 (half demosonly's same-window +2.03) → distributed
+EXONERATED; else AMBIGUOUS. The fixture dry-run on the rigonly log
+reproduces the posted rigonly read exactly (+0.69 → AMBIGUOUS,
+Δtrain −0.39) — the instrument agrees with the hand-computed verdict
+it must generalize.***
+
+**Status**: NO live runs (babysit: 0 registered, exit 0 at boot). Box
+8×A100 idle-by-design (discriminator OWNER-GATED, ask msg
+1538929076079689849 unanswered since 15:14Z, ~100 min at write).
+Local H100 free (owner's policy server down since ~16:2x–16:4xZ; no
+rig report yet). Channel polled at boot 16:47 and 16:5x — empty both
+times, inbox empty.
+
+**Steering**: none — no new messages, no new reactions beyond the
+recorded 👍s. The discriminator go/no-go and any rig report on @250
+remain the watched signals.
+
+**Done**: queue item `sft-drift-discriminator-postproc-kit` DONE
+(this session's commit): `sft_drift_saga_charts.py` gains
+`--discriminator/--fixture` — `disc_overlay.png` 2-panel indexed
+chart (Δ eval/train chunk MAE vs own step-500; disc bold near-white
+against faint banked context + the shaded drifting-8× band, bounds
+drawn on-chart) + `analysis__sft_drift_discriminator.json` verdict
+read encoding the launcher header's rule with pre-run frozen numeric
+bounds; fixture outputs land in gitignored `reports/disc_fixture/`
+(never blog-side). ruff + format clean, full check.py green, default
+4-figure path regression-checked. Queue truth-up: kit closed,
++`sft-drift-discriminator-prereg-post-draft` refill (depth-1 reason
+restated).
+
+**Next**: `queue_cli.py next` → `sft-drift-discriminator-prereg-post-draft`
+(CPU, small — cut the formal pre-reg draft from the frozen launcher
+header + the kit's frozen bounds; posting stays gated on the GO). On
+GO: post pre-reg, `systemd-run --user
+--unit=fontaine-demosonly-1gpu-disc`, babysit.toml entry, first-poll
+util check (~25–32 s/step expected, 1-GPU eff-96); at rc the kit
+turns the rsynced log into chart + verdict in one command.
+Owner-pending: discriminator go, G1-miss ride 👍, augment-report
+reaction, disk composite exemption, approach redesign go, v2.1
+bands, ckpt-format, morning-veto items.*
 
 *Updated 2026-08-17 16:41–16:5xZ (real `date -u` at write: 16:43) —
 tick: **the owner's rig session has ENDED — the H100 policy server
@@ -89,47 +138,15 @@ babysit.toml entry, first-poll util check (~25–32 s/step expected,
 augment-report reaction, disk composite exemption, approach redesign
 go, v2.1 bands, ckpt-format, morning-veto items.*
 
-*Updated 2026-08-17 15:57–16:1xZ (real `date -u` at write: 16:00) —
-tick: **discovery — the owner is rig-testing the rigonly checkpoint
-RIGHT NOW: a policy server they launched at 14:07:32Z from tmux is
-live on the local H100 serving `grasp_sft_rigonly_8xa100/step_000250`
-(port 8144, ~13 GB resident). The H100 is OWNER-CLAIMED, not free.
-Discriminator ask still unanswered (43+ min) — explained by the rig
-session; held in-channel watch to 16:15, no GO by close.***
-
-**Status**: box 8×A100 idle-by-design (discriminator OWNER-GATED, ask
-msg 1538929076079689849; frozen launcher header verified on box this
-tick — pre-reg post cuttable verbatim on GO). Local H100
-owner-claimed (policy server = the north-star loop running live; do
-NOT treat local as free, do NOT touch pid 3365591). `run_work_next`
-armed (confirmed on disk) → work session chains for the CPU queue.
-
-**Steering**: no new messages (inbox empty). History: **👍 on the
-14:53 @1000 ambiguous-verdict post** — recorded; consistent with the
-explicit 15:07 agreement, no new action. Tight-poll rule honored
-in-session via a 2.5-min monitor loop 15:57–16:15 (owner active in
-tmux, a GO would idle 8×A100 until next tick otherwise).
-
-**Done**: policy-server discovery banked as a memory
-(`owner-policy-server-h100`: check compute-apps before local
-launches; served-ckpt path = what the owner is rig-testing — they
-picked @250, not the lowest-eval @500); queue validated (depth 1,
-stated reason stands); 10:19 body entry + 2 footer notes rolled to
-the [08-17 archive](archive/now-2026-08-17.md); launcher
-header re-verified on box.
-
-**Next**: chained work session — `sft-v1-eval-chain-html-panel` (CPU)
-+ boundary polls for the discriminator answer. On GO: formal pre-reg
-post from the frozen header BEFORE launch, `systemd-run --user
---unit=fontaine-demosonly-1gpu-disc`, babysit.toml entry, first-poll
-util check (~25–32 s/step expected, 1-GPU eff-96). The owner's rig
-session may produce fresh steering (real-rig behavior of @250) —
-treat any rig report as priority context. Owner-pending: discriminator
-go, G1-miss ride 👍, augment-report reaction, disk composite
-exemption, approach redesign go, v2.1 bands, ckpt-format,
-morning-veto items.*
-
 ## Utilization footer
+
+Session 2026-08-17 16:46–17:1xZ (work, exploit; zero GPU-h — box
+idle-by-design pending the discriminator gate, local H100 free since
+the owner's rig session ended): **discriminator post-processing kit
+built + fixture-validated (`--discriminator/--fixture` on the saga
+chart script; verdict bounds frozen pre-run, rigonly fixture
+reproduces +0.69 → AMBIGUOUS exactly), queue refilled with the
+pre-reg post draft item** — `run_work_next` armed for the CPU queue.
 
 Session 2026-08-17 16:41–16:5xZ (tick; zero GPU-h — box idle-by-design
 pending the discriminator gate, local H100 freed mid-window as the
