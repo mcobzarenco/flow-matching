@@ -6,19 +6,31 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-17 19:20–19:4xZ (real `date -u` at write: 19:38) —
-work session: **utilization ledger REBASED — the trailing-7-day
-baseline was 11 days stale; the fresh window reads local ~80 / box
-~254 GPU-h.***
+*Updated 2026-08-17 19:20–20:3xZ (real `date -u` at write: 20:26) —
+work session: **utilization ledger REBASED + discriminator OOM
+incident caught, root-caused, fixed and RELAUNCHED — attempt 1 died
+at its first eval probe (probe batched at 96, training forwards
+micro-12); verdict now ~01:0x–01:3xZ 08-18.***
 
-**Status**: 1 live run — `grasp_sft_v2_demosonly_1gpu_disc` at step
-150/1000, loss 4.94→0.88, 14.9 s/step (~3.5 h to 1000 → verdict
-~23:0xZ, inside this session's window), VRAM 62.24 GiB vs the 78
-gate, babysit exit 0. Step-250 probe ≈19:55Z (drifting comparators
-sat at 3.46 there; NO probe-kill bars — verdict at 1000 only).
+**Status**: 1 live run — `grasp_sft_v2_demosonly_1gpu_disc`
+ATTEMPT 2 (unit `fontaine-demosonly-1gpu-disc-r2`, launched
+20:20:55Z after the OOM fix): restart-from-0, same seed 0, same
+recipe; attempt-1 pace 15–18.7 s/step → step 1000 ≈ 01:0x–01:3xZ
+08-18, next tick(s) own the boundary. Attempt 1 trained clean to
+step 250 (loss 4.94→0.71, 62.26 GiB steady) then died 19:59:21Z:
+CUDA OOM in the FIRST eval probe — `build_probe_set` batches at the
+full per-rank batch (96) while chunked training only ever forwards
+micro-12; the fast-path decode's KV caches pushed 62→79 GiB. Latent
+in the frozen box script too. FIX landed: probe batches at
+`batch_size // backward_chunks` (`bijou/train/cli.py`); probe/eval
+tests green; verdict rule untouched (within-run delta, same probe
+batching both ends). Attempt-1 jsonl preserved as
+`train_log_attempt1_oom250.jsonl` (no eval record ever flushed).
+~1.25 GPU-h burned; ~5.8 total projected vs the 12 gate.
 
 **Steering**: none — `read` empty, inbox empty, nothing new in
-`history -n 5`.
+`history -n 5`. Incident + fix + relaunch posted in-channel
+(1539006392671805572).
 
 **Done**: queue item `utilization-ledger-rebase` CLOSED: trailing-
 7-day GPU-h recomputed per-run over 08-10 00:00Z → 08-17 19:45Z —
@@ -39,12 +51,11 @@ call).
 
 **Next**: `queue_cli.py next` = `prereg-draft-per-dataset-flow-norm-
 rerun` (gated on the verdict); `queue-box-kill-audit` is the
-unblocked CPU head. Discriminator boundary ~23:0xZ:
-`sft_drift_saga_charts.py --discriminator` verdict → drift-saga
-finalize + in-channel + un-gates the flow-norm pre-reg draft. This
-session rides babysit checkpoints to the boundary; if step 1000
-lands comfortably before the 23:20Z hard kill, the verdict reads
-here, else the next tick owns it. Owner-pending list unchanged
+unblocked CPU head. Discriminator boundary ~01:0x–01:3xZ 08-18
+(attempt 2): `sft_drift_saga_charts.py --discriminator` verdict →
+drift-saga finalize + in-channel + un-gates the flow-norm pre-reg
+draft — the instrument must read the FRESH jsonl only (attempt-1
+file carries no eval records). Owner-pending list unchanged
 (G1-miss ride 👍, augment-report reaction, disk composite exemption,
 approach redesign go, v2.1 bands, ckpt-format, morning-veto items).*
 
@@ -117,14 +128,17 @@ redesign go, v2.1 bands, ckpt-format, morning-veto items.*
 
 ## Utilization footer
 
-Session 2026-08-17 19:20–19:4xZ (work, exploit-infra; GPU-h accruing
-— discriminator riding at 14.9 s/step, verdict ~23:0xZ): **utilization
-ledger rebased — trailing-7-day window recomputed per-run from prune
+Session 2026-08-17 19:20–20:3xZ (work, exploit-infra; ~1.25 GPU-h
+burned on discriminator attempt 1's OOM death + attempt 2 accruing
+from 20:20:55Z, verdict ~01:0x–01:3xZ 08-18): **utilization ledger
+rebased — trailing-7-day window recomputed per-run from prune
 records + archive notes (local ~80.0/~80.2, box ~250/~254 FINAL at
-the box kill), footer baseline rewritten to the fresh stamp +
-2-note form, receipts note + rerunnable extract instrument landed,
-queue refilled `queue-box-kill-audit`** — babysit green at step 150;
-session rides to the ~23:0xZ boundary.
+the box kill), receipts note + rerunnable extract instrument landed
+— AND the discriminator's first-eval-probe CUDA OOM root-caused
+(probe batched at per-rank 96 vs training's micro-12) + fixed in
+`bijou/train/cli.py` + relaunched same-seed from 0; queue refilled
+`queue-box-kill-audit`** — attempt-1 jsonl preserved, incident
+in-channel, next ticks own the boundary.
 
 Session 2026-08-17 19:17–19:2xZ (tick; GPU-h accruing — discriminator
 riding): **quiet babysit — step 100/1000 at 15.8 s/step, loss

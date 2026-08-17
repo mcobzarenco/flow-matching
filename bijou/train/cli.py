@@ -2161,6 +2161,14 @@ def main() -> int:
     # shard for the rich wandb table.
     eval_probe: ProbeSet[Any] | None = None
     train_probe: ProbeSet[Any] | None = None
+    # Probe batches must fit the same footprint as a training forward:
+    # with chunked backward the model only ever sees batch_size //
+    # backward_chunks samples at once, and the probe's fast-path decode
+    # additionally carries KV caches. Probing at the full per-rank batch
+    # OOMs exactly when chunking was the thing making the batch fit
+    # (measured: 1-GPU batch-96 x 8 chunks trained at 62 GiB peak, first
+    # eval probe at batch 96 pushed past 79 GiB, 2026-08-17 19:58Z).
+    probe_batch_size = args.batch_size // args.backward_chunks
     if args.eval_samples is not None:
         if args.holdout_episodes > 0:
             eval_selection = select_datasets(
@@ -2195,7 +2203,7 @@ def main() -> int:
                 args.eval_seed,
                 rank,
                 world_size,
-                args.batch_size,
+                probe_batch_size,
                 keep_rich=is_main,
             )
             if is_main:
@@ -2203,7 +2211,7 @@ def main() -> int:
                     f"eval probe: {eval_probe.total} of {len(eval_dataset)} "
                     f"held-out-episode frames (seed {args.eval_seed}), "
                     f"sharded over {world_size} rank(s) in batches of "
-                    f"{args.batch_size}",
+                    f"{probe_batch_size}",
                     flush=True,
                 )
             # Only the fetched probe items survive; the second dataset
@@ -2217,7 +2225,7 @@ def main() -> int:
             args.eval_seed,
             rank,
             world_size,
-            args.batch_size,
+            probe_batch_size,
             keep_rich=is_main and eval_probe is None,
         )
         if is_main:

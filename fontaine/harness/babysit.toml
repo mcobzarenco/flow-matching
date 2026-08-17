@@ -1127,9 +1127,23 @@ jsonl = "/home/ubuntu/checkpoints/finetune/grasp_sft_v2_demosonly_1gpu_disc/trai
 total_steps = 1000
 probe_key = "eval_chunk_mae"
 vram_key = "vram_alloc_peak_gib"
-started_utc = "2026-08-17T18:44:15Z"
+started_utc = "2026-08-17T20:20:55Z"
+# ATTEMPT 2 (unit fontaine-demosonly-1gpu-disc-r2). Attempt 1 (unit
+# fontaine-demosonly-1gpu-disc, 18:44:15Z) trained clean to step 250
+# then DIED 19:59:21Z: CUDA OOM inside the FIRST eval probe —
+# build_probe_set batched the probe at the full per-rank batch (96)
+# while training only ever forwards micro-12 (batch 96 / 8 chunks);
+# the fast-path decode's KV caches pushed 62->79 GiB. Latent in the
+# frozen box script too (any 1-rank probe shard > micro). Fix: probe
+# batches at batch_size // backward_chunks (bijou/train/cli.py, this
+# commit); attempt-1 jsonl preserved as train_log_attempt1_oom250.jsonl
+# (no eval record ever flushed — verdict instrument reads the fresh
+# file only). Same seed 0, same recipe: restart-from-0 of the same
+# pre-registered run (no save existed before 500), NOT a resume —
+# fresh-seed-on-resume rule does not apply. ~1.25 GPU-h burned of the
+# 12 gate; attempt 2 ~4.5 projected => ~5.8 total, inside gate.
 gpu_hours_per_wall_hour = 1.0
-boundary = "1000 steps, probes every 250, saves every 500; box-pace estimate ~25-32 s/step for the full eff-96 step (~7-9 h wall) — H100 should match or beat; VERDICT READ AT 1000 (not a mid-run kill): delta eval MAE (1000 vs own 500) <= +0.30 => HEALTHY, distributed CONVICTED; >= +1.0158 => same-drift, distributed EXONERATED; else AMBIGUOUS (sft_drift_saga_charts.py --discriminator, bounds frozen pre-launch)"
+boundary = "1000 steps, probes every 250, saves every 500; attempt-1 measured pace 15-18.7 s/step rising with step (~4.5-5 h wall to 1000 from 20:2xZ launch => verdict ~01:0x-01:3xZ 08-18); VERDICT READ AT 1000 (not a mid-run kill): delta eval MAE (1000 vs own 500) <= +0.30 => HEALTHY, distributed CONVICTED; >= +1.0158 => same-drift, distributed EXONERATED; else AMBIGUOUS (sft_drift_saga_charts.py --discriminator, bounds frozen pre-launch)"
 anchors = [
     "this is a REPLICATION arm — drift here is the EXPECTED-INTERESTING outcome, not an anomaly to kill: NO probe-kill bars, ride to 1000 unless liveness/NaN/gate",
     "drifting 8x comparators (same recipe): demosonly eval 3.46->3.24->4.22->5.27->6.17 at 250..1250 (monotone from 500); healthy 1-GPU family stayed flat — judge shape vs these, verdict only at 1000",
