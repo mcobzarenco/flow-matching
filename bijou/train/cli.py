@@ -836,6 +836,33 @@ def main() -> int:
                     )
                 molmo_flow_section = ref_section
 
+    # The per-dataset flow scheme rides the SECTION tag (one recorded
+    # fact: build, save, serving and resume all read it). The flag
+    # flips the tag AFTER section resolution so the config-equality
+    # guards above compared source-recorded sections; omitting the flag
+    # on a source that already records the scheme inherits it.
+    per_dataset_flow_norm = False
+    if args.family in ("molmoact2_flow", "molmoact2_joint"):
+        assert molmo_flow_section is not None  # resolved or refused above
+        if args.per_dataset_flow_norm:
+            molmo_flow_section = dataclasses.replace(
+                molmo_flow_section,
+                normalization="q01q99_per_dataset",
+            )
+        per_dataset_flow_norm = molmo_flow_section.normalization == "q01q99_per_dataset"
+        if per_dataset_flow_norm and is_main:
+            print(
+                "[per-dataset-flow-norm] flow targets normalize under "
+                "each item's own dataset q01/q99 row "
+                + (
+                    "(--per-dataset-flow-norm)"
+                    if args.per_dataset_flow_norm
+                    else "(inherited from the source flow section)"
+                )
+                + "; the merged table still drives CE/state",
+                flush=True,
+            )
+
     # -- datasets --------------------------------------------------------
     selection = select_datasets(
         args.train_data,
@@ -1100,6 +1127,7 @@ def main() -> int:
         action_q99=(
             molmoact2_action_table[1] if molmoact2_action_table is not None else None
         ),
+        carry_item_action_stats=per_dataset_flow_norm,
     )
     if is_main and args.state_dropout > 0:
         print(

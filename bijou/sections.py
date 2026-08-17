@@ -362,7 +362,11 @@ class MolmoFlowDecoderConfig:
     ``normalization`` is the decoder-owned scheme tag:
     ``"q01q99"`` = clamp-normalized targets against the checkpoint's
     ``normalization`` DatasetStats table (whose q01/q99 fields ARE the
-    tag's merged table — stored once, not duplicated here)."""
+    tag's merged table — stored once, not duplicated here);
+    ``"q01q99_per_dataset"`` = clamp-normalized against each item's
+    OWN dataset row (metadata's ``per_dataset_stats``; the batch
+    carries the rows — --per-dataset-flow-norm). Checkpoints predating
+    the second scheme always record the first."""
 
     max_horizon: int
     max_action_dim: int
@@ -1075,6 +1079,13 @@ def build_molmo_flow_decoder(
     the write-side schema dict (decoders cannot import this module).
     Weights are NOT loaded here — the caller owns that (converted
     checkpoints inject compat tensors; fresh sections would init)."""
+    if section.normalization not in ("q01q99", "q01q99_per_dataset"):
+        raise SystemExit(
+            f"flow_decoder section records normalization scheme "
+            f"{section.normalization!r} — this build knows 'q01q99' "
+            "(decoder-baked merged table) and 'q01q99_per_dataset' "
+            "(per-item dataset rows); newer checkpoint than code?",
+        )
     if normalization.action_q01 is None or normalization.action_q99 is None:
         raise SystemExit(
             "molmo_flow needs the q01/q99 quantile rows in the checkpoint "
@@ -1122,6 +1133,7 @@ def build_molmo_flow_decoder(
         action_q01=torch.tensor(normalization.action_q01, dtype=torch.float32),
         action_q99=torch.tensor(normalization.action_q99, dtype=torch.float32),
         checkpoint_schema=section.to_dict(),
+        per_dataset_norm=section.normalization == "q01q99_per_dataset",
     )
     if dtype is not None:
         decoder = decoder.to(dtype)

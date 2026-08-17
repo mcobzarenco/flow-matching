@@ -220,6 +220,14 @@ class TrainArgs:
     # decoder-owned-global scheme; per-dataset-normalizing families
     # don't consume the global row at train time).
     recompute_stats: bool
+    # Flow targets normalize under each item's OWN dataset q01/q99 row
+    # instead of the decoder-baked merged table (molmoact2 flow/joint
+    # only; section tag "q01q99_per_dataset", recorded on the flow
+    # section so serving and resume inherit the scheme). Composes with
+    # --recompute-stats: the CE/state tables stay merged (recomputed);
+    # only the flow codec goes per-dataset. Omitting the flag on a
+    # run whose SOURCE section records the scheme inherits it.
+    per_dataset_flow_norm: bool
     self_attention_mode: str
     time_conditioning: str
     # SnapFlow φ_s target-time embedding on the flow decoder (implied by
@@ -500,6 +508,17 @@ class TrainArgs:
                         "checkpoint's table — there is no source table on "
                         "a fresh run",
                     )
+            if self.per_dataset_flow_norm and self.resume is not None:
+                raise ValueError(
+                    "--per-dataset-flow-norm is refused under --resume: "
+                    "the scheme is recorded on the checkpoint's flow "
+                    "section and inherited — omit the flag",
+                )
+            if self.family == "molmoact2_ar" and self.per_dataset_flow_norm:
+                raise ValueError(
+                    "--per-dataset-flow-norm is the flow-target scheme; "
+                    "molmoact2_ar builds no flow decoder",
+                )
             if self.family == "molmoact2_ar" and self.insulate_flow:
                 raise ValueError(
                     "--insulate-flow is the flow KV seam; molmoact2_ar "
@@ -529,6 +548,13 @@ class TrainArgs:
                 "decoder-owned-GLOBAL normalization scheme; "
                 f"{self.family} normalizes per dataset at collate time "
                 "and does not consume the global row in training",
+            )
+        if self.per_dataset_flow_norm and not self.family.startswith("molmoact2"):
+            raise ValueError(
+                "--per-dataset-flow-norm switches the molmo_flow "
+                "decoder off its baked merged table; "
+                f"{self.family} already normalizes per dataset at "
+                "collate time (mean/std) — the flag is meaningless there",
             )
         if self.family != "gemma_flow" and self.time_conditioning != "additive":
             raise ValueError(
@@ -935,6 +961,7 @@ class TrainArgs:
                 stream_counts=arch["stream_counts"],
                 insulate_flow=raw.insulate_flow,
                 recompute_stats=raw.recompute_stats,
+                per_dataset_flow_norm=raw.per_dataset_flow_norm,
                 joint_ce_weight=(
                     raw.joint_ce_weight if raw.joint_ce_weight is not None else 1.0
                 ),
@@ -1220,6 +1247,19 @@ def _build_parser() -> argparse.ArgumentParser:
         "(the table is then a locked run fact). Composes AFTER a "
         "convention fix, never instead of one — "
         "docs/so101-joint-conventions.md",
+    )
+    parser.add_argument(
+        "--per-dataset-flow-norm",
+        action="store_true",
+        help="normalize flow targets under each item's OWN dataset "
+        "q01/q99 row instead of the decoder-baked merged table (and "
+        "serve the same way: the batch carries the rows, sim rollouts "
+        "decode under the sim row). The mixture-misfit fix from the "
+        "2026-08-17 flow-regression isolation: a pooled/foreign table "
+        "can crush or clip a single rig's channels. molmoact2 "
+        "flow/joint only; recorded on the flow section "
+        "('q01q99_per_dataset') so serving + resume inherit it; "
+        "composes with --recompute-stats (CE/state tables stay merged)",
     )
     parser.add_argument(
         "--objective",

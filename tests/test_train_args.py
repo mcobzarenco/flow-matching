@@ -610,3 +610,80 @@ def test_recompute_stats_scoping() -> None:
             ["--init-from", "ckpt", "--recompute-stats", "--save-dir", "out"],
             _checkpoint(),  # gemma_flow: per-dataset normalization
         )
+
+
+def test_per_dataset_flow_norm_scoping() -> None:
+    """--per-dataset-flow-norm: molmoact2 flow/joint only — refused on
+    molmoact2_ar (no flow decoder), on gemma_flow (already per-dataset
+    at collate time), and under --resume (the scheme is a recorded
+    section fact, inherited)."""
+    joint = _checkpoint(
+        family=VLAFamily.MOLMOACT2_JOINT,
+        backbone="allenai/MolmoAct2-SO100_101",
+        decoder="molmo_flow",
+        chunk_size=30,
+        time_conditioning=TimeConditioning.ADDITIVE,
+        self_attention_mode=SelfAttentionMode.BIDIRECTIONAL,
+        objective={"kind": "joint", "ce_weight": 1.0, "insulate_flow": False},
+    )
+    args = _parse(
+        [
+            "--init-from",
+            "ckpt",
+            "--per-dataset-flow-norm",
+            "--backbone-text-lr",
+            "1e-5",
+            "--save-dir",
+            "out",
+        ],
+        joint,
+    )
+    assert args.per_dataset_flow_norm is True
+    # Composes with --recompute-stats (CE/state stay merged-recomputed).
+    args = _parse(
+        [
+            "--init-from",
+            "ckpt",
+            "--per-dataset-flow-norm",
+            "--recompute-stats",
+            "--backbone-text-lr",
+            "1e-5",
+            "--save-dir",
+            "out",
+        ],
+        joint,
+    )
+    assert args.per_dataset_flow_norm is True and args.recompute_stats is True
+    with pytest.raises(SystemExit):
+        _parse(
+            [
+                "--resume",
+                "ckpt",
+                "--per-dataset-flow-norm",
+                "--backbone-text-lr",
+                "1e-5",
+                "--save-dir",
+                "out",
+            ],
+            joint,
+        )
+    with pytest.raises(SystemExit):
+        _parse(
+            [
+                "--init-from",
+                "ckpt",
+                "--per-dataset-flow-norm",
+                "--objective",
+                "ar",
+                "--backbone-text-lr",
+                "1e-5",
+                "--save-dir",
+                "out",
+            ],
+            joint,
+        )
+    with pytest.raises(SystemExit):
+        _parse(
+            ["--init-from", "ckpt", "--per-dataset-flow-norm", "--save-dir", "out"],
+            _checkpoint(),  # gemma_flow: already per-dataset at collate
+        )

@@ -189,6 +189,13 @@ class CollatedBatch[I: BatchInputs]:
     # byte-identical.
     suffix_tokens: Tensor | None
     suffix_is_aux: Tensor | None
+    # The RAW per-item action rows (each [B, action_dim]), present iff
+    # the Collator was built with ``carry_item_action_stats`` (the
+    # per-dataset flow scheme). Distinct from ``action_stats``, whose
+    # quantile rows the merged-table override may pin to the CE table —
+    # this field is NEVER overridden. None keeps every other path
+    # byte-identical.
+    item_action_stats: NormStats | None = None
 
     def all_tensors(self) -> list[Tensor]:
         """Every tensor in the batch, nested fields included (stream-sync
@@ -202,6 +209,11 @@ class CollatedBatch[I: BatchInputs]:
             *([self.suffix_is_aux] if self.suffix_is_aux is not None else []),
             *self.action_stats.tensors().values(),
             *self.state_stats.tensors().values(),
+            *(
+                self.item_action_stats.tensors().values()
+                if self.item_action_stats is not None
+                else []
+            ),
             *self.encoder_inputs.tensors().values(),
         ]
 
@@ -216,6 +228,11 @@ class CollatedBatch[I: BatchInputs]:
             encoder_inputs=self.encoder_inputs.pin_memory(),
             action_stats=self.action_stats.pin_memory(),
             state_stats=self.state_stats.pin_memory(),
+            item_action_stats=(
+                self.item_action_stats.pin_memory()
+                if self.item_action_stats is not None
+                else None
+            ),
         )
 
     def to(
@@ -233,6 +250,11 @@ class CollatedBatch[I: BatchInputs]:
             encoder_inputs=self.encoder_inputs.to(device, non_blocking=non_blocking),
             action_stats=self.action_stats.to(device, non_blocking=non_blocking),
             state_stats=self.state_stats.to(device, non_blocking=non_blocking),
+            item_action_stats=(
+                self.item_action_stats.to(device, non_blocking=non_blocking)
+                if self.item_action_stats is not None
+                else None
+            ),
         )
 
 
@@ -402,6 +424,15 @@ class Collator[I: BatchInputs]:
     # Both-or-neither.
     action_q01: Tensor | None = None
     action_q99: Tensor | None = None
+    # The per-dataset flow scheme's carrier (molmo_flow section tag
+    # "q01q99_per_dataset"): when True, the batch additionally carries
+    # ``item_action_stats`` — the RAW per-item action rows, exempt from
+    # the merged-table override above — so the flow decoder can
+    # normalize/denormalize each item under its OWN dataset's q01/q99
+    # while ``action_stats`` keeps serving the CE/token contract.
+    # Items must carry quantile rows (checked at collation). False
+    # keeps every existing path byte-identical (field stays None).
+    carry_item_action_stats: bool = False
     _generator: torch.Generator | None = dataclasses.field(
         default=None,
         repr=False,
@@ -645,10 +676,18 @@ class Collator[I: BatchInputs]:
             cameras = cameras[: self.max_cameras]
         return cameras
 
-    def _stats(self, items: list[dict[str, Any]], modality: str) -> NormStats:
+    def _stats(
+        self,
+        items: list[dict[str, Any]],
+        modality: str,
+        *,
+        per_item: bool = False,
+    ) -> NormStats:
         """Stack one modality's per-item stats tensors; quantiles are all
         present (dataset items) or all absent (items built from an
-        old checkpoint's stats table) — a mixed batch is a wiring bug."""
+        old checkpoint's stats table) — a mixed batch is a wiring bug.
+        ``per_item`` bypasses the merged-table override below (the
+        ``item_action_stats`` carrier: RAW rows, never overridden)."""
         with_quantiles = [f"{modality}_q01" in item for item in items]
         if any(with_quantiles) and not all(with_quantiles):
             raise ValueError(
@@ -656,8 +695,16 @@ class Collator[I: BatchInputs]:
                 "stats — items from datasets always carry them, items from "
                 "an old checkpoint's stats table never do; do not mix",
             )
+        if per_item and not all(with_quantiles):
+            raise ValueError(
+                f"carry_item_action_stats needs per-item {modality} "
+                "q01/q99 rows on every item, but this batch carries none "
+                "— the per-dataset flow scheme cannot fall back to an "
+                "old checkpoint's stats table",
+            )
         if (
-            modality == "action"
+            not per_item
+            and modality == "action"
             and self.action_q01 is not None
             and self.action_q99 is not None
         ):
@@ -781,6 +828,11 @@ class Collator[I: BatchInputs]:
             action_tokens=action_tokens,
             suffix_tokens=suffix_tokens,
             suffix_is_aux=suffix_is_aux,
+            item_action_stats=(
+                self._stats(items, "action", per_item=True)
+                if self.carry_item_action_stats
+                else None
+            ),
         )
 
 

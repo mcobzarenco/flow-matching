@@ -725,6 +725,14 @@ class MolmoFlowDecoder(nn.Module):
         self.checkpoint_schema: dict[str, object] | None = None
         self.action_q01 = torch.zeros(config.max_action_dim, dtype=torch.float32)
         self.action_q99 = torch.zeros(config.max_action_dim, dtype=torch.float32)
+        # The per-dataset normalization scheme (section tag
+        # "q01q99_per_dataset"): targets normalize — and chunks
+        # denormalize — under each ITEM'S own dataset q01/q99 row
+        # (batch.item_action_stats, collator-carried) instead of the
+        # decoder-baked merged table above. The baked table stays
+        # configured (metadata still records the merged row); it is
+        # simply not the flow codec under this scheme.
+        self.per_dataset_norm = False
         self.reset_parameters()
 
     def configure(
@@ -734,9 +742,15 @@ class MolmoFlowDecoder(nn.Module):
         action_q01: Tensor,
         action_q99: Tensor,
         checkpoint_schema: dict[str, object],
+        per_dataset_norm: bool = False,
     ) -> None:
         """Attach the deployment facts (loader-called; predict/loss refuse
         an unconfigured decoder loudly).
+
+        ``per_dataset_norm`` selects the section's normalization scheme:
+        False = the baked merged table below is the flow codec
+        ("q01q99"); True = each item's own dataset row is
+        ("q01q99_per_dataset" — the batch carries the rows).
 
         Shapes:
         - ``action_q01``/``action_q99``: [action_dim] raw-unit quantiles
@@ -766,6 +780,7 @@ class MolmoFlowDecoder(nn.Module):
         )
         self.runtime = runtime
         self.checkpoint_schema = checkpoint_schema
+        self.per_dataset_norm = per_dataset_norm
 
     def _configured(self) -> MolmoFlowRuntime:
         if self.runtime is None:
@@ -802,7 +817,11 @@ class MolmoFlowDecoder(nn.Module):
         deployment operating point), slice the real action width, clamp
         + q01/q99-unnormalize, and the reference's dtype round-trip.
         ``batch`` stats are deliberately unused — normalization is
-        decoder-owned (§8.13 decision 6).
+        decoder-owned (§8.13 decision 6) — EXCEPT under
+        ``per_dataset_norm``, where the chunk denormalizes under the
+        collator-carried per-item rows (``batch.item_action_stats``):
+        each row is the serving rig's own table, the row its items'
+        targets trained under (sim rollouts attach the sim row).
 
         Returns ``(actions, noise)`` — the raw natural product; the
         family wraps it. ``noise`` is ALWAYS the initial draw the
@@ -814,8 +833,15 @@ class MolmoFlowDecoder(nn.Module):
         - returns actions: [B, n_action_steps, action_dim] fp32 raw
           units
         """
-        del batch  # stats intentionally unused; signature mirrors flow's
         runtime = self._configured()
+        if self.per_dataset_norm:
+            decode_q01, decode_q99 = item_quantile_rows(batch, runtime.action_dim)
+        else:
+            # Merged scheme: stats intentionally unused (the signature
+            # mirrors flow's); the baked table is the codec.
+            decode_q01 = self.action_q01[: runtime.action_dim]
+            decode_q99 = self.action_q99[: runtime.action_dim]
+        del batch
         kv_states = layer_kv_pairs(memory, num_blocks=len(self.blocks))
         conditioning = conditioning_mask_of(memory)
         if noise is None:
@@ -839,8 +865,8 @@ class MolmoFlowDecoder(nn.Module):
         sliced = chunk[:, : runtime.n_action_steps, : runtime.action_dim]
         unnormalized = unnormalize_chunk(
             sliced.cpu(),
-            self.action_q01[: runtime.action_dim].cpu(),
-            self.action_q99[: runtime.action_dim].cpu(),
+            decode_q01.cpu(),
+            decode_q99.cpu(),
         )
         # The reference's output dtype path: unnormalize in fp32, cast
         # BACK to the sampled dtype, then fp32 — the bf16 quantization is
@@ -1260,7 +1286,11 @@ def molmo_flow_loss_sums(
     KV off the prefix cache (detached under ``insulate`` — their
     post-train KI), q01/q99-clamp-normalize the RAW batch actions with
     the DECODER'S table (decision 6: per-sample stats deliberately
-    unused), pad to max_action_dim, draw t from the RECORDED law and
+    unused) — or, under ``per_dataset_norm``, with each item's OWN
+    dataset row (``batch.item_action_stats``; the per-dataset scheme:
+    a mixture's rig-misfit table cannot then crush or clip any single
+    rig's channels), pad to max_action_dim, draw t from the RECORDED
+    law and
     ε ~ N(0, I) (ambient RNG — the trainer's seeded stream, matching
     every other decoder's loss), and return the sum-form objective.
     ``times``/``noise`` overrides are for oracles.
@@ -1292,10 +1322,15 @@ def molmo_flow_loss_sums(
             f"action_horizon {runtime.action_horizon} — --chunk-size must "
             "match the checkpoint's horizon",
         )
+    if decoder.per_dataset_norm:
+        target_q01, target_q99 = item_quantile_rows(batch, runtime.action_dim)
+    else:
+        target_q01 = decoder.action_q01[: runtime.action_dim]
+        target_q99 = decoder.action_q99[: runtime.action_dim]
     normalized = normalize_targets(
         actions,
-        decoder.action_q01[: runtime.action_dim].to(actions.device),
-        decoder.action_q99[: runtime.action_dim].to(actions.device),
+        target_q01.to(actions.device),
+        target_q99.to(actions.device),
     )
     padded = F.pad(
         normalized,
@@ -1437,6 +1472,48 @@ def flow_matching_loss_sums(
         dtype=torch.float32,
     )
     return per_position.sum(), count
+
+
+def item_quantile_rows(
+    batch: CollatedBatch[Any],
+    action_dim: int,
+) -> tuple[Tensor, Tensor]:
+    """The per-dataset scheme's normalization rows off a batch: each
+    item's own dataset q01/q99, collator-carried on
+    ``item_action_stats`` (``batch.action_stats`` may hold the merged
+    CE table under the joint family — never read here). Loud on every
+    wiring gap: a batch without the carrier (collator built without
+    ``carry_item_action_stats``) or without quantile rows (items
+    resolved from a pre-quantile checkpoint table) cannot train or
+    serve this scheme.
+
+    Shapes:
+    - returns: ([B, 1, dim], [B, 1, dim]) fp32 — broadcast-ready
+      against [B, T, dim] chunks
+    """
+    stats = batch.item_action_stats
+    if stats is None:
+        raise ValueError(
+            "per-dataset flow normalization needs the batch's per-item "
+            "action rows (item_action_stats) — the collator was built "
+            "without carry_item_action_stats; wiring bug",
+        )
+    if stats.q01 is None or stats.q99 is None:
+        raise ValueError(
+            "per-dataset flow normalization needs per-item action "
+            "q01/q99 rows, but the batch items carry none (stats "
+            "resolved from a pre-quantile table?) — the scheme cannot "
+            "fall back to mean/std",
+        )
+    if stats.q01.shape[-1] != action_dim:
+        raise ValueError(
+            f"per-item action rows are {stats.q01.shape[-1]}-wide but the "
+            f"decoder is configured for action_dim {action_dim}",
+        )
+    return (
+        stats.q01.to(torch.float32)[:, None, :],
+        stats.q99.to(torch.float32)[:, None, :],
+    )
 
 
 def normalize_targets(actions: Tensor, q01: Tensor, q99: Tensor) -> Tensor:

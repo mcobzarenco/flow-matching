@@ -401,7 +401,8 @@ def tile_memory(memory: GemmaMemory, draws: int) -> GemmaMemory:
 
 def tile_stats(batch: CollatedBatch[Any], draws: int) -> CollatedBatch[Any]:
     """The FLOW-DECODE view of a batch at draws x B: only the fields
-    FlowDecoder.predict_chunk reads — ``state`` and the two stats — are
+    FlowDecoder.predict_chunk reads — ``state``, the two stats, and the
+    per-item action rows when carried — are
     tiled (draws-major, matching :func:`tile_memory`). Every other
     field keeps its B rows and must not be consumed at draws scale."""
 
@@ -419,6 +420,11 @@ def tile_stats(batch: CollatedBatch[Any], draws: int) -> CollatedBatch[Any]:
         state=batch.state.repeat(draws, 1),
         action_stats=tile(batch.action_stats),
         state_stats=tile(batch.state_stats),
+        item_action_stats=(
+            tile(batch.item_action_stats)
+            if batch.item_action_stats is not None
+            else None
+        ),
     )
 
 
@@ -1004,6 +1010,16 @@ class BijouPolicy:
             if self.spec.family in (VLAFamily.MOLMOACT2_AR, VLAFamily.MOLMOACT2_JOINT)
             else None
         )
+        # The per-dataset flow scheme (section tag "q01q99_per_dataset",
+        # read off the built decoder): the batch must carry the RAW
+        # per-item rows so the flow decode denormalizes under the
+        # serving rig's own table — the harness-attached stats (rollout
+        # --stats-repo-id picks the row) — while ``action_stats`` keeps
+        # the merged CE table above for the token leg.
+        per_dataset_flow = (
+            isinstance(self.flow_decoder, MolmoFlowDecoder)
+            and self.flow_decoder.per_dataset_norm
+        )
         # The families whose DESIGNATED action decoder is the AR suffix
         # (flow-less): their prompts always carry [generate|…] and the
         # request set is the caller's ask; a joint family serves through
@@ -1052,6 +1068,7 @@ class BijouPolicy:
             state_q99=state_table[1] if state_table is not None else None,
             action_q01=action_table[0] if action_table is not None else None,
             action_q99=action_table[1] if action_table is not None else None,
+            carry_item_action_stats=per_dataset_flow,
         )
 
     @property

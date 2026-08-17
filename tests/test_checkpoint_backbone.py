@@ -157,6 +157,7 @@ def make_args(save_dir: Path) -> TrainArgs:
         stream_counts=(4, 4, 8),
         insulate_flow=False,
         recompute_stats=False,
+        per_dataset_flow_norm=False,
         self_attention_mode="causal_actions",
         time_conditioning="additive",
         target_time_embed=False,
