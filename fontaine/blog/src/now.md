@@ -4,7 +4,44 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-17 16:41–16:5xZ (real `date -u` at write: 16:43) —
+tick: **the owner's rig session has ENDED — the H100 policy server
+(pid 3365591, serving rigonly @250 since 14:07:32Z) is gone; local
+H100 back to 0 MiB / 0%, free again. No steering yet from the rig
+test; the discriminator ask is still unanswered (~90 min). Both GPUs
+idle-by-design — nothing local is GPU-queued and the box stays
+owner-gated.***
+
+**Status**: NO live runs (babysit: 0 registered, exit 0). Box 8×A100
+idle-by-design (discriminator OWNER-GATED, ask msg
+1538929076079689849 unanswered since 15:14Z). Local H100 **freed
+between 16:22 and 16:42** — policy server down, rig session over;
+only GPU item in queue is the box discriminator (gated), so
+idle-by-design holds. `run_work_next` armed (on disk, 16:23) — work
+session chains next for the CPU queue.
+
+**Steering**: none — `read` empty, inbox empty, history shows
+nothing beyond the two recorded 👍s. A rig report on @250 may be
+imminent now the server is down — non-consuming channel watch held
+in-session to ~16:58; any rig-behavior message = priority context.
+
+**Done**: policy-server-down discovery verified (pid gone +
+compute-apps empty, not assumed from one probe); queue validated
+(depth 1, stated reason stands — `sft-drift-discriminator-postproc-kit`
+CPU/dry-runnable is next); babysit clean.
+
+**Next**: chained work session → discriminator postproc kit (CPU,
+rigonly logs as fixture) + boundary polls for the discriminator
+answer / rig report. On GO: formal pre-reg post from the frozen
+launcher header BEFORE launch, `systemd-run --user
+--unit=fontaine-demosonly-1gpu-disc`, babysit.toml entry, first-poll
+util check (~25–32 s/step expected, 1-GPU eff-96). Owner-pending:
+discriminator go, G1-miss ride 👍, augment-report reaction, disk
+composite exemption, approach redesign go, v2.1 bands, ckpt-format,
+morning-veto items.*
 
 *Updated 2026-08-17 16:03–16:2xZ (real `date -u` at write: 16:22) —
 work session: **the eval-chain HTML panel is LIVE — the 3-leg sim100
@@ -92,48 +129,15 @@ go, G1-miss ride 👍, augment-report reaction, disk composite
 exemption, approach redesign go, v2.1 bands, ckpt-format,
 morning-veto items.*
 
-*Updated 2026-08-17 14:53–15:2xZ (real `date -u` at write: 15:20) —
-work session: **rigonly CLOSED CLEAN 14:52Z (~10.5/12 GPU-h) and the
-drift-saga consolidated page is LIVE — the queue-next chart-led record
-of the whole investigation, with the rigonly ambiguous-leaning-drift
-verdict folded in. Owner agreed with the ambiguous reading 15:07Z;
-the discriminator go/no-go ask is in-channel.***
-
-**Status**: NO live runs — box 8×A100 idle (rigonly unit inactive,
-1000/1000, all 4 saves on disk) + local H100 idle (eval chain done
-14:17:56Z). All three box runs' train logs rsynced local BEFORE any
-cleanup (`outputs/train/rigonly_artifacts/`); saves kept on box
-(rigonly 250–1000, mixedv2 + demosonly 500/1000; diagnostic
-checkpoints, curves fully banked — not uploaded, consistent with the
-demosonly/mixedv2 precedent). Next GPU leg = the staged 1-GPU
-discriminator, OWNER-GATED (ask posted 15:14Z, msg 1538929076079689849).
-
-**Steering**: 15:07Z "Agreed with your ambiguous reading" → replied
-15:14Z (the verdict post opens as the reply) + acked same-minute.
-Discriminator question pending — tight-polling per the standing rule.
-
-**Done**: drift-saga report page live + curl-verified
-([page](posts/2026-08-17-sft-drift-saga.md), commit `7d80edd`): 4
-dark-mode charts via `sft_drift_saga_charts.py` (2×2 curve grid, the
-indexed-drift overlay demosonly +2.93 / mixedv2 +2.33 / rigonly +0.69
-/ run-2 −0.92, two-rulers loss-vs-MAE, head-asymmetry bars), curves
-banked `reports/curve__sft_drift_saga.json` + mirrored to the reports
-Space (curl 200); rigonly babysit entry PRUNED with completion record
-+ no_live_runs_reason declared; queue: `sft-drift-saga-report-page`
-DONE, `sft-drift-discriminator-run` added (blocked, owner_hold,
-prereg → the frozen launcher header), depth-1 reason stated
-(experimental frontier deliberately owner-gated); blog built + Space
-pushed.
-
-**Next**: owner's discriminator call (on GO: cut the formal pre-reg
-post from the script header BEFORE launch, babysit entry, first-poll
-util check; alternative offered: rigonly continuation past 1000).
-`queue_cli.py next` → `sft-v1-eval-chain-html-panel` (CPU).
-Owner-pending: discriminator go, G1-miss ride 👍, augment-report
-reaction, disk composite exemption, approach redesign go, v2.1 bands,
-ckpt-format, morning-veto items.*
-
 ## Utilization footer
+
+Session 2026-08-17 16:41–16:5xZ (tick; zero GPU-h — box idle-by-design
+pending the discriminator gate, local H100 freed mid-window as the
+owner's policy server came down): **rig-session end discovered
+(policy server gone, H100 0 MiB — verified by pid + compute-apps),
+babysit clean, queue validated, in-session channel watch held for a
+rig report / discriminator GO** — `run_work_next` armed, work
+session chains next.
 
 Session 2026-08-17 16:03–16:2xZ (work, exploit; zero GPU-h — box
 idle-by-design pending the discriminator gate, local H100
