@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-17T14:33:30Z
+**Updated:** 2026-08-17T15:12:39Z
 
-**Depth call:** depth 1: drift-saga report page (CPU, draftable now). Next experimental work is boundary-gated (rigonly verdict ~15:0xZ, leg 3 ~14:1xZ) with the 1-GPU discriminator pre-staged as the next arm; the follow-up choice is owner-gated on those verdicts. Both GPUs carry live ridden runs.
+**Depth call:** depth 1 (sft-v1-eval-chain-html-panel, CPU): the experimental frontier is deliberately owner-gated — the drift investigation has one designed next cut (the staged 1-GPU discriminator, item sft-drift-discriminator-run BLOCKED on the owner go asked in-channel 15:1xZ 08-17) and pre-registering further runs before that verdict would violate the run-only-what-changes-the-next-decision rule. Both GPUs idle by design pending that word.
 
-**24 open** (Live 2 · Queued 2 · Blocked 20 · Done 205)
+**24 open** (Live 2 · Queued 1 · Blocked 21 · Done 206)
 
 ## 🔴 Live (2)
 
@@ -40,7 +40,7 @@ sim100 on run-2's step_000500 (owner order 08:03:49Z 08-17, msg 1538820633826299
 
 ---
 
-## 🟢 Queued (2)
+## 🟢 Queued (1)
 
 *ready — waiting on a window or a boundary*
 
@@ -58,23 +58,23 @@ Eval-chain HTML panel + results-page integration: browsable panel for the 3-leg 
 
 ---
 
-**`sft-drift-saga-report-page`** · `cpu`
+## 🟡 Blocked (21)
 
-Chart-led drift-saga page (owner preference: chart-led consolidated reports): the grasp-SFT MAE-drift investigation as one page
+*waiting on a prerequisite, a boundary, or the owner*
 
-**boundary:** Queued 13:40Z 08-17. Draftable now (CPU); FINALIZE slots for the rigonly/discriminator verdicts. Feeds the eventual fix pre-reg.
+**`sft-drift-discriminator-run`** · `gpu-box` · **⛔ owner hold**
+
+1-GPU drift discriminator (OWNER-GATED, staged on box: launch_box_grasp_sft_v2_demosonly_1gpu_discriminator.sh): demosonly recipe on ONE box GPU, same eff-96/micro-12/seed/augment/recompute-stats/init
+
+**boundary:** Queued 15:1xZ 08-17 at the rigonly close (ambiguous-leaning-drift verdict posted; ask in-channel). BLOCKED on the owner's go — box is idle, launch is one systemd-run command (header of the staged script). · `fontaine/scripts/box/launch_box_grasp_sft_v2_demosonly_1gpu_discriminator.sh`
 
 <details><summary>full record</summary>
 
-Chart-led drift-saga page (owner preference: chart-led consolidated reports): the grasp-SFT MAE-drift investigation as one page — the isolation grid (run-1b remap / run-2 pooled / mixed-v2 merged / demosonly native / rigonly cut), the banked MAE curves per run (all four drifting curves + the healthy probe), the two-rulers mechanism (normalized-loss vs raw-degree MAE, 1/(q99-q01)^2 weighting), the head asymmetry (step500 flow 4/100 vs token 16/100), and the config-delta table (distributed/augment/batch/table-mode/init). Curves are already banked in logs/queue; the page can be drafted now and finalizes when the rigonly (+discriminator) verdicts land. Dark-mode charts, plain-words opener per papers rule.
+1-GPU drift discriminator (OWNER-GATED, staged on box: launch_box_grasp_sft_v2_demosonly_1gpu_discriminator.sh): demosonly recipe on ONE box GPU, same eff-96/micro-12/seed/augment/recompute-stats/init — single delta = distributed machinery removed (torchrun+zero1+chunk-grad-allreduce). Every drifting run (run-1b/run-2/mixedv2/demosonly, + rigonly ambiguous) is 8x distributed; every healthy run (44/100 probe, 28/100 stage-C) was 1-GPU. Read: MAE probes every 250; flat-through-1000 convicts the distributed path, same-drift exonerates it (remaining deltas: augment/batch-geometry/recompute-at-launch/init). ~7-9 GPU-h, ~7-9 h wall on gpu0. On completion: verdict to the drift-saga page finalize slot + in-channel. NOTE: prereg field points at the staged frozen launcher (recipe + read rule in its header); cut a formal pre-reg post from it BEFORE launch on the owner go.
 
 </details>
 
 ---
-
-## 🟡 Blocked (20)
-
-*waiting on a prerequisite, a boundary, or the owner*
 
 **`expert-approach-quasistatic-redesign`** · `cpu` · **⛔ owner hold**
 
@@ -352,9 +352,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (205)
+## ✅ Done (206)
 
 *closed — the full record stays in each fold*
+
+**`sft-drift-saga-report-page`** · `cpu`
+
+Chart-led drift-saga page (owner preference: chart-led consolidated reports): the grasp-SFT MAE-drift investigation as one page
+
+**boundary:** Queued 13:40Z 08-17. Draftable now (CPU); FINALIZE slots for the rigonly/discriminator verdicts. Feeds the eventual fix pre-reg. | DONE 15:1xZ 08-17 work session: page live (posts/2026-08-17-sft-drift-saga.md, 4 dark-mode charts via sft_drift_saga_charts.py, curves banked reports/curve__sft_drift_saga.json from box train_log.jsonl copies rsynced pre-cleanup incl. rigonly full verdict eval 9.24/8.82/9.15/9.51 + train 5.53/4.62/4.03/4.23 = ambiguous-leaning-drift, +0.69 vs demosonly +2.93 indexed). FINALIZE slot remains for the discriminator verdict (owner-gated).
+
+<details><summary>full record</summary>
+
+Chart-led drift-saga page (owner preference: chart-led consolidated reports): the grasp-SFT MAE-drift investigation as one page — the isolation grid (run-1b remap / run-2 pooled / mixed-v2 merged / demosonly native / rigonly cut), the banked MAE curves per run (all four drifting curves + the healthy probe), the two-rulers mechanism (normalized-loss vs raw-degree MAE, 1/(q99-q01)^2 weighting), the head asymmetry (step500 flow 4/100 vs token 16/100), and the config-delta table (distributed/augment/batch/table-mode/init). Curves are already banked in logs/queue; the page can be drafted now and finalizes when the rigonly (+discriminator) verdicts land. Dark-mode charts, plain-words opener per papers rule.
+
+</details>
+
+---
 
 **`grasp-sft-v2-demosonly-endpoint-kit`** · `cpu`
 

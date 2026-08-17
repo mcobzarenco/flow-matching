@@ -1079,24 +1079,20 @@
 # owner-designed rig-only cut (below); 1-GPU discriminator stays
 # staged (launch_box_grasp_sft_v2_demosonly_1gpu_discriminator.sh).
 
-[[run]]
-name = "grasp_sft_rigonly_8xa100"
-kind = "train-jsonl"
-host = "147.224.218.164"
-pgrep = "bijou.train"
-pgrep_min = 8
-gpu_indices = [0, 1, 2, 3, 4, 5, 6, 7]
-gpu_mem_min_mib = 20000
-jsonl = "/home/ubuntu/checkpoints/finetune/grasp_sft_rigonly_8xa100/train_log.jsonl"
-total_steps = 1000
-started_utc = "2026-08-17T13:34:08+00:00"
-gpu_hours_per_wall_hour = 8.0
-boundary = "1000 steps, save+eval every 250. Owner-designed data-axis cut (13:30Z): rig datasets ONLY (pick_place_v2 + clean, 51 eps / 32,431 frames, ~3 epochs), recipe otherwise verbatim incl. the full distributed stack; --recompute-stats = rig-native table. Boundary ~15:0xZ: post the MAE curve verdict — drift on known-good rig data convicts the recipe/stack; health implicates the sim-demo corpus; then the staged 1-GPU discriminator is the complementary cut (owner decides). Rsync any eval artifacts local BEFORE box cleanup."
-anchors = [
-    "drifting-runs signature: MAE rising monotone from step 500 on BOTH slices while losses fall (mixed v2 and demosonly curves banked in queue/now.md); rig-only healthy = corpus implicated, rig-only drifting = recipe/stack convicted",
-    "run-2's rig-slice context (NOT directly comparable - different table/share): real v2 train 8.15 / eval 15.77 at step 3000",
-    "rate ~4 s/step expected (same batch geometry); 1000 steps ~ 1.2 h stepping",
-]
-[[run.gates]]
-kind = "gpu_hours_max"
-value = 12.0
+# grasp_sft_rigonly_8xa100 entry PRUNED 15:0xZ 08-17 work session —
+# run COMPLETE 14:52Z (1000/1000, unit fontaine-grasp-sft-rigonly
+# inactive, all 4 saves 250/500/750/1000 on disk; 13:34:08→~14:53Z
+# wall ≈ 10.5/12 GPU-h gate, ~3.9-4.1 s/step steady, 8×~99% util,
+# zero tracebacks). VERDICT READ: AMBIGUOUS-LEANING-DRIFT — eval MAE
+# 9.24→8.82→9.15→9.51 (dip-then-rise from 500, the drifting SHAPE,
+# ends above @250) + train 5.53→4.62→4.03→4.23 (first uptick at the
+# endpoint), but magnitude +0.69 eval over 500 steps vs demosonly's
+# +2.9, holdout only 6 episodes. NOT the clean both-slices monotone
+# signature; NOT clean health either. Artifacts rsynced local BEFORE
+# any cleanup (outputs/train/rigonly_artifacts/: rigonly + mixedv2 +
+# demosonly train_log.jsonl + full stdout log). Consolidated verdict
+# + charts = drift-saga report page (this session); next cut = the
+# staged 1-GPU discriminator (owner decides, ask posted).
+
+no_live_runs_reason = "declared 15:0xZ 08-17 work session: rigonly COMPLETE 14:52Z and pruned (ambiguous-leaning-drift verdict, artifacts rsynced local). Box 8×A100 idle + local H100 idle; next GPU leg = the staged 1-GPU discriminator (launch_box_grasp_sft_v2_demosonly_1gpu_discriminator.sh, single delta: distributed machinery removed) — OWNER-GATED, ask posted in-channel this session."
+
