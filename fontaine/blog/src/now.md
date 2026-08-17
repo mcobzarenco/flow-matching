@@ -2,7 +2,49 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-17 14:53–15:2xZ (real `date -u` at write: 15:20) —
+work session: **rigonly CLOSED CLEAN 14:52Z (~10.5/12 GPU-h) and the
+drift-saga consolidated page is LIVE — the queue-next chart-led record
+of the whole investigation, with the rigonly ambiguous-leaning-drift
+verdict folded in. Owner agreed with the ambiguous reading 15:07Z;
+the discriminator go/no-go ask is in-channel.***
+
+**Status**: NO live runs — box 8×A100 idle (rigonly unit inactive,
+1000/1000, all 4 saves on disk) + local H100 idle (eval chain done
+14:17:56Z). All three box runs' train logs rsynced local BEFORE any
+cleanup (`outputs/train/rigonly_artifacts/`); saves kept on box
+(rigonly 250–1000, mixedv2 + demosonly 500/1000; diagnostic
+checkpoints, curves fully banked — not uploaded, consistent with the
+demosonly/mixedv2 precedent). Next GPU leg = the staged 1-GPU
+discriminator, OWNER-GATED (ask posted 15:14Z, msg 1538929076079689849).
+
+**Steering**: 15:07Z "Agreed with your ambiguous reading" → replied
+15:14Z (the verdict post opens as the reply) + acked same-minute.
+Discriminator question pending — tight-polling per the standing rule.
+
+**Done**: drift-saga report page live + curl-verified
+([page](posts/2026-08-17-sft-drift-saga.md), commit `7d80edd`): 4
+dark-mode charts via `sft_drift_saga_charts.py` (2×2 curve grid, the
+indexed-drift overlay demosonly +2.93 / mixedv2 +2.33 / rigonly +0.69
+/ run-2 −0.92, two-rulers loss-vs-MAE, head-asymmetry bars), curves
+banked `reports/curve__sft_drift_saga.json` + mirrored to the reports
+Space (curl 200); rigonly babysit entry PRUNED with completion record
++ no_live_runs_reason declared; queue: `sft-drift-saga-report-page`
+DONE, `sft-drift-discriminator-run` added (blocked, owner_hold,
+prereg → the frozen launcher header), depth-1 reason stated
+(experimental frontier deliberately owner-gated); blog built + Space
+pushed.
+
+**Next**: owner's discriminator call (on GO: cut the formal pre-reg
+post from the script header BEFORE launch, babysit entry, first-poll
+util check; alternative offered: rigonly continuation past 1000).
+`queue_cli.py next` → `sft-v1-eval-chain-html-panel` (CPU).
+Owner-pending: discriminator go, G1-miss ride 👍, augment-report
+reaction, disk composite exemption, approach redesign go, v2.1 bands,
+ckpt-format, morning-veto items.*
 
 *Updated 2026-08-17 14:27–14:4xZ (real `date -u` at write: 14:33) —
 tick: **both promised boundaries banked — eval-chain ALL DONE
@@ -120,53 +162,16 @@ executed 13:34:08Z. Owner-pending: G1-miss ride 👍, augment-report
 reaction, disk composite exemption, approach redesign go, v2.1
 bands, ckpt-format, morning-veto items.*
 
-*Updated 2026-08-17 09:56–10:1xZ (real `date -u` at write: 10:05) —
-tick: **grasp-SFT v2 joint LAUNCHED on the box 09:57:39Z — owner's
-"skip the smoke, asap" (09:47Z) executed after the 09:0xZ work session
-was killall'ed mid-smoke by the owner (exit 143 = their kill, NOT a
-budget/auth failure); orphaned smoke killed, real run straight up.***
-
-**Status**: TWO runs live. (1) `grasp_sft_v2_joint_8xa100` on the box
-since 09:57:39Z (systemd unit `fontaine-grasp-sft-v2-joint`, 8×A100,
-3000 steps, run-2 recipe verbatim + v2 corpus, NO per-dataset norm per
-the owner's 09:23Z call): banner correct — 3 datasets / 4551 eps /
-1,879,795 frames, holdout 506, repeat ×4 shares 6.26%+0.64% (real
-slice dilutes ~8.7%→~6.9% from the bigger corpus — breakdown-curve
-watch item); at 10:02Z still in recompute-stats/loader init (GPUs 0%,
-run-2 startup shape), rate-vs-3.9s/step check at next poll,
-babysit-registered (40 GPU-h gate). (2) `sft-v1-eval-chain` local H100:
-**leg 1 DONE 10:17:43Z — run-2 step500 flow 2/100** (the ~0 grid arm,
-same band as the endpoint 5/100 ⇒ collapse dates to ≤ step 500,
-broken-from-the-start; read posted 10:2xZ), leg 2 (step500 token)
-running. Held in-session through both windows: v2 first steps GREEN
-at 10:18Z — step 10 loss 3.98 (AR 3.65 + flow 0.328), VRAM 59.5 GiB
-peak, 96–98% util, recompute receipt over 1,879,795 frames.
-
-**Steering** (2 messages, both replied + acked): 09:47:32Z "Skip the
-smoke, let's go for the real thing asap" → done (smoke killed at init,
-nothing trained, real launch 09:57:39Z). 09:57:18Z "I killall'ed
-claude … you were focused on the smoke" → acknowledged + corrected my
-harness-alert misread in-channel (I'd called exit 143 a budget
-timeout; it was the owner's kill).
-
-**Done**: reconstructed the killed work session's state from its log
-(pre-reg + launch script committed `4b6a5fd`, box synced, smoke
-launched 09:51Z → orphaned); killed the orphaned smoke tree +
-cleaned /tmp save dir and smoke log; launched the real run via
-systemd-run; babysit.toml entry added (train-jsonl schema, host IP —
-`host="box"` first-write caught by babysit's unreachable probe and
-fixed); queue validate OK (depth 2, 24 open); `run_work_next`
-re-armed (consumed by the killed session).
-
-**Next**: chained work session — first step-rate poll on v2 (vs
-run-2's ~3.9 s/step; ETA ~3.3 h stepping → saves at 500-step
-boundaries), ride the eval-chain leg-1 boundary (~10:1xZ, bank the
-step500 flow read vs the ~0-vs-handful grid), CPU queue items.
-Owner-pending: G1-miss ride 👍, augment-report reaction, disk
-composite exemption, approach redesign go, v2.1 bands, ckpt-format,
-morning-veto items (recipe call RESOLVED 09:23Z).*
-
 ## Utilization footer
+
+Session 2026-08-17 14:53–15:2xZ (work, exploit; box: rigonly ridden to
+its 14:52Z close ≈ 10.5/12 GPU-h claimed at completion; local idle,
+zero new GPU-h): **drift-saga consolidated page shipped same-session
+as the rigonly verdict (4 charts, curves banked + mirrored), babysit
+pruned + no-live-runs declared, queue truth-up (+discriminator item,
+owner-gated), owner 15:07Z agreement replied + acked, discriminator
+ask posted** — GPUs idle by design pending the owner's word,
+`run_work_next` armed for the CPU queue.
 
 Session 2026-08-17 14:27–14:4xZ (tick; box busy with rig-only ~690/1000
 ridden not claimed; local H100 freed 14:17:56Z by the chain's ALL
