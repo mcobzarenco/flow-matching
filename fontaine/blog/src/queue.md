@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-17T03:38:40Z
+**Updated:** 2026-08-17T05:47:03Z
 
 **Depth call:** depth 2: endpoint boundary (runnable at run-2 completion ~00:4xZ) + wrist-cam-pose-refit (runnable now, next work session). Others owner-gated (disk composite exemption, approach redesign, v2.1 bands, ckpt-format, morning-veto) or box-gated.
 
-**25 open** (Live 1 · Queued 4 · Blocked 20 · Done 194)
+**24 open** (Live 1 · Queued 3 · Blocked 20 · Done 195)
 
 ## 🔴 Live (1)
 
@@ -26,7 +26,7 @@ grasp_sft_v1_joint endpoint boundary — RE-POINTED at run 2 (RESTART --recomput
 
 ---
 
-## 🟢 Queued (4)
+## 🟢 Queued (3)
 
 *ready — waiting on a window or a boundary*
 
@@ -67,20 +67,6 @@ Grasp demos v2: 5k regen with all demo improvements (owner order 00:45:29Z 08-17
 <details><summary>full record</summary>
 
 Grasp demos v2: 5k regen with all demo improvements (owner order 00:45:29Z 08-17): expert v1.3 (1.5 cm centering, retreat glide 5deg/tick, tail 450) + bracket_appearance=real + the FITTED wrist-cam pose (owner: "definitely include an adjusted wrist camera angle to match the rig" =&gt; BLOCKED on wrist-cam-pose-refit landing its validated pose). Same collector path/scale as demo_gen_v1 (5000 kept episodes, sharded on the box), then upload public as fontaine-grasp-demos-v2. Box is free after the v1 endpoint sim100 (~02:1xZ 08-17).
-
-</details>
-
----
-
-**`wrist-cam-pose-refit`** · `cpu`
-
-Wrist-cam pose refit vs rig v2 (owner ask 21:43:31Z 08-16, proposal agreed-in-channel 22:0xZ msg 1538665108811812925): sim wrist view shows one small clockwise-leaning orange jaw tip where rig v2 shows BOTH jaws symmetric from th…
-
-**boundary:** Queued 22:0xZ 08-16 at the steering reply. | STAGE 1 DONE 23:4xZ 08-16 (in-session fill work during the run-2 ride, owner status ask 23:06Z): matched-pairs instrument landed (fontaine/scripts/wrist_cam_matched_pairs.py, commit 31d8391), 312 pairs at outputs/sim/wrist_refit/matched_pairs/ + manifest. Read: discrepancy CONSISTENT — the real-centered working area (jaw tips/held object/disk) sits at/below the sim bottom edge =&gt; pitch overshoot + clockwise roll; some poses see the mount body. Remaining: stage-2 measurements on the 312 pairs, stage-3 fit + held-out validation + flag-gated ship (composite posted in-channel 1538690503976161410).
-
-<details><summary>full record</summary>
-
-Wrist-cam pose refit vs rig v2 (owner ask 21:43:31Z 08-16, proposal agreed-in-channel 22:0xZ msg 1538665108811812925): sim wrist view shows one small clockwise-leaning orange jaw tip where rig v2 shows BOTH jaws symmetric from the bottom edge (eyeballed 08-16: /tmp pairs; the sim-wrist-periphery-fix pose overcorrected). Instrument first, fit second, lens-plumbline pattern: (1) matched pairs — replay rig v2 per-frame joint STATES into the sim, render wrist at identical kinematics; (2) measure both sides: in-image jaw-axis angle (orange jaw hue-segmentable real / exact mask sim), bottom-band occupancy fraction, both-jaws-visible rate; (3) fit mount-local camera roll/tilt (+fovy if needed) minimizing the matched-set discrepancy, validate held-out; ship flag-gated (bracket_appearance pattern), rides the next-gen regen with brackets + v1.3 expert. Note: pose change alters recorded wrist frames -&gt; regen-only, never silently.
 
 </details>
 
@@ -366,7 +352,7 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (194)
+## ✅ Done (195)
 
 *closed — the full record stays in each fold*
 
@@ -379,6 +365,20 @@ Serving-path normalization audit (from the 5/100 sim100 verdict, post 1538738118
 <details><summary>full record</summary>
 
 Serving-path normalization audit (from the 5/100 sim100 verdict, post 1538738118151249940): trace the action de-normalization table end-to-end at rollout (checkpoint metadata.json vs dataset-side stats vs any cached constants) for the recomputed channels (wrist_roll +-157, wrist_flex -52/95, lift -124.8); verify what rollout_sim actually applied on the box legs; then re-run 20 unseen seeds LOCALLY (owner: local sim100s) with the verified table. Decisive + cheap: if the mismatch is real, expect a large jump; if not, the 16x-data model genuinely regressed and the v2 pipeline needs the fault isolated BEFORE grasp-sft-v2 trains with the same flag.
+
+</details>
+
+---
+
+**`wrist-cam-pose-refit`** · `cpu`
+
+Wrist-cam pose refit vs rig v2 (owner ask 21:43:31Z 08-16, proposal agreed-in-channel 22:0xZ msg 1538665108811812925): sim wrist view shows one small clockwise-leaning orange jaw tip where rig v2 shows BOTH jaws symmetric from th…
+
+**boundary:** Queued 22:0xZ 08-16 at the steering reply. | STAGE 1 DONE 23:4xZ 08-16 (in-session fill work during the run-2 ride, owner status ask 23:06Z): matched-pairs instrument landed (fontaine/scripts/wrist_cam_matched_pairs.py, commit 31d8391), 312 pairs at outputs/sim/wrist_refit/matched_pairs/ + manifest. Read: discrepancy CONSISTENT — the real-centered working area (jaw tips/held object/disk) sits at/below the sim bottom edge =&gt; pitch overshoot + clockwise roll; some poses see the mount body. Remaining: stage-2 measurements on the 312 pairs, stage-3 fit + held-out validation + flag-gated ship (composite posted in-channel 1538690503976161410). | STAGES 2+3 DONE 2026-08-17T05:47:03Z (work session): 312-pair measurement instrument (wrist_cam_pose_measure.py; real both-jaws-visible 92.9% vs sim 0.0% — fixed jaw never in the v1 frame), 6-param mount-local fit (wrist_cam_pose_fit.py, pre-reg msg 1538759641591324747): pitch -23/yaw +14/roll -9.5 deg, cam-frame offset (+3.3,+1.3,-3.0) cm. Held-out (96 pairs): G2 PASS (both-jaws 0%-&gt;100% vs real 90.3%), G3 PASS (bottom-occ |d| -65%), G1 MISS (centroid -44.5% vs -50% bar; residual = lens/detector floor, axis err 42.5-&gt;15.9 deg). Deviations disclosed in results post 1538786116956594250. SHIPPED flag-gated SO101Sim(wrist_pose='refit'), default untouched, REGEN-ONLY — rides grasp-demos-v2-regen. Commit 4b14b1f.
+
+<details><summary>full record</summary>
+
+Wrist-cam pose refit vs rig v2 (owner ask 21:43:31Z 08-16, proposal agreed-in-channel 22:0xZ msg 1538665108811812925): sim wrist view shows one small clockwise-leaning orange jaw tip where rig v2 shows BOTH jaws symmetric from the bottom edge (eyeballed 08-16: /tmp pairs; the sim-wrist-periphery-fix pose overcorrected). Instrument first, fit second, lens-plumbline pattern: (1) matched pairs — replay rig v2 per-frame joint STATES into the sim, render wrist at identical kinematics; (2) measure both sides: in-image jaw-axis angle (orange jaw hue-segmentable real / exact mask sim), bottom-band occupancy fraction, both-jaws-visible rate; (3) fit mount-local camera roll/tilt (+fovy if needed) minimizing the matched-set discrepancy, validate held-out; ship flag-gated (bracket_appearance pattern), rides the next-gen regen with brackets + v1.3 expert. Note: pose change alters recorded wrist frames -&gt; regen-only, never silently.
 
 </details>
 
