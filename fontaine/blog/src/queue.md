@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-18T06:31:00Z
+**Updated:** 2026-08-18T07:05:00Z
 
-**Depth call:** depth 2 queued (pdnorm-endpoint-report-paired-section + pdnorm-prereg-panel-guard-recalibration, both CPU un-gated) after the disc1000-panel-row-audit close.
+**Depth call:** depth 2 queued (pdnorm-prereg-panel-guard-recalibration + pdnorm-endpoint-report-preset, both CPU un-gated) after the paired-section close.
 
-**22 open** (Live 0 · Queued 2 · Blocked 20 · Done 225)
+**22 open** (Live 0 · Queued 2 · Blocked 20 · Done 226)
 
 ## 🔴 Live (0)
 
@@ -18,6 +18,20 @@
 
 *ready — waiting on a window or a boundary*
 
+**`pdnorm-endpoint-report-preset`** · `cpu`
+
+pdnorm endpoint report preset (PRE-GO prep, CPU): add a 'pdnormendpoint' preset to grasp_sft_joint_unseen_report.py so the ON-GO endpoint report is one command
+
+**boundary:** Queued 07:0xZ 08-18 work session (refill at the paired-section close, charter section 4). CPU, un-gated, draft-only prep; wants to land before GO so the ON-GO checklist's endpoint report is one command. If GO lands first, the endpoint session adds the preset inline instead — this item then closes as absorbed. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
+
+<details><summary>full record</summary>
+
+pdnorm endpoint report preset (PRE-GO prep, CPU): add a 'pdnormendpoint' preset to grasp_sft_joint_unseen_report.py so the ON-GO endpoint report is one command — anchor rows base 9 / probe 44 / disc1000 baseline 11 (the paired baseline arm gets its own row), meta line naming the pre-reg's frozen absolute bands (broken-class band, 11-19 ambiguous band, &gt;=20 exoneration bar) and the wear-audit panel anchors (27.40 re-worn / 25.15 midpoint null / state-copy 8.37), paired_band_note carried over, checkpoint/meta fields left as FILL-AT-ENDPOINT placeholders that the endpoint session stamps. Oracle asserts the preset's anchor rows + band note + that --paired-json composes with it; check.py green.
+
+</details>
+
+---
+
 **`pdnorm-prereg-panel-guard-recalibration`** · `cpu`
 
 Recalibrate the pdnorm pre-reg's panel expectations from the wear audit (PRE-GO, draft-only edit): the +0.05-vs-baseline panel guard was framed against 58.14, of which ~half is pure serving-window re-expression (audit: re-worn di…
@@ -27,20 +41,6 @@ Recalibrate the pdnorm pre-reg's panel expectations from the wear audit (PRE-GO,
 <details><summary>full record</summary>
 
 Recalibrate the pdnorm pre-reg's panel expectations from the wear audit (PRE-GO, draft-only edit): the +0.05-vs-baseline panel guard was framed against 58.14, of which ~half is pure serving-window re-expression (audit: re-worn disc-1000 27.40, repo-midpoint null 25.15, floor 14.40). Fold the audit's reference points into the draft's calibration note as the panel read's interpretation anchors: a pdnorm endpoint wearing honest rows should be read against 27.40/25.15 (wear-corrected class) with state-copy 8.37 the real bar, not against the raw 58.14. Record-only if the owner GO lands first — the frozen guard itself stays frozen; this edits interpretation anchors, not gates.
-
-</details>
-
----
-
-**`pdnorm-endpoint-report-paired-section`** · `cpu`
-
-pdnorm endpoint HTML report: paired-vs-baseline section — wire the frozen sim100_paired_read.py output (success-count delta CI, discordant-seed McNemar table, progress delta CI vs disc1000_baseline/flow_unseen.json) into grasp_sf…
-
-**boundary:** Queued 06:0xZ 08-18 work session (refill at the paired-read-instrument close, charter section 4). CPU, un-gated; nice-to-land before the pdnorm endpoint read but the bare-json paired read (already frozen) suffices if the endpoint arrives first. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
-
-<details><summary>full record</summary>
-
-pdnorm endpoint HTML report: paired-vs-baseline section — wire the frozen sim100_paired_read.py output (success-count delta CI, discordant-seed McNemar table, progress delta CI vs disc1000_baseline/flow_unseen.json) into grasp_sft_joint_unseen_report.py's disc1000 preset so the pdnorm endpoint report renders the recorded non-gating paired read ALONGSIDE the frozen absolute bands (11-19 ambiguous band context), instead of the read living only in a bare analysis json. Charts follow the dark-mode eval-report scheme; smoke on the banked probe-vs-disc1000 pair before the real endpoint data.
 
 </details>
 
@@ -328,9 +328,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (225)
+## ✅ Done (226)
 
 *closed — the full record stays in each fold*
+
+**`pdnorm-endpoint-report-paired-section`** · `cpu`
+
+pdnorm endpoint HTML report: paired-vs-baseline section — wire the frozen sim100_paired_read.py output (success-count delta CI, discordant-seed McNemar table, progress delta CI vs disc1000_baseline/flow_unseen.json) into grasp_sf…
+
+**boundary:** Queued 06:0xZ 08-18 work session (refill at the paired-read-instrument close, charter section 4). CPU, un-gated; nice-to-land before the pdnorm endpoint read but the bare-json paired read (already frozen) suffices if the endpoint arrives first. | DONE 07:0xZ 08-18 work session: grasp_sft_joint_unseen_report.py grows --paired-json (frozen sim100_paired_read output rendered as a 'Paired read' section: delta tiles with CI wording + McNemar discordant-seed chart, house dark scheme; disc1000 preset carries the 11-19 ambiguous-band note), oracles tests/test_grasp_sft_joint_unseen_report.py x4 green, check.py 1015 green (commit 4cfefae). Smoked on the banked probe-vs-disc1000 pair (44 vs 11, +33 CI [22,44], p 1.0e-07) then the CANONICAL disc1000 flow_unseen100 report regenerated in place with the section and re-pushed to fontaine-reports (curl 200, section verified live); reports.md paired-read bullet extended. The pdnorm endpoint report gets the same section from its own frozen paired json. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
+
+<details><summary>full record</summary>
+
+pdnorm endpoint HTML report: paired-vs-baseline section — wire the frozen sim100_paired_read.py output (success-count delta CI, discordant-seed McNemar table, progress delta CI vs disc1000_baseline/flow_unseen.json) into grasp_sft_joint_unseen_report.py's disc1000 preset so the pdnorm endpoint report renders the recorded non-gating paired read ALONGSIDE the frozen absolute bands (11-19 ambiguous band context), instead of the read living only in a bare analysis json. Charts follow the dark-mode eval-report scheme; smoke on the banked probe-vs-disc1000 pair before the real endpoint data.
+
+</details>
+
+---
 
 **`disc1000-panel-row-audit`** · `cpu`
 

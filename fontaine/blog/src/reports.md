@@ -1004,7 +1004,14 @@ HTML-reports rule.
   [2.66, 4.46], 80% per-seed win rate. The instrument cleanly
   separates the healthy/broken classes on banked data — at the
   pdnorm endpoint it reads against disc-1000's 100 episodes with
-  these same constants (seed-0 bootstrap, 10k resamples)
+  these same constants (seed-0 bootstrap, 10k resamples). Rendered:
+  the flow-unseen report above now carries this read as a "Paired
+  read" section (delta tiles + McNemar discordant-seed chart, with
+  the 11–19 ambiguous-band note) via
+  `grasp_sft_joint_unseen_report.py --paired-json` (oracle
+  `tests/test_grasp_sft_joint_unseen_report.py`, `4cfefae`) — the
+  pdnorm endpoint report gets the same section from its own frozen
+  paired json
 - Weights: [`grasp_sft_v2_demosonly_1gpu_disc`](https://huggingface.co/mcobzarenco/fontaine-checkpoints/tree/main/grasp_sft_v2_demosonly_1gpu_disc)
   (steps 500 + 1000, weights-only, banked 00:5xZ 08-18)
 
