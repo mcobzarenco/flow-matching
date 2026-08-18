@@ -247,6 +247,21 @@ pre-SFT released checkpoint's panel row (same-wear: 27.14, at the
 null; own-table 25.89), read through these anchors; all are recorded
 alongside — never in place of — the frozen guard.
 
+One estimator seam remains between the endpoint and these anchors,
+and it closes on GO (instrument landed dry 09:xxZ 08-18, before GO):
+under the per-dataset scheme the endpoint's panel items wear their
+NATIVE recorded training-table rows (each repo's `meta/stats.json`
+q01/q99 — deployment-honest), while the 27.40/27.14/25.15 anchors
+wear per-repo rows FIT on the panel's own truth (oracle-ish).
+`pdnorm_endpoint_truthfit_rewear.py` (record-only, output-side, same
+estimator and identity anchors as the audits; oracle suite
+`tests/test_pdnorm_endpoint_truthfit_rewear.py`) inverts the endpoint
+npz per repo through the native rows — per-repo inversion identity
+enforced — and re-expresses through the truth-fit rows, recording the
+native-vs-truth-fit estimator delta alongside the ladder read. The
+NATIVE row stays the headline number; the truth-fit row exists to
+read the ladder like for like.
+
 ![panel anchor ladder, wear-corrected class — endpoint slot stamped on
 GO](../img/pdnorm/panel_ladder.png)
 
