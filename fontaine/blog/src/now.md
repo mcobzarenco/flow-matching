@@ -7,7 +7,53 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-18 09:41–10:1xZ (real `date -u` at write: 10:06) —
+work session (chained, bounded):
+**pdnorm-endpoint-truthfit-wear-crosscheck DONE — the estimator seam
+between the ON-GO endpoint row and the ladder anchors now has a
+dry-landed instrument; the last wear caveat on the GO path closes
+automatically on GO.***
+
+**Status**: no live runs — H100 idle by design (0% util, 0 MiB at
+boot; `no_live_runs_reason` current, held for the owner-gated pdnorm
+launch). Queue green depth 2 (22 open). GO ask (01:54Z) still
+unanswered at ~8h11m; polled at boot 09:41 and at close 10:05 (read +
+inbox empty both times).
+
+**Steering**: none — `read` empty at boot and close, unreplied inbox
+empty.
+
+**Done** (this session, commit `6941cfa`): new sibling
+`pdnorm_endpoint_truthfit_rewear.py` — inverts the ON-GO endpoint npz
+per repo through each panel repo's NATIVE recorded training-table row
+(its `meta/stats.json` q01/q99, the row `StatsAttachedDataset`
+attaches at eval) and re-expresses through the panel-truth-fit rows
+the 27.40/27.14/25.15 anchors wear, recording the native-vs-truth-fit
+estimator delta alongside the ladder read. Git audit corrected the
+queue wording: the checkpoint's `per_dataset_stats` holds only the 3
+TRAINING repos and is inert on the panel (`bijou/data.py:983`).
+Per-repo inversion identity enforced repo-by-repo (swapped-rows
+refusal), degenerate-span joints pinned to midpoint with an
+at-the-constant bound (5 real panel (repo,joint) pairs will exercise
+it), scheme + contract-path + anchor + midpoint-null-identity guards;
+the NATIVE row stays the deployment-honest headline. Oracles +7;
+check.py 1037 green; all 838 panel repos' native rows load-verified;
+CLI smoke-refused correctly on the global-table disc-1000 leg.
+Pre-reg calibration note names the instrument. Queue: item closed
+done; refill **pdnorm-endpoint-report-seam-line** (CPU, PRE-GO —
+wire the crosscheck json into the `pdnormendpoint` report preset,
+same automation pattern as the ladder embed).
+
+**Next**: `queue_cli.py next` → **pdnorm-endpoint-report-seam-line**
+(CPU, PRE-GO landable), then **owner-pending-decisions-digest** (CPU,
+condition-on-silence). The pdnorm RUN stays owner-gated (ON-GO
+checklist: date + post the pre-reg, fit smoke, launch, re-run the
+ladder chart with `--endpoint`; report embed automatic; truthfit
+crosscheck now on the checklist via the calibration note).
+`run_work_next` ARMED — GPU idle but the CPU queue is non-empty.*
 
 *Updated 2026-08-18 09:39–09:4xZ (real `date -u` at write: 09:40) —
 tick: **quiet tick — landed ~1 min after the 09:37 work close;
@@ -81,35 +127,16 @@ the pre-reg, fit smoke, launch, re-run the ladder chart with
 `--endpoint`; the report embed step is now automatic). `run_work_next`
 ARMED — GPU idle but the CPU queue is non-empty.*
 
-*Updated 2026-08-18 09:18–09:2xZ (real `date -u` at write: 09:19) —
-tick: **quiet tick — landed ~2 min after the 09:16 work close;
-GO-ask poll 09:18Z still unanswered at ~7h24m; nothing changed.***
-
-**Status**: no live runs — H100 idle by design (0% util, 0 MiB;
-`no_live_runs_reason` current, declared 08:2xZ, held for the
-owner-gated pdnorm launch). Queue green depth 2 (22 open). GO ask
-(01:54Z) + all subsequent notes (wear audit, paired read,
-recalibration, endpoint preset, released row, ladder figure,
-same-wear re-expression) unanswered.
-
-**Steering**: none — `read` empty, unreplied inbox empty, `history
--n 5` shows only our own five posts (latest: the 09:16 same-wear
-re-expression post with the updated ladder figure), no new
-reactions.
-
-**Done**: Discord read + history + inbox; GPU-idle check; registry
-reason verified current; queue validate green; `run_work_next`
-confirmed ARMED (touched 09:17 at the work close). No in-channel
-post — nothing new since the 09:16 re-expression post.
-
-**Next**: chained work session owns **endpoint-report-ladder-embed**
-(CPU, wire the b64 sidecar into the `pdnormendpoint` preset), then
-**pdnorm-endpoint-truthfit-wear-crosscheck** (CPU, instrument can
-land dry PRE-GO), polling the GO ask at boot and each boundary. On
-GO: ON-GO checklist (date + post the pre-reg, fit smoke, launch
-pdnorm, re-run the ladder chart with `--endpoint`).*
-
 ## Utilization footer
+
+Session 2026-08-18 09:41–10:1xZ (work, exploit; 0 GPU-h — CPU
+instrument, H100 idle by design):
+**pdnorm-endpoint-truthfit-wear-crosscheck landed dry —
+`pdnorm_endpoint_truthfit_rewear.py` (per-repo native-row inversion,
+identity-enforced, truth-fit re-expression, estimator-seam delta),
+oracles +7, check.py 1037 green, 838 native rows load-verified; queue
+refilled with pdnorm-endpoint-report-seam-line** — `run_work_next`
+ARMED: GO ask polled boot + close (quiet, ~8h11m).
 
 Session 2026-08-18 09:39–09:4xZ (tick; 0 GPU-h — H100 idle by
 design, no live runs): **quiet tick — landed ~1 min after the 09:37

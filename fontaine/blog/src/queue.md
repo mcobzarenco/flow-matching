@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-18T09:31:00Z
+**Updated:** 2026-08-18T10:00:00Z
 
 **Depth call:** depth 2 queued (endpoint-report-ladder-embed cpu + pdnorm-endpoint-truthfit-wear-crosscheck cpu, both un-gated) after the released-row-honest-wear-reexpression close.
 
-**22 open** (Live 0 · Queued 2 · Blocked 20 · Done 232)
+**22 open** (Live 0 · Queued 2 · Blocked 20 · Done 233)
 
 ## 🔴 Live (0)
 
@@ -32,15 +32,15 @@ Pending-decisions digest for the owner (CPU, un-gated, condition-on-silence): ~2
 
 ---
 
-**`pdnorm-endpoint-truthfit-wear-crosscheck`** · `cpu`
+**`pdnorm-endpoint-report-seam-line`** · `cpu`
 
-Endpoint truth-fit wear cross-check (ON-GO rider, CPU, record-only): the pdnorm endpoint wears its NATIVE per-dataset training-table rows, while the ladder's 27.40/27.14 wear per-repo rows fit on the panel's own truth
+Wire the estimator-seam cross-check into the pdnormendpoint report preset (PRE-GO prep, CPU): grasp_sft_joint_unseen_report.py grows a --truthfit-json arg (preset-default path reports/analysis__pdnorm_endpoint_truthfit_wear.json,…
 
-**boundary:** Queued 09:0xZ 08-18 work session (refill at the released-row-honest-wear close, charter section 4). CPU; the estimator seam is the one wear caveat the ladder still carries after the same-wear re-expression — this makes endpoint-vs-ladder estimator-consistent on GO. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
+**boundary:** Queued 10:0xZ 08-18 work session (refill at the truthfit-crosscheck close, charter section 4). CPU, PRE-GO landable; rides the same GO-path automation pattern as endpoint-report-ladder-embed. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
 
 <details><summary>full record</summary>
 
-Endpoint truth-fit wear cross-check (ON-GO rider, CPU, record-only): the pdnorm endpoint wears its NATIVE per-dataset training-table rows, while the ladder's 27.40/27.14 wear per-repo rows fit on the panel's own truth — same wear class, different ESTIMATOR (truth-fit rows are oracle-ish; deployment tables are not). Extend released_row_rewear.py (or a sibling) to invert the endpoint npz through the checkpoint's per_dataset_stats rows (per-repo worn tables, not a global one) and re-express through the panel-truth-fit honest rows, recording the native-vs-truth-fit wear delta alongside the ladder read; oracle on the per-repo inversion identity, check.py green. PRE-GO the per-repo inversion extension can land dry (instrument-only); the read itself rides the endpoint npz.
+Wire the estimator-seam cross-check into the pdnormendpoint report preset (PRE-GO prep, CPU): grasp_sft_joint_unseen_report.py grows a --truthfit-json arg (preset-default path reports/analysis__pdnorm_endpoint_truthfit_wear.json, quiet-skip on absent, loud on an explicit missing flag — the ladder-embed behavior split) rendering an 'estimator seam' line under the ladder section: endpoint native vs truthfit row, the seam delta, and the truthfit ladder anchors, read from pdnorm_endpoint_truthfit_rewear.py's ladder_read block. Oracles for render/absent/missing; check.py green — the ON-GO endpoint report then carries the estimator-consistent read with zero manual composition, same as the ladder figure.
 
 </details>
 
@@ -328,9 +328,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (232)
+## ✅ Done (233)
 
 *closed — the full record stays in each fold*
+
+**`pdnorm-endpoint-truthfit-wear-crosscheck`** · `cpu`
+
+Endpoint truth-fit wear cross-check (ON-GO rider, CPU, record-only): the pdnorm endpoint wears its NATIVE per-dataset training-table rows, while the ladder's 27.40/27.14 wear per-repo rows fit on the panel's own truth
+
+**boundary:** Queued 09:0xZ 08-18 work session (refill at the released-row-honest-wear close, charter section 4). CPU; the estimator seam is the one wear caveat the ladder still carries after the same-wear re-expression — this makes endpoint-vs-ladder estimator-consistent on GO. CLOSED 10:0xZ 08-18 work session: instrument landed dry as the sibling pdnorm_endpoint_truthfit_rewear.py (NOT an extension of released_row_rewear — git audit: native rows come from each panel repo's meta/stats.json, the rows StatsAttachedDataset attaches at eval; the checkpoint's per_dataset_stats holds only the 3 TRAINING repos and is inert on the panel — queue wording drifted). Per-repo inversion identity enforced per repo (swapped-rows oracle), degenerate-span joints pinned to midpoint with an at-the-constant bound (5 real (repo,joint) pairs in the panel will exercise it), scheme + contract-path + anchor + midpoint-null identity guards; 7 oracles in tests/test_pdnorm_endpoint_truthfit_rewear.py, check.py 1037 green; all 838 panel repos' native rows load-verified. Pre-reg calibration note names the instrument; the READ rides the ON-GO endpoint npz. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
+
+<details><summary>full record</summary>
+
+Endpoint truth-fit wear cross-check (ON-GO rider, CPU, record-only): the pdnorm endpoint wears its NATIVE per-dataset training-table rows, while the ladder's 27.40/27.14 wear per-repo rows fit on the panel's own truth — same wear class, different ESTIMATOR (truth-fit rows are oracle-ish; deployment tables are not). Extend released_row_rewear.py (or a sibling) to invert the endpoint npz through the checkpoint's per_dataset_stats rows (per-repo worn tables, not a global one) and re-express through the panel-truth-fit honest rows, recording the native-vs-truth-fit wear delta alongside the ladder read; oracle on the per-repo inversion identity, check.py green. PRE-GO the per-repo inversion extension can land dry (instrument-only); the read itself rides the endpoint npz.
+
+</details>
+
+---
 
 **`endpoint-report-ladder-embed`** · `cpu`
 
