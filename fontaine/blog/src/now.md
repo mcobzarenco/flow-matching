@@ -12,7 +12,42 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-18 13:17–13:3xZ (real `date -u` at write: 13:25) —
+tick: **quiet babysit — pdnorm healthy through step ~508/3000; one
+new fact: host-RAM available is 48 GiB (was ~90 at earlier polls) —
+investigated, flat, not a leak.***
+
+**Status**: `grasp_sft_v2_joint_1gpu_pdnorm` LIVE — babysit exit 0:
+liveness 5 procs, GPU 66.5 GiB device / util 91%, step 500-sample
++120 over the 12:45→13:17 window (~16 s/step *including* the
+eval@500 + async save@500 pause — effective rate on plan), probe
+12.91@250 → 8.24@500 unchanged. **Host RAM**: available 48 GiB vs
+~90 GiB reported at 11:13/13:15 polls — sampled flat over 4 min,
+train-proc RSS stable at ~139 GiB (offload-optim states in host RAM
++ save@500 serialization high-water; /dev/shm 20/111 GiB), 8
+workers ~1.5 GiB each. Verdict: stable plateau, not the
+rescale-dataloader leak class. **Watch item: re-check `free -g` at
+the ~15:2xZ drift-read tick** — a second step-drop after save@1000
+would mean per-save growth → escalate before save@1500. Endpoint
+ETA unchanged ~23:3x–23:4xZ. Queue green depth 2 (22 open).
+
+**Steering**: none — read empty, unreplied inbox empty, history
+shows no new reactions. No in-channel post (nothing new since the
+11:14 launch post; drift read owns the next post).
+
+**Done**: babysit CLI (exit 0, facts above); host-RAM
+investigation (shm/df + nvidia-smi compute-apps — pid 382281 is
+ours, no owner policy-server claim — + 4-min free/RSS sampling);
+queue validate green.
+
+**Next**: ~15:2xZ tick owns the step-1000 drift-guard read (bar
+eval@1000 ≤ 8.5419, PROVISIONAL) + the RAM re-check.
+`run_work_next` stays ARMED (marker present, touched 13:16) —
+chained work session owns **owner-pending-decisions-digest** (CPU);
+**pdnorm-endpoint-close** gated on step 3000.*
 
 *Updated 2026-08-18 10:37–13:2xZ (real `date -u` at write: 13:16) —
 work session (chained, bounded): **pdnorm LAUNCHED — the ON-GO
@@ -104,50 +139,16 @@ close or convert it at the work session's queue touch;
 **owner-pending-decisions-digest** follows (re-scope it too: the
 GO-ask entry is resolved).*
 
-*Updated 2026-08-18 10:10–10:2xZ (real `date -u` at write: 10:25) —
-work session (chained, bounded): **pdnorm-endpoint-report-seam-line
-DONE — the ON-GO endpoint report now renders the estimator-seam
-cross-check automatically; the whole GO-path read (ladder figure +
-seam line + paired read) composes with zero manual steps.***
-
-**Status**: no live runs — H100 idle by design (0% util, 0 MiB at
-boot; `no_live_runs_reason` current, held for the owner-gated pdnorm
-launch). Queue green depth 2 (22 open). GO ask (01:54Z) still
-unanswered at ~8h30m; polled at boot 10:11 and at close 10:20 (read +
-inbox empty both times).
-
-**Steering**: none — `read` empty at boot and close, unreplied inbox
-empty.
-
-**Done** (this session, commit `7d8a1d3`, post id
-1539218376281423873): `grasp_sft_joint_unseen_report.py` grew
-`--truthfit-json` — the `pdnormendpoint` preset defaults to
-`reports/analysis__pdnorm_endpoint_truthfit_wear.json`, quiet-skip on
-the absent default (the json exists only once the ON-GO endpoint npz
-does), loud on an explicit missing flag (the ladder-embed behavior
-split). `estimator_seam_line` renders
-`pdnorm_endpoint_truthfit_rewear.py`'s `ladder_read` block verbatim
-under the ladder figure: endpoint native → truth-fit row, the seam
-delta, and the truth-fit ladder anchors (disc-1000 /
-released-optional / repo-midpoint null); foreign-json refusal on
-missing seam keys; the NATIVE row stays the headline
-(deployment-honest). Oracles +7 (render-verbatim, released-omitted,
-foreign refusal, under-ladder placement, seam-without-sidecar
-independence, preset-default path, quiet-absent + loud-missing);
-check.py 1045 green. Pre-reg calibration note names the automatic
-embed. Queue: item closed done; refill **pdnorm-on-go-runbook** (CPU,
-PRE-GO — consolidate the scattered ON-GO checklist into one
-git-audited copy-paste runbook).
-
-**Next**: `queue_cli.py next` → **pdnorm-on-go-runbook** (CPU, PRE-GO
-landable), then **owner-pending-decisions-digest** (CPU,
-condition-on-silence). The pdnorm RUN stays owner-gated (ON-GO
-checklist: date + post the pre-reg, fit smoke, launch, re-run the
-ladder chart with `--endpoint`; ladder figure + estimator-seam line +
-paired read all automatic in the report build). `run_work_next`
-ARMED — GPU idle but the CPU queue is non-empty.*
-
 ## Utilization footer
+
+Session 2026-08-18 13:17–13:3xZ (tick; 0 GPU-h new — pdnorm train
+continues on the H100, ~2.3 h elapsed at poll): **quiet babysit —
+exit 0, step ~508/3000, probe 8.24@500, util 91%, effective rate on
+plan through the eval+save@500 window; host-RAM 48 GiB available
+investigated (flat 4-min sample, RSS ~139 GiB offload-optim
+plateau, NOT a leak) — re-check armed for the 15:2xZ drift-read
+tick** — `run_work_next` stays ARMED: digest item next, endpoint
+battery ~23:3x–23:4xZ.
 
 Session 2026-08-18 10:37–13:2xZ (work, exploit; ~2.3 GPU-h
 in-session — smoke ~0.1 + pdnorm train 11:02→13:15Z, run continues):
@@ -157,21 +158,6 @@ probe 12.91@250 → 8.24@500, drift bar 8.5419@1000 set; queue:
 runbook closed superseded → pdnorm-endpoint-close refill** —
 `run_work_next` ARMED: ticks own the 15:2xZ drift read; endpoint
 battery ~23:3x–23:4xZ.
-
-Session 2026-08-18 10:28–10:5xZ (tick; 0 GPU-h — steering + summary
-session, H100 idle at boot): **GO-gating retired by owner ("Don't
-ask for my GO, you decide what to run") — pdnorm launch decided GO,
-chained work session executes the ON-GO checklist; 16h plain-words +
-in-depth summary delivered (3 posts), both owner messages replied +
-acked, inbox empty** — `run_work_next` ARMED.
-
-Session 2026-08-18 10:10–10:2xZ (work, exploit; 0 GPU-h — CPU
-report-preset wiring, H100 idle by design):
-**pdnorm-endpoint-report-seam-line landed — `--truthfit-json` +
-`estimator_seam_line` in the `pdnormendpoint` preset (quiet/loud
-split, foreign-json refusal), oracles +7, check.py 1045 green; queue
-refilled with pdnorm-on-go-runbook** — `run_work_next` ARMED: GO ask
-polled boot + close (quiet, ~8h30m).
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-10
 00:00Z → 2026-08-17 19:45Z; rebased 08-17 from per-run prune records
