@@ -7,9 +7,44 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-18 00:49–01:2xZ (real `date -u` at write: 01:18) —
+*Updated 2026-08-18 01:20–01:2xZ (real `date -u` at write: 01:22) —
+tick: **quiet tick with one new signal — owner 👍 on the 21:33
+Amendment-1 post, first surfaced this tick; `run_work_next` stays
+ARMED, work session chains into the flow-norm pre-reg draft.***
+
+**Status**: no live runs — H100 idle (0% util, 0 MiB; owner
+policy-server not up at check). Queue green depth 2 (21 open); head
+item `prereg-draft-per-dataset-flow-norm-rerun` (CPU, gate lifted)
+belongs to the chained work session, not this 30-min tick.
+
+**Steering**: **NEW — 👍×1 on our 21:33 step-250/Amendment-1 post**
+(id 1539024477260882000), caught via `history -n 5`; no tick since
+21:33 had recorded a reaction there, so it's new since the 00:49
+close. Read: owner endorsement of the amendment discipline
+(compute-both-rules, AMBIGUOUS-BY-INSTRUMENT branch, stack-parity
+disambiguator) — the verdict was executed under exactly that
+structure and the parity probe confirmed HEALTHY, so the
+endorsement is retroactively satisfied; recorded per the
+reaction-as-steering rule, no reply owed (agreement; verdict +
+parity result posts already stand). Otherwise quiet: `read` empty
+(cursor already past our 00:58 parity post), unreplied inbox empty.
+
+**Done**: Discord read + history + inbox checks; queue validate
+green; GPU-idle check; `run_work_next` confirmed ARMED (armed 01:18
+by the work-session close — this tick leaves it in place). No
+in-channel post (nothing new to report; the 00:58 parity post is
+current).
+
+**Next**: chained work session (4-h budget) owns
+**prereg-draft-per-dataset-flow-norm-rerun** (baseline arm = the
+discriminator run itself; wrist_roll parity corroboration folded
+in), then `disc-step1000-html-report` (small GPU, un-gated).
+Owner-pending list unchanged.*
+
+*Previous update 2026-08-18 00:49–01:2xZ (real `date -u` at write: 01:18) —
 work session (chained): **discriminator post-processing CLOSED —
 stack-parity probe CONFIRMS the HEALTHY verdict on the pre-merge
 instrument; checkpoints banked; verdict report page live.***
@@ -55,83 +90,15 @@ then `disc-step1000-html-report` (small GPU, un-gated).
 the next tick chains straight into the draft. Owner-pending list
 unchanged.*
 
-*Previous update 2026-08-18 00:29–00:4xZ (real `date -u` at write: 00:44) —
-boundary tick: **VERDICT — HEALTHY, distributed path CONVICTED;
-both Amendment-1 rules agree, no instrument ambiguity;
-descent-asymmetry caveat carried.***
-
-**Status**: `grasp_sft_v2_demosonly_1gpu_disc` attempt 2
-**COMPLETE** — 1000/1000, loss 0.4186, VRAM 62.26 GiB vs the 78
-gate, ~5.8 GPU-h vs the 12 gate; save-1000 mid-write at read time
-(optimizer.pt down, weights dir pending). **Step-1000 probe: eval
-5.8989 / train 5.5242** → Δeval(1000−500) = **−1.67** (Δtrain
-−1.70); trajectory 12.51 → 7.57 → 6.59 → 5.90, descending through
-the whole verdict window.
-
-**Steering**: none — `read` empty, unreplied inbox empty, `history
--n 5` only our posts.
-
-**Done**: held the session through the boundary (§6) — babysit exit
-0 at step 950, sleep-polled to the 00:42Z probe, then ran the frozen
-instrument (`sft_drift_saga_charts.py --discriminator`): **HEALTHY**
-under the raw rule (−1.67 ≤ +0.30) AND Amendment 1's scale-adjusted
-rule (−1.67 ≤ +1.084) — the rules agree ⇒
-**torchrun + zero1 + chunk-grad-allreduce CONVICTED** (the
-pre-registered HEALTHY meaning: that stack is the delta separating
-every drifting 8× run from every healthy one; same recipe on 1 GPU
-stayed healthy). Ratio-to-comparator converged 3.61× @250 → 2.34×
-@500 → 1.56× @750 → **1.12× @1000** (5.90 vs their 5.27 — theirs
-rising since 500, ours still falling). **Descent-asymmetry caveat
-carried** per the 22:34 pre-record (bounds satisfied trivially by a
-still-descending curve; stack-parity probe of saves 500/1000 is the
-queued cheap confirmation). Verdict posted in-channel (id
-1539072109685379175); overlay + JSON written (`disc_overlay.png`,
-`analysis__sft_drift_discriminator.json`). Queue validate green.
-**`run_work_next` ARMED.**
-
-**Next**: chained work session owns post-processing — checkpoint
-upload (`upload_grasp_sft_v2_disc_checkpoints.py`, prepped; needs
-save-1000 complete), stack-parity-probe decision, utilization
-ledger row (~5.8 GPU-h final), blog verdict post/report, then the
-flow-norm pre-reg draft (both queue items now verdict-unlocked).
-Owner-pending list unchanged.*
-
-*Previous update 2026-08-18 00:07–00:1xZ (real `date -u` at write: 00:08) —
-tick: **final pre-verdict babysit — step 860/1000 healthy, ~0.6 h
-to step 1000; this tick ends before the boundary, the next tick
-owns the verdict.***
-
-**Status**: 1 live run — `grasp_sft_v2_demosonly_1gpu_disc` attempt
-2 at step 860/1000, loss 0.4414 (−0.031 since 780), 15.12 s/step
-(window rate 3.8 steps/min, in-band), VRAM 62.26 GiB vs the 78
-gate, host RAM 50 GB available — flat at the root-caused plateau.
-At this pace step 1000 lands **~00:44Z**, after this tick's 00:37Z
-hard kill: the boundary read stays with the next tick, exactly as
-the last three ticks planned.
-
-**Steering**: none — `read` surfaced only our own 23:47 post
-(cursor advance), unreplied inbox empty, `history -n 5` shows only
-our posts.
-
-**Done**: babysit exit 0 (liveness 5 procs, rate/VRAM/RAM in-band);
-queue validate green depth 2 (22 open). No in-channel post — the
-23:47 step-750 post is the pre-endpoint record and nothing changed
-since. `run_work_next` stays NOT armed — unchanged: both queued CPU
-items are verdict-gated; the boundary tick can arm it itself if
-Amendment 1 + post-processing outgrow its 30 min.
-
-**Next**: boundary tick (~00:4x–01:0xZ, likely the ~00:49 fire)
-owns step 1000 — `sft_drift_saga_charts.py --discriminator` on the
-fresh jsonl, then **Amendment 1** (raw AND scale-adjusted rules;
-disagree ⇒ AMBIGUOUS-BY-INSTRUMENT + `stack_parity_probe.sh` run
-mode); descent-asymmetry caveat LIKELY (750 still falling ⇒
-Δ(1000−500) plausibly negative ⇒ HEALTHY bounds satisfied
-trivially — carry the caveat + stack-parity probe as confirmation).
-Post-verdict: checkpoint upload
-(`upload_grasp_sft_v2_disc_checkpoints.py`, prepped) then the
-flow-norm pre-reg draft. Owner-pending list unchanged.*
-
 ## Utilization footer
+
+Session 2026-08-18 01:20–01:2xZ (tick; 0 GPU-h — H100 idle, no live
+runs): **quiet tick, one new signal — owner 👍 on the 21:33
+Amendment-1 post caught via the history check (endorsement of the
+amendment discipline; verdict + parity confirmation already
+executed under it, no reply owed); read + inbox empty, queue green
+depth 2** — `run_work_next` stays ARMED: the chained work session
+owns the flow-norm pre-reg draft, then the step-1000 HTML panel.
 
 Session 2026-08-18 00:49–01:2xZ (work, exploit; +~0.1 GPU-h — two
 stack-parity probe evals ~1 min each on the freed H100; ledger row
@@ -144,16 +111,6 @@ report page + parity chart live; run + upload queue items closed,
 flow-norm draft gate lifted, HTML-report refill queued** —
 `run_work_next` ARMED: next tick chains into the flow-norm pre-reg
 draft.
-
-Session 2026-08-18 00:29–00:4xZ (boundary tick; discriminator run
-COMPLETE at ~5.8 GPU-h vs the 12 gate): **VERDICT HEALTHY —
-distributed path CONVICTED; eval 5.8989@1000, Δ(1000−500) −1.67,
-raw and Amendment-1 scale-adjusted rules agree (no instrument
-ambiguity); ratio-to-comparator converged to 1.12×;
-descent-asymmetry caveat carried with the stack-parity probe queued
-as confirmation; verdict posted id 1539072109685379175** —
-`run_work_next` ARMED: the chained work session owns checkpoint
-upload, ledger row, blog verdict post, flow-norm pre-reg draft.
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-10
 00:00Z → 2026-08-17 19:45Z; rebased 08-17 from per-run prune records
