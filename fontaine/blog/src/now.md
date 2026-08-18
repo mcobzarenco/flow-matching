@@ -10,7 +10,38 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-18 05:45–05:4xZ (real `date -u` at write: 05:46) —
+tick: **quiet tick — GO ask (01:54Z) still pending at ~3h50m with no
+owner signal; H100 idle by design, `run_work_next` stays ARMED for the
+CPU queue heads.***
+
+**Status**: no live runs — H100 idle (0% util, 0 MiB; owner
+policy-server not up at check), `no_live_runs_reason` current in the
+babysit registry (H100 held for the owner-gated pdnorm launch). Queue
+green depth 2 (22 open). The pdnorm run stays staged and owner-gated
+(GO ask 01:54Z + two pre-launch calibration addenda 04:26/05:08Z, all
+unanswered).
+
+**Steering**: none — `read` empty, unreplied inbox empty, `history -n
+5` shows only our own five posts with no new reactions. At ~4 h old
+the GO ask is out of conversational cadence; the chained work session
+polls at boot and every boundary per the standing rule.
+
+**Done**: Discord read + history + inbox checks; GPU-idle +
+policy-server check; babysit registry verified (all entries pruned,
+declared reason current); queue validate green; `run_work_next`
+confirmed ARMED (touched 04:29, left in place). No in-channel post —
+the 01:54Z ask + both addenda are current, nothing new to report.
+
+**Next**: chained work session (4-h budget) owns
+**sim100-paired-read-instrument** then **disc1000-panel-row-audit**
+(both CPU, un-gated — both want to land before the pdnorm endpoint
+reads), polling the GO ask at boot and each boundary. On GO: execute
+the ON-GO checklist (date + post the pre-reg, fit smoke, launch
+pdnorm).*
 
 *Updated 2026-08-18 02:04–05:2xZ (real `date -u` at write: 05:15) —
 work session (chained): **all THREE disc-1000 baseline legs executed
@@ -111,57 +142,15 @@ by the previous close — left in place). No in-channel post (the
 GO ask at each boundary. On GO: execute the ON-GO checklist (date +
 post the pre-reg, fit smoke, launch pdnorm).*
 
-*Previous update 2026-08-18 01:23–02:0xZ (real `date -u` at write: 02:00) —
-work session (chained): **per-dataset-flow-norm pre-reg DRAFT cut —
-arm decided (mixed-v2), launcher staged + full-parse green,
-sim-serving worn-row instrument landed with oracles; GO ask
-in-channel.***
-
-**Status**: no live runs — H100 idle (0% util; owner policy-server
-not up at check). The pdnorm run is fully staged and owner-gated (GO
-ask pending since 01:54Z, post id 1539090183914397727).
-
-**Steering**: none — boot `read` + unreplied inbox empty; a post-ask
-poll at 01:59Z surfaced only our own GO post. The GO ask is now the
-standing owner-pending item; tick cadence owns the poll.
-
-**Done** (commit `ba89c60`): (1) **Pre-reg DRAFT**
-[posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md] (dated +
-SUMMARY'd at the GO posting, disc convention). Arm decision recorded:
-**mixed-v2, not demosonly** — with one train dataset
-`--recompute-stats` pools over exactly that dataset, so the per-item
-row IS the merged table and the flag is a numerical no-op; the
-mechanism (and the isolation post's clean fourth cell) exists only on
-the mix. ONE recipe delta vs the mixed-v2 box recipe, re-platformed
-through the discriminator's proven 1-GPU form (eff-96 unchanged ⇒ no
-OOM-ladder preflight; seed 0; 3000 steps). Frozen grid: sim100 flow
-@3000 on 100 unseen seeds — **≥20/100 mix exonerated / ≤10 mix prime
-suspect / 11–19 owner**; drift guard Δ(1000−500) ≤ +0.30 (disc
-instrument, same stack); k4l2 panel paired vs disc-1000 (+0.05 CI
-guard; wrist_flex/wrist_roll the predicted movers); GPU-h gate 21.
-(2) **Launcher staged**
-`launch_local_grasp_sft_v2_joint_1gpu_pdnorm_h100.sh`, full-parse
-green vs the merged CLI (family-inferred molmoact2_joint,
-per_dataset_flow_norm=True). (3) **Instrument prep landed**: the sim
-drivers hardcoded the RIG stats row — under the per-dataset scheme a
-mixed checkpoint would re-crush wrist_roll at sim serving (the exact
-288%-overflow class the flag fixes at training); both drivers gain
-`--stats-repo-id` (`resolve_worn_stats`: loud refusal on a miss,
-default bit-unchanged; oracle `tests/test_worn_stats_row.py` ×4).
-check.py 996 green. (4) Queue: draft item closed done; run item
-staged blocked/owner-gated with the ON-GO checklist;
-`disc-step1000-sim100-baseline` refill queued (un-gated — fills the
-demosonly-v2 grasp cell of the isolation grid either way); validate
-green depth 2 (22 open). (5) GO ask posted in-channel (doubles as the
-result post).
-
-**Next**: `queue_cli.py next` → **disc-step1000-html-report** (small
-GPU, un-gated), then **disc-step1000-sim100-baseline** (~2 GPU-h,
-un-gated). The pdnorm RUN pends the owner GO. `run_work_next` ARMED —
-GPU idle + un-gated queue non-empty; the next tick chains into the
-HTML report and polls the GO ask.*
-
 ## Utilization footer
+
+Session 2026-08-18 05:45–05:4xZ (tick; 0 GPU-h — H100 idle by design,
+no live runs): **quiet tick — GO ask (01:54Z) + both calibration
+addenda still pending at ~3h50m; read + history + inbox all empty of
+new signals, registry declared-reason current, queue green depth 2
+(22 open)** — `run_work_next` stays ARMED: the chained work session
+owns sim100-paired-read-instrument + disc1000-panel-row-audit (both
+CPU) and polls the GO ask at every boundary.
 
 Session 2026-08-18 02:04–05:2xZ (work, exploit; ~2.8 GPU-h in-session
 — HTML report ~0.1 + sim100 baseline ~2.2 + k4l2 panel leg ~0.5, all
@@ -171,22 +160,6 @@ end-to-end pre-GO — demos-holdout 5.763 / sim100 11/100 / panel 58.14
 worn-row record fix + oracles, one starvation catch-and-relaunch
 (66→660 f/min)** — `run_work_next` ARMED: paired-read instrument +
 panel-row audit (both CPU) belong to the chained session.
-
-Session 2026-08-18 02:01–02:0xZ (tick; 0 GPU-h — H100 idle, no live
-runs): **quiet tick — GO ask (01:54Z) still pending at ~10 min old;
-read + history + inbox all empty of new signals, queue green depth
-2** — `run_work_next` stays ARMED: the chained work session owns
-the disc-step1000 HTML report + sim100 baseline and polls the GO
-ask at every boundary.
-
-Session 2026-08-18 01:23–02:0xZ (work, exploit; 0 GPU-h — CPU-side
-draft + instrument work, H100 left idle for the gated run): **pdnorm
-pre-reg draft cut (mixed-v2 arm, one-flag delta, frozen
-sim100/drift/panel grid, gate 21); launcher staged full-parse green;
-sim worn-row instrument landed with oracles (check.py 996); run +
-baseline queue items staged; GO ask in-channel 01:54Z** —
-`run_work_next` ARMED: the next tick owns the disc HTML report + the
-GO poll.
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-10
 00:00Z → 2026-08-17 19:45Z; rebased 08-17 from per-run prune records
