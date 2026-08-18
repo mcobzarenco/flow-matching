@@ -252,6 +252,23 @@ class ExpertState:
     # kinematic target — the measured pad error feeds back into the
     # IK target until the PHYSICAL pads bracket the hull.
     droop: np.ndarray = field(default_factory=lambda: np.zeros(3))
+    # Servo-droop compensation (approach): the eased quasi-static arm
+    # never overshoots, so it parks at the force-saturated static pose
+    # up to ~7 cm short of the solved hover (measured on the drop-in
+    # ease — the momentum-tuned 3 cm exit bar never trips and the
+    # phase burns its clock). Same settle-measure-correct pattern as
+    # descend with its OWN clip sized for the bigger shortfall.
+    approach_droop: np.ndarray = field(default_factory=lambda: np.zeros(3))
+    # Tick of the last settle-measure-correct update in the current
+    # phase (approach/descend share it; phases are exclusive and
+    # _enter resets it). Quiet + ramp-done alone is NOT enough pacing:
+    # the IK target moves less than one slew step per correction, so
+    # the command catches up instantly while the SERVO is still
+    # responding — consecutive-tick updates wind the integrator to
+    # its clip in ~15 ticks and close fires at the displaced pressed
+    # pose (measured, quasi-static entries). A refractory period
+    # paces corrections to the servo settle timescale.
+    last_correct_tick: int = -99
     # Servo-droop compensation (lower): the same undershoot under the
     # boat's added load stalls the radial trim short of the disk (gate
     # read 08-15: 4 held seeds parked at ~4.7 cm, arm quiet, full
@@ -276,6 +293,9 @@ class ExpertState:
     # True once the episode's FIRST approach ends — the eased approach
     # cap applies only before this (re-entries keep the global cap).
     first_approach_done: bool = False
+    # Live pad->hover distance (m), written by the approach plan for
+    # the output stage's distance-gated ease release.
+    hover_err_m: float = float("inf")
     trace: list[str] = field(default_factory=list)
 
 
@@ -301,6 +321,16 @@ class ScriptedExpert:
     #: spawn band (boat r_base ≤ ~0.27); a class attr so the spawn-v2
     #: robustness probe can sweep it against far-radius shoulder sag.
     DROOP_CLIP = 0.04
+    #: Approach integrator clip (m) — wider than descend's: the eased
+    #: static park is up to ~7 cm short (vs descend's ~2 cm droop),
+    #: and a real deck jam sits ~10 cm off, so a fully clipped
+    #: correction still leaves the jam detector's ≥3.5 cm error
+    #: signature intact.
+    APPROACH_DROOP_CLIP = 0.06
+    #: Minimum ticks between settle-measure-correct updates — the
+    #: servo's measured settle time for a few-cm target move. See
+    #: ExpertState.last_correct_tick for why quiet alone underpaces.
+    CORRECT_REFRACTORY_TICKS = 10
     #: Retreat ticks spent pulling up-and-back before slewing to HOME
     #: (clears the released boat before the big joint-space swing).
     RETREAT_UP_TICKS = 25
@@ -318,21 +348,41 @@ class ScriptedExpert:
     SLEW_ARM_DEG: float | None = 10.0
     SLEW_JAW_DEG: float | None = 12.0
     #: Approach-leg eased cap (owner 2026-08-16 19:42Z: the reach
-    #: toward the boat is "still a bit too fast and janky"). Mechanism
-    #: kept, DEFAULT OFF — measured NO-GO as a drop-in (n=120: placed
-    #: 41.7% vs 58.3, first-approach-only variant 40.8%): the eased arm
-    #: moves quasi-statically, so the dynamic overshoot that dips the
-    #: pads under approach's 3 cm exit bar never happens — the arm
-    #: parks at the force-saturated static pose ~7 cm short (seed 1015:
-    #: err flat 7.1 cm, qvel 0.015, false jam-flip at t51), and
-    #: descend/close/lift degrade from the parked entry (pinch-miss
-    #: loops, empty lifts at the 200-tick timeout). A smooth approach
-    #: needs the exits redesigned for static poses (approach droop +
-    #: descend entry) — its own instrumented item, not a knob flip.
-    #:   rate_t = min(APPROACH_SLEW_DEG, EASE_START + EASE_PER_TICK * t)
+    #: toward the boat is "still a bit too fast and janky"), applied
+    #: to the FIRST approach's far swing only, releasing to the
+    #: global cap inside APPROACH_NEAR_R:
+    #:   far:  rate_t = min(APPROACH_SLEW_DEG, EASE_START + EASE_PER_TICK * t)
+    #:   near: rate_t = SLEW_ARM_DEG
+    #: DEFAULT OFF — the 08-18 redesign ladder (n=120 pinned-BLAS,
+    #: fontaine/notes/smooth_v1{4,5}_*.json) measured EVERY eased
+    #: rung under the 57.5% placed reference: whole-approach 6°/tick
+    #: 41.7, 6 cm release 34-41, 12 cm release 49.2 (cap 5) / 50.0
+    #: (soft-start cap 10). The loss is physics, not exits: (a) the
+    #: sysid'd servo's STATIC reach envelope parks high+short at
+    #: far radius (anti-gravity extension saturates the shoulder), so
+    #: quasi-static pads never land the pinch pose the dynamic dip
+    #: reaches; (b) quasi-static pinches grip the hull SHALLOW, the
+    #: carried boat hangs low, drags on the disk and stalls the lower
+    #: phase (seed-1047 A/B trace); (c) part of the baseline yield
+    #: rides the violent-approach jam-flip/recover chain. Approach
+    #: momentum is load-bearing — smoothing trades yield directly.
+    #: The efficient smooth point if the trade is ever wanted:
+    #: cap 5 + the 12 cm release (-8.3 placed, far swing at the
+    #: owner-tuned retreat pace). Ladder flat across caps 5-10 =>
+    #: the cost sits in the release-zone entry mechanics.
     APPROACH_SLEW_DEG: float | None = None
     APPROACH_EASE_START: float = 1.5
     APPROACH_EASE_PER_TICK: float = 0.5
+    #: Ease-release radius (m): pad-to-hover distance under which the
+    #: first approach returns to the global cap. This is the RUN-UP
+    #: distance — the grasp chain's yield lives on the arm's entry
+    #: momentum into descend/close (the static reach envelope parks
+    #: high+short; only the dynamic dip lands the pinch pose), and a
+    #: 6 cm release measured barely better than no release at all
+    #: (placed 34-41% vs 57.5 ref across the eased ladder). 12 cm
+    #: gives the servos room to reach baseline arrival speed while
+    #: the far 2/3 of the home->boat swing still glides.
+    APPROACH_NEAR_R: float = 0.12
     #: Retreat home leg: glide instead of one-shot (owner 2026-08-16
     #: 19:42Z: "the arm goes to the rest pose while extended and then
     #: it folds once it got there"). Under the per-channel slew the
@@ -392,6 +442,7 @@ class ScriptedExpert:
         self.state.trace.append(f"{phase}@{self.state.ticks_in_phase}")
         self.state.phase = phase
         self.state.ticks_in_phase = 0
+        self.state.last_correct_tick = -99
 
     def _grasp_seed(self) -> np.ndarray:
         seed = PICKUP_QPOS[:5].copy()
@@ -416,6 +467,7 @@ class ScriptedExpert:
         state.flips_left -= 1
         state.roll_flip = not state.roll_flip
         state.droop[:] = 0.0
+        state.approach_droop[:] = 0.0
         state.trace.append("jam-flip")
         # Retreat up-and-back BEFORE re-approaching: flipping the
         # wrist 180 deg next to the hull flings the boat (measured
@@ -450,6 +502,7 @@ class ScriptedExpert:
             and not self.state.first_approach_done
             and self.SLEW_ARM_DEG is not None
             and self.APPROACH_SLEW_DEG is not None
+            and self.state.hover_err_m > self.APPROACH_NEAR_R
         ):
             arm_rate = min(
                 self.APPROACH_SLEW_DEG,
@@ -460,6 +513,18 @@ class ScriptedExpert:
         out = self._last_cmd + np.clip(cmd_deg - self._last_cmd, -rate, rate)
         self._last_cmd = out
         return out
+
+    def _ramp_done(self, arm_target_rad: np.ndarray) -> bool:
+        """True once the output-stage ramp has caught up with the
+        planned arm target — a settle-measure-correct read is only
+        meaningful when the quiet arm is lagging GRAVITY, not the
+        commanded ramp (the eased approach spends its first tens of
+        ticks mid-ramp; folding ramp lag into a droop integrator
+        overshoots the correction)."""
+        if self._last_cmd is None:
+            return self.SLEW_ARM_DEG is None  # one-shot commands: instant
+        want = np.rad2deg(arm_target_rad)
+        return float(np.abs(want - self._last_cmd[:5]).max()) < 1.0
 
     def action(self, sim: SO101Sim) -> np.ndarray:
         return self._smooth(sim, self._plan(sim))
@@ -488,6 +553,7 @@ class ScriptedExpert:
                 state.regrasp_tried = True
                 state.grip_lost_ticks = 0
                 state.droop[:] = 0.0
+                state.approach_droop[:] = 0.0
                 state.trace.append("regrasp")
                 self._enter("approach")
 
@@ -500,9 +566,55 @@ class ScriptedExpert:
         if state.phase == "approach":
             hover = boat_pos + np.array([0.0, 0.0, self.CLEARANCE_Z])
             hover_err = float(np.linalg.norm(pads_now - hover))
+            state.hover_err_m = hover_err
+            eased = (
+                self.SLEW_ARM_DEG is not None
+                and self.APPROACH_SLEW_DEG is not None
+                and not state.first_approach_done
+            )
             if self._jam_flip(sim, hover_err):
                 return self._command(self._arm_now(sim), JAW_OPEN_RAD)
-            arm, _ = planner.solve_grasp(hover, boat_yaw, self._grasp_seed())
+            arm, _ = planner.solve_grasp(
+                hover + state.approach_droop,
+                boat_yaw,
+                self._grasp_seed(),
+            )
+            # Settle-measure-correct (descend's pattern, own clip):
+            # the quasi-static eased arm parks force-saturated short
+            # of the solved hover and the 3 cm exit below never trips
+            # dynamically — fold the measured pad error into the
+            # target until the PHYSICAL pads reach the hover. Paced
+            # by ramp completion AND the refractory period (see
+            # ExpertState.last_correct_tick).
+            arm_speed = float(np.abs(sim.data.qvel[planner.arm_dofs]).max())
+            settled = arm_speed < 0.08 and self._ramp_done(arm)
+            if (
+                eased
+                and state.ticks_in_phase > 20
+                and settled
+                and state.ticks_in_phase - state.last_correct_tick
+                >= self.CORRECT_REFRACTORY_TICKS
+            ):
+                state.last_correct_tick = state.ticks_in_phase
+                state.approach_droop += hover - pads_now
+                # z only ever RAISES the hover target: pads parking
+                # HIGH is not a grasp problem (descend owns the down
+                # leg), and a down-driven hover presses the open jaw
+                # into the boat's deck (measured: boat nudged, false
+                # jams, budget burnt).
+                state.approach_droop[2] = max(state.approach_droop[2], 0.0)
+                state.approach_droop = np.clip(
+                    state.approach_droop,
+                    -self.APPROACH_DROOP_CLIP,
+                    self.APPROACH_DROOP_CLIP,
+                )
+            # Exit: the proven DYNAMIC bar. Inside APPROACH_NEAR_R the
+            # ease has released to the global cap, so the final dip
+            # that dips the pads under 3 cm keeps baseline dynamics
+            # and descend enters exactly as in the reference arm. On
+            # saturated far parks (pads quiet outside the near bar)
+            # the droop feedback above walks the corrected target
+            # until the pads cross into the release zone.
             if hover_err < 0.03 or timeout:
                 self._enter("descend")
             return self._command(arm, JAW_OPEN_RAD)

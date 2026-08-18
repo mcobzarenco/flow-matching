@@ -33,7 +33,18 @@ from __future__ import annotations
 import argparse
 import json
 import multiprocessing as mp
+import os
 from pathlib import Path
+
+# Pin BLAS to one thread BEFORE numpy loads anywhere (parent env is
+# inherited by spawn workers): under worker oversubscription OpenBLAS
+# varies its reduction partitioning at runtime, the DLS IK solutions
+# jitter bitwise, and the contact-rich sim amplifies that into
+# DIFFERENT EPISODE OUTCOMES on marginal seeds run-to-run (measured
+# 08-18: identical invocations placed 6/23 vs 3/23 with disjoint seed
+# sets; pinned runs are bitwise identical).
+for _v in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS"):
+    os.environ.setdefault(_v, "1")
 
 import numpy as np
 
@@ -169,7 +180,11 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--arm-slew", type=_slew_arg, default="6")
     parser.add_argument("--jaw-slew", type=_slew_arg, default="8")
-    parser.add_argument("--seeds", default="1000:1120", help="start:stop")
+    parser.add_argument(
+        "--seeds",
+        default="1000:1120",
+        help="start:stop range, or a comma list (targeted smokes)",
+    )
     parser.add_argument("--tail-ticks", type=int, default=150)
     parser.add_argument("--max-ticks", type=int, default=600)
     parser.add_argument("--spawn-version", default="v2.1")
@@ -188,8 +203,11 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    start, stop = (int(x) for x in args.seeds.split(":"))
-    seeds = list(range(start, stop))
+    if ":" in args.seeds:
+        start, stop = (int(x) for x in args.seeds.split(":"))
+        seeds = list(range(start, stop))
+    else:
+        seeds = [int(x) for x in args.seeds.split(",")]
     cfg = {
         "arm_slew": args.arm_slew,
         "jaw_slew": args.jaw_slew,
