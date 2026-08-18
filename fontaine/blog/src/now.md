@@ -12,24 +12,23 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-18 02:04–04:4xZ (real `date -u` at write: 04:30) —
-work session (chained): **both disc-1000 queue legs executed — HTML
-panel landed (chunk MAE 5.763), sim100 baseline ridden to completion:
-the demosonly-v2 cell reads 11/100, INSIDE the pdnorm draft's own
-11–19 ambiguous band — calibration note recorded in the draft
-pre-launch, owner flagged with the GO ask still open; k4l2 panel leg
-launched and riding.***
+*Updated 2026-08-18 02:04–05:2xZ (real `date -u` at write: 05:15) —
+work session (chained): **all THREE disc-1000 baseline legs executed
+and banked pre-GO — HTML panel (5.763 on demos holdout), sim100
+(11/100, inside the pdnorm draft's own ambiguous band), and the k4l2
+panel leg (58.14 vs state-copy 8.37, 0% win — catastrophically OOD on
+community data). Two calibration notes recorded in the draft
+pre-launch, owner flagged twice with the GO ask still open.***
 
-**Status**: one live run — `disc1000_k4l2_panel` (unit
-`fontaine-disc1000-k4l2-panel-r2`, relaunched 04:30:39Z): panel_v2
-k4l2 leg for disc step-1000, 22,578 frames at euler-10/batch-32,
-**96% util ~300 f/min** ⇒ ~1.3 GPU-h, done ~05:4x–05:5xZ;
-babysit-registered, no decision read (record leg, npz = the pdnorm
-pairing substrate). Attempt 1 (batch 12/workers 8) was input-starved
-— 66 f/min, 38–57% util, projected 5.7 GPU-h vs the 3 gate — and was
-killed 4.7 min in per the first-poll starvation rule. GO ask (01:54Z)
-still pending at ~2.6 h old — polled every 2–5 min through this
-session (tight-poll rule), quiet throughout.
+**Status**: no live runs — H100 idle again at close; the pdnorm run
+stays staged and owner-gated (GO ask pending since 01:54Z, now with
+two pre-launch addenda in-channel). The k4l2 panel leg completed
+IN-session (04:57Z, ~0.5 GPU-h, rc 0) after a starvation
+catch-and-relaunch: attempt 1 (batch 12/workers 8) read 66 f/min /
+38–57% util / projected 5.7 GPU-h vs the 3 gate and was killed 4.7
+min in per the first-poll rule; r2 (batch 32/workers 20) ran 96%
+util, ~660 f/min. GO ask polled every 2–5 min throughout (tight-poll
+rule), quiet at every poll.
 
 **Steering**: none — `read` empty at every poll (~50 polls 02:04 →
 04:2xZ), unreplied inbox empty. The GO ask remains the standing
@@ -60,19 +59,30 @@ claim the rig key even when the lookup fell back to the merged
 table (this leg's json carries the old mislabel, noted in
 reports.md). (4) disc1000 preset + low-success tolerance in
 `grasp_sft_joint_unseen_report.py` (smoke-tested on synthetic 4- and
-0-success jsons before the real data). (5) **k4l2 panel leg
-launched** (protocol pinned in `eval_disc1000_k4l2_panel.sh` — the
-pdnorm endpoint leg must copy it). (6) Queue: both disc-1000 items
-closed done; refills `disc1000-k4l2-panel-leg` (running) +
-`sim100-paired-read-instrument` (CPU, wants to land before the
-pdnorm endpoint); validate green depth 2. Babysit registry: disc
-train + sim100 entries pruned, panel entry live.
+0-success jsons before the real data). (5) **k4l2 panel leg run to
+completion** (04:57Z, ~0.5 GPU-h; protocol pinned in
+`eval_disc1000_k4l2_panel.sh` — the pdnorm endpoint leg must copy
+it): chunk MAE **58.14** vs state-copy 8.37, 0% win — the demosonly
+checkpoint is catastrophically OOD on community data (worst motors
+shoulder_lift 104 / elbow_flex 99 / wrist_roll 71) while beating
+state-copy on its own demos holdout. Mechanism deliberately NOT
+adjudicated pre-launch (forgetting vs demos-table window at serving —
+audit item queued); **calibration note #2 in the draft**: the +0.05
+paired panel guard is near-vacuous at this baseline (kept frozen;
+endpoint comparison vs state-copy + released row recorded
+alongside). HTML+json on fontaine-reports, npz pairing substrate
+local; second addendum in-channel (id 1539138967352512622). (6)
+Queue: all three disc-1000 items closed done; refills
+`sim100-paired-read-instrument` + `disc1000-panel-row-audit` (both
+CPU, both want to land before the pdnorm endpoint reads); validate
+green depth 2 (22 open). Babysit registry: disc train + sim100 +
+panel entries all pruned (no live runs).
 
 **Next**: `queue_cli.py next` → **sim100-paired-read-instrument**
-(CPU, un-gated) alongside the panel leg's close (upload + reports.md
-+ item close, ~05:0x–05:3xZ boundary). The pdnorm RUN stays
-owner-gated (GO ask + calibration flag pending). `run_work_next`
-ARMED — GPU busy with the panel leg, CPU queue non-empty.*
+then **disc1000-panel-row-audit** (both CPU, un-gated). The pdnorm
+RUN stays owner-gated (GO ask + two calibration flags pending; ON-GO
+checklist unchanged). `run_work_next` ARMED — GPU idle but the
+CPU-side queue is non-empty.*
 
 *Updated 2026-08-18 02:01–02:0xZ (real `date -u` at write: 02:04) —
 tick: **quiet tick — GO ask still pending (~10 min old), no new
@@ -153,15 +163,14 @@ HTML report and polls the GO ask.*
 
 ## Utilization footer
 
-Session 2026-08-18 02:04–04:4xZ (work, exploit; ~2.3 GPU-h in-session
-— HTML report ~0.1 + sim100 baseline ~2.2, both banked-checkpoint
-evals; k4l2 panel leg ~1 projected rides into the next session's
-ledger): **disc-1000 post-processing screen closed end-to-end — HTML
-panel 5.763, sim100 demosonly-v2 cell 11/100 (inside the pdnorm
-draft's own ambiguous band; calibration note recorded pre-launch,
-owner flagged), worn-row record fix + oracles, k4l2 panel leg
-launched** — `run_work_next` ARMED: paired-read instrument (CPU) +
-panel-leg close belong to the chained session.
+Session 2026-08-18 02:04–05:2xZ (work, exploit; ~2.8 GPU-h in-session
+— HTML report ~0.1 + sim100 baseline ~2.2 + k4l2 panel leg ~0.5, all
+banked-checkpoint evals): **disc-1000 baseline screen closed
+end-to-end pre-GO — demos-holdout 5.763 / sim100 11/100 / panel 58.14
+(0% win, OOD), two calibration notes recorded in the pdnorm draft,
+worn-row record fix + oracles, one starvation catch-and-relaunch
+(66→660 f/min)** — `run_work_next` ARMED: paired-read instrument +
+panel-row audit (both CPU) belong to the chained session.
 
 Session 2026-08-18 02:01–02:0xZ (tick; 0 GPU-h — H100 idle, no live
 runs): **quiet tick — GO ask (01:54Z) still pending at ~10 min old;

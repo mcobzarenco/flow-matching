@@ -948,6 +948,24 @@ HTML-reports rule.
   default fallback (the leg json's `stats_repo_id` field carries the
   rig lookup key — the pre-fix record semantics; fixed for future
   legs in `bba4a45`, which post-dates this leg's launch)
+- [k4l2 panel_v2 leg](https://mcobzarenco-fontaine-reports.static.hf.space/eval__grasp_sft_v2_demosonly_1gpu_disc__step_001000__panel_v2_k4l2_euler10_draws1_stable.html)
+  ([json](https://mcobzarenco-fontaine-reports.static.hf.space/eval__grasp_sft_v2_demosonly_1gpu_disc__step_001000__panel_v2_k4l2_euler10_draws1_stable.json))
+  — the baseline side of the pdnorm pre-reg's paired panel read
+  (04:57Z 08-18, ~0.5 GPU-h; euler-10 draws-1 stable, chunk 30,
+  batch 32, protocol pinned in `eval_disc1000_k4l2_panel.sh`; npz
+  pairing substrate local under `reports/`): chunk MAE **58.14** vs
+  state-copy 8.37 — **7× worse than state-copy, 0% win rate** on the
+  community panel, from a checkpoint that beats state-copy on its own
+  demos holdout (5.76 vs 7.67 above). The demosonly-v2 checkpoint is
+  a narrow specialist; worst motors shoulder_lift 104 / elbow_flex 99
+  / wrist_roll 71. Interpretation hedged pending the queued
+  instrument audit (which row panel items wore: genuine forgetting vs
+  the demos-recomputed table's windows at serving — both consistent
+  with this read). Calibration fact recorded pre-launch: at baseline
+  58.14 the pre-reg's +0.05 panel guard is near-vacuous as framed.
+  Relaunch note: attempt 1 (batch 12/workers 8) was input-starved (66
+  f/min, projected 5.7 GPU-h) and killed at 4.7 min per the
+  first-poll rule; r2 (batch 32/workers 20) ran at 96% util.
 - Weights: [`grasp_sft_v2_demosonly_1gpu_disc`](https://huggingface.co/mcobzarenco/fontaine-checkpoints/tree/main/grasp_sft_v2_demosonly_1gpu_disc)
   (steps 500 + 1000, weights-only, banked 00:5xZ 08-18)
 

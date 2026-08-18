@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-18T04:38:00Z
+**Updated:** 2026-08-18T05:12:00Z
 
 **Depth call:** depth 2 queued (disc-step1000-html-report — small un-gated GPU instrumentation; plus the blocked owner-gated pdnorm run item staged at the draft cut) after the pre-reg-draft close.
 
-**22 open** (Live 0 · Queued 2 · Blocked 20 · Done 222)
+**22 open** (Live 0 · Queued 2 · Blocked 20 · Done 223)
 
 ## 🔴 Live (0)
 
@@ -18,6 +18,20 @@
 
 *ready — waiting on a window or a boundary*
 
+**`disc1000-panel-row-audit`** · `cpu`
+
+Instrument audit for the disc-1000 panel row (58.14): determine which normalization row each panel item WORE in the k4l2 leg
+
+**boundary:** Queued 05:1xZ 08-18 work session (refill at the panel-leg close, charter section 4). CPU, un-gated; wants to land before the pdnorm endpoint panel read is interpreted. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
+
+<details><summary>full record</summary>
+
+Instrument audit for the disc-1000 panel row (58.14): determine which normalization row each panel item WORE in the k4l2 leg — the checkpoint's per-dataset table holds only the demos row (recompute-stats, single dataset), so what does the post-d3dd4d0 eval do for community repos absent from the table (honest per-repo rows recomputed from eval data? checkpoint merged-table fallback?). Read the eval item-wearing code path + the leg json's recorded stats; if the wear is the demos table, quantify the window-crush share of the 58.14 (denorm the npz predictions through plausible alternative rows) vs weight-level forgetting. Decides how the pdnorm endpoint's panel read should be interpreted; CPU-only (npz + code reading).
+
+</details>
+
+---
+
 **`sim100-paired-read-instrument`** · `cpu`
 
 Paired per-seed sim100 read instrument: compare two flow_unseen jsons on the shared 100 seeds
@@ -27,20 +41,6 @@ Paired per-seed sim100 read instrument: compare two flow_unseen jsons on the sha
 <details><summary>full record</summary>
 
 Paired per-seed sim100 read instrument: compare two flow_unseen jsons on the shared 100 seeds — success-count delta with paired bootstrap CI, discordant-seed (McNemar-style) count, and progress delta CI; oracle-tested (sim100_reads.py bootstrap pattern). Registered consumer: the pdnorm endpoint's paired read vs the disc-1000 baseline (calibration note recorded in the draft pre-launch: baseline 11/100 sits inside the 11-19 ambiguous band, so the paired read rides alongside the frozen absolute bands). Also runnable retro as its own oracle: probe(44) vs disc1000(11) on the banked jsons.
-
-</details>
-
----
-
-**`disc1000-k4l2-panel-leg`** · `gpu-local`
-
-k4l2 panel leg (+prediction npz dump +--report HTML) for grasp_sft_v2_demosonly_1gpu_disc/step_001000: the pdnorm pre-reg's tertiary read pairs the pdnorm endpoint against 'the discriminator's banked step-1000 on the shared frame…
-
-**boundary:** Queued 02:3xZ 08-18 work session (refill, charter section 4). Un-gated (eval of a banked checkpoint, not an experiment arm); GPU-guarded on the owner policy-server check. Runnable any time before the pdnorm endpoint read; if the pdnorm run is live when picked up, it waits (single H100). || RUNNING 04:30:39Z 08-18 (unit fontaine-disc1000-k4l2-panel-r2, babysit-registered): attempt 1 (04:25Z, batch 12/workers 8) input-starved at 66 f/min =&gt; killed 4.7 min in per the first-poll rule; r2 at batch 32/workers 20 reads 96% util ~300 f/min 24 GiB =&gt; ~1.3 GPU-h, done ~05:4x-05:5xZ. Protocol pinned in eval_disc1000_k4l2_panel.sh (euler-10 draws-1 stable, chunk 30, batch 32, panel_v2 plan + npz dump — the pdnorm endpoint leg copies it); chained session owns the close. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
-
-<details><summary>full record</summary>
-
-k4l2 panel leg (+prediction npz dump +--report HTML) for grasp_sft_v2_demosonly_1gpu_disc/step_001000: the pdnorm pre-reg's tertiary read pairs the pdnorm endpoint against 'the discriminator's banked step-1000 on the shared frames' (+0.05 CI guard, per-motor deltas recorded, wrist_flex/wrist_roll the predicted movers) — no such panel leg is banked yet, so pre-bank it now and take the pairing off the pdnorm critical path (also: first real-data panel row for the first non-drifting v2-corpus checkpoint). Protocol: the house panel_v2 k4l2 instrument verbatim (pin flags from the F-arm/tiny panel_v2 eval scripts at execution per the git-audit rule); ~1.5-2 GPU-h, gate 3.
 
 </details>
 
@@ -328,9 +328,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (222)
+## ✅ Done (223)
 
 *closed — the full record stays in each fold*
+
+**`disc1000-k4l2-panel-leg`** · `gpu-local`
+
+k4l2 panel leg (+prediction npz dump +--report HTML) for grasp_sft_v2_demosonly_1gpu_disc/step_001000: the pdnorm pre-reg's tertiary read pairs the pdnorm endpoint against 'the discriminator's banked step-1000 on the shared frame…
+
+**boundary:** Queued 02:3xZ 08-18 work session (refill, charter section 4). Un-gated (eval of a banked checkpoint, not an experiment arm); GPU-guarded on the owner policy-server check. Runnable any time before the pdnorm endpoint read; if the pdnorm run is live when picked up, it waits (single H100). || RUNNING 04:30:39Z 08-18 (unit fontaine-disc1000-k4l2-panel-r2, babysit-registered): attempt 1 (04:25Z, batch 12/workers 8) input-starved at 66 f/min =&gt; killed 4.7 min in per the first-poll rule; r2 at batch 32/workers 20 reads 96% util ~300 f/min 24 GiB =&gt; ~1.3 GPU-h, done ~05:4x-05:5xZ. Protocol pinned in eval_disc1000_k4l2_panel.sh (euler-10 draws-1 stable, chunk 30, batch 32, panel_v2 plan + npz dump — the pdnorm endpoint leg copies it); chained session owns the close. || DONE 04:57Z 08-18 (r2 ridden to completion in-session, ~0.5/3 GPU-h, rc 0): chunk MAE 58.14 vs state-copy 8.37, 0% win — catastrophically OOD on community data (worst motors shoulder_lift 104 / elbow_flex 99 / wrist_roll 71) from a checkpoint that beats state-copy on its own demos holdout. HTML+json on fontaine-reports (curl 200), npz pairing substrate local under reports/; reports.md + pre-reg draft panel-guard section updated pre-launch (guard near-vacuous at this baseline; endpoint comparison vs state-copy + released ckpt recorded alongside). Interpretation hedged pending disc1000-panel-row-audit. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
+
+<details><summary>full record</summary>
+
+k4l2 panel leg (+prediction npz dump +--report HTML) for grasp_sft_v2_demosonly_1gpu_disc/step_001000: the pdnorm pre-reg's tertiary read pairs the pdnorm endpoint against 'the discriminator's banked step-1000 on the shared frames' (+0.05 CI guard, per-motor deltas recorded, wrist_flex/wrist_roll the predicted movers) — no such panel leg is banked yet, so pre-bank it now and take the pairing off the pdnorm critical path (also: first real-data panel row for the first non-drifting v2-corpus checkpoint). Protocol: the house panel_v2 k4l2 instrument verbatim (pin flags from the F-arm/tiny panel_v2 eval scripts at execution per the git-audit rule); ~1.5-2 GPU-h, gate 3.
+
+</details>
+
+---
 
 **`disc-step1000-html-report`** · `gpu-local`
 

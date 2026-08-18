@@ -175,6 +175,21 @@ by > +0.05 with CI excluding 0 (the house guard convention). Per-motor
 deltas recorded — wrist_flex and wrist_roll are the channels the
 mechanism predicts should move.
 
+**Panel baseline MEASURED** (04:57Z 08-18, before GO — protocol
+pinned in `eval_disc1000_k4l2_panel.sh`, the endpoint leg copies it):
+disc-1000 reads **58.14** on the panel vs state-copy 8.37 (0% win) —
+the demosonly checkpoint is catastrophically out-of-distribution on
+community data despite beating state-copy on its own demos holdout
+(5.76). Two consistent mechanisms, deliberately NOT adjudicated
+pre-launch (instrument-audit item queued): weight-level forgetting
+after 1000 narrow steps, and/or serving through the demos-recomputed
+table's windows on community-range states. **Calibration note**: at
+baseline 58.14 the +0.05 guard above is near-vacuous as framed — it
+still catches "mixed worse than demosonly on real data", but any
+plausible endpoint clears it; the informative panel comparison at
+endpoint will be vs state-copy and vs the pre-SFT released
+checkpoint's panel row, recorded alongside the frozen guard.
+
 Curve-level record: demos-slice breakdown vs the discriminator curve
 (same holdout episodes); rig-slice curves recorded as the first
 per-dataset-normalized rig numbers. Token-leg sim100 and further
