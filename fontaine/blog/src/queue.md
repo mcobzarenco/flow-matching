@@ -6,7 +6,7 @@
 
 **Depth call:** post-triage: 4 queued executable (pdnorm-endpoint-close gated ~23:3xZ, grasp-sft-bootstrap legs 3/4 GPU-free-gated, sim-clutter-patch-promotion CPU, expert-approach-quasistatic-redesign CPU) + owner-pending-decisions-digest closing this session
 
-**16 open** (Live 0 · Queued 3 · Blocked 13 · Done 242)
+**15 open** (Live 0 · Queued 2 · Blocked 13 · Done 243)
 
 ## 🔴 Live (0)
 
@@ -14,7 +14,7 @@
 
 *(empty)*
 
-## 🟢 Queued (3)
+## 🟢 Queued (2)
 
 *ready — waiting on a window or a boundary*
 
@@ -27,20 +27,6 @@ pdnorm endpoint close (GPU, gated on step-3000 ~23:4x-00:0xZ 18/19 08): run the 
 <details><summary>full record</summary>
 
 pdnorm endpoint close (GPU, gated on step-3000 ~23:4x-00:0xZ 18/19 08): run the frozen endpoint battery in order — sim100 flow leg on the endpoint (100 unseen seeds, --stats-repo-id grasp_demos_v2/merged per the worn-row rule) + the baseline disc-1000 leg already banked -&gt; sim100_paired_read.py vs the 11/100 baseline; k4l2 panel leg (protocol pinned in eval_disc1000_k4l2_panel.sh, npz dump); pdnorm_panel_ladder_chart.py --endpoint &lt;row&gt; restamp; pdnorm_endpoint_truthfit_rewear.py (native-&gt;truth-fit seam); report build (pdnormendpoint preset — ladder/seam/paired embeds automatic) + push; verdict post through the frozen grid (&gt;=20 exonerates mix / &lt;=10 convicts / 11-19 ambiguous); bank endpoint to fontaine-checkpoints if any gated read makes it load-bearing (a grasping mixed ckpt certainly is), weights-only + HTML report. Step-1000 drift-guard read (delta eval(1000-500) &lt;= +0.30, PROVISIONAL) rides the ~15:1xZ babysit boundary, not this item. || SUBSTRATE PIN 14:1xZ 08-18 (prereg Amendment 1): the clutter-patch promotion flipped SO101Sim's default to clutter_appearance='patched' — every sim100 leg of this battery MUST run --clutter-appearance standins (registered v1/v2 protocol; demos + the 11/100 baseline are stand-ins-era; the pin keeps the read bit-identical to the code state at registration).
-
-</details>
-
----
-
-**`expert-approach-quasistatic-redesign`** · `cpu`
-
-Approach-leg smoothing done right (owner ask 19:42Z 08-16, drop-in ease measured NO-GO 41.7/40.8 vs 58.3 placed n=120
-
-**boundary:** Queued 20:1xZ 08-16 at the steering slice close. || DELEGATION TRIAGE 13:3xZ 08-18 (owner-pending-decisions-digest, under the 10:25Z no-go-asks delegation): DECIDED GO by Fontaine (announced in-channel) — this executes the owner's own 19:42Z 08-16 smoothness ask; the proposal-awaits-go gate dissolves under no-go-asks. CPU work item: approach droop feedback + exit-on-converged + descend-entry re-tune, bar yield-neutral vs 58.3/54.2/94.3, sample videos posted for owner eyeball at close. Feeds demo-gen v1.1.
-
-<details><summary>full record</summary>
-
-Approach-leg smoothing done right (owner ask 19:42Z 08-16, drop-in ease measured NO-GO 41.7/40.8 vs 58.3 placed n=120 — quasi-static arm never trips the momentum-tuned exits; diagnosis banked in scripted_expert.py APPROACH_SLEW_DEG comment + fontaine/notes/smooth_v12*.json): redesign approach/descend for static poses — approach droop feedback (descend's settle-measure-correct pattern, own clip), exit on command-converged + corrected static err, descend entry from parked pose re-tuned (close/lift degraded from parked entry: pinch-miss loops, empty lifts). Instrument: smooth_expert_measure.py (knobs landed: --approach-slew/--retreat-glide), bar = yield-neutral vs 58.3/54.2/94.3 with approach visibly eased; sample videos for the owner eyeball. OWNER-GATED: proposed in-channel 20:1xZ 08-16 (msg 1538641510281519134), awaits their go.
 
 </details>
 
@@ -68,7 +54,7 @@ Grasp-rich SFT bootstrap (owner go 22:07Z 08-14 on the 90%-of-seeds question; DR
 
 Demo-gen v1.1 regen on the box (owner 17:07Z: 'develop the next version of the demos with much smoother trajectories'): same sharded driver + protocol as v1 (spawn v2.1, mix70, 5k kept, seeds fresh stride) with the landed v1.1 ex…
 
-**boundary:** Queued 18:1xZ 08-16. On box-free + owner answers: rerun collect ladder (2-shard smoke merge oracle first), merge, quantile rewrite, upload as fontaine-grasp-demos-v1.1, card + visualizer link. GPU gate: 30 GPU-h (v1 used 16.9 at worse yield). || BOX-KILL AUDIT 22:5xZ 08-17 (queue-box-kill-audit): STAYS BLOCKED, host VOID. Blocker (1) ('box busy until ~21:xxZ 08-16') is superseded — the box is DEAD, so the gpu-a100 class currently has NO host at all. Surviving blockers: (2) owner sign-off on the disk-visibility realcal exemption and (3) smoothness steering (both already on the owner-pending list), PLUS a new compute call: future box, or local-1xH100 re-platform (v1 spent 16.9 GPU-h sharded on 8x; single-H100 serial is a long exclusive window competing with the training queue + owner policy-server — an explicit owner trade-off, not a default). || DELEGATION TRIAGE 13:3xZ 08-18 (owner-pending-decisions-digest, under the 10:25Z no-go-asks delegation): owner_hold dissolved — blocker (2) DECIDED by Fontaine: disk-mask realcal exemption GO as proposed (material-only measured NO-GO at ~1.1x plate ceiling; disk_appearance='realcal' carries it); blocker (3) folds into expert-approach-quasistatic-redesign (now queued GO — v1.1 waits for the smoother expert to land, that is the point of the version). Remaining real blockers: quasistatic redesign landed + a compute window (single-H100 serial is a long exclusive window — Fontaine schedules it into a genuinely clear gap; an 8x-class box would be owner-owned provisioning, 08-18 digest). · [pre-reg](posts/2026-08-16-prereg-sim-spawn-v2.md)
+**boundary:** Queued 18:1xZ 08-16. On box-free + owner answers: rerun collect ladder (2-shard smoke merge oracle first), merge, quantile rewrite, upload as fontaine-grasp-demos-v1.1, card + visualizer link. GPU gate: 30 GPU-h (v1 used 16.9 at worse yield). || BOX-KILL AUDIT 22:5xZ 08-17 (queue-box-kill-audit): STAYS BLOCKED, host VOID. Blocker (1) ('box busy until ~21:xxZ 08-16') is superseded — the box is DEAD, so the gpu-a100 class currently has NO host at all. Surviving blockers: (2) owner sign-off on the disk-visibility realcal exemption and (3) smoothness steering (both already on the owner-pending list), PLUS a new compute call: future box, or local-1xH100 re-platform (v1 spent 16.9 GPU-h sharded on 8x; single-H100 serial is a long exclusive window competing with the training queue + owner policy-server — an explicit owner trade-off, not a default). || DELEGATION TRIAGE 13:3xZ 08-18 (owner-pending-decisions-digest, under the 10:25Z no-go-asks delegation): owner_hold dissolved — blocker (2) DECIDED by Fontaine: disk-mask realcal exemption GO as proposed (material-only measured NO-GO at ~1.1x plate ceiling; disk_appearance='realcal' carries it); blocker (3) folds into expert-approach-quasistatic-redesign (now queued GO — v1.1 waits for the smoother expert to land, that is the point of the version). Remaining real blockers: quasistatic redesign landed + a compute window (single-H100 serial is a long exclusive window — Fontaine schedules it into a genuinely clear gap; an 8x-class box would be owner-owned provisioning, 08-18 digest). || QUASISTATIC VERDICT 16:4xZ 08-18: the smoother-expert blocker RESOLVES as measured NO-GO (approach smoothing costs placed% — momentum is load-bearing, see expert-approach-quasistatic-redesign close). v1.1 regen proceeds with the CURRENT v1.3-class expert (slew-10 traces + 2x slow retreat + realcal disk exemption per the 13:3x triage GO); smoothing knob (cap5+12cm release, -8.3 placed) available if the owner prices the trade in. Remaining blocker: a compute window only (single-H100 serial vs owner box call, per 08-18 digest). · [pre-reg](posts/2026-08-16-prereg-sim-spawn-v2.md)
 
 <details><summary>full record</summary>
 
@@ -246,7 +232,7 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (242)
+## ✅ Done (243)
 
 *closed — the full record stays in each fold*
 
@@ -833,6 +819,20 @@ Wrist-cam pose refit vs rig v2 (owner ask 21:43:31Z 08-16, proposal agreed-in-ch
 <details><summary>full record</summary>
 
 Wrist-cam pose refit vs rig v2 (owner ask 21:43:31Z 08-16, proposal agreed-in-channel 22:0xZ msg 1538665108811812925): sim wrist view shows one small clockwise-leaning orange jaw tip where rig v2 shows BOTH jaws symmetric from the bottom edge (eyeballed 08-16: /tmp pairs; the sim-wrist-periphery-fix pose overcorrected). Instrument first, fit second, lens-plumbline pattern: (1) matched pairs — replay rig v2 per-frame joint STATES into the sim, render wrist at identical kinematics; (2) measure both sides: in-image jaw-axis angle (orange jaw hue-segmentable real / exact mask sim), bottom-band occupancy fraction, both-jaws-visible rate; (3) fit mount-local camera roll/tilt (+fovy if needed) minimizing the matched-set discrepancy, validate held-out; ship flag-gated (bracket_appearance pattern), rides the next-gen regen with brackets + v1.3 expert. Note: pose change alters recorded wrist frames -&gt; regen-only, never silently.
+
+</details>
+
+---
+
+**`expert-approach-quasistatic-redesign`** · `cpu`
+
+Approach-leg smoothing done right (owner ask 19:42Z 08-16, drop-in ease measured NO-GO 41.7/40.8 vs 58.3 placed n=120
+
+**boundary:** Queued 20:1xZ 08-16 at the steering slice close. || DELEGATION TRIAGE 13:3xZ 08-18 (owner-pending-decisions-digest, under the 10:25Z no-go-asks delegation): DECIDED GO by Fontaine (announced in-channel) — this executes the owner's own 19:42Z 08-16 smoothness ask; the proposal-awaits-go gate dissolves under no-go-asks. CPU work item: approach droop feedback + exit-on-converged + descend-entry re-tune, bar yield-neutral vs 58.3/54.2/94.3, sample videos posted for owner eyeball at close. Feeds demo-gen v1.1. || EXECUTED + CLOSED 16:4xZ 08-18 work session (48e0496): full quasi-static machinery built (approach settle-measure-correct feedback w/ own clip + refractory pacing, parked-corrected exit, distance-gated ease w/ APPROACH_NEAR_R release) and the ladder measured n=120 pinned-BLAS: EVERY eased rung under the 57.5 placed ref — whole-approach 6deg 41.7, 6cm release 34-41, 12cm release 49.2 (cap5) / 50.0 (soft cap10). Verdict: approach momentum is LOAD-BEARING (static reach envelope parks pads high+short; quasi-static pinches grip shallow -&gt; disk drag stalls lower; deck-strike jam-flip chain carries part of baseline yield) — the yield-neutral bar is UNREACHABLE by approach smoothing on this platform. Decision announced (post 1539312294079627275): APPROACH_SLEW_DEG default OFF, fast path bit-identical (n=120 row parity); efficient smooth point exposed as knob (cap5+12cm, -8.3 placed, ~+17% collection wall). BONUS: instrument non-determinism found+fixed (OpenBLAS thread jitter in IK under worker oversubscription; BLAS pinned in-instrument, bitwise-repeatable now). 3 videos posted (1047 A/B + 1004 ease success). Videos smooth_expert_videos.py landed.
+
+<details><summary>full record</summary>
+
+Approach-leg smoothing done right (owner ask 19:42Z 08-16, drop-in ease measured NO-GO 41.7/40.8 vs 58.3 placed n=120 — quasi-static arm never trips the momentum-tuned exits; diagnosis banked in scripted_expert.py APPROACH_SLEW_DEG comment + fontaine/notes/smooth_v12*.json): redesign approach/descend for static poses — approach droop feedback (descend's settle-measure-correct pattern, own clip), exit on command-converged + corrected static err, descend entry from parked pose re-tuned (close/lift degraded from parked entry: pinch-miss loops, empty lifts). Instrument: smooth_expert_measure.py (knobs landed: --approach-slew/--retreat-glide), bar = yield-neutral vs 58.3/54.2/94.3 with approach visibly eased; sample videos for the owner eyeball. OWNER-GATED: proposed in-channel 20:1xZ 08-16 (msg 1538641510281519134), awaits their go.
 
 </details>
 
