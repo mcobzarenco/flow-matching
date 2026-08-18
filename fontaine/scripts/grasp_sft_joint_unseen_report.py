@@ -13,7 +13,15 @@ Usage:
       [--leg-json outputs/sim/grasp_sft/joint_probes/flow_unseen.json] \
       [--video-dir outputs/sim/grasp_sft/joint_probes/flow_unseen] \
       [--out-html reports/eval__grasp_sft_joint_step2000__flow_unseen100.html] \
-      [--gallery-dir reports/joint_unseen_gallery]
+      [--gallery-dir reports/joint_unseen_gallery] \
+      [--paired-json reports/analysis__sim100_paired_probe_vs_disc1000.json]
+
+--paired-json takes a frozen sim100_paired_read.py output and renders
+it as a "Paired read" section (delta tiles + discordant-seed chart)
+alongside the frozen absolute anchors; the read stays recorded,
+non-gating (registered consumer: the pdnorm endpoint vs the disc-1000
+demosonly baseline, whose 11/100 sits inside the pre-reg's own 11-19
+ambiguous band).
 """
 
 from __future__ import annotations
@@ -128,6 +136,12 @@ PRESETS: dict[str, dict] = {
             " isolation grid; baseline arm of the"
             " <code>--per-dataset-flow-norm</code> pre-reg"
         ),
+        "paired_band_note": (
+            " The demosonly baseline's 11/100 sits inside the pdnorm"
+            " draft's own 11&ndash;19 ambiguous band, so the paired read"
+            " rides alongside the frozen absolute bands &mdash; it is"
+            " recorded, never gating."
+        ),
     },
 }
 
@@ -193,6 +207,97 @@ def success_bar(rows: list[tuple[str, int, str]]) -> str:
     return fig_to_b64(fig)
 
 
+def discordant_bar(table: dict[str, int], label_a: str, label_b: str) -> str:
+    # Concordant cells share the muted anchor gray on purpose: only the
+    # discordant seeds decide a McNemar read.
+    rows = [
+        (f"{label_a} only", table["a_only"], SUCCESS, 1.0),
+        (f"{label_b} only", table["b_only"], FAIL, 1.0),
+        ("both succeed", table["both_succeed"], ANCHOR, 0.55),
+        ("both fail", table["both_fail"], ANCHOR, 0.55),
+    ]
+    xmax = max(10, int(max(v for _, v, _, _ in rows) * 1.25))
+    fig, ax = plt.subplots(figsize=(6.4, 2.6), facecolor=PAGE)
+    for i, (label, val, color, alpha) in enumerate(rows):
+        ax.barh(i, val, color=color, height=0.55, alpha=alpha)
+        ax.text(val + xmax * 0.015, i, str(val), color=TEXT, fontsize=10, va="center")
+        ax.text(
+            -xmax * 0.025,
+            i,
+            label,
+            color=TEXT,
+            fontsize=9,
+            va="center",
+            ha="right",
+        )
+    ax.invert_yaxis()
+    ax.set_yticks([])
+    ax.set_xlim(0, xmax)
+    ax.set_xlabel("seeds (paired on the shared unseen set)")
+    ax.set_title("Discordant seeds decide the paired read")
+    style_ax(ax)
+    ax.grid(axis="y", visible=False)
+    fig.subplots_adjust(left=0.34)
+    return fig_to_b64(fig)
+
+
+def paired_section(payload: dict, band_note: str) -> str:
+    """Render a frozen sim100_paired_read.py output as an html section:
+    meta line (role + pre-reg + preset band note), delta tiles, and the
+    McNemar discordant-seed chart."""
+    label_a = payload["arms"]["a"]["label"]
+    label_b = payload["arms"]["b"]["label"]
+    read = payload["read"]
+    succ, disc, prog = read["success"], read["discordant"], read["progress"]
+
+    def ci_text(ci: list[float], *, excludes: bool) -> str:
+        return f"CI95 [{ci[0]:g}, {ci[1]:g}], {'excludes' if excludes else 'spans'} 0"
+
+    count_ci = ci_text(
+        succ["count_delta_ci95"],
+        excludes=succ["ci_excludes_zero"],
+    )
+    tiles = [
+        (
+            f"{succ['count_delta']:+d}",
+            (
+                f"success-count delta, {succ['count_a']} vs {succ['count_b']}"
+                f" ({count_ci})"
+            ),
+        ),
+        (
+            f"p = {disc['mcnemar_exact_p_two_sided']:.1e}",
+            f"McNemar exact, {disc['a_only']} vs {disc['b_only']} discordant seeds",
+        ),
+        (
+            f"{prog['mean_delta_cm']:+.2f} cm",
+            (
+                "mean progress delta"
+                f" ({ci_text(prog['ci95'], excludes=prog['ci_excludes_zero'])})"
+            ),
+        ),
+        (
+            f"{prog['win_rate']:.0%}",
+            f"per-seed progress win rate ({prog['tie_rate']:.0%} ties)",
+        ),
+    ]
+    tiles_html = "".join(
+        f'<div class="tile"><div class="big">{v}</div><div class="lab">{html.escape(k)}</div></div>'
+        for v, k in tiles
+    )
+    strikes = read["reset_strikes"]
+    return (
+        f"<h2>Paired read: {html.escape(label_a)} vs {html.escape(label_b)}</h2>\n"
+        f'<p class="meta">{html.escape(payload["role"])} · pre-reg'
+        f" <code>{html.escape(payload['prereg'])}</code> · paired on the"
+        f" {read['n_seeds']} shared unseen seeds · reset strikes"
+        f" {strikes['a']}/{strikes['b']}.{band_note}</p>\n"
+        f'<div class="tiles">{tiles_html}</div>\n'
+        f'<img src="data:image/png;base64,'
+        f'{discordant_bar(disc, label_a, label_b)}">\n'
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -219,6 +324,13 @@ def main() -> int:
         "--preset",
         choices=sorted(PRESETS),
         default="step2000",
+    )
+    parser.add_argument(
+        "--paired-json",
+        type=Path,
+        default=None,
+        help="frozen sim100_paired_read.py output to render as a paired-read"
+        " section (recorded, non-gating)",
     )
     args = parser.parse_args()
     preset = PRESETS[args.preset]
@@ -307,6 +419,13 @@ def main() -> int:
         for v, k in tiles
     )
 
+    paired_html = ""
+    if args.paired_json is not None:
+        paired_html = paired_section(
+            json.loads(args.paired_json.read_text()),
+            preset.get("paired_band_note", ""),
+        )
+
     meta_html = preset["meta_html"].format(success=SUCCESS)
     bar_rows = [
         *preset["anchor_rows"],
@@ -340,7 +459,7 @@ def main() -> int:
 <div class="tiles">{tiles_html}</div>
 <h2>Against the anchors</h2>
 <img src="data:image/png;base64,{success_bar(bar_rows)}">
-<h2>Per-seed outcomes</h2>
+{paired_html}<h2>Per-seed outcomes</h2>
 <img src="data:image/png;base64,{outcome_strip(eps)}">
 <h2>Clips</h2>
 {gallery_html}
