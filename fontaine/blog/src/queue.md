@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-18T07:05:00Z
+**Updated:** 2026-08-18T07:19:00Z
 
 **Depth call:** depth 2 queued (pdnorm-prereg-panel-guard-recalibration + pdnorm-endpoint-report-preset, both CPU un-gated) after the paired-section close.
 
-**22 open** (Live 0 · Queued 2 · Blocked 20 · Done 226)
+**22 open** (Live 0 · Queued 2 · Blocked 20 · Done 227)
 
 ## 🔴 Live (0)
 
@@ -18,6 +18,20 @@
 
 *ready — waiting on a window or a boundary*
 
+**`released-ckpt-k4l2-panel-row`** · `gpu-local`
+
+Measure the pre-SFT released checkpoint's k4l2 panel row (PRE-GO, record-only): the pdnorm pre-reg names 'vs the pre-SFT released checkpoint's panel row' as an informative endpoint comparison, but that row has never been measured
+
+**boundary:** Queued 07:1xZ 08-18 work session (refill at the guard-recalibration close, charter section 4). GPU (short panel eval, ~0.5 GPU-h by the disc-1000 r2 rate), un-gated, record-only — H100 is idle-by-design for the owner-gated pdnorm launch, and precedent (baseline sim100 + panel legs, 04:xxZ 08-18) is that short pre-GO baseline evals use the idle window; check compute-apps for the owner policy-server before launch, abort guard as on the disc launcher. If GO lands first, pdnorm launch takes the GPU and this waits for the training window's eval slack or the endpoint session. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
+
+<details><summary>full record</summary>
+
+Measure the pre-SFT released checkpoint's k4l2 panel row (PRE-GO, record-only): the pdnorm pre-reg names 'vs the pre-SFT released checkpoint's panel row' as an informative endpoint comparison, but that row has never been measured — the draft's anchor ladder (27.40 / 25.15 / 8.37) covers wear classes of the SFT'd checkpoint, not where SFT started. Run the SFT source checkpoint through the pinned disc-1000 panel protocol (eval_disc1000_k4l2_panel.sh shape: same frames, batch 32 / workers 20 — first-poll util check per standing rule), wearing its own released source table (the row it records; that IS its honest wear). Read: released ~&lt;=15 =&gt; SFT destroyed real community competence (forgetting confirmed large); released ~&gt;=25 (at/above the midpoint null) =&gt; community data was never in reach and the endpoint read reweights toward the serving-window mechanism. Lands in reports.md + the endpoint interpretation anchors as a record-only addendum.
+
+</details>
+
+---
+
 **`pdnorm-endpoint-report-preset`** · `cpu`
 
 pdnorm endpoint report preset (PRE-GO prep, CPU): add a 'pdnormendpoint' preset to grasp_sft_joint_unseen_report.py so the ON-GO endpoint report is one command
@@ -27,20 +41,6 @@ pdnorm endpoint report preset (PRE-GO prep, CPU): add a 'pdnormendpoint' preset 
 <details><summary>full record</summary>
 
 pdnorm endpoint report preset (PRE-GO prep, CPU): add a 'pdnormendpoint' preset to grasp_sft_joint_unseen_report.py so the ON-GO endpoint report is one command — anchor rows base 9 / probe 44 / disc1000 baseline 11 (the paired baseline arm gets its own row), meta line naming the pre-reg's frozen absolute bands (broken-class band, 11-19 ambiguous band, &gt;=20 exoneration bar) and the wear-audit panel anchors (27.40 re-worn / 25.15 midpoint null / state-copy 8.37), paired_band_note carried over, checkpoint/meta fields left as FILL-AT-ENDPOINT placeholders that the endpoint session stamps. Oracle asserts the preset's anchor rows + band note + that --paired-json composes with it; check.py green.
-
-</details>
-
----
-
-**`pdnorm-prereg-panel-guard-recalibration`** · `cpu`
-
-Recalibrate the pdnorm pre-reg's panel expectations from the wear audit (PRE-GO, draft-only edit): the +0.05-vs-baseline panel guard was framed against 58.14, of which ~half is pure serving-window re-expression (audit: re-worn di…
-
-**boundary:** Queued 06:3xZ 08-18 work session (refill at the row-audit close, charter section 4). CPU, un-gated, draft-only; wants to land before the pdnorm endpoint panel read is interpreted (same consumer as the audit). If GO arrives first, the ON-GO checklist proceeds unchanged — this item then lands as a record-only addendum. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
-
-<details><summary>full record</summary>
-
-Recalibrate the pdnorm pre-reg's panel expectations from the wear audit (PRE-GO, draft-only edit): the +0.05-vs-baseline panel guard was framed against 58.14, of which ~half is pure serving-window re-expression (audit: re-worn disc-1000 27.40, repo-midpoint null 25.15, floor 14.40). Fold the audit's reference points into the draft's calibration note as the panel read's interpretation anchors: a pdnorm endpoint wearing honest rows should be read against 27.40/25.15 (wear-corrected class) with state-copy 8.37 the real bar, not against the raw 58.14. Record-only if the owner GO lands first — the frozen guard itself stays frozen; this edits interpretation anchors, not gates.
 
 </details>
 
@@ -328,9 +328,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (226)
+## ✅ Done (227)
 
 *closed — the full record stays in each fold*
+
+**`pdnorm-prereg-panel-guard-recalibration`** · `cpu`
+
+Recalibrate the pdnorm pre-reg's panel expectations from the wear audit (PRE-GO, draft-only edit): the +0.05-vs-baseline panel guard was framed against 58.14, of which ~half is pure serving-window re-expression (audit: re-worn di…
+
+**boundary:** Queued 06:3xZ 08-18 work session (refill at the row-audit close, charter section 4). CPU, un-gated, draft-only; wants to land before the pdnorm endpoint panel read is interpreted (same consumer as the audit). If GO arrives first, the ON-GO checklist proceeds unchanged — this item then lands as a record-only addendum. | DONE 07:1xZ 08-18 work session: draft-only edit landed in the pre-reg's panel-baseline section — the two candidate mechanisms recorded as resolved by the wear audit (~half serving-window re-expression, ~half genuine collapse), and the calibration note recalibrated with the interpretation-anchor ladder 27.40 (re-worn disc-1000, same-model wear-corrected reference) / 25.15 (repo-midpoint null, carries-any-signal bar) / 8.37 (state-copy, the real bar), plus the wear-asymmetry warning (pdnorm endpoint wears honest rows; disc-1000's 58.14 wore the demos global table — honest wear alone is worth ~a halving). The frozen +0.05 guard untouched. check.py 1015 green. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
+
+<details><summary>full record</summary>
+
+Recalibrate the pdnorm pre-reg's panel expectations from the wear audit (PRE-GO, draft-only edit): the +0.05-vs-baseline panel guard was framed against 58.14, of which ~half is pure serving-window re-expression (audit: re-worn disc-1000 27.40, repo-midpoint null 25.15, floor 14.40). Fold the audit's reference points into the draft's calibration note as the panel read's interpretation anchors: a pdnorm endpoint wearing honest rows should be read against 27.40/25.15 (wear-corrected class) with state-copy 8.37 the real bar, not against the raw 58.14. Record-only if the owner GO lands first — the frozen guard itself stays frozen; this edits interpretation anchors, not gates.
+
+</details>
+
+---
 
 **`pdnorm-endpoint-report-paired-section`** · `cpu`
 
