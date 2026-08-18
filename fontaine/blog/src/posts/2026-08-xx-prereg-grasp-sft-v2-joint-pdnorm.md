@@ -187,15 +187,46 @@ pinned in `eval_disc1000_k4l2_panel.sh`, the endpoint leg copies it):
 disc-1000 reads **58.14** on the panel vs state-copy 8.37 (0% win) —
 the demosonly checkpoint is catastrophically out-of-distribution on
 community data despite beating state-copy on its own demos holdout
-(5.76). Two consistent mechanisms, deliberately NOT adjudicated
-pre-launch (instrument-audit item queued): weight-level forgetting
-after 1000 narrow steps, and/or serving through the demos-recomputed
-table's windows on community-range states. **Calibration note**: at
-baseline 58.14 the +0.05 guard above is near-vacuous as framed — it
-still catches "mixed worse than demosonly on real data", but any
-plausible endpoint clears it; the informative panel comparison at
-endpoint will be vs state-copy and vs the pre-SFT released
-checkpoint's panel row, recorded alongside the frozen guard.
+(5.76). The two candidate mechanisms (weight-level forgetting vs
+serving through the demos-recomputed table's windows) were left
+unadjudicated when this baseline was measured; the
+[panel-row wear audit](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__disc1000_panel_row_audit.json)
+(06:4xZ 08-18, `disc1000_row_audit.py`, still before GO) resolved the
+split: **~half of the 58.14 is serving-window re-expression, ~half is
+genuine collapse to the demos prior**. Re-wearing the identical
+normalized predictions through honest per-repo rows (fit on the
+panel's own truth) halves the row to **27.40** — yet that re-worn
+model is still WORSE than a constant repo-box-midpoint null
+(**25.15**); the worn-box clamp floor is 14.40 of the 58.14, with
+predictions not edge-saturated (the wear hurts through affine
+re-expression, not the clamp).
+
+**Calibration note (recalibrated from the wear audit, 07:xxZ 08-18,
+before GO — interpretation anchors only; the +0.05 guard above stays
+frozen as registered).** At baseline 58.14 the guard is near-vacuous
+as framed — it still catches "mixed worse than demosonly on real
+data", but any plausible endpoint clears it. The audit adds a wear
+asymmetry that the anchors must absorb: this run's checkpoint records
+the per-dataset scheme, so its panel items wear honest per-repo rows,
+while disc-1000's 58.14 was produced wearing the demos-only global
+table — the honest-wear re-expression alone is worth roughly a
+halving (58.14 → 27.40) with zero model improvement. A pdnorm
+endpoint's panel row therefore reads against the **wear-corrected
+class**, not the raw 58.14:
+
+- **27.40** — disc-1000 re-worn through honest rows: the true
+  same-model reference. Endpoint ≈ 27 means the panel moved on wear
+  alone; no claim of real-data improvement.
+- **25.15** — constant repo-box-midpoint null: the carries-any-signal
+  bar. An endpoint not clearly below this has no usable signal on
+  community data, exactly like the baseline.
+- **8.37** — state-copy: the real bar for "usable on real data";
+  nothing in the SFT lineage has approached it on this panel.
+
+The informative endpoint comparisons remain vs state-copy and vs the
+pre-SFT released checkpoint's panel row, now read through these
+anchors; all are recorded alongside — never in place of — the frozen
+guard.
 
 Curve-level record: demos-slice breakdown vs the discriminator curve
 (same holdout episodes); rig-slice curves recorded as the first
