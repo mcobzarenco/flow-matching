@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-18T14:12:00Z",
+ "updated_utc": "2026-08-18T14:35:00Z",
  "depth_reason": "post-triage: 4 queued executable (pdnorm-endpoint-close gated ~23:3xZ, grasp-sft-bootstrap legs 3/4 GPU-free-gated, sim-clutter-patch-promotion CPU, expert-approach-quasistatic-redesign CPU) + owner-pending-decisions-digest closing this session",
  "items": [
   {
@@ -2325,12 +2325,12 @@
   {
    "id": "clutter-patch-promotion-regate",
    "class": "gpu-local",
-   "status": "queued",
+   "status": "done",
    "prereg": "fontaine/blog/src/posts/2026-08-18-prereg-clutter-patch-promotion-regate.md",
    "owner_hold": false,
-   "title": "Clutter-patch promotion re-gate (~0.02 GPU-h, registered with the 08-13 in-channel gate pre-reg (05:23Z), report 2026-08-14-appearance-screen-report.md): render the pinned 20x5 slots through the PRODUCTION patched path (SO101Sim v3 default) + a production standins arm, embed with the er_60k probe checkpoint, knn5 AUROC vs the same real_v2 reference \u2014 expect standins in the registered 0.708-0.718 band and patched within ~0.01 of the gate's 0.556 (the production implementation differs from the gate arm only at clutter-occluding-dynamic pixels, measured none on the oracle seeds). Gates any BEHAVIORAL eval on the patched substrate (demo-gen v1.1, future sim100 cells); tonight's pdnorm sim100 is pinned standins and does not wait on this.",
+   "title": "Clutter-patch promotion re-gate (~0.02 GPU-h, registered with the 08-13 in-channel gate pre-reg (05:23Z), report 2026-08-14-appearance-screen-report.md): render the pinned 20x5 slots through the PRODUCTION patched path (SO101Sim v3 default) + a production standins arm, embed with the er_60k probe checkpoint, knn5 AUROC vs the same real_v2 reference \u2014 expect standins in the registered 0.708-0.718 band and patched within ~0.01 of the gate's 0.556 (the production implementation differs from the gate arm only at clutter-occluding-dynamic pixels, measured none on the oracle seeds). Gates any BEHAVIORAL eval on the patched substrate (demo-gen v1.1, future sim100 cells); tonight's pdnorm sim100 is pinned standins and does not wait on this. || EXECUTED 14:2x-14:3xZ 08-18 (same session as the promotion): PASS \u2014 production patched AUROC 0.554 vs gate 0.556 (dev -0.002, bar +/-0.010); standins anchor 0.713 (band 0.708-0.718, = the banked v3 anchor); clean 0.283. Instrument fontaine/scripts/sim_clutter_promotion_regate.py (2 production arms, no hooks; CPU model load + vision-only CUDA beside the live pdnorm run), report reports/analysis__clutter_patch_promotion_regate.json, frames dumped. NOTE: er_60k probe ckpt re-converted to current schema at ~/checkpoints/converted/er_60k_step_060000_vla_v2 (old _vla dir is schema-v1 stale). The patched substrate is CLEARED for behavioral evals (demo-gen v1.1, future sim100 cells); tonight's pdnorm sim100 stays pinned standins per Amendment 1.",
    "boundary": "Queued 14:1xZ 08-18 at the promotion close. Small GPU job; runnable alongside the pdnorm run only if VRAM headroom is proven (~13 GiB free at queue time, encoder-only embed), else first in the post-endpoint GPU window before grasp-sft-bootstrap token legs."
   }
  ],
- "updated": "2026-08-18T14:12:00Z"
+ "updated": "2026-08-18T14:35:00Z"
 }
