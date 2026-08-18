@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-18T00:56:00Z
+**Updated:** 2026-08-18T01:54:00Z
 
-**Depth call:** depth 2 queued (per-dataset-flow-norm pre-reg draft — gate lifted by the HEALTHY verdict + stack-parity confirmation, the designated next work item; disc-step1000-html-report — standing-rule instrumentation refill) after the disc post-processing close: run item + checkpoint-upload item both closed done.
+**Depth call:** depth 2 queued (disc-step1000-html-report — small un-gated GPU instrumentation; plus the blocked owner-gated pdnorm run item staged at the draft cut) after the pre-reg-draft close.
 
-**21 open** (Live 0 · Queued 2 · Blocked 19 · Done 219)
+**22 open** (Live 0 · Queued 2 · Blocked 20 · Done 220)
 
 ## 🔴 Live (0)
 
@@ -32,23 +32,37 @@ Browsable HTML eval panel for grasp_sft_v2_demosonly_1gpu_disc/step_001000 (owne
 
 ---
 
-**`prereg-draft-per-dataset-flow-norm-rerun`** · `cpu`
+**`disc-step1000-sim100-baseline`** · `gpu-local`
 
-Pre-reg DRAFT for the --per-dataset-flow-norm rerun (the 08-17 isolation verdict's recipe recommendation, posted 1538811601153425469): the per-channel occupancy analysis showed the pooled/merged table crushes wrist_flex to 0.24x…
+sim100 flow leg for grasp_sft_v2_demosonly_1gpu_disc/step_001000 (the pdnorm pre-reg's BASELINE grasp read, runnable independent of the GO): 100 unseen seeds, sim.rollout_sim episode 30 s / execute-horizon 30 / euler-10 / bfloat1…
 
-**boundary:** Queued 18:0xZ 08-17 work session at the ebaa8e0-merge close (refill, charter section 4). GATED behind the discriminator verdict (sft-drift-discriminator-run, owner-GO pending since 15:14Z 08-17): the verdict decides whether distributed machinery or recipe deltas own the drift, which fixes this rerun's baseline arm + platform. Draft is CPU-only; posting+launch owner-gated as always. || GATE LIFTED 00:5xZ 08-18: discriminator verdict = HEALTHY/CONVICTED (distributed machinery owns the drift, recipe deltas exonerated) + stack-parity confirmation banked — per the pre-reg's interpretation grid the rerun proceeds on the single-GPU recipe class with drift risk retired; baseline arm = the discriminator run itself (same recipe, same platform, per_dataset_flow_norm=False, saves + full eval jsonl banked on fontaine-checkpoints). NEW corroboration for the draft: under the old checkpoint table the parity probe's worst motor is wrist_roll (16.87@500 / 12.31@1000 vs state-copy 3.99) — exactly the channel the 08-17 occupancy analysis showed overflowing 288%. Draft is CPU-only; posting+launch owner-gated as always. NEXT WORK ITEM.
+**boundary:** Queued 01:5xZ 08-18 work session at the pdnorm draft cut (refill, charter section 4). Un-gated (eval of a banked checkpoint, not an experiment arm); GPU-guarded on the owner policy-server check. Read protocol + interpretation pre-registered in the pdnorm draft's baseline-arms section. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
 
 <details><summary>full record</summary>
 
-Pre-reg DRAFT for the --per-dataset-flow-norm rerun (the 08-17 isolation verdict's recipe recommendation, posted 1538811601153425469): the per-channel occupancy analysis showed the pooled/merged table crushes wrist_flex to 0.24x weight and overflows wrist_roll 288% under the rig table — the enabler (6a6a0aa) is now LIVE on the merged family-norm stack (d3dd4d0: family-level branch, section tag q01q99_per_dataset, serving reads the recorded fact at load). Draft the pre-reg for a demosonly (or mixed-v2, pending the discriminator verdict's recipe implications) grasp-SFT rerun with --per-dataset-flow-norm: frozen recipe delta = ONE flag vs the matched baseline run, primary read = same MAE probe windows vs the baseline curve + k4l2 panel paired at endpoint, platform local H100 single-GPU (act-ckpt fit preflight per the 08-08 OOM ladder note if eff-batch above discriminator's 96).
+sim100 flow leg for grasp_sft_v2_demosonly_1gpu_disc/step_001000 (the pdnorm pre-reg's BASELINE grasp read, runnable independent of the GO): 100 unseen seeds, sim.rollout_sim episode 30 s / execute-horizon 30 / euler-10 / bfloat16 decoder, default worn-row lookup (demosonly ckpt: rig key misses -&gt; merged demos-native table, the correct window; record stats_repo_id from the out-json). Fills the demosonly-v2 grasp cell of the isolation grid (v2 pre-reg grid: &gt;= probe band 44 =&gt; demos were the lever; ~5 =&gt; data not the lever) and anchors the pdnorm rerun's paired grasp read. ~2 GPU-h, gate 3; +sim strip chart + result post.
 
 </details>
 
 ---
 
-## 🟡 Blocked (19)
+## 🟡 Blocked (20)
 
 *waiting on a prerequisite, a boundary, or the owner*
+
+**`per-dataset-flow-norm-rerun-run`** · `gpu-local` · **⛔ owner hold**
+
+RUN grasp_sft_v2_joint_1gpu_pdnorm (mixed-v2 + --per-dataset-flow-norm, local H100 1-GPU): the isolation grid's clean fourth cell
+
+**boundary:** Queued 01:5xZ 08-18 work session at the draft cut. OWNER-GATED: launch pends the GO on the draft post (standing ask goes in-channel with the draft summary). Everything CPU-side is staged: launcher full-parse green, serving-row instrument landed with oracles, decision grid + gates frozen in the draft. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
+
+<details><summary>full record</summary>
+
+RUN grasp_sft_v2_joint_1gpu_pdnorm (mixed-v2 + --per-dataset-flow-norm, local H100 1-GPU): the isolation grid's clean fourth cell — 3-dataset mix + sim-fit flow windows. ON GO: (1) post the pre-reg (rename draft to dated, SUMMARY, build+push, in-channel) BEFORE launch; (2) fit smoke STEPS=20 SMOKE=1; (3) launch via systemd-run unit fontaine-v2-joint-pdnorm, babysit.toml entry, first-poll util/rate + free -g (3-dataset loader at batch-96); (4) boundaries: step-1000 drift-guard read (delta(1000-500) &lt;= +0.30 raw, PROVISIONAL for grasp), step-3000 endpoint -&gt; sim100 flow leg 100 unseen seeds with --stats-repo-id grasp_demos_v2/merged + BASELINE disc step-1000 sim100 leg (fills the demosonly-v2 grasp cell) + k4l2 panel paired vs disc-1000; frozen grid: &gt;=20/100 mix exonerated / &lt;=10/100 mix prime suspect / 11-19 ambiguous-to-owner. GPU-h gate 21.
+
+</details>
+
+---
 
 **`expert-approach-quasistatic-redesign`** · `cpu` · **⛔ owner hold**
 
@@ -314,7 +328,7 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (219)
+## ✅ Done (220)
 
 *closed — the full record stays in each fold*
 
@@ -369,6 +383,20 @@ Restore local dataset mirrors post-box-kill (CPU/network, no GPU): the box delet
 <details><summary>full record</summary>
 
 Restore local dataset mirrors post-box-kill (CPU/network, no GPU): the box deletion (owner 18:09Z 08-17) left grasp_demos_v1 with NO local copy (~/datasets/fontaine has only grasp_sft_demos_v0; v2 re-pulled 18:2xZ for the discriminator). Pull mcobzarenco/fontaine-grasp-demos-v1 (28.1 GB at evacuation-verify) -&gt; ~/datasets/fontaine/grasp_demos_v1/merged via snapshot_download; verify file count + size vs HF. First audit which held gpu-local items (grasp-sft-bootstrap / grasp-sft-token-sft-arm / grpo-r2-post-sft) reference v1-era paths and record the mapping in their boundaries — pull what their launch gaps need, not speculatively beyond v1.
+
+</details>
+
+---
+
+**`prereg-draft-per-dataset-flow-norm-rerun`** · `cpu`
+
+Pre-reg DRAFT for the --per-dataset-flow-norm rerun (the 08-17 isolation verdict's recipe recommendation, posted 1538811601153425469): the per-channel occupancy analysis showed the pooled/merged table crushes wrist_flex to 0.24x…
+
+**boundary:** Queued 18:0xZ 08-17 work session at the ebaa8e0-merge close (refill, charter section 4). GATED behind the discriminator verdict (sft-drift-discriminator-run, owner-GO pending since 15:14Z 08-17): the verdict decides whether distributed machinery or recipe deltas own the drift, which fixes this rerun's baseline arm + platform. Draft is CPU-only; posting+launch owner-gated as always. || GATE LIFTED 00:5xZ 08-18: discriminator verdict = HEALTHY/CONVICTED (distributed machinery owns the drift, recipe deltas exonerated) + stack-parity confirmation banked — per the pre-reg's interpretation grid the rerun proceeds on the single-GPU recipe class with drift risk retired; baseline arm = the discriminator run itself (same recipe, same platform, per_dataset_flow_norm=False, saves + full eval jsonl banked on fontaine-checkpoints). NEW corroboration for the draft: under the old checkpoint table the parity probe's worst motor is wrist_roll (16.87@500 / 12.31@1000 vs state-copy 3.99) — exactly the channel the 08-17 occupancy analysis showed overflowing 288%. Draft is CPU-only; posting+launch owner-gated as always. NEXT WORK ITEM. || DONE 01:5xZ 08-18 work session: draft cut posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md (dated + SUMMARY'd at the GO posting, disc-prereg convention). ARM DECISION recorded in the draft: MIXED-v2 cell, not demosonly — with a single train dataset --recompute-stats pools over exactly that dataset, so the per-item row IS the merged table and the flag is a numerical no-op (flow_normalize_targets applies the same q01/q99 map); the mechanism (and the isolation post's clean fourth cell) exists only on the mix. One recipe delta (--per-dataset-flow-norm) vs the mixed-v2 box recipe re-platformed through the discriminator's proven 1-GPU form (eff-96 unchanged =&gt; no OOM-ladder preflight). Launcher staged launch_local_grasp_sft_v2_joint_1gpu_pdnorm_h100.sh, full-parse green (molmoact2_joint, per_dataset_flow_norm=True, seed 0). INSTRUMENT PREP LANDED: sim drivers' worn-row hardcode (STATS_REPO_ID=rig row) would have re-crushed wrist_roll at sim serving for per-dataset-scheme mixed checkpoints — both drivers now take --stats-repo-id (loud refusal on miss, default bit-unchanged, oracle tests/test_worn_stats_row.py 4 tests). check.py 996 green.
+
+<details><summary>full record</summary>
+
+Pre-reg DRAFT for the --per-dataset-flow-norm rerun (the 08-17 isolation verdict's recipe recommendation, posted 1538811601153425469): the per-channel occupancy analysis showed the pooled/merged table crushes wrist_flex to 0.24x weight and overflows wrist_roll 288% under the rig table — the enabler (6a6a0aa) is now LIVE on the merged family-norm stack (d3dd4d0: family-level branch, section tag q01q99_per_dataset, serving reads the recorded fact at load). Draft the pre-reg for a demosonly (or mixed-v2, pending the discriminator verdict's recipe implications) grasp-SFT rerun with --per-dataset-flow-norm: frozen recipe delta = ONE flag vs the matched baseline run, primary read = same MAE probe windows vs the baseline curve + k4l2 panel paired at endpoint, platform local H100 single-GPU (act-ckpt fit preflight per the 08-08 OOM ladder note if eff-batch above discriminator's 96).
 
 </details>
 
