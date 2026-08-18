@@ -918,6 +918,25 @@ the baseline the visual-matching lever must move.
 - Weights: [`grasp_sft_v1_joint_step3000`](https://huggingface.co/mcobzarenco/fontaine-checkpoints/tree/main/grasp_sft_v1_joint_step3000)
   (weights-only, byte-verified post-upload)
 
+## Grasp-SFT v2 drift discriminator `grasp_sft_v2_demosonly_1gpu_disc` @1000 ([pre-reg](posts/2026-08-17-prereg-sft-drift-discriminator.md) · [verdict](posts/2026-08-18-sft-drift-discriminator-verdict.md))
+
+The first non-drifting v2-corpus checkpoint (verdict HEALTHY 00:42Z
+08-18 ⇒ distributed path convicted), panel-reported per the standing
+HTML-reports rule.
+
+- [browsable HTML eval report](https://mcobzarenco-fontaine-reports.static.hf.space/eval__grasp_sft_v2_demosonly_1gpu_disc__step_001000__demos_holdout256_euler10.html)
+  ([json](https://mcobzarenco-fontaine-reports.static.hf.space/eval__grasp_sft_v2_demosonly_1gpu_disc__step_001000__demos_holdout256_euler10.json))
+  — current-stack eval on the probe-matched pins (demos holdout 0.1 /
+  split-seed 0 / 256 samples seed 0 / chunk 30 / euler-10 / batch 12),
+  32 charted frames: chunk MAE **5.763** vs state-copy 7.671 (paired
+  −1.95); reproduces the old-stack parity read 5.7626 to 3 decimals —
+  the in-train probe's 5.8989 is the known ×1.024 probe-vs-eval
+  instrument shift from the [verdict post](posts/2026-08-18-sft-drift-discriminator-verdict.md).
+  wrist_roll 12.31 stays the worst motor (3.5× state-copy's 3.99),
+  the residue the `--per-dataset-flow-norm` rerun targets
+- Weights: [`grasp_sft_v2_demosonly_1gpu_disc`](https://huggingface.co/mcobzarenco/fontaine-checkpoints/tree/main/grasp_sft_v2_demosonly_1gpu_disc)
+  (steps 500 + 1000, weights-only, banked 00:5xZ 08-18)
+
 ## Cross-family analyses
 
 - [flow-vs-AR paired per-step read](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__flow_vs_ar_paired_k4l2.json)

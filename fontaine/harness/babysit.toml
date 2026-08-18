@@ -1111,51 +1111,34 @@
 # recompute-stats, init molmoact2-so101-released — command block
 # byte-identical to the frozen box script. Post-merge (d3dd4d0) jsonl
 # vocabulary: loss_action_flow / loss_action_ar / loss_narration.
+# grasp_sft_v2_demosonly_1gpu_disc entry PRUNED 02:1xZ 08-18 work
+# session — COMPLETE 1000/1000 (00:42Z verdict HEALTHY under both
+# Amendment-1 rules => distributed path CONVICTED; ~5.8/12 GPU-h;
+# saves 500+1000 banked to fontaine-checkpoints; stack-parity probe
+# confirmed HEALTHY on the pre-merge instrument 00:5xZ). Entry had
+# outlived the run by two sessions (post-processing sessions left it
+# registered); this prune is the housekeeping.
+
 [[run]]
-name = "grasp_sft_v2_demosonly_1gpu_disc"
-kind = "train-jsonl"
+name = "disc1000_sim100_baseline"
+kind = "progress-log"
 host = "local"
-pgrep = "grasp_sft_v2_demosonly_1gpu_disc"
-pgrep_min = 1                      # single-process 1-GPU (bash+tee+python under the unit)
+pgrep = "disc1000_sim100_baseline|rollout_sim.*disc1000_baseline"
+pgrep_min = 1
 gpu_indices = [0]
-gpu_mem_min_mib = 20000
-jsonl = "/home/ubuntu/checkpoints/finetune/grasp_sft_v2_demosonly_1gpu_disc/train_log.jsonl"
-# (jsonl path FIXED 19:0xZ 08-17: registry carried the box layout
-# outputs/train/<run>/train_log.jsonl; the local bijou.train stack
-# writes to ~/checkpoints/finetune/<run>/ — first babysit exit-1 was
-# this path, run itself healthy. Full stdout: outputs/train/<run>.log)
-total_steps = 1000
-probe_key = "eval_chunk_mae"
-vram_key = "vram_alloc_peak_gib"
-started_utc = "2026-08-17T20:20:55Z"
-# ATTEMPT 2 (unit fontaine-demosonly-1gpu-disc-r2). Attempt 1 (unit
-# fontaine-demosonly-1gpu-disc, 18:44:15Z) trained clean to step 250
-# then DIED 19:59:21Z: CUDA OOM inside the FIRST eval probe —
-# build_probe_set batched the probe at the full per-rank batch (96)
-# while training only ever forwards micro-12 (batch 96 / 8 chunks);
-# the fast-path decode's KV caches pushed 62->79 GiB. Latent in the
-# frozen box script too (any 1-rank probe shard > micro). Fix: probe
-# batches at batch_size // backward_chunks (bijou/train/cli.py, this
-# commit); attempt-1 jsonl preserved as train_log_attempt1_oom250.jsonl
-# (no eval record ever flushed — verdict instrument reads the fresh
-# file only). Same seed 0, same recipe: restart-from-0 of the same
-# pre-registered run (no save existed before 500), NOT a resume —
-# fresh-seed-on-resume rule does not apply. ~1.25 GPU-h burned of the
-# 12 gate; attempt 2 ~4.5 projected => ~5.8 total, inside gate.
+gpu_mem_min_mib = 8000
+log = "/home/ubuntu/eval__disc1000_sim100_flow_unseen.log"
+progress_re = "seed [0-9]+ replan [0-9]+"
+started_utc = "2026-08-18T02:10:01Z"
 gpu_hours_per_wall_hour = 1.0
-boundary = "1000 steps, probes every 250, saves every 500; attempt-1 measured pace 15-18.7 s/step rising with step (~4.5-5 h wall to 1000 from 20:2xZ launch => verdict ~01:0x-01:3xZ 08-18); VERDICT READ AT 1000 (not a mid-run kill): delta eval MAE (1000 vs own 500) <= +0.30 => HEALTHY, distributed CONVICTED; >= +1.0158 => same-drift, distributed EXONERATED; else AMBIGUOUS (sft_drift_saga_charts.py --discriminator, bounds frozen pre-launch)"
+boundary = "sim100 flow leg, seeds 0-99 (unit fontaine-disc1000-sim100): ~40 s/seed measured at seed 0 => ~70-80 min, done ~03:2x-03:3xZ 08-18. Read: grasp count vs pdnorm pre-reg anchors (probe 44/100, broken class ~5/100) — fills the demosonly-v2 grasp cell of the isolation grid; interpretation pre-registered in the pdnorm draft's baseline-arms section, NOT a decision gate on its own."
 anchors = [
-    "AMENDMENT 1 (21:3xZ 08-17, frozen BEFORE the step-500 probe): step-250 read 12.5087 eval / 12.4202 train vs comparator 3.4623/3.6862 — first run on the merged family-norm stack, probe units shifted ~3.6x while AR CE tracks (0.6385 vs 0.6116). Verdict at 1000 computes BOTH raw bounds (+0.30/+1.0158) AND scale-adjusted (x s=3.613: +1.084/+3.670); agree => verdict, disagree => AMBIGUOUS-BY-INSTRUMENT (no claim, owner escalation, stack-parity probe of the saved ckpts is the disambiguator). Amendment section in the pre-reg post",
-    "this is a REPLICATION arm — drift here is the EXPECTED-INTERESTING outcome, not an anomaly to kill: NO probe-kill bars, ride to 1000 unless liveness/NaN/gate",
-    "drifting 8x comparators (same recipe): demosonly eval 3.46->3.24->4.22->5.27->6.17 at 250..1250 (monotone from 500); healthy 1-GPU family stayed flat — judge shape vs these, verdict only at 1000",
-    "first poll standing rule: GPU util + s/step (fix input starvation) + free -g (loader workers 8 x prefetch 4 at batch-96 single-process is the host-RAM watch; 221 GB total, ~197 available at launch)",
-    "owner policy-server guard fired at launch preflight (GPU was clean); if the server reappears mid-run DO NOT kill it or the run — escalate in-channel",
-    "recompute-stats at launch = the drifting runs' own recipe (deliberately kept, it is on the suspect list only if EXONERATED)",
+    "eval leg of a banked checkpoint (disc step-1000, first non-drifting v2-corpus ckpt) — no kill bars beyond liveness + the GPU-h gate; ride to 100/100",
+    "GPU util ~30-40% is NORMAL for the sequential rollout_sim driver (policy calls alternate with CPU sim stepping) — not input starvation, do not touch",
+    "worn-row lookup left at DEFAULT on purpose: demosonly ckpt has no rig key => merged demos-native table is the correct window; record stats_repo_id from the out-json in the result post",
+    "owner policy-server guard fired clean at launch (GPU idle); if the server appears mid-run DO NOT kill either — escalate in-channel",
 ]
 [[run.gates]]
-kind = "vram_max_gib"
-value = 78.0
-[[run.gates]]
 kind = "gpu_hours_max"
-value = 12.0
+value = 3.0
 
