@@ -1,22 +1,39 @@
 # Now
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-18 22:22–22:2xZ (real `date -u` at write: 22:25) —
+tick: **quiet babysit ~20 min after the 22:01 entry — run healthy,
+loss back to mid-band, probe curve unchanged; probe@2750 now
+projects ~23:0xZ (a touch later than the earlier ~22:5x estimate),
+still after this tick's cap — its read falls to the next tick.***
+
+**Status**: `grasp_sft_v2_joint_1gpu_pdnorm` LIVE — babysit exit 0 at
+22:23: step 2590/3000, 5 procs, VRAM 62.21/71 gate stable, loss
+0.3481 (−0.0356 vs 22:02, back to mid-band; 0.34–0.43 band intact),
+rate 15.295 s/step in the healthy window (since-last-sample 80 steps
+/ 21 min agrees), GPU duty-cycling with troughs but recovering to
+99–100% (13-sample check), host RAM 46 GiB available. Probe curve
+unchanged since the 2500 confirm (…5.45/5.47/6.59/**6.83**); next
+probe at 2750 in ~160 steps (~23:0xZ). ~1.7 h to endpoint, ETA
+~00:0xZ. Queue green depth 2 (15 open; both gpu-gated).
+
+**Steering**: none — read empty, inbox empty, history shows no
+reactions yet on the 21:58 spike-confirmed post (id
+1539393176228335698).
+
+**Done**: babysit CLI (exit 0, includes Discord read + history),
+free -g + extended 13-sample GPU util check (troughs at 0% recover
+to 100% — duty cycle, not a stall; rate confirms), queue validate.
+No post (quiet interval; nothing new since the 21:58 confirm note).
+
+**Next**: probe@2750 read next tick (~23:0xZ) completes the drift
+curve before the endpoint. Endpoint battery **pdnorm-endpoint-close**
+at step 3000 (~00:0xZ 08-19, sim100 pinned `--clutter-appearance
+standins` per Amendment 1) with **best-save flexibility LIVE** (best
+saved candidate **step 2000 @ 5.47**; 2500 saved but probes 6.83).
+Then **grasp-sft-bootstrap** probe legs 3/4. CPU queue EMPTY —
+`run_work_next` NOT armed.*
 
 *Updated 2026-08-18 22:01–22:0xZ (real `date -u` at write: 22:03) —
 tick: **quiet babysit right after the 21:58 confirm entry — run
@@ -89,42 +106,19 @@ probe at 2750 ~22:5xZ, endpoint 3000 read completes the curve).
 Then **grasp-sft-bootstrap** probe legs 3/4. CPU queue EMPTY —
 `run_work_next` NOT armed.*
 
-*Updated 2026-08-18 21:19–21:2xZ (real `date -u` at write: 21:21) —
-tick: **quiet babysit ~20 min after the 20:58 spike entry — run
-healthy, loss flat; owner 👍 on the spike watch note (agreement with
-the READ/no-action call). Probe@2500 lands ~21:58Z, after this
-tick's cap — confirm/deny read falls to the next tick.***
-
-**Status**: `grasp_sft_v2_joint_1gpu_pdnorm` LIVE — babysit exit 0 at
-21:20: step 2350/3000, 5 procs, VRAM 62.21/71 gate stable, loss
-0.3544 (−0.0002 vs 20:59, flat — the 20:38 top-of-band wiggle stays
-resolved), rate 15.06 s/step in the 15.0–16.2 healthy window, GPU
-duty-cycling to 100% (5-sample check), host RAM 46 GiB available
-(stable). Probe curve unchanged since the 2250 spike
-(…5.45/5.47/**6.59**); next probe at 2500 in ~150 steps (~21:58Z) is
-the spike's confirm/deny — also a save boundary. ~2.7 h to endpoint,
-ETA ~00:0xZ. Queue green depth 2 (15 open; both gpu-gated).
-
-**Steering**: **owner 👍x1 on the 21:01 spike watch post** (id
-1539378620609339457) — lightweight agreement with the pre-reg
-READ/no-action stance and the endpoint-battery kill/keep authority;
-recorded per the reaction-steering rule, no reply owed (reaction,
-not message). Read/inbox otherwise empty.
-
-**Done**: babysit CLI (exit 0, includes Discord read + history),
-free -g + util/rate standing checks (GPU duty cycle verified by
-5-sample poll), queue validate. No post (quiet mid-run interval; the
-2500 datum is what's worth posting, and it lands next tick).
-
-**Next**: probe@2500 read next tick (~21:58Z+) — if elevation holds,
-best-save flexibility goes live at endpoint choice (best saved
-candidate: step 2000 @ 5.47). Endpoint battery
-**pdnorm-endpoint-close** unchanged at step 3000 (~00:0xZ 08-19,
-sim100 pinned `--clutter-appearance standins` per Amendment 1), then
-**grasp-sft-bootstrap** probe legs 3/4. CPU queue EMPTY —
-`run_work_next` NOT armed.*
-
 ## Utilization footer
+
+Session 2026-08-18 22:22–22:2xZ (tick; 0 GPU-h new — pdnorm train
+continues, ~11.6 h elapsed): **quiet babysit — babysit exit 0: step
+2590/3000, loss 0.3481 (back to mid-band, −0.0356 vs 22:02), probe
+curve unchanged since the 2500 confirm (next at 2750 ~23:0xZ, lands
+next tick), rate 15.295 s/step healthy (since-last-sample agrees),
+VRAM 62.21/71, GPU duty-cycling to 100% (13-sample check, 0%
+troughs recover), RAM 46 GiB; Discord silent (read+inbox empty, no
+reactions yet on the 21:58 confirm post)** — CPU queue empty,
+`run_work_next` NOT armed; probe@2750 next tick, endpoint battery
+~00:0xZ with best-save flexibility live (best saved: step 2000 @
+5.47).
 
 Session 2026-08-18 22:01–22:0xZ (tick; 0 GPU-h new — pdnorm train
 continues, ~11.3 h elapsed): **quiet babysit — babysit exit 0: step
