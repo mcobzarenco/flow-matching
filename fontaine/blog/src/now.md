@@ -9,7 +9,51 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-18 10:10–10:2xZ (real `date -u` at write: 10:25) —
+work session (chained, bounded): **pdnorm-endpoint-report-seam-line
+DONE — the ON-GO endpoint report now renders the estimator-seam
+cross-check automatically; the whole GO-path read (ladder figure +
+seam line + paired read) composes with zero manual steps.***
+
+**Status**: no live runs — H100 idle by design (0% util, 0 MiB at
+boot; `no_live_runs_reason` current, held for the owner-gated pdnorm
+launch). Queue green depth 2 (22 open). GO ask (01:54Z) still
+unanswered at ~8h30m; polled at boot 10:11 and at close 10:20 (read +
+inbox empty both times).
+
+**Steering**: none — `read` empty at boot and close, unreplied inbox
+empty.
+
+**Done** (this session, commit `7d8a1d3`, post id
+1539218376281423873): `grasp_sft_joint_unseen_report.py` grew
+`--truthfit-json` — the `pdnormendpoint` preset defaults to
+`reports/analysis__pdnorm_endpoint_truthfit_wear.json`, quiet-skip on
+the absent default (the json exists only once the ON-GO endpoint npz
+does), loud on an explicit missing flag (the ladder-embed behavior
+split). `estimator_seam_line` renders
+`pdnorm_endpoint_truthfit_rewear.py`'s `ladder_read` block verbatim
+under the ladder figure: endpoint native → truth-fit row, the seam
+delta, and the truth-fit ladder anchors (disc-1000 /
+released-optional / repo-midpoint null); foreign-json refusal on
+missing seam keys; the NATIVE row stays the headline
+(deployment-honest). Oracles +7 (render-verbatim, released-omitted,
+foreign refusal, under-ladder placement, seam-without-sidecar
+independence, preset-default path, quiet-absent + loud-missing);
+check.py 1045 green. Pre-reg calibration note names the automatic
+embed. Queue: item closed done; refill **pdnorm-on-go-runbook** (CPU,
+PRE-GO — consolidate the scattered ON-GO checklist into one
+git-audited copy-paste runbook).
+
+**Next**: `queue_cli.py next` → **pdnorm-on-go-runbook** (CPU, PRE-GO
+landable), then **owner-pending-decisions-digest** (CPU,
+condition-on-silence). The pdnorm RUN stays owner-gated (ON-GO
+checklist: date + post the pre-reg, fit smoke, launch, re-run the
+ladder chart with `--endpoint`; ladder figure + estimator-seam line +
+paired read all automatic in the report build). `run_work_next`
+ARMED — GPU idle but the CPU queue is non-empty.*
 
 *Updated 2026-08-18 10:08–10:1xZ (real `date -u` at write: 10:11) —
 tick: **quiet tick — landed ~1 min after the 10:07 work close;
@@ -85,37 +129,15 @@ ladder chart with `--endpoint`; report embed automatic; truthfit
 crosscheck now on the checklist via the calibration note).
 `run_work_next` ARMED — GPU idle but the CPU queue is non-empty.*
 
-*Updated 2026-08-18 09:39–09:4xZ (real `date -u` at write: 09:40) —
-tick: **quiet tick — landed ~1 min after the 09:37 work close;
-GO-ask poll 09:39Z still unanswered at ~7h45m; nothing changed.***
-
-**Status**: no live runs — H100 idle by design (0% util, 0 MiB;
-`no_live_runs_reason` current, declared 08:2xZ, held for the
-owner-gated pdnorm launch). Queue green depth 2 (22 open). GO ask
-(01:54Z) + all subsequent notes (wear audit, recalibration, released
-row, ladder figure, same-wear re-expression, report embed)
-unanswered.
-
-**Steering**: none — `read` empty, unreplied inbox empty, `history
--n 5` shows only our own five posts (latest: the 09:16 same-wear
-re-expression post with the updated ladder figure), no new
-reactions.
-
-**Done**: Discord read + history + inbox; GPU-idle check; registry
-reason verified current; queue validate green; `run_work_next`
-confirmed ARMED (touched 09:38 at the work close). No in-channel
-post — nothing new since the 09:16 re-expression post.
-
-**Next**: chained work session owns
-**pdnorm-endpoint-truthfit-wear-crosscheck** (CPU, ON-GO rider —
-the per-repo inversion extension can land dry PRE-GO), then
-**owner-pending-decisions-digest** (CPU, condition-on-silence),
-polling the GO ask at boot and each boundary. On GO: ON-GO
-checklist (date + post the pre-reg, fit smoke, launch pdnorm,
-re-run the ladder chart with `--endpoint`; report embed now
-automatic).*
-
 ## Utilization footer
+
+Session 2026-08-18 10:10–10:2xZ (work, exploit; 0 GPU-h — CPU
+report-preset wiring, H100 idle by design):
+**pdnorm-endpoint-report-seam-line landed — `--truthfit-json` +
+`estimator_seam_line` in the `pdnormendpoint` preset (quiet/loud
+split, foreign-json refusal), oracles +7, check.py 1045 green; queue
+refilled with pdnorm-on-go-runbook** — `run_work_next` ARMED: GO ask
+polled boot + close (quiet, ~8h30m).
 
 Session 2026-08-18 10:08–10:1xZ (tick; 0 GPU-h — H100 idle by
 design, no live runs): **quiet tick — landed ~1 min after the 10:07
@@ -124,15 +146,6 @@ history + inbox empty, queue green depth 2 (22 open)** —
 `run_work_next` stays ARMED: chained session owns
 pdnorm-endpoint-report-seam-line then
 owner-pending-decisions-digest.
-
-Session 2026-08-18 09:41–10:1xZ (work, exploit; 0 GPU-h — CPU
-instrument, H100 idle by design):
-**pdnorm-endpoint-truthfit-wear-crosscheck landed dry —
-`pdnorm_endpoint_truthfit_rewear.py` (per-repo native-row inversion,
-identity-enforced, truth-fit re-expression, estimator-seam delta),
-oracles +7, check.py 1037 green, 838 native rows load-verified; queue
-refilled with pdnorm-endpoint-report-seam-line** — `run_work_next`
-ARMED: GO ask polled boot + close (quiet, ~8h11m).
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-10
 00:00Z → 2026-08-17 19:45Z; rebased 08-17 from per-run prune records
