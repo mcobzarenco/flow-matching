@@ -1,6 +1,38 @@
 # Now
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-18 16:47–16:5xZ (real `date -u` at write: 16:49) —
+tick: **quiet babysit ~15 min after the quasistatic session closed —
+run healthy at baseline rate; util-oscillation pattern read as loader
+duty cycle, not a stall; no delta.***
+
+**Status**: `grasp_sft_v2_joint_1gpu_pdnorm` LIVE — babysit exit 0 at
+16:47: step 1290/3000, 5 procs, VRAM 62.21/71 gate stable, loss
+0.4889, probe 5.72@1250 (curve 12.91/8.24/6.65/6.11/5.72 — still
+falling vs disc anchor). Rate window 15.0–16.2 s/step ≈ the ~15.3
+healthy est — recovered with the CPU measure runs gone (none left in
+ps; host RAM back to 48 GiB available). nvidia-smi util oscillates
+100↔0 at 5-s samples (power 123→578 W) but step rate is at baseline
+⇒ per-step loader segments (rig-video decode in the batch-96 mix),
+not starvation — rate is the ground truth, no action. ~7.4 h to
+endpoint, ETA ~00:1xZ. Queue green depth 2 (15 open; both
+gpu-gated on the endpoint).
+
+**Steering**: none — read empty, inbox empty; history shows only our
+own 16:37 result posts, no new reactions.
+
+**Done**: babysit CLI, util/rate + free -g standing checks (RAM 48
+GiB, recovered from 46), 30-s util watch + jsonl rate cross-check to
+clear the 0%-sample false alarm, Discord read + history, queue
+validate. No post (nothing new since 16:44).
+
+**Next**: unchanged — **pdnorm-endpoint-close** at step 3000
+(~00:1xZ 08-19, sim100 pinned `--clutter-appearance standins` per
+Amendment 1), then **grasp-sft-bootstrap** probe legs 3/4. CPU queue
+EMPTY — `run_work_next` NOT armed; routine tick babysits own the
+interim.*
 
 *Updated 2026-08-18 15:30–16:5xZ (real `date -u` at write: 16:52) —
 work session (chained, bounded): **expert-approach-quasistatic-redesign
@@ -73,55 +105,15 @@ chained work session owns **expert-approach-quasistatic-redesign**
 pinned `--clutter-appearance standins` per Amendment 1);
 **grasp-sft-bootstrap** token legs 3/4 after it.*
 
-*Updated 2026-08-18 13:44–15:3xZ (real `date -u` at write: 15:28) —
-work session (chained, bounded): **sim-clutter-patch-promotion
-EXECUTED + its registered re-gate PASSED same session — real-crop
-clutter patches are now the production v3/v4 clutter appearance.
-Session then rode to the step-1000 drift-guard read in-turn: PASS.***
-
-**Status**: `grasp_sft_v2_joint_1gpu_pdnorm` LIVE — babysit exit 0 at
-15:26 (drift read): step 1000/3000, 5 procs, util 84%, VRAM 62.21/71
-gate stable through save@1000; **drift guard PASS: Δ eval(1000−500) =
-−2.13 vs ≤ +0.30** (8.2419@500 → 6.1069@1000; curve
-12.91/8.24/6.65/6.11 vs disc 12.51/7.57/6.59/5.90 — healthy shape,
-slightly above throughout). Host RAM 46 GiB available (vs 48 at
-13:17) — no second step-drop after save@1000, watch routine. ~8.4 h
-to endpoint, ETA ~23:5xZ. Queue green depth 3 (16 open).
-
-**Steering**: none — read + inbox empty at boot (13:45) and the 14:19
-poll; no owner reply yet to the triage posts.
-
-**Done** (commits `9fe3ead` promotion + `0c0a8fb` re-gate; post
-1539282325907570728): the 13:3x GO executed end to end.
-`sim/clutter_patch.py` (moved from fontaine/scripts, camera model
-inlined + oracle-pinned); `SO101Sim clutter_appearance` knob, default
-**patched** — crops pasted onto the drawn plate at `_draw_content`,
-stand-ins parked off-frustum (dropped from top render/mask/v4
-shadow), wrist path untouched, zero extra RNG draws (slot-pairing
-survives). Oracles +5 in `tests/test_sim_appearance.py` (wrist
-bit-exact patched-vs-standins v3+v4; top bit-exact outside
-clutter-affected px; physics/stream identity; camera-model freeze);
-check.py 1048 green + 3 gpu render legs. **Re-gate PASS**
-(`sim_clutter_promotion_regate.py`, ~0.02 GPU-h beside the live run):
-production patched AUROC 0.554 vs gate 0.556 (dev −0.002, bar
-±0.010), standins anchor 0.713 dead-center — patched substrate
-CLEARED for behavioral evals. Sequencing: pdnorm prereg **Amendment
-1** pins tonight's sim100 legs to `--clutter-appearance standins`
-(11/100 baseline + demos are stand-ins-era); pin also in the endpoint
-queue item + archived gate instruments; er_60k probe ckpt
-re-converted to current schema (`er_60k_step_060000_vla_v2`).
-**Drift-guard read** ridden in-turn (foreground hold to eval@1000,
-posted 1539294445630005277): PASS, no knob moves (READ not kill).
-
-**Next**: `queue_cli.py next` CPU pointer →
-**expert-approach-quasistatic-redesign** (chained session).
-**pdnorm-endpoint-close** at step 3000 (~23:5xZ, sim100 pinned
-`--clutter-appearance standins` per Amendment 1);
-**grasp-sft-bootstrap** token legs 3/4 after it. Routine babysits own
-the interim (host-RAM watch routine). `run_work_next` ARMED at
-close.*
-
 ## Utilization footer
+
+Session 2026-08-18 16:47–16:5xZ (tick; 0 GPU-h new — pdnorm train
+continues, ~5.8 h elapsed): **quiet babysit — exit 0, step
+1290/3000, probe 5.72@1250, rate 15.0–16.2 s/step at baseline
+(measure-run contention gone, RAM back to 48 GiB); util 100↔0
+oscillation cross-checked against jsonl rate and read as loader duty
+cycle, not starvation; Discord quiet, no post** — CPU queue empty,
+`run_work_next` NOT armed; endpoint battery ~00:1xZ.
 
 Session 2026-08-18 15:30–16:5xZ (work, bounded, exploit-side; 0 GPU-h
 new — pdnorm train continues, ~5.9 h elapsed at close; CPU-only
@@ -132,30 +124,6 @@ default stays baseline, smooth knob exposed; instrument BLAS-pinning
 determinism fix; owner pdnorm-vs-demosonly question answered
 (~30 min late — truncated-babysit lesson re-learned)** — CPU queue
 empty at close, `run_work_next` not armed; endpoint battery ~00:xxZ.
-
-Session 2026-08-18 15:27–15:3xZ (tick; 0 GPU-h new — pdnorm train
-continues, ~4.5 h elapsed): **quiet babysit right after the
-drift-read session closed — first sample caught the eval+save@1000
-resume window (util 0%, +0 steps); step watcher confirmed resume
-(step 1010 @ 15:28, loss 0.5106, util 99%, VRAM 62.21/71); Discord
-quiet, no post** — `run_work_next` stays ARMED: quasistatic redesign
-next; endpoint battery ~23:5xZ.
-
-Session 2026-08-18 13:44–15:3xZ (work, bounded, exploit-side; ~0.02
-GPU-h in-session (re-gate embeds) — pdnorm train continues, ~4.4 h
-elapsed at close): **clutter-patch promotion EXECUTED + production
-re-gate PASS same session (patched 0.554 vs gate 0.556, standins
-anchor 0.713; commits `9fe3ead`+`0c0a8fb`); tonight's sim100 pinned
-standins via prereg Amendment 1; step-1000 drift read ridden in-turn
-— PASS (Δ −2.13 vs ≤ +0.30 bar)** — `run_work_next` ARMED:
-quasistatic redesign next; endpoint battery ~23:5xZ.
-
-Session 2026-08-18 13:41–13:4xZ (tick; 0 GPU-h new — pdnorm train
-continues, ~2.6 h elapsed): **quiet babysit 2 min after the digest
-session closed — exit 0, step 590/3000, 15.0 s/step instantaneous,
-probe 8.24@500, RAM plateau 48 GiB unchanged; Discord quiet, no
-post** — `run_work_next` stays ARMED: clutter promotion next; drift
-read ~15:2xZ; endpoint ~23:4x–00:0xZ.
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-10
 00:00Z → 2026-08-17 19:45Z; rebased 08-17 from per-run prune records
