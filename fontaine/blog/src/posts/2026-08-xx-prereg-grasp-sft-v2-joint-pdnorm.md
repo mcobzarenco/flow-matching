@@ -118,7 +118,14 @@ discriminator launcher.
   the mixed run to BEAT its demosonly control roughly twofold. The
   absolute bands stay frozen; a paired per-seed read vs this
   baseline's 100 episodes will be recorded alongside them (owner
-  flagged in-channel with the GO ask still open).
+  flagged in-channel with the GO ask still open). **Instrument
+  frozen pre-data** (05:5xZ 08-18): `sim100_paired_read.py` —
+  success-count delta with seed-0 10k-resample bootstrap CI95,
+  discordant-seed table with exact two-sided McNemar p, paired
+  progress delta CI; oracle `tests/test_sim100_paired_read.py`,
+  retro-validated on probe(44) vs this baseline(11): +33 successes
+  CI95 [22, 44], 37-vs-4 discordant, progress +3.57 cm [2.66, 4.46]
+  ([banked read](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim100_paired_probe_vs_disc1000.json)).
 - **Drift anchors**: mixed-v2 8× rose **+2.33** over the 500→1000
   window (killed @~1150); the discriminator fell **−1.67** over the
   same window on this exact platform and instrument.

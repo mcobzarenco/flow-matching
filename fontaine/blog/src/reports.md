@@ -966,6 +966,18 @@ HTML-reports rule.
   Relaunch note: attempt 1 (batch 12/workers 8) was input-starved (66
   f/min, projected 5.7 GPU-h) and killed at 4.7 min per the
   first-poll rule; r2 (batch 32/workers 20) ran at 96% util.
+- [paired per-seed read: probe vs disc-1000](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim100_paired_probe_vs_disc1000.json)
+  — retro shakedown of the frozen paired-read instrument
+  (`sim100_paired_read.py`, oracle
+  `tests/test_sim100_paired_read.py`; the pdnorm endpoint's
+  registered non-gating read vs this baseline, frozen pre-data):
+  probe 44 vs disc-1000 11 = **+33 successes, bootstrap CI95
+  [22, 44]**; discordant seeds 37 probe-only vs 4 disc-only
+  (McNemar exact p ≈ 1.0e-7); paired progress delta **+3.57 cm**
+  [2.66, 4.46], 80% per-seed win rate. The instrument cleanly
+  separates the healthy/broken classes on banked data — at the
+  pdnorm endpoint it reads against disc-1000's 100 episodes with
+  these same constants (seed-0 bootstrap, 10k resamples)
 - Weights: [`grasp_sft_v2_demosonly_1gpu_disc`](https://huggingface.co/mcobzarenco/fontaine-checkpoints/tree/main/grasp_sft_v2_demosonly_1gpu_disc)
   (steps 500 + 1000, weights-only, banked 00:5xZ 08-18)
 
