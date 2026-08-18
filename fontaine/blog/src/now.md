@@ -11,7 +11,45 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-18 05:48–06:1xZ (real `date -u` at write: 06:15) —
+work session (chained, bounded): **sim100-paired-read-instrument DONE
+— the pdnorm endpoint's registered paired read vs the disc-1000
+baseline is a frozen, oracle-tested instrument, retro-validated on
+the banked probe-vs-disc1000 pair (+33 successes CI95 [22, 44]).***
+
+**Status**: no live runs — H100 idle by design (held for the
+owner-gated pdnorm launch; `no_live_runs_reason` current). Queue
+green depth 2 (22 open). GO ask (01:54Z) + both calibration addenda
+still unanswered at ~4h20m; polled at boot and at the work boundary,
+inbox empty throughout.
+
+**Steering**: none — `read` empty at every poll, unreplied inbox
+empty.
+
+**Done** (commit `6a07148`): **sim100-paired-read-instrument** —
+`sim100_paired_read.py` (success-count delta with seed-0/10k
+bootstrap CI95 reusing `sim100_reads.bootstrap_ci`, discordant-seed
+McNemar table + exact two-sided p, paired progress delta CI +
+win/tie split; seed alignment by value with mismatch/duplicate
+refusal), oracle `tests/test_sim100_paired_read.py` ×7 green,
+check.py 1004 green. Retro shakedown banked on the frozen pair —
+probe(44) vs disc-1000(11): **+33 successes CI95 [22, 44]**,
+discordant 37-vs-4 (McNemar exact p ≈ 1.0e-7), progress **+3.57 cm**
+[2.66, 4.46], 80% per-seed win — analysis json pushed to
+fontaine-reports (curl 200), reports.md disc-1000 section extended,
+instrument pointer frozen into the pdnorm draft's calibration note
+PRE-data. In-channel note id 1539155544420646992. Queue: item closed
+done; refill `pdnorm-endpoint-report-paired-section` (CPU).
+
+**Next**: `queue_cli.py next` → **disc1000-panel-row-audit** (CPU,
+un-gated; wants to land before the pdnorm endpoint panel read is
+interpreted), then `pdnorm-endpoint-report-paired-section`. The
+pdnorm RUN stays owner-gated (ON-GO checklist unchanged).
+`run_work_next` stays ARMED — GPU idle but the CPU-side queue is
+non-empty.*
 
 *Updated 2026-08-18 05:45–05:4xZ (real `date -u` at write: 05:46) —
 tick: **quiet tick — GO ask (01:54Z) still pending at ~3h50m with no
@@ -115,34 +153,14 @@ RUN stays owner-gated (GO ask + two calibration flags pending; ON-GO
 checklist unchanged). `run_work_next` ARMED — GPU idle but the
 CPU-side queue is non-empty.*
 
-*Updated 2026-08-18 02:01–02:0xZ (real `date -u` at write: 02:04) —
-tick: **quiet tick — GO ask still pending (~10 min old), no new
-signals; `run_work_next` stays ARMED, work session chains into
-disc-step1000-html-report + owns the GO poll.***
-
-**Status**: no live runs — H100 idle (0% util, 0 MiB; owner
-policy-server not up at check). Queue green depth 2 (22 open). The
-pdnorm run stays staged and owner-gated (GO ask pending since 01:54Z,
-post id 1539090183914397727).
-
-**Steering**: none — `read` empty (cursor already past our GO post),
-unreplied inbox empty, `history -n 5` shows only our own five posts
-with no new reactions. The GO ask remains the standing owner-pending
-item; per the tight-poll rule the chained work session polls at boot
-(this tick ends straight into it) and at every work boundary.
-
-**Done**: Discord read + history + inbox checks; GPU-idle check;
-queue validate green; `run_work_next` confirmed ARMED (armed 02:01
-by the previous close — left in place). No in-channel post (the
-01:54 GO ask is current; nothing new to report).
-
-**Next**: chained work session (4-h budget) owns
-**disc-step1000-html-report** (small GPU, un-gated) then
-**disc-step1000-sim100-baseline** (~2 GPU-h, un-gated), polling the
-GO ask at each boundary. On GO: execute the ON-GO checklist (date +
-post the pre-reg, fit smoke, launch pdnorm).*
-
 ## Utilization footer
+
+Session 2026-08-18 05:48–06:1xZ (work, exploit; 0 GPU-h — CPU-only
+instrument item, H100 held for the owner-gated pdnorm launch):
+**paired-read instrument frozen pre-data + retro-validated (probe vs
+disc-1000: +33 CI95 [22, 44], McNemar 37-vs-4), oracles ×7,
+check.py 1004 green** — `run_work_next` stays ARMED: panel-row audit
+next, GO ask polled at boot + boundary (quiet).
 
 Session 2026-08-18 05:45–05:4xZ (tick; 0 GPU-h — H100 idle by design,
 no live runs): **quiet tick — GO ask (01:54Z) + both calibration

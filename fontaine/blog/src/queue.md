@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-18T05:12:00Z
+**Updated:** 2026-08-18T06:05:00Z
 
-**Depth call:** depth 2 queued (disc-step1000-html-report — small un-gated GPU instrumentation; plus the blocked owner-gated pdnorm run item staged at the draft cut) after the pre-reg-draft close.
+**Depth call:** depth 2 queued (disc1000-panel-row-audit + pdnorm-endpoint-report-paired-section, both CPU un-gated) after the paired-read-instrument close.
 
-**22 open** (Live 0 · Queued 2 · Blocked 20 · Done 223)
+**22 open** (Live 0 · Queued 2 · Blocked 20 · Done 224)
 
 ## 🔴 Live (0)
 
@@ -18,6 +18,20 @@
 
 *ready — waiting on a window or a boundary*
 
+**`pdnorm-endpoint-report-paired-section`** · `cpu`
+
+pdnorm endpoint HTML report: paired-vs-baseline section — wire the frozen sim100_paired_read.py output (success-count delta CI, discordant-seed McNemar table, progress delta CI vs disc1000_baseline/flow_unseen.json) into grasp_sf…
+
+**boundary:** Queued 06:0xZ 08-18 work session (refill at the paired-read-instrument close, charter section 4). CPU, un-gated; nice-to-land before the pdnorm endpoint read but the bare-json paired read (already frozen) suffices if the endpoint arrives first. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
+
+<details><summary>full record</summary>
+
+pdnorm endpoint HTML report: paired-vs-baseline section — wire the frozen sim100_paired_read.py output (success-count delta CI, discordant-seed McNemar table, progress delta CI vs disc1000_baseline/flow_unseen.json) into grasp_sft_joint_unseen_report.py's disc1000 preset so the pdnorm endpoint report renders the recorded non-gating paired read ALONGSIDE the frozen absolute bands (11-19 ambiguous band context), instead of the read living only in a bare analysis json. Charts follow the dark-mode eval-report scheme; smoke on the banked probe-vs-disc1000 pair before the real endpoint data.
+
+</details>
+
+---
+
 **`disc1000-panel-row-audit`** · `cpu`
 
 Instrument audit for the disc-1000 panel row (58.14): determine which normalization row each panel item WORE in the k4l2 leg
@@ -27,20 +41,6 @@ Instrument audit for the disc-1000 panel row (58.14): determine which normalizat
 <details><summary>full record</summary>
 
 Instrument audit for the disc-1000 panel row (58.14): determine which normalization row each panel item WORE in the k4l2 leg — the checkpoint's per-dataset table holds only the demos row (recompute-stats, single dataset), so what does the post-d3dd4d0 eval do for community repos absent from the table (honest per-repo rows recomputed from eval data? checkpoint merged-table fallback?). Read the eval item-wearing code path + the leg json's recorded stats; if the wear is the demos table, quantify the window-crush share of the 58.14 (denorm the npz predictions through plausible alternative rows) vs weight-level forgetting. Decides how the pdnorm endpoint's panel read should be interpreted; CPU-only (npz + code reading).
-
-</details>
-
----
-
-**`sim100-paired-read-instrument`** · `cpu`
-
-Paired per-seed sim100 read instrument: compare two flow_unseen jsons on the shared 100 seeds
-
-**boundary:** Queued 04:3xZ 08-18 work session (refill at the sim100-baseline close, charter section 4). CPU-side, un-gated; wants to land BEFORE the pdnorm endpoint read so the instrument is frozen pre-data. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
-
-<details><summary>full record</summary>
-
-Paired per-seed sim100 read instrument: compare two flow_unseen jsons on the shared 100 seeds — success-count delta with paired bootstrap CI, discordant-seed (McNemar-style) count, and progress delta CI; oracle-tested (sim100_reads.py bootstrap pattern). Registered consumer: the pdnorm endpoint's paired read vs the disc-1000 baseline (calibration note recorded in the draft pre-launch: baseline 11/100 sits inside the 11-19 ambiguous band, so the paired read rides alongside the frozen absolute bands). Also runnable retro as its own oracle: probe(44) vs disc1000(11) on the banked jsons.
 
 </details>
 
@@ -328,9 +328,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (223)
+## ✅ Done (224)
 
 *closed — the full record stays in each fold*
+
+**`sim100-paired-read-instrument`** · `cpu`
+
+Paired per-seed sim100 read instrument: compare two flow_unseen jsons on the shared 100 seeds
+
+**boundary:** Queued 04:3xZ 08-18 work session (refill at the sim100-baseline close, charter section 4). CPU-side, un-gated; wants to land BEFORE the pdnorm endpoint read so the instrument is frozen pre-data. | DONE 06:0xZ 08-18 work session: sim100_paired_read.py landed (imports sim100_reads.bootstrap_ci — one bootstrap implementation, seed 0 / 10k resamples), oracle tests/test_sim100_paired_read.py x7 green (seed alignment by value not order, mismatch/duplicate refusal, hand-pinned McNemar table + exact p, count-CI scaling + determinism); retro read banked: reports/analysis__sim100_paired_probe_vs_disc1000.json + pushed to fontaine-reports (curl 200) — probe 44 vs disc1000 11 = +33 successes CI95 [22,44], discordant 37-vs-4, McNemar exact p ~1.0e-7, progress +3.57 cm [2.66,4.46], 80% win rate. Instrument pointer frozen into the pdnorm draft's calibration note pre-data. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
+
+<details><summary>full record</summary>
+
+Paired per-seed sim100 read instrument: compare two flow_unseen jsons on the shared 100 seeds — success-count delta with paired bootstrap CI, discordant-seed (McNemar-style) count, and progress delta CI; oracle-tested (sim100_reads.py bootstrap pattern). Registered consumer: the pdnorm endpoint's paired read vs the disc-1000 baseline (calibration note recorded in the draft pre-launch: baseline 11/100 sits inside the 11-19 ambiguous band, so the paired read rides alongside the frozen absolute bands). Also runnable retro as its own oracle: probe(44) vs disc1000(11) on the banked jsons.
+
+</details>
+
+---
 
 **`disc1000-k4l2-panel-leg`** · `gpu-local`
 
