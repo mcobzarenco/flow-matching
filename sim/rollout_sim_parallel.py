@@ -59,6 +59,7 @@ from .rollout_sim import (
     RolloutSim,
     hold_chunk_fn,
     resolve_replans,
+    resolve_worn_stats,
     run_episode_loop,
     sim_item,
 )
@@ -297,6 +298,15 @@ def parse_args() -> argparse.Namespace:
         help="write a config header + per-seed rows (incl. per-tick "
         "distance series) for the reads instrument",
     )
+    parser.add_argument(
+        "--stats-repo-id",
+        default=None,
+        help="the dataset row sim items wear (a key of the checkpoint's "
+        f"per-dataset table; default: {STATS_REPO_ID!r} else the merged "
+        "table). Per-dataset-flow-norm checkpoints trained on a mix "
+        "denormalize flow chunks under the WORN row — sim episodes must "
+        "wear the sim demos' row, not the rig's",
+    )
     args = parser.parse_args()
     modes = sum(
         [args.checkpoint is not None, args.hold, args.molmoact2_discrete is not None],
@@ -304,6 +314,16 @@ def parse_args() -> argparse.Namespace:
     if modes != 1:
         parser.error(
             "exactly one of --checkpoint / --hold / --molmoact2-discrete is required",
+        )
+    if args.stats_repo_id is not None and args.checkpoint is None:
+        parser.error(
+            "--stats-repo-id picks a bijou policy's worn row — only "
+            "meaningful with --checkpoint",
+        )
+    if args.stats_repo_id is not None and args.convmap_seam_stats is not None:
+        parser.error(
+            "--stats-repo-id and --convmap-seam-stats both decide the worn "
+            "stats — pick one (the seam already replaces the row wholesale)",
         )
     if args.molmoact2_discrete is not None:
         for flag, name in (
@@ -794,7 +814,7 @@ def main() -> int:
                 "sample_steps": args.sample_steps,
                 "method": args.method,
                 "flow_decoder_dtype": args.flow_decoder_dtype,
-                "stats_repo_id": STATS_REPO_ID,
+                "stats_repo_id": args.stats_repo_id or STATS_REPO_ID,
                 "commit": commit,
                 # The RNG-key convention: each row's sampling stream is
                 # stable_sample_rng(run_seed, repo_id(draw),
@@ -931,10 +951,7 @@ def main() -> int:
             # Converted checkpoints (molmoact2 lineage) carry no
             # per-dataset table — their items must wear the checkpoint's
             # MERGED stats (same fallback as the sequential driver).
-            stats = policy.info.per_dataset_normalization.get(
-                STATS_REPO_ID,
-                policy.info.normalization,
-            )
+            stats = resolve_worn_stats(policy.info, args.stats_repo_id)
 
         def predict_batch(requests: list[tuple[Any, ...]]) -> list[np.ndarray]:
             items = []
@@ -1054,7 +1071,7 @@ def main() -> int:
                 "top_transform": args.top_transform,
                 "control_hz": CONTROL_HZ,
                 "task": TASK,
-                "stats_repo_id": STATS_REPO_ID,
+                "stats_repo_id": args.stats_repo_id or STATS_REPO_ID,
                 "mount_flip": not args.no_mount_flip,
                 "commit": commit,
                 # Off-contract provenance: the resolved seam map (fit +

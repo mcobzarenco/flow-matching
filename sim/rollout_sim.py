@@ -34,7 +34,7 @@ import av
 import numpy as np
 import torch
 
-from bijou.data import DatasetStats
+from bijou.data import DatasetStats, PolicyInfo
 from bijou.eval.policies import BijouPolicy
 from bijou.modelling.decoders.flow import SamplingMethod
 from bijou.rollout import SO_MOTORS, observation_to_item
@@ -50,6 +50,29 @@ SIM_CAMERAS = ("top", "wrist")
 
 STATS_REPO_ID = "mcobzarenco/so101_pick_place_v2"
 TASK = "Pick up the toy boat and place it on the wooden disk."
+
+
+def resolve_worn_stats(info: PolicyInfo, stats_repo_id: str | None) -> DatasetStats:
+    """The stats row sim items wear. Default: the rig row when the
+    checkpoint carries it, else the merged table (converted checkpoints
+    carry no per-dataset table). An explicit ``--stats-repo-id`` must
+    resolve — under the per-dataset flow scheme the sampled chunks
+    denormalize under the WORN row, so a silent fallback would serve
+    the model through the wrong window."""
+    if stats_repo_id is None:
+        return info.per_dataset_normalization.get(
+            STATS_REPO_ID,
+            info.normalization,
+        )
+    row = info.per_dataset_normalization.get(stats_repo_id)
+    if row is None:
+        raise SystemExit(
+            f"--stats-repo-id {stats_repo_id!r} is not in the checkpoint's "
+            f"per-dataset table {sorted(info.per_dataset_normalization)} — "
+            "the worn row decides the flow denormalization window, so it "
+            "cannot fall back",
+        )
+    return row
 
 
 class RolloutSim(Protocol):
@@ -169,9 +192,22 @@ def parse_args() -> argparse.Namespace:
         help="write a config header + per-seed rows (incl. per-tick "
         "distance series) for the reads instrument",
     )
+    parser.add_argument(
+        "--stats-repo-id",
+        default=None,
+        help="the dataset row sim items wear (a key of the checkpoint's "
+        f"per-dataset table; default: {STATS_REPO_ID!r} else the merged "
+        "table). Per-dataset-flow-norm checkpoints trained on a mix "
+        "denormalize flow chunks under the WORN row — sim episodes must "
+        "wear the sim demos' row, not the rig's",
+    )
     args = parser.parse_args()
     if (args.checkpoint is None) == (not args.hold):
         parser.error("exactly one of --checkpoint / --hold is required")
+    if args.stats_repo_id is not None and args.hold:
+        parser.error(
+            "--stats-repo-id picks a policy's worn row — meaningless with --hold",
+        )
     if args.wrist_transform != "none" and args.hold:
         parser.error(
             "--wrist-transform rewrites the policy's wrist input — "
@@ -473,6 +509,7 @@ def run_episode(
     video_path: Path | None,
     draw: int = 0,
     wrist_transform: str = "none",
+    stats_repo_id: str | None = None,
 ) -> EpisodeResult:
     latencies: list[float] = []
     next_chunk: Callable[[SimObservation, int], np.ndarray]
@@ -483,10 +520,7 @@ def run_episode(
         # table — their items must wear the checkpoint's MERGED stats
         # (the exact normalization the model trained with; its state
         # binning already rides BijouPolicy's molmo_flow state table).
-        stats = policy.info.per_dataset_normalization.get(
-            STATS_REPO_ID,
-            policy.info.normalization,
-        )
+        stats = resolve_worn_stats(policy.info, stats_repo_id)
 
         def policy_chunk(obs: SimObservation, replan: int) -> np.ndarray:
             item = sim_item(
@@ -543,6 +577,8 @@ def main() -> int:
             serve_head=args.serve_head,
         )
         horizon = min(args.execute_horizon, policy.info.chunk_size)
+        # Fail before the episode loop, not inside episode 1.
+        resolve_worn_stats(policy.info, args.stats_repo_id)
         print(
             f"policy: {policy.name} "
             f"({args.method}-{args.sample_steps}, horizon {horizon})",
@@ -571,6 +607,7 @@ def main() -> int:
                     video_path=video_path,
                     draw=draw,
                     wrist_transform=args.wrist_transform,
+                    stats_repo_id=args.stats_repo_id,
                 ),
             )
 
@@ -613,7 +650,7 @@ def main() -> int:
                 "wrist_transform": args.wrist_transform,
                 "control_hz": CONTROL_HZ,
                 "task": TASK,
-                "stats_repo_id": STATS_REPO_ID,
+                "stats_repo_id": args.stats_repo_id or STATS_REPO_ID,
                 "commit": commit,
             },
             "episodes": [
