@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-18T08:47:00Z
+**Updated:** 2026-08-18T09:08:00Z
 
-**Depth call:** depth 2 queued (released-row-honest-wear-reexpression cpu + endpoint-report-ladder-embed cpu, both un-gated) after the pdnorm-panel-ladder-chart close.
+**Depth call:** depth 2 queued (endpoint-report-ladder-embed cpu + pdnorm-endpoint-truthfit-wear-crosscheck cpu, both un-gated) after the released-row-honest-wear-reexpression close.
 
-**22 open** (Live 0 · Queued 2 · Blocked 20 · Done 230)
+**22 open** (Live 0 · Queued 2 · Blocked 20 · Done 231)
 
 ## 🔴 Live (0)
 
@@ -18,6 +18,20 @@
 
 *ready — waiting on a window or a boundary*
 
+**`pdnorm-endpoint-truthfit-wear-crosscheck`** · `cpu`
+
+Endpoint truth-fit wear cross-check (ON-GO rider, CPU, record-only): the pdnorm endpoint wears its NATIVE per-dataset training-table rows, while the ladder's 27.40/27.14 wear per-repo rows fit on the panel's own truth
+
+**boundary:** Queued 09:0xZ 08-18 work session (refill at the released-row-honest-wear close, charter section 4). CPU; the estimator seam is the one wear caveat the ladder still carries after the same-wear re-expression — this makes endpoint-vs-ladder estimator-consistent on GO. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
+
+<details><summary>full record</summary>
+
+Endpoint truth-fit wear cross-check (ON-GO rider, CPU, record-only): the pdnorm endpoint wears its NATIVE per-dataset training-table rows, while the ladder's 27.40/27.14 wear per-repo rows fit on the panel's own truth — same wear class, different ESTIMATOR (truth-fit rows are oracle-ish; deployment tables are not). Extend released_row_rewear.py (or a sibling) to invert the endpoint npz through the checkpoint's per_dataset_stats rows (per-repo worn tables, not a global one) and re-express through the panel-truth-fit honest rows, recording the native-vs-truth-fit wear delta alongside the ladder read; oracle on the per-repo inversion identity, check.py green. PRE-GO the per-repo inversion extension can land dry (instrument-only); the read itself rides the endpoint npz.
+
+</details>
+
+---
+
 **`endpoint-report-ladder-embed`** · `cpu`
 
 Wire the panel anchor-ladder figure into the pdnormendpoint report preset (PRE-GO prep, CPU): grasp_sft_joint_unseen_report.py grows a --ladder-b64 arg (or preset-default path reports/pdnorm_panel_ladder.b64) rendering the ladder…
@@ -27,20 +41,6 @@ Wire the panel anchor-ladder figure into the pdnormendpoint report preset (PRE-G
 <details><summary>full record</summary>
 
 Wire the panel anchor-ladder figure into the pdnormendpoint report preset (PRE-GO prep, CPU): grasp_sft_joint_unseen_report.py grows a --ladder-b64 arg (or preset-default path reports/pdnorm_panel_ladder.b64) rendering the ladder chart as a section of the ON-GO endpoint report, below the meta line's textual ladder — the endpoint session re-runs pdnorm_panel_ladder_chart.py --endpoint &lt;row&gt; first, so the report embeds the stamped figure with zero extra composition work. Oracle asserts the section renders from a sidecar (img tag with the b64 payload) and is absent when the file/flag is missing; check.py green.
-
-</details>
-
----
-
-**`released-row-honest-wear-reexpression`** · `cpu`
-
-Released-row honest-wear re-expression (PRE-GO, record-only, CPU): the released checkpoint's panel row (25.89, banked 08:22Z 08-18) wears its own released global table, while the ladder's same-model reference 27.40 wears honest p…
-
-**boundary:** Queued 08:2xZ 08-18 work session (refill at the released-panel-row close, charter section 4). CPU, un-gated, npz + instrument already local; wants to land before the pdnorm endpoint read so the anchor ladder is wear-consistent. If GO lands first, this rides the training window as a CPU work item. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
-
-<details><summary>full record</summary>
-
-Released-row honest-wear re-expression (PRE-GO, record-only, CPU): the released checkpoint's panel row (25.89, banked 08:22Z 08-18) wears its own released global table, while the ladder's same-model reference 27.40 wears honest per-repo rows — the wear classes differ, so the released-vs-SFT comparison carries a wear-mismatch caveat. Re-wear the released checkpoint's banked npz predictions (reports/eval__molmoact2_so101_released__panel_v2_k4l2_euler10_draws1_stable.npz, local) through the honest per-repo rows via the disc1000_row_audit.py re-expression path (same 838-repo truth-fit rows; extend the script with a --npz/--source-table flag or a sibling entry point, oracle on the re-expression identity anchors, check.py green). Output: the honest-wear released row alongside 27.40 in analysis json + a reports.md sentence — this dissolves the ladder caveat and makes released-vs-disc1000 a same-wear read (is the SFT checkpoint actually WORSE than where it started, wear held fixed?).
 
 </details>
 
@@ -328,9 +328,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (230)
+## ✅ Done (231)
 
 *closed — the full record stays in each fold*
+
+**`released-row-honest-wear-reexpression`** · `cpu`
+
+Released-row honest-wear re-expression (PRE-GO, record-only, CPU): the released checkpoint's panel row (25.89, banked 08:22Z 08-18) wears its own released global table, while the ladder's same-model reference 27.40 wears honest p…
+
+**boundary:** Queued 08:2xZ 08-18 work session (refill at the released-panel-row close, charter section 4). CPU, un-gated, npz + instrument already local; wants to land before the pdnorm endpoint read so the anchor ladder is wear-consistent. If GO lands first, this rides the training window as a CPU work item. | DONE 09:0xZ 08-18 work session: released_row_rewear.py landed (sibling of disc1000_row_audit — anchor-refusing, exact-inversion oracle worst 1.5e-05 deg, midpoint-null identity anchor vs the SFT audit json PASSED: panels element-identical, honest rows byte-identical, null 25.154476 both sides). SAME-WEAR READ: released honest-wear 27.14 vs SFT 27.40 (delta +0.26) — wear held fixed, the SFT checkpoint ended within noise of where it started (answer to the item's question: marginally worse, noise-scale), and BOTH rows are slightly worse than the 25.15 repo-midpoint null. Per-joint: shoulder_lift 68.9-&gt;66.1 / elbow_flex 43.1-&gt;36.2 down, shoulder_pan/wrist rows trade up — same two dominant motors. analysis__released_row_honest_wear.json pushed to fontaine-reports (curl 200); reports.md re-expression bullet + caveat-dissolved note; prereg calibration ladder updated (released rung now same-wear 27.14, own-table 25.89 kept in the note); ladder chart + its oracle updated, PNG + b64 re-rendered; oracles tests/test_released_row_rewear.py x5 green; check.py green. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
+
+<details><summary>full record</summary>
+
+Released-row honest-wear re-expression (PRE-GO, record-only, CPU): the released checkpoint's panel row (25.89, banked 08:22Z 08-18) wears its own released global table, while the ladder's same-model reference 27.40 wears honest per-repo rows — the wear classes differ, so the released-vs-SFT comparison carries a wear-mismatch caveat. Re-wear the released checkpoint's banked npz predictions (reports/eval__molmoact2_so101_released__panel_v2_k4l2_euler10_draws1_stable.npz, local) through the honest per-repo rows via the disc1000_row_audit.py re-expression path (same 838-repo truth-fit rows; extend the script with a --npz/--source-table flag or a sibling entry point, oracle on the re-expression identity anchors, check.py green). Output: the honest-wear released row alongside 27.40 in analysis json + a reports.md sentence — this dissolves the ladder caveat and makes released-vs-disc1000 a same-wear read (is the SFT checkpoint actually WORSE than where it started, wear held fixed?).
+
+</details>
+
+---
 
 **`pdnorm-panel-ladder-chart`** · `cpu`
 
