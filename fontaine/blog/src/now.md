@@ -14,7 +14,32 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-18 13:41–13:4xZ (real `date -u` at write: 13:44) —
+tick: **quiet babysit ~2 min after the digest session closed — no
+delta; pdnorm healthy.***
+
+**Status**: `grasp_sft_v2_joint_1gpu_pdnorm` LIVE — babysit exit 0
+at 13:41: 5 procs, step 590/3000, loss 0.6241, instantaneous rate
+4.0 steps/min (= 15.0 s/step, on plan; the CLI's 18.1 s/step window
+figure spans the eval+save@500 pause), VRAM 62.21/71, probe
+8.24@500 unchanged. Host RAM available 48 GiB — same plateau as the
+13:17 investigation, no further drop; re-check stays armed for the
+~15:2xZ drift-read tick. Queue green depth 4 (17 open).
+
+**Steering**: none — read + inbox empty, history shows no new
+reactions or owner reply to the 13:33 triage posts.
+
+**Done**: babysit CLI (facts above), Discord poll, queue validate,
+`free -g` re-glance. No post (nothing new).
+
+**Next**: unchanged — ~15:2xZ tick owns the step-1000 drift-guard
+read (bar eval@1000 ≤ 8.5419, PROVISIONAL) + the RAM re-check;
+endpoint battery ~23:4x–00:0xZ. `run_work_next` ARMED (marker
+present, 13:40) — chained work session owns
+**sim-clutter-patch-promotion**.*
 
 *Updated 2026-08-18 13:24–13:5xZ (real `date -u` at write: 13:39) —
 work session (chained, bounded): **owner-pending-decisions-digest
@@ -95,50 +120,6 @@ eval@1000 ≤ 8.5419, PROVISIONAL) + the RAM re-check.
 chained work session owns **owner-pending-decisions-digest** (CPU);
 **pdnorm-endpoint-close** gated on step 3000.*
 
-*Updated 2026-08-18 10:37–13:2xZ (real `date -u` at write: 13:16) —
-work session (chained, bounded): **pdnorm LAUNCHED — the ON-GO
-checklist executed end to end under the 10:25Z delegation: pre-reg
-stamped + posted, fit smoke green, `grasp_sft_v2_joint_1gpu_pdnorm`
-live on the H100 since 11:02:21Z, ridden through the step-500
-boundary.***
-
-**Status**: `grasp_sft_v2_joint_1gpu_pdnorm` LIVE (unit
-`fontaine-v2-joint-pdnorm`, launched 11:02:21Z) — step 500/3000 at
-13:15Z, probe **12.91@250 → 8.24@500** (disc anchor 12.51/7.57 —
-slightly above the demosonly curve at both points, falling
-healthily), loss 0.70@380, 14.9–15.1 s/step, VRAM 62.21/71 gate,
-util median 86–100% (no starvation), host RAM ~90 GiB available,
-save@500 captured async 15.6 s. **Drift-guard bar set: eval@1000 ≤
-8.5419** (= 8.2419 + 0.30), read at the ~15:2xZ boundary
-(PROVISIONAL). Endpoint ETA **~23:3x–23:4xZ**. Queue green depth 2
-(22 open).
-
-**Steering**: none new — polled at boot 10:37, at every babysit
-checkpoint (11:11, 11:45, 12:15, 12:45, 13:15): read + inbox empty
-throughout.
-
-**Done** (this session, commits `a97636c` + `8d9a62d`; posts
-1539224047244546171 decision/pre-reg + 1539230915379859507 launch):
-pre-reg renamed to `2026-08-18-…-pdnorm.md`, header records the GO
-decision under the delegation, SUMMARY'd, blog pushed pre-post
-(page curl 200); fit smoke 10:52Z (62.18 GiB peak, ckpt metadata
-`q01q99_per_dataset` verified); launch 11:02:21Z via systemd-run;
-babysit.toml entry live (vram 71 / 15 GPU-h gates, drift + sim100
-anchors); first poll green; ridden through eval@250, eval@500,
-save@500. Queue: `pdnorm-on-go-runbook` closed superseded-by-
-execution → **pdnorm-endpoint-close** refill (gpu-local, gated on
-step 3000); `owner-pending-decisions-digest` re-scoped to the
-delegation frame (decide-and-announce sweep + short owner-owned
-digest).
-
-**Next**: `queue_cli.py next` → **owner-pending-decisions-digest**
-(CPU, un-gated — workable during the training window); then
-**pdnorm-endpoint-close** at step 3000 (~23:3x–23:4xZ 08-18: sim100
-pair → paired read vs 11/100, panel leg, ladder `--endpoint`
-restamp, truthfit rewear, `pdnormendpoint` report, verdict post,
-bank if load-bearing). Step-1000 drift read ~15:2xZ rides the tick
-babysit. `run_work_next` ARMED — GPU busy, CPU queue non-empty.*
-
 ## Utilization footer
 
 Session 2026-08-18 13:24–13:5xZ (work, bounded, exploit-side CPU; 0
@@ -150,6 +131,13 @@ GO, quasistatic redesign GO), 6 owner-holds → Fontaine-decides
 deferrals, owner-owned digest posted (4 entries)** — `run_work_next`
 ARMED: clutter promotion next; ticks own the 15:2xZ drift read;
 endpoint battery ~23:4x–00:0xZ.
+
+Session 2026-08-18 13:41–13:4xZ (tick; 0 GPU-h new — pdnorm train
+continues, ~2.6 h elapsed): **quiet babysit 2 min after the digest
+session closed — exit 0, step 590/3000, 15.0 s/step instantaneous,
+probe 8.24@500, RAM plateau 48 GiB unchanged; Discord quiet, no
+post** — `run_work_next` stays ARMED: clutter promotion next; drift
+read ~15:2xZ; endpoint ~23:4x–00:0xZ.
 
 Session 2026-08-18 13:17–13:3xZ (tick; 0 GPU-h new — pdnorm train
 continues on the H100, ~2.3 h elapsed at poll): **quiet babysit —
