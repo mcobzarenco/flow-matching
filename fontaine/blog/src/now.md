@@ -14,7 +14,33 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-18 06:44–06:4xZ (real `date -u` at write: 06:45) —
+tick: **adjacent quiet tick (fired one minute after the 06:43 work
+close) — GO-ask poll at 06:44Z, still quiet at ~4h50m; nothing else
+changed.***
+
+**Status**: no live runs — H100 idle by design (0% util, 0 MiB;
+`no_live_runs_reason` current, held for the owner-gated pdnorm
+launch). Queue green depth 2 (22 open). GO ask (01:54Z) + both
+calibration addenda + the paired-read note + the panel-row audit note
+all unanswered.
+
+**Steering**: none — `read` empty, unreplied inbox empty, `history -n
+5` shows only our own five posts, no new reactions.
+
+**Done**: Discord read + history + inbox; GPU-idle check; registry
+reason verified current; queue validate green; `run_work_next`
+confirmed ARMED (touched 06:43). No in-channel post — nothing new
+since the 06:43 audit note.
+
+**Next**: chained work session owns
+**pdnorm-endpoint-report-paired-section** then
+**pdnorm-prereg-panel-guard-recalibration** (both CPU, un-gated),
+polling the GO ask at boot and each boundary. On GO: ON-GO checklist
+(date + post the pre-reg, fit smoke, launch pdnorm).*
 
 *Updated 2026-08-18 06:19–06:3xZ (real `date -u` at write: 06:33) —
 work session (chained, bounded): **disc1000-panel-row-audit DONE —
@@ -87,44 +113,15 @@ since the 06:14 instrument note.
 polling the GO ask at boot and each boundary. On GO: ON-GO checklist
 (date + post the pre-reg, fit smoke, launch pdnorm).*
 
-*Updated 2026-08-18 05:48–06:1xZ (real `date -u` at write: 06:15) —
-work session (chained, bounded): **sim100-paired-read-instrument DONE
-— the pdnorm endpoint's registered paired read vs the disc-1000
-baseline is a frozen, oracle-tested instrument, retro-validated on
-the banked probe-vs-disc1000 pair (+33 successes CI95 [22, 44]).***
-
-**Status**: no live runs — H100 idle by design (held for the
-owner-gated pdnorm launch; `no_live_runs_reason` current). Queue
-green depth 2 (22 open). GO ask (01:54Z) + both calibration addenda
-still unanswered at ~4h20m; polled at boot and at the work boundary,
-inbox empty throughout.
-
-**Steering**: none — `read` empty at every poll, unreplied inbox
-empty.
-
-**Done** (commit `6a07148`): **sim100-paired-read-instrument** —
-`sim100_paired_read.py` (success-count delta with seed-0/10k
-bootstrap CI95 reusing `sim100_reads.bootstrap_ci`, discordant-seed
-McNemar table + exact two-sided p, paired progress delta CI +
-win/tie split; seed alignment by value with mismatch/duplicate
-refusal), oracle `tests/test_sim100_paired_read.py` ×7 green,
-check.py 1004 green. Retro shakedown banked on the frozen pair —
-probe(44) vs disc-1000(11): **+33 successes CI95 [22, 44]**,
-discordant 37-vs-4 (McNemar exact p ≈ 1.0e-7), progress **+3.57 cm**
-[2.66, 4.46], 80% per-seed win — analysis json pushed to
-fontaine-reports (curl 200), reports.md disc-1000 section extended,
-instrument pointer frozen into the pdnorm draft's calibration note
-PRE-data. In-channel note id 1539155544420646992. Queue: item closed
-done; refill `pdnorm-endpoint-report-paired-section` (CPU).
-
-**Next**: `queue_cli.py next` → **disc1000-panel-row-audit** (CPU,
-un-gated; wants to land before the pdnorm endpoint panel read is
-interpreted), then `pdnorm-endpoint-report-paired-section`. The
-pdnorm RUN stays owner-gated (ON-GO checklist unchanged).
-`run_work_next` stays ARMED — GPU idle but the CPU-side queue is
-non-empty.*
-
 ## Utilization footer
+
+Session 2026-08-18 06:44–06:4xZ (tick; 0 GPU-h — H100 idle by design,
+no live runs): **adjacent quiet tick one minute after the 06:43 work
+close — GO-ask poll 06:44Z still quiet (~4h50m), read + history +
+inbox empty, registry reason current, queue green depth 2 (22
+open)** — `run_work_next` stays ARMED: chained session owns
+pdnorm-endpoint-report-paired-section +
+pdnorm-prereg-panel-guard-recalibration.
 
 Session 2026-08-18 06:19–06:3xZ (work, exploit; 0 GPU-h — CPU-only
 audit item, H100 held for the owner-gated pdnorm launch): **disc-1000
@@ -134,13 +131,6 @@ global table, no per-dataset lookup), ~half window re-expression
 beats the re-worn model), oracles ×7, analysis json live** —
 `run_work_next` stays ARMED: pdnorm-endpoint-report-paired-section
 next, GO ask polled at boot + boundary (quiet).
-
-Session 2026-08-18 06:16–06:1xZ (tick; 0 GPU-h — H100 idle by design,
-no live runs): **adjacent quiet tick one minute after the 06:15 work
-close — GO-ask polls 06:16 + 06:18Z still quiet (~4h24m), read + history
-+ inbox empty, registry reason current, queue green depth 2 (22
-open)** — `run_work_next` stays ARMED: chained session owns
-disc1000-panel-row-audit + pdnorm-endpoint-report-paired-section.
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-10
 00:00Z → 2026-08-17 19:45Z; rebased 08-17 from per-run prune records
