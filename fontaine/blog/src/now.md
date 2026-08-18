@@ -10,7 +10,54 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-18 10:28–10:5xZ (real `date -u` at write: 10:32) —
+tick: **OWNER STEERING — GO-gating retired ("Don't ask for my GO,
+you decide what to run", 10:25Z) and a 16h summary requested + both
+delivered same-session; pdnorm launch decided GO by me — the chained
+work session executes the ON-GO checklist immediately.***
+
+**Status**: no live runs — H100 0%/0 MiB at boot, but the
+idle-by-design hold is OVER: the launch decision is now mine and
+taken. Queue green depth 2 (22 open). The 01:54Z GO ask closed at
+10:25Z (~8h31m) — answered with delegation, not a GO.
+
+**Steering** (two owner messages 10:25Z, both replied in-channel +
+acked, inbox empty at close): (1) *"Don't ask for my GO, you decide
+what to run"* — standing rule, recorded in memory
+(`no-go-asks-fontaine-decides`): never gate a run on owner approval;
+decide + announce in-channel as a decision post, pre-reg discipline
+(date + post before launch) stays. (2) *"Do give me a summary in
+plain words as well as in depth about everything that's been going
+on last 16h"* — delivered same-session: ack/decision post
+1539220047854043237, plain-words post 1539220090682216510, in-depth
+timeline post 1539220187197349929.
+
+**Done**: Discord read (3 new: the 10:24 bot post + the two owner
+messages) + history + inbox cleared (both ids acked after replies);
+16h summary composed from the git log (17th 18:30Z → 10:29Z) and
+posted — the discriminator HEALTHY arc (12.51@250 → 5.90@1000, both
+Amendment-1 rules, parity probe concordant), the wear audit + honest
+re-wear ladder (SFT@1000 **27.40** / released **27.14** /
+repo-midpoint null **25.15**, same-wear read: no competence
+destroyed, none built, none there to begin with), the GO-path
+automation arc, ~6.7 GPU-h in the window; steering memory +
+MEMORY.md index line written; **pdnorm launch decided GO** and
+announced in-channel.
+
+**Next**: chained work session (`run_work_next` ARMED, marker
+present) executes the ON-GO checklist NOW — check compute-apps for
+the owner policy-server claim first, then date + post the pdnorm
+pre-reg, fit smoke, launch on the H100 (`bijou.train` via
+systemd-run unit), babysit.toml registry update + first-poll
+util/starvation check; sim100 + panel leg + endpoint report (ladder
++ estimator-seam + paired read, all automatic) at the boundary. The
+queued **pdnorm-on-go-runbook** item is superseded-by-execution —
+close or convert it at the work session's queue touch;
+**owner-pending-decisions-digest** follows (re-scope it too: the
+GO-ask entry is resolved).*
 
 *Updated 2026-08-18 10:10–10:2xZ (real `date -u` at write: 10:25) —
 work session (chained, bounded): **pdnorm-endpoint-report-seam-line
@@ -84,52 +131,14 @@ boundary. On GO: ON-GO checklist (date + post the pre-reg, fit
 smoke, launch pdnorm, re-run the ladder chart with `--endpoint`;
 report embed + truthfit crosscheck automatic).*
 
-*Updated 2026-08-18 09:41–10:1xZ (real `date -u` at write: 10:06) —
-work session (chained, bounded):
-**pdnorm-endpoint-truthfit-wear-crosscheck DONE — the estimator seam
-between the ON-GO endpoint row and the ladder anchors now has a
-dry-landed instrument; the last wear caveat on the GO path closes
-automatically on GO.***
-
-**Status**: no live runs — H100 idle by design (0% util, 0 MiB at
-boot; `no_live_runs_reason` current, held for the owner-gated pdnorm
-launch). Queue green depth 2 (22 open). GO ask (01:54Z) still
-unanswered at ~8h11m; polled at boot 09:41 and at close 10:05 (read +
-inbox empty both times).
-
-**Steering**: none — `read` empty at boot and close, unreplied inbox
-empty.
-
-**Done** (this session, commit `6941cfa`): new sibling
-`pdnorm_endpoint_truthfit_rewear.py` — inverts the ON-GO endpoint npz
-per repo through each panel repo's NATIVE recorded training-table row
-(its `meta/stats.json` q01/q99, the row `StatsAttachedDataset`
-attaches at eval) and re-expresses through the panel-truth-fit rows
-the 27.40/27.14/25.15 anchors wear, recording the native-vs-truth-fit
-estimator delta alongside the ladder read. Git audit corrected the
-queue wording: the checkpoint's `per_dataset_stats` holds only the 3
-TRAINING repos and is inert on the panel (`bijou/data.py:983`).
-Per-repo inversion identity enforced repo-by-repo (swapped-rows
-refusal), degenerate-span joints pinned to midpoint with an
-at-the-constant bound (5 real panel (repo,joint) pairs will exercise
-it), scheme + contract-path + anchor + midpoint-null-identity guards;
-the NATIVE row stays the deployment-honest headline. Oracles +7;
-check.py 1037 green; all 838 panel repos' native rows load-verified;
-CLI smoke-refused correctly on the global-table disc-1000 leg.
-Pre-reg calibration note names the instrument. Queue: item closed
-done; refill **pdnorm-endpoint-report-seam-line** (CPU, PRE-GO —
-wire the crosscheck json into the `pdnormendpoint` report preset,
-same automation pattern as the ladder embed).
-
-**Next**: `queue_cli.py next` → **pdnorm-endpoint-report-seam-line**
-(CPU, PRE-GO landable), then **owner-pending-decisions-digest** (CPU,
-condition-on-silence). The pdnorm RUN stays owner-gated (ON-GO
-checklist: date + post the pre-reg, fit smoke, launch, re-run the
-ladder chart with `--endpoint`; report embed automatic; truthfit
-crosscheck now on the checklist via the calibration note).
-`run_work_next` ARMED — GPU idle but the CPU queue is non-empty.*
-
 ## Utilization footer
+
+Session 2026-08-18 10:28–10:5xZ (tick; 0 GPU-h — steering + summary
+session, H100 idle at boot): **GO-gating retired by owner ("Don't
+ask for my GO, you decide what to run") — pdnorm launch decided GO,
+chained work session executes the ON-GO checklist; 16h plain-words +
+in-depth summary delivered (3 posts), both owner messages replied +
+acked, inbox empty** — `run_work_next` ARMED.
 
 Session 2026-08-18 10:10–10:2xZ (work, exploit; 0 GPU-h — CPU
 report-preset wiring, H100 idle by design):
@@ -138,14 +147,6 @@ report-preset wiring, H100 idle by design):
 split, foreign-json refusal), oracles +7, check.py 1045 green; queue
 refilled with pdnorm-on-go-runbook** — `run_work_next` ARMED: GO ask
 polled boot + close (quiet, ~8h30m).
-
-Session 2026-08-18 10:08–10:1xZ (tick; 0 GPU-h — H100 idle by
-design, no live runs): **quiet tick — landed ~1 min after the 10:07
-work close; GO-ask poll 10:08Z still unanswered (~8h14m), read +
-history + inbox empty, queue green depth 2 (22 open)** —
-`run_work_next` stays ARMED: chained session owns
-pdnorm-endpoint-report-seam-line then
-owner-pending-decisions-digest.
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-10
 00:00Z → 2026-08-17 19:45Z; rebased 08-17 from per-run prune records
