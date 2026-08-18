@@ -993,6 +993,27 @@ HTML-reports rule.
   ever matters). Reading the pdnorm endpoint against this baseline:
   wear-corrected reference points are 27.40 (re-worn disc-1000) and
   25.15 (midpoint null); the real bar stays state-copy's 8.37
+- [released-checkpoint k4l2 panel row](https://mcobzarenco-fontaine-reports.static.hf.space/eval__molmoact2_so101_released__panel_v2_k4l2_euler10_draws1_stable.html)
+  ([json](https://mcobzarenco-fontaine-reports.static.hf.space/eval__molmoact2_so101_released__panel_v2_k4l2_euler10_draws1_stable.json))
+  — the pre-SFT released checkpoint (`molmoact2-so101-released`, the
+  SFT lineage's init) through the pinned panel protocol (08:22Z
+  08-18, ~0.45 GPU-h, record-only PRE-GO; euler-10 draws-1 stable,
+  chunk 30, batch 32/workers 20 at ~1173 f/min 95–100% util; wearing
+  its OWN released source table — q01q99 global stats, no
+  per-dataset rows, the default path is its honest wear): chunk MAE
+  **25.89** on the 15,056 core frames, 9% win rate vs state-copy
+  (8.3678 reproduced ≈ banked 8.37, anchor green); first_mae already
+  21.99 (global misprediction, not chunk-horizon drift); worst
+  motors shoulder_lift 68.9 / elbow_flex 43.1 — the same two that
+  dominate the SFT row's 104/99. **Read (frozen in the queue item
+  pre-launch): 25.89 is AT the 25.15 midpoint null → community
+  competence was never in reach for this lineage**; SFT had ~nothing
+  real to destroy on this panel, so the wear audit's "genuine
+  collapse" half reads as collapse-to-demos-prior of an
+  already-at-null model, not forgetting of once-held competence.
+  Caveat: wears differ by design across the ladder (released table
+  here, honest per-repo rows for the 27.40, demos global for the
+  58.14) — rows are interpretation anchors, not a paired read
 - [paired per-seed read: probe vs disc-1000](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim100_paired_probe_vs_disc1000.json)
   — retro shakedown of the frozen paired-read instrument
   (`sim100_paired_read.py`, oracle

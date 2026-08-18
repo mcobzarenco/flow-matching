@@ -183,6 +183,9 @@ def test_main_pdnormendpoint_preset_anchors_bands_and_paired_section(
     assert "11&ndash;19 ambiguous band" in html
     assert "&ge;20 exonerates the mix" in html
     assert "27.40" in html and "25.15" in html and "8.37" in html
+    # Released pre-SFT row joined the ladder once measured (08:22Z
+    # 08-18, record-only): 25.89 at the null.
+    assert "25.89 released pre-SFT" in html
     # Checkpoint/meta fields stay placeholders until the endpoint session
     # stamps them.
     assert "FILL-AT-ENDPOINT" in html

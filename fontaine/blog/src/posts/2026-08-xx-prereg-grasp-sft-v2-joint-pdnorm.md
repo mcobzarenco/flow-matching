@@ -217,6 +217,21 @@ class**, not the raw 58.14:
 - **27.40** — disc-1000 re-worn through honest rows: the true
   same-model reference. Endpoint ≈ 27 means the panel moved on wear
   alone; no claim of real-data improvement.
+- **25.89** — the pre-SFT released checkpoint, measured (08:22Z
+  08-18, still before GO;
+  [row](https://mcobzarenco-fontaine-reports.static.hf.space/eval__molmoact2_so101_released__panel_v2_k4l2_euler10_draws1_stable.html)):
+  the never-measured comparison this section names, banked
+  record-only through the pinned panel protocol, wearing its own
+  released source table (its honest wear — q01q99 global stats, no
+  per-dataset rows). It lands AT the midpoint null (25.89 vs 25.15,
+  9% win rate vs state-copy; error concentrated in shoulder_lift
+  68.9 / elbow_flex 43.1, the SFT row's same worst motors). By the
+  frozen record-only read (queued pre-launch): **community
+  competence was never in reach for this lineage** — SFT had ~no
+  real community signal to destroy, and the disc-1000 residual
+  ~half reweights toward serving-window mechanics plus
+  collapse-to-demos-prior of a model that started at the null,
+  rather than forgetting of once-held competence.
 - **25.15** — constant repo-box-midpoint null: the carries-any-signal
   bar. An endpoint not clearly below this has no usable signal on
   community data, exactly like the baseline.
@@ -224,9 +239,9 @@ class**, not the raw 58.14:
   nothing in the SFT lineage has approached it on this panel.
 
 The informative endpoint comparisons remain vs state-copy and vs the
-pre-SFT released checkpoint's panel row, now read through these
-anchors; all are recorded alongside — never in place of — the frozen
-guard.
+pre-SFT released checkpoint's panel row (now measured: 25.89, at the
+null), read through these anchors; all are recorded alongside — never
+in place of — the frozen guard.
 
 Curve-level record: demos-slice breakdown vs the discriminator curve
 (same holdout episodes); rig-slice curves recorded as the first

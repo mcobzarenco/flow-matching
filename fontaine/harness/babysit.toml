@@ -1128,7 +1128,31 @@
 # pre-launch. Report+json+gallery on fontaine-reports; reports.md +
 # draft baseline-arms updated; result post in-channel.
 
-no_live_runs_reason = "declared 05:1xZ 08-18 work session: all three disc-1000 baseline legs COMPLETE and pruned (HTML report 5.763, sim100 11/100, k4l2 panel 58.14 — all banked to fontaine-reports pre-GO). H100 idle on purpose: the next GPU leg is the pdnorm run, owner-gated on the 01:54Z GO ask (two pre-launch calibration addenda posted 04:3x/05:08Z); CPU queue heads are sim100-paired-read-instrument + disc1000-panel-row-audit."
+# (no_live_runs_reason cleared 07:55Z 08-18 work session — released_k4l2_panel
+# launched below (short un-gated record-only leg on the idle window, queue
+# released-ckpt-k4l2-panel-row; the pdnorm RUN stays owner-gated on the 01:54Z
+# GO ask). PRIOR: "declared 05:1xZ 08-18 work session: all three disc-1000
+# baseline legs COMPLETE and pruned (HTML report 5.763, sim100 11/100, k4l2
+# panel 58.14 — all banked to fontaine-reports pre-GO). H100 idle on purpose:
+# the next GPU leg is the pdnorm run, owner-gated on the 01:54Z GO ask (two
+# pre-launch calibration addenda posted 04:3x/05:08Z); CPU queue heads are
+# sim100-paired-read-instrument + disc1000-panel-row-audit.")
+
+# released_k4l2_panel entry PRUNED 08:2xZ 08-18 work session — COMPLETE
+# 08:22:01Z rc 0, ridden end-to-end (~0.45/3 GPU-h; ~1173 f/min at 95-100%
+# util, no starvation — faster than the disc leg's 660). READ (frozen
+# pre-launch, record-only): pooled core chunk MAE **25.89** wearing its own
+# released table = AT the 25.15 midpoint null (9% win vs state-copy; anchor
+# 8.3678 reproduces banked 8.37; first_mae 21.99 — global misprediction, not
+# horizon drift; worst motors shoulder_lift 68.9 / elbow_flex 43.1, the SFT
+# row's same two). VERDICT: community competence was never in reach for this
+# lineage — SFT had ~nothing real to destroy; endpoint interpretation
+# reweights toward serving-window mechanics + collapse-to-demos-prior of an
+# already-at-null model. Artifacts on fontaine-reports (curl 200 x2);
+# reports.md bullet + pre-reg draft anchor ladder + pdnormendpoint preset
+# (25.89 row, oracle extended) all landed same session.
+
+no_live_runs_reason = "declared 08:2xZ 08-18 work session: released_k4l2_panel COMPLETE 08:22Z and pruned (25.89 = at the midpoint null; record-only read banked). H100 idle on purpose again: the next GPU leg is the pdnorm run, owner-gated on the 01:54Z GO ask; CPU queue head is pdnorm-panel-ladder-chart."
 
 # disc1000_k4l2_panel entry PRUNED 05:1xZ 08-18 work session —
 # COMPLETE 04:57Z rc 0 (r2, ~0.5/3 GPU-h; attempt 1 killed 4.7 min in

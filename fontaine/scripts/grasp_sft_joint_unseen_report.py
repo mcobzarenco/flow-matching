@@ -168,7 +168,8 @@ PRESETS: dict[str, dict] = {
             " broken-class band / 11&ndash;19 ambiguous band /"
             ' <b style="color:{success}">&ge;20 exonerates the mix</b> ·'
             " panel anchors, wear-corrected class: 27.40 re-worn"
-            " disc-1000 / 25.15 repo-midpoint null / 8.37 state-copy"
+            " disc-1000 / 25.89 released pre-SFT (measured 08-18, at"
+            " the null) / 25.15 repo-midpoint null / 8.37 state-copy"
             " (real bar) · verdict: <b>FILL-AT-ENDPOINT</b>"
         ),
         "paired_band_note": (

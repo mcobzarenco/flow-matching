@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-18T07:37:00Z
+**Updated:** 2026-08-18T08:26:00Z
 
-**Depth call:** depth 2 queued (released-ckpt-k4l2-panel-row gpu-local + pdnorm-panel-ladder-chart cpu, both un-gated) after the endpoint-report-preset close.
+**Depth call:** depth 2 queued (pdnorm-panel-ladder-chart cpu + released-row-honest-wear-reexpression cpu, both un-gated) after the released-ckpt-k4l2-panel-row close.
 
-**22 open** (Live 0 · Queued 2 · Blocked 20 · Done 228)
+**22 open** (Live 0 · Queued 2 · Blocked 20 · Done 229)
 
 ## 🔴 Live (0)
 
@@ -18,6 +18,20 @@
 
 *ready — waiting on a window or a boundary*
 
+**`released-row-honest-wear-reexpression`** · `cpu`
+
+Released-row honest-wear re-expression (PRE-GO, record-only, CPU): the released checkpoint's panel row (25.89, banked 08:22Z 08-18) wears its own released global table, while the ladder's same-model reference 27.40 wears honest p…
+
+**boundary:** Queued 08:2xZ 08-18 work session (refill at the released-panel-row close, charter section 4). CPU, un-gated, npz + instrument already local; wants to land before the pdnorm endpoint read so the anchor ladder is wear-consistent. If GO lands first, this rides the training window as a CPU work item. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
+
+<details><summary>full record</summary>
+
+Released-row honest-wear re-expression (PRE-GO, record-only, CPU): the released checkpoint's panel row (25.89, banked 08:22Z 08-18) wears its own released global table, while the ladder's same-model reference 27.40 wears honest per-repo rows — the wear classes differ, so the released-vs-SFT comparison carries a wear-mismatch caveat. Re-wear the released checkpoint's banked npz predictions (reports/eval__molmoact2_so101_released__panel_v2_k4l2_euler10_draws1_stable.npz, local) through the honest per-repo rows via the disc1000_row_audit.py re-expression path (same 838-repo truth-fit rows; extend the script with a --npz/--source-table flag or a sibling entry point, oracle on the re-expression identity anchors, check.py green). Output: the honest-wear released row alongside 27.40 in analysis json + a reports.md sentence — this dissolves the ladder caveat and makes released-vs-disc1000 a same-wear read (is the SFT checkpoint actually WORSE than where it started, wear held fixed?).
+
+</details>
+
+---
+
 **`pdnorm-panel-ladder-chart`** · `cpu`
 
 Panel anchor-ladder chart for the pdnorm endpoint read (PRE-GO prep, CPU): a small standalone dark-mode chart script (house eval-report scheme, owner standing preference: chart-led reports) rendering the wear-audit panel ladder a…
@@ -27,20 +41,6 @@ Panel anchor-ladder chart for the pdnorm endpoint read (PRE-GO prep, CPU): a sma
 <details><summary>full record</summary>
 
 Panel anchor-ladder chart for the pdnorm endpoint read (PRE-GO prep, CPU): a small standalone dark-mode chart script (house eval-report scheme, owner standing preference: chart-led reports) rendering the wear-audit panel ladder as a labeled horizontal-bar/rung figure — raw disc-1000 58.14 (worn demos global table), re-worn 27.40 (same-model wear-corrected reference), repo-midpoint null 25.15 (carries-any-signal bar), worn-box clamp floor 14.40, state-copy 8.37 (real bar) — with FILL-AT-ENDPOINT slots for the pdnorm endpoint row and the released-ckpt row (released-ckpt-k4l2-panel-row lands it when measured). Output a PNG + embeddable b64 for the endpoint report and the pre-reg post; oracle asserts rung values + labels + placeholder slots; check.py green.
-
-</details>
-
----
-
-**`released-ckpt-k4l2-panel-row`** · `gpu-local`
-
-Measure the pre-SFT released checkpoint's k4l2 panel row (PRE-GO, record-only): the pdnorm pre-reg names 'vs the pre-SFT released checkpoint's panel row' as an informative endpoint comparison, but that row has never been measured
-
-**boundary:** Queued 07:1xZ 08-18 work session (refill at the guard-recalibration close, charter section 4). GPU (short panel eval, ~0.5 GPU-h by the disc-1000 r2 rate), un-gated, record-only — H100 is idle-by-design for the owner-gated pdnorm launch, and precedent (baseline sim100 + panel legs, 04:xxZ 08-18) is that short pre-GO baseline evals use the idle window; check compute-apps for the owner policy-server before launch, abort guard as on the disc launcher. If GO lands first, pdnorm launch takes the GPU and this waits for the training window's eval slack or the endpoint session. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
-
-<details><summary>full record</summary>
-
-Measure the pre-SFT released checkpoint's k4l2 panel row (PRE-GO, record-only): the pdnorm pre-reg names 'vs the pre-SFT released checkpoint's panel row' as an informative endpoint comparison, but that row has never been measured — the draft's anchor ladder (27.40 / 25.15 / 8.37) covers wear classes of the SFT'd checkpoint, not where SFT started. Run the SFT source checkpoint through the pinned disc-1000 panel protocol (eval_disc1000_k4l2_panel.sh shape: same frames, batch 32 / workers 20 — first-poll util check per standing rule), wearing its own released source table (the row it records; that IS its honest wear). Read: released ~&lt;=15 =&gt; SFT destroyed real community competence (forgetting confirmed large); released ~&gt;=25 (at/above the midpoint null) =&gt; community data was never in reach and the endpoint read reweights toward the serving-window mechanism. Lands in reports.md + the endpoint interpretation anchors as a record-only addendum.
 
 </details>
 
@@ -328,9 +328,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (228)
+## ✅ Done (229)
 
 *closed — the full record stays in each fold*
+
+**`released-ckpt-k4l2-panel-row`** · `gpu-local`
+
+Measure the pre-SFT released checkpoint's k4l2 panel row (PRE-GO, record-only): the pdnorm pre-reg names 'vs the pre-SFT released checkpoint's panel row' as an informative endpoint comparison, but that row has never been measured
+
+**boundary:** Queued 07:1xZ 08-18 work session (refill at the guard-recalibration close, charter section 4). GPU (short panel eval, ~0.5 GPU-h by the disc-1000 r2 rate), un-gated, record-only — H100 is idle-by-design for the owner-gated pdnorm launch, and precedent (baseline sim100 + panel legs, 04:xxZ 08-18) is that short pre-GO baseline evals use the idle window; check compute-apps for the owner policy-server before launch, abort guard as on the disc launcher. If GO lands first, pdnorm launch takes the GPU and this waits for the training window's eval slack or the endpoint session. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
+
+<details><summary>full record</summary>
+
+Measure the pre-SFT released checkpoint's k4l2 panel row (PRE-GO, record-only): the pdnorm pre-reg names 'vs the pre-SFT released checkpoint's panel row' as an informative endpoint comparison, but that row has never been measured — the draft's anchor ladder (27.40 / 25.15 / 8.37) covers wear classes of the SFT'd checkpoint, not where SFT started. Run the SFT source checkpoint through the pinned disc-1000 panel protocol (eval_disc1000_k4l2_panel.sh shape: same frames, batch 32 / workers 20 — first-poll util check per standing rule), wearing its own released source table (the row it records; that IS its honest wear). Read: released ~&lt;=15 =&gt; SFT destroyed real community competence (forgetting confirmed large); released ~&gt;=25 (at/above the midpoint null) =&gt; community data was never in reach and the endpoint read reweights toward the serving-window mechanism. Lands in reports.md + the endpoint interpretation anchors as a record-only addendum.
+
+</details>
+
+---
 
 **`pdnorm-endpoint-report-preset`** · `cpu`
 
