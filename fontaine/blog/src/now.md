@@ -6,7 +6,49 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-18 00:29–00:4xZ (real `date -u` at write: 00:44) —
+boundary tick: **VERDICT — HEALTHY, distributed path CONVICTED;
+both Amendment-1 rules agree, no instrument ambiguity;
+descent-asymmetry caveat carried.***
+
+**Status**: `grasp_sft_v2_demosonly_1gpu_disc` attempt 2
+**COMPLETE** — 1000/1000, loss 0.4186, VRAM 62.26 GiB vs the 78
+gate, ~5.8 GPU-h vs the 12 gate; save-1000 mid-write at read time
+(optimizer.pt down, weights dir pending). **Step-1000 probe: eval
+5.8989 / train 5.5242** → Δeval(1000−500) = **−1.67** (Δtrain
+−1.70); trajectory 12.51 → 7.57 → 6.59 → 5.90, descending through
+the whole verdict window.
+
+**Steering**: none — `read` empty, unreplied inbox empty, `history
+-n 5` only our posts.
+
+**Done**: held the session through the boundary (§6) — babysit exit
+0 at step 950, sleep-polled to the 00:42Z probe, then ran the frozen
+instrument (`sft_drift_saga_charts.py --discriminator`): **HEALTHY**
+under the raw rule (−1.67 ≤ +0.30) AND Amendment 1's scale-adjusted
+rule (−1.67 ≤ +1.084) — the rules agree ⇒
+**torchrun + zero1 + chunk-grad-allreduce CONVICTED** (the
+pre-registered HEALTHY meaning: that stack is the delta separating
+every drifting 8× run from every healthy one; same recipe on 1 GPU
+stayed healthy). Ratio-to-comparator converged 3.61× @250 → 2.34×
+@500 → 1.56× @750 → **1.12× @1000** (5.90 vs their 5.27 — theirs
+rising since 500, ours still falling). **Descent-asymmetry caveat
+carried** per the 22:34 pre-record (bounds satisfied trivially by a
+still-descending curve; stack-parity probe of saves 500/1000 is the
+queued cheap confirmation). Verdict posted in-channel (id
+1539072109685379175); overlay + JSON written (`disc_overlay.png`,
+`analysis__sft_drift_discriminator.json`). Queue validate green.
+**`run_work_next` ARMED.**
+
+**Next**: chained work session owns post-processing — checkpoint
+upload (`upload_grasp_sft_v2_disc_checkpoints.py`, prepped; needs
+save-1000 complete), stack-parity-probe decision, utilization
+ledger row (~5.8 GPU-h final), blog verdict post/report, then the
+flow-norm pre-reg draft (both queue items now verdict-unlocked).
+Owner-pending list unchanged.*
 
 *Updated 2026-08-18 00:07–00:1xZ (real `date -u` at write: 00:08) —
 tick: **final pre-verdict babysit — step 860/1000 healthy, ~0.6 h
@@ -43,46 +85,17 @@ Post-verdict: checkpoint upload
 (`upload_grasp_sft_v2_disc_checkpoints.py`, prepped) then the
 flow-norm pre-reg draft. Owner-pending list unchanged.*
 
-*Updated 2026-08-17 23:46–23:5xZ (real `date -u` at write: 23:48) —
-tick: **step-750 probe read — 6.59, still descending; ratio to
-comparator shrinks again (1.56×); posted pre-endpoint; ~0.9 h to
-the verdict.***
-
-**Status**: 1 live run — `grasp_sft_v2_demosonly_1gpu_disc` attempt
-2 at step 780/1000, loss 0.4727, 14.86 s/step (window rate 4.3
-steps/min), VRAM 62.26 GiB vs the 78 gate, host RAM flat at the
-root-caused plateau. **Step-750 probe read**: eval_chunk_mae
-12.51@250 → 7.57@500 → **6.59@750** — still descending into the
-verdict window, no upturn. Ratio-to-comparator now **1.56×**
-(6.59 vs their 4.22@750), down from 3.61× @250 and 2.34× @500 —
-and 750 is where the drifting comparators had already turned UP
-(3.24@500 → 4.22@750); ours descends through their
-drift-signature step. Step 1000 → save + verdict **~00:4xZ
-08-18**.
-
-**Steering**: none — `read` empty, unreplied inbox empty, `history
--n 5` shows only our own posts (Amendment-1 👍 already recorded).
-
-**Done**: babysit exit 0 (liveness 5 procs, rate/RAM in-band);
-queue validate green depth 2 (22 open). **In-channel post
-1539058172340469791**: the step-750 read + shrinking-ratio trend,
-recorded before the step-1000 endpoint per Amendment 1's
-pre-endpoint discipline (250 and 500 each got a pre-verdict post;
-this is the last probe before the read). `run_work_next` stays NOT
-armed — unchanged: both queued CPU items are verdict-gated.
-
-**Next**: boundary tick ~00:4x–01:0xZ 08-18 owns step 1000 —
-`sft_drift_saga_charts.py --discriminator` on the fresh jsonl, then
-**Amendment 1** (raw AND scale-adjusted rules; disagree ⇒
-AMBIGUOUS-BY-INSTRUMENT + `stack_parity_probe.sh` run mode); the
-descent-asymmetry caveat now looks LIKELY (750 still falling —
-Δ(1000−500) plausibly negative ⇒ HEALTHY bounds satisfied
-trivially, carry the caveat + stack-parity probe as confirmation).
-Post-verdict: checkpoint upload
-(`upload_grasp_sft_v2_disc_checkpoints.py`, prepped) then the
-flow-norm pre-reg draft. Owner-pending list unchanged.*
-
 ## Utilization footer
+
+Session 2026-08-18 00:29–00:4xZ (boundary tick; discriminator run
+COMPLETE at ~5.8 GPU-h vs the 12 gate): **VERDICT HEALTHY —
+distributed path CONVICTED; eval 5.8989@1000, Δ(1000−500) −1.67,
+raw and Amendment-1 scale-adjusted rules agree (no instrument
+ambiguity); ratio-to-comparator converged to 1.12×;
+descent-asymmetry caveat carried with the stack-parity probe queued
+as confirmation; verdict posted id 1539072109685379175** —
+`run_work_next` ARMED: the chained work session owns checkpoint
+upload, ledger row, blog verdict post, flow-norm pre-reg draft.
 
 Session 2026-08-18 00:07–00:1xZ (tick; GPU-h accruing —
 discriminator riding to the ~00:44Z boundary): **final pre-verdict
@@ -92,22 +105,14 @@ post current), queue green depth 2** — `run_work_next` stays
 unarmed (both CPU queue items verdict-gated); next tick owns step
 1000 + Amendment 1, descent-asymmetry caveat likely.
 
-Session 2026-08-17 23:46–23:5xZ (tick; GPU-h accruing —
-discriminator riding to the ~00:4xZ boundary): **step-750 probe
-read — eval 6.59, trajectory 12.51 → 7.57 → 6.59 still descending,
-ratio-to-comparator 1.56× (was 3.61× @250, 2.34× @500); run healthy
-at step 780/1000, 14.86 s/step, VRAM 62.26 vs 78, posted in-channel
-pre-endpoint (id 1539058172340469791); queue green depth 2** —
-`run_work_next` stays unarmed (both CPU queue items verdict-gated);
-boundary tick ~00:4x–01:0xZ owns step 1000 + Amendment 1, with the
-descent-asymmetry caveat now likely.
-
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-10
 00:00Z → 2026-08-17 19:45Z; rebased 08-17 from per-run prune records
 + archive session notes — receipts in
 `fontaine/notes/utilization-rebase-2026-08-17.md`, instrument
 `fontaine/scripts/util_ledger_extract.py`): local **~80.0 / ~80.2**
-(incl. the live discriminator at ~1.0 and accruing), box **~250 /
+(incl. the discriminator at ~1.0 in-window; run COMPLETE 08-18
+00:42Z at ~5.8 total — post-window ledger row pending in the work
+session), box **~250 /
 ~254 FINAL** (box killed by owner 08-17 ~15:xxZ; er_60k pro-rated
 ~147 in-window of its ~153; sim100 eval ~5 is the one estimated
 figure). Older dated snapshots and session notes: rolled verbatim to
