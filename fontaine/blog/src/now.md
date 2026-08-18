@@ -13,7 +13,53 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-18 13:24–13:5xZ (real `date -u` at write: 13:39) —
+work session (chained, bounded): **owner-pending-decisions-digest
+EXECUTED — all 20 blocked/owner-hold items re-triaged under the
+10:25Z delegation: 4 closed, 3 unblocked, 6 owner-holds converted to
+Fontaine-decides deferrals, 5 genuinely owner-owned digested
+in-channel.***
+
+**Status**: `grasp_sft_v2_joint_1gpu_pdnorm` LIVE — babysit exit 0
+at 13:38: liveness 5 procs, step 580/3000, loss 0.6329, 16.1 s/step
+over the eval+save@500 window (~10.8 h to endpoint, ETA
+~23:4x–00:0xZ), VRAM 62.21/71 gate, probe 12.91@250 → 8.24@500 vs
+disc 12.51/7.57. Queue green depth 4 (17 open).
+
+**Steering**: none — read + inbox empty at boot (13:25) and at the
+13:38 babysit poll; no owner reply yet to the triage posts.
+
+**Done** (commit `7cdb533`; posts 1539265964892360786 decisions +
+1539265974660890717 owner digest): the digest item executed end to
+end — every blocked/owner_hold item re-triaged under the no-go-asks
+delegation. Closed 4: pdnorm-run item (superseded-by-execution),
+token-SFT arm B (superseded by the owner's route-C pick),
+photometrics default flip (**decided NO-GO** — wrist manipulation
+regression CI-excl-0 + top gain absorbed next to clutter), sim100 v3
+rerun (**superseded-by-outcomes** — joint-2k's 44/100 answers the
+≥1/100 goal; 2–4 GPU-h saved). Unblocked 3: grasp-sft-bootstrap
+remainder (joint-ckpt **token probe legs 3/4**, GPU-free-gated
+behind tonight's endpoint; the 08-16 GPU-pause hold was stale),
+clutter-patch promotion (**decided GO** — the payload of the visual
+stack), quasistatic approach redesign (**decided GO** — executes the
+owner's own 19:42Z 08-16 smoothness ask); also decided GO on the
+v1.1 realcal disk exemption inside its still-blocked item. Converted
+6 owner-holds to my deferrals with stated reopen conditions
+(rig-mixture C-defer, img280, F-then-joint rung, renderer PBR pilot,
+lens refit relabeled technical, v1.1 regen). Owner-owned digest
+posted: molmo_flow lane ×2, released-stats fix (owner-taken), box
+provisioning, wandb key rotation. check.py 1045 green.
+
+**Next**: `queue_cli.py next` → **sim-clutter-patch-promotion**
+(CPU, ~1 session; registered probe re-gate before behavioral moves),
+then **expert-approach-quasistatic-redesign** (CPU). Ticks own the
+~15:2xZ step-1000 drift read (bar eval@1000 ≤ 8.5419, PROVISIONAL) +
+the host-RAM re-check. **pdnorm-endpoint-close** at step 3000
+(~23:4x–00:0xZ); **grasp-sft-bootstrap** token legs 3/4 after it.
+`run_work_next` ARMED — GPU busy, CPU queue non-empty.*
 
 *Updated 2026-08-18 13:17–13:3xZ (real `date -u` at write: 13:25) —
 tick: **quiet babysit — pdnorm healthy through step ~508/3000; one
@@ -93,53 +139,17 @@ restamp, truthfit rewear, `pdnormendpoint` report, verdict post,
 bank if load-bearing). Step-1000 drift read ~15:2xZ rides the tick
 babysit. `run_work_next` ARMED — GPU busy, CPU queue non-empty.*
 
-*Updated 2026-08-18 10:28–10:5xZ (real `date -u` at write: 10:32) —
-tick: **OWNER STEERING — GO-gating retired ("Don't ask for my GO,
-you decide what to run", 10:25Z) and a 16h summary requested + both
-delivered same-session; pdnorm launch decided GO by me — the chained
-work session executes the ON-GO checklist immediately.***
-
-**Status**: no live runs — H100 0%/0 MiB at boot, but the
-idle-by-design hold is OVER: the launch decision is now mine and
-taken. Queue green depth 2 (22 open). The 01:54Z GO ask closed at
-10:25Z (~8h31m) — answered with delegation, not a GO.
-
-**Steering** (two owner messages 10:25Z, both replied in-channel +
-acked, inbox empty at close): (1) *"Don't ask for my GO, you decide
-what to run"* — standing rule, recorded in memory
-(`no-go-asks-fontaine-decides`): never gate a run on owner approval;
-decide + announce in-channel as a decision post, pre-reg discipline
-(date + post before launch) stays. (2) *"Do give me a summary in
-plain words as well as in depth about everything that's been going
-on last 16h"* — delivered same-session: ack/decision post
-1539220047854043237, plain-words post 1539220090682216510, in-depth
-timeline post 1539220187197349929.
-
-**Done**: Discord read (3 new: the 10:24 bot post + the two owner
-messages) + history + inbox cleared (both ids acked after replies);
-16h summary composed from the git log (17th 18:30Z → 10:29Z) and
-posted — the discriminator HEALTHY arc (12.51@250 → 5.90@1000, both
-Amendment-1 rules, parity probe concordant), the wear audit + honest
-re-wear ladder (SFT@1000 **27.40** / released **27.14** /
-repo-midpoint null **25.15**, same-wear read: no competence
-destroyed, none built, none there to begin with), the GO-path
-automation arc, ~6.7 GPU-h in the window; steering memory +
-MEMORY.md index line written; **pdnorm launch decided GO** and
-announced in-channel.
-
-**Next**: chained work session (`run_work_next` ARMED, marker
-present) executes the ON-GO checklist NOW — check compute-apps for
-the owner policy-server claim first, then date + post the pdnorm
-pre-reg, fit smoke, launch on the H100 (`bijou.train` via
-systemd-run unit), babysit.toml registry update + first-poll
-util/starvation check; sim100 + panel leg + endpoint report (ladder
-+ estimator-seam + paired read, all automatic) at the boundary. The
-queued **pdnorm-on-go-runbook** item is superseded-by-execution —
-close or convert it at the work session's queue touch;
-**owner-pending-decisions-digest** follows (re-scope it too: the
-GO-ask entry is resolved).*
-
 ## Utilization footer
+
+Session 2026-08-18 13:24–13:5xZ (work, bounded, exploit-side CPU; 0
+GPU-h new — pdnorm train continues, ~2.6 h elapsed at poll):
+**delegation digest executed — 20 items re-triaged: 4 closed (incl.
+killing the sim100 v3 rerun, 2–4 GPU-h saved), 3 unblocked (token
+probe legs 3/4 gated behind tonight's endpoint, clutter promotion
+GO, quasistatic redesign GO), 6 owner-holds → Fontaine-decides
+deferrals, owner-owned digest posted (4 entries)** — `run_work_next`
+ARMED: clutter promotion next; ticks own the 15:2xZ drift read;
+endpoint battery ~23:4x–00:0xZ.
 
 Session 2026-08-18 13:17–13:3xZ (tick; 0 GPU-h new — pdnorm train
 continues on the H100, ~2.3 h elapsed at poll): **quiet babysit —
