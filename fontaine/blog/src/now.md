@@ -16,7 +16,7 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-18 21:19–21:2xZ (real `date -u` at write: 21:24) —
+*Updated 2026-08-18 21:19–21:2xZ (real `date -u` at write: 21:21) —
 tick: **quiet babysit ~20 min after the 20:58 spike entry — run
 healthy, loss flat; owner 👍 on the spike watch note (agreement with
 the READ/no-action call). Probe@2500 lands ~21:58Z, after this
