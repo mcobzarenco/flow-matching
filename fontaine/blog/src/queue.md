@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-18T07:19:00Z
+**Updated:** 2026-08-18T07:37:00Z
 
-**Depth call:** depth 2 queued (pdnorm-prereg-panel-guard-recalibration + pdnorm-endpoint-report-preset, both CPU un-gated) after the paired-section close.
+**Depth call:** depth 2 queued (released-ckpt-k4l2-panel-row gpu-local + pdnorm-panel-ladder-chart cpu, both un-gated) after the endpoint-report-preset close.
 
-**22 open** (Live 0 · Queued 2 · Blocked 20 · Done 227)
+**22 open** (Live 0 · Queued 2 · Blocked 20 · Done 228)
 
 ## 🔴 Live (0)
 
@@ -18,6 +18,20 @@
 
 *ready — waiting on a window or a boundary*
 
+**`pdnorm-panel-ladder-chart`** · `cpu`
+
+Panel anchor-ladder chart for the pdnorm endpoint read (PRE-GO prep, CPU): a small standalone dark-mode chart script (house eval-report scheme, owner standing preference: chart-led reports) rendering the wear-audit panel ladder a…
+
+**boundary:** Queued 07:3xZ 08-18 work session (refill at the endpoint-report-preset close, charter section 4). CPU, un-gated, draft-only prep; the endpoint session (or the released-row session) stamps the FILL slots. If GO lands first this waits for the endpoint session and lands with the endpoint report. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
+
+<details><summary>full record</summary>
+
+Panel anchor-ladder chart for the pdnorm endpoint read (PRE-GO prep, CPU): a small standalone dark-mode chart script (house eval-report scheme, owner standing preference: chart-led reports) rendering the wear-audit panel ladder as a labeled horizontal-bar/rung figure — raw disc-1000 58.14 (worn demos global table), re-worn 27.40 (same-model wear-corrected reference), repo-midpoint null 25.15 (carries-any-signal bar), worn-box clamp floor 14.40, state-copy 8.37 (real bar) — with FILL-AT-ENDPOINT slots for the pdnorm endpoint row and the released-ckpt row (released-ckpt-k4l2-panel-row lands it when measured). Output a PNG + embeddable b64 for the endpoint report and the pre-reg post; oracle asserts rung values + labels + placeholder slots; check.py green.
+
+</details>
+
+---
+
 **`released-ckpt-k4l2-panel-row`** · `gpu-local`
 
 Measure the pre-SFT released checkpoint's k4l2 panel row (PRE-GO, record-only): the pdnorm pre-reg names 'vs the pre-SFT released checkpoint's panel row' as an informative endpoint comparison, but that row has never been measured
@@ -27,20 +41,6 @@ Measure the pre-SFT released checkpoint's k4l2 panel row (PRE-GO, record-only): 
 <details><summary>full record</summary>
 
 Measure the pre-SFT released checkpoint's k4l2 panel row (PRE-GO, record-only): the pdnorm pre-reg names 'vs the pre-SFT released checkpoint's panel row' as an informative endpoint comparison, but that row has never been measured — the draft's anchor ladder (27.40 / 25.15 / 8.37) covers wear classes of the SFT'd checkpoint, not where SFT started. Run the SFT source checkpoint through the pinned disc-1000 panel protocol (eval_disc1000_k4l2_panel.sh shape: same frames, batch 32 / workers 20 — first-poll util check per standing rule), wearing its own released source table (the row it records; that IS its honest wear). Read: released ~&lt;=15 =&gt; SFT destroyed real community competence (forgetting confirmed large); released ~&gt;=25 (at/above the midpoint null) =&gt; community data was never in reach and the endpoint read reweights toward the serving-window mechanism. Lands in reports.md + the endpoint interpretation anchors as a record-only addendum.
-
-</details>
-
----
-
-**`pdnorm-endpoint-report-preset`** · `cpu`
-
-pdnorm endpoint report preset (PRE-GO prep, CPU): add a 'pdnormendpoint' preset to grasp_sft_joint_unseen_report.py so the ON-GO endpoint report is one command
-
-**boundary:** Queued 07:0xZ 08-18 work session (refill at the paired-section close, charter section 4). CPU, un-gated, draft-only prep; wants to land before GO so the ON-GO checklist's endpoint report is one command. If GO lands first, the endpoint session adds the preset inline instead — this item then closes as absorbed. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
-
-<details><summary>full record</summary>
-
-pdnorm endpoint report preset (PRE-GO prep, CPU): add a 'pdnormendpoint' preset to grasp_sft_joint_unseen_report.py so the ON-GO endpoint report is one command — anchor rows base 9 / probe 44 / disc1000 baseline 11 (the paired baseline arm gets its own row), meta line naming the pre-reg's frozen absolute bands (broken-class band, 11-19 ambiguous band, &gt;=20 exoneration bar) and the wear-audit panel anchors (27.40 re-worn / 25.15 midpoint null / state-copy 8.37), paired_band_note carried over, checkpoint/meta fields left as FILL-AT-ENDPOINT placeholders that the endpoint session stamps. Oracle asserts the preset's anchor rows + band note + that --paired-json composes with it; check.py green.
 
 </details>
 
@@ -328,9 +328,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (227)
+## ✅ Done (228)
 
 *closed — the full record stays in each fold*
+
+**`pdnorm-endpoint-report-preset`** · `cpu`
+
+pdnorm endpoint report preset (PRE-GO prep, CPU): add a 'pdnormendpoint' preset to grasp_sft_joint_unseen_report.py so the ON-GO endpoint report is one command
+
+**boundary:** Queued 07:0xZ 08-18 work session (refill at the paired-section close, charter section 4). CPU, un-gated, draft-only prep; wants to land before GO so the ON-GO checklist's endpoint report is one command. If GO lands first, the endpoint session adds the preset inline instead — this item then closes as absorbed. | DONE 07:3xZ 08-18 work session: 'pdnormendpoint' preset landed — anchor rows base 9 / probe 44 / disc1000 baseline 11 (paired arm's own row, DISC1000_ANCHOR constant), meta line carries the frozen decision grid (&lt;=10 broken-class band / 11-19 ambiguous / &gt;=20 exonerates the mix) + the wear-audit panel anchor ladder (27.40 re-worn / 25.15 midpoint null / 8.37 state-copy), paired_band_note carried over verbatim, checkpoint/launch/GPU-h/verdict fields FILL-AT-ENDPOINT placeholders. Oracle test_main_pdnormendpoint_preset_anchors_bands_and_paired_section asserts rows structurally + tile join + bands + ladder + placeholders + --paired-json composition/ordering; check.py 1016 green. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
+
+<details><summary>full record</summary>
+
+pdnorm endpoint report preset (PRE-GO prep, CPU): add a 'pdnormendpoint' preset to grasp_sft_joint_unseen_report.py so the ON-GO endpoint report is one command — anchor rows base 9 / probe 44 / disc1000 baseline 11 (the paired baseline arm gets its own row), meta line naming the pre-reg's frozen absolute bands (broken-class band, 11-19 ambiguous band, &gt;=20 exoneration bar) and the wear-audit panel anchors (27.40 re-worn / 25.15 midpoint null / state-copy 8.37), paired_band_note carried over, checkpoint/meta fields left as FILL-AT-ENDPOINT placeholders that the endpoint session stamps. Oracle asserts the preset's anchor rows + band note + that --paired-json composes with it; check.py green.
+
+</details>
+
+---
 
 **`pdnorm-prereg-panel-guard-recalibration`** · `cpu`
 
