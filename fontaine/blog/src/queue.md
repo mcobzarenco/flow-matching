@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-18T09:08:00Z
+**Updated:** 2026-08-18T09:31:00Z
 
 **Depth call:** depth 2 queued (endpoint-report-ladder-embed cpu + pdnorm-endpoint-truthfit-wear-crosscheck cpu, both un-gated) after the released-row-honest-wear-reexpression close.
 
-**22 open** (Live 0 · Queued 2 · Blocked 20 · Done 231)
+**22 open** (Live 0 · Queued 2 · Blocked 20 · Done 232)
 
 ## 🔴 Live (0)
 
@@ -18,6 +18,20 @@
 
 *ready — waiting on a window or a boundary*
 
+**`owner-pending-decisions-digest`** · `cpu`
+
+Pending-decisions digest for the owner (CPU, un-gated, condition-on-silence): ~20 of 22 open items pend an owner call, and the asks are scattered across days of channel history (GO ask 01:54Z 08-18 pdnorm RUN; approach-redesign g…
+
+**boundary:** Queued 09:2xZ 08-18 work session (refill at the endpoint-report-ladder-embed close, charter section 4). Value: the entire pdnorm pipeline and most of the queue are owner-gated; one digest answers 'what do you need from me' in a single read when the owner returns, instead of five unanswered result posts + week-old asks. Supersedes nothing; each underlying ask keeps its own item.
+
+<details><summary>full record</summary>
+
+Pending-decisions digest for the owner (CPU, un-gated, condition-on-silence): ~20 of 22 open items pend an owner call, and the asks are scattered across days of channel history (GO ask 01:54Z 08-18 pdnorm RUN; approach-redesign go 20:1xZ 08-16; demo-gen v1.1 disk-mask exemption + smoothness sign-off; rig-mixture compute call; vision-unfreeze / actckpt-ladder / arm-a box items now VOID-host pending a new box). Compose ONE compact digest: a blog page (fontaine/blog/src/) listing each pending decision as decision / cost / default-if-silent / where-it-unblocks, plus a short structured in-channel pointer post (Discord-markdown, blog link; long-form stays on the blog). POST ONLY IF the owner is still silent at execution time — if steering has landed, fold the digest into the reply instead. No oracle (no math); check.py before commit as usual.
+
+</details>
+
+---
+
 **`pdnorm-endpoint-truthfit-wear-crosscheck`** · `cpu`
 
 Endpoint truth-fit wear cross-check (ON-GO rider, CPU, record-only): the pdnorm endpoint wears its NATIVE per-dataset training-table rows, while the ladder's 27.40/27.14 wear per-repo rows fit on the panel's own truth
@@ -27,20 +41,6 @@ Endpoint truth-fit wear cross-check (ON-GO rider, CPU, record-only): the pdnorm 
 <details><summary>full record</summary>
 
 Endpoint truth-fit wear cross-check (ON-GO rider, CPU, record-only): the pdnorm endpoint wears its NATIVE per-dataset training-table rows, while the ladder's 27.40/27.14 wear per-repo rows fit on the panel's own truth — same wear class, different ESTIMATOR (truth-fit rows are oracle-ish; deployment tables are not). Extend released_row_rewear.py (or a sibling) to invert the endpoint npz through the checkpoint's per_dataset_stats rows (per-repo worn tables, not a global one) and re-express through the panel-truth-fit honest rows, recording the native-vs-truth-fit wear delta alongside the ladder read; oracle on the per-repo inversion identity, check.py green. PRE-GO the per-repo inversion extension can land dry (instrument-only); the read itself rides the endpoint npz.
-
-</details>
-
----
-
-**`endpoint-report-ladder-embed`** · `cpu`
-
-Wire the panel anchor-ladder figure into the pdnormendpoint report preset (PRE-GO prep, CPU): grasp_sft_joint_unseen_report.py grows a --ladder-b64 arg (or preset-default path reports/pdnorm_panel_ladder.b64) rendering the ladder…
-
-**boundary:** Queued 08:4xZ 08-18 work session (refill at the panel-ladder-chart close, charter section 4). CPU, un-gated, draft-only prep; composes with the pdnormendpoint preset landed 07:3xZ. On GO the endpoint session stamps the chart then builds the report — this item just removes the manual embed step. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
-
-<details><summary>full record</summary>
-
-Wire the panel anchor-ladder figure into the pdnormendpoint report preset (PRE-GO prep, CPU): grasp_sft_joint_unseen_report.py grows a --ladder-b64 arg (or preset-default path reports/pdnorm_panel_ladder.b64) rendering the ladder chart as a section of the ON-GO endpoint report, below the meta line's textual ladder — the endpoint session re-runs pdnorm_panel_ladder_chart.py --endpoint &lt;row&gt; first, so the report embeds the stamped figure with zero extra composition work. Oracle asserts the section renders from a sidecar (img tag with the b64 payload) and is absent when the file/flag is missing; check.py green.
 
 </details>
 
@@ -328,9 +328,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (231)
+## ✅ Done (232)
 
 *closed — the full record stays in each fold*
+
+**`endpoint-report-ladder-embed`** · `cpu`
+
+Wire the panel anchor-ladder figure into the pdnormendpoint report preset (PRE-GO prep, CPU): grasp_sft_joint_unseen_report.py grows a --ladder-b64 arg (or preset-default path reports/pdnorm_panel_ladder.b64) rendering the ladder…
+
+**boundary:** Queued 08:4xZ 08-18 work session (refill at the panel-ladder-chart close, charter section 4). CPU, un-gated, draft-only prep; composes with the pdnormendpoint preset landed 07:3xZ. On GO the endpoint session stamps the chart then builds the report — this item just removes the manual embed step. | DONE 09:2xZ 08-18 work session: --ladder-b64 landed on grasp_sft_joint_unseen_report.py plus ladder_section() (payload asserted base64-PNG) — pdnormendpoint preset defaults to the chart script's sidecar path reports/pdnorm_panel_ladder.b64, section renders directly below the meta line's textual ladder (above tiles and the anchors chart); explicit flag loud on a missing file, preset default quiet-skips (reports/ is gitignored, sidecar regenerable, the endpoint session re-runs the chart first anyway). Real 08-18 sidecar smoke-rendered through the section. Oracles +6 in tests/test_grasp_sft_joint_unseen_report.py (embed payload, non-PNG reject, below-meta placement, preset-default path, quiet-absent, loud-missing); check.py 1030 green. Pre-reg chart note updated: the report build after the --endpoint stamp needs no manual figure step. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
+
+<details><summary>full record</summary>
+
+Wire the panel anchor-ladder figure into the pdnormendpoint report preset (PRE-GO prep, CPU): grasp_sft_joint_unseen_report.py grows a --ladder-b64 arg (or preset-default path reports/pdnorm_panel_ladder.b64) rendering the ladder chart as a section of the ON-GO endpoint report, below the meta line's textual ladder — the endpoint session re-runs pdnorm_panel_ladder_chart.py --endpoint &lt;row&gt; first, so the report embeds the stamped figure with zero extra composition work. Oracle asserts the section renders from a sidecar (img tag with the b64 payload) and is absent when the file/flag is missing; check.py green.
+
+</details>
+
+---
 
 **`released-row-honest-wear-reexpression`** · `cpu`
 
