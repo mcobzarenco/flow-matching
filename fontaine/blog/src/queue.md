@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-18T01:54:00Z
+**Updated:** 2026-08-18T04:38:00Z
 
 **Depth call:** depth 2 queued (disc-step1000-html-report — small un-gated GPU instrumentation; plus the blocked owner-gated pdnorm run item staged at the draft cut) after the pre-reg-draft close.
 
-**22 open** (Live 0 · Queued 2 · Blocked 20 · Done 220)
+**22 open** (Live 0 · Queued 2 · Blocked 20 · Done 222)
 
 ## 🔴 Live (0)
 
@@ -18,29 +18,29 @@
 
 *ready — waiting on a window or a boundary*
 
-**`disc-step1000-html-report`** · `gpu-local`
+**`sim100-paired-read-instrument`** · `cpu`
 
-Browsable HTML eval panel for grasp_sft_v2_demosonly_1gpu_disc/step_001000 (owner standing rule: every important checkpoint gets an HTML report generated + linked from reports/; evals include --report)
+Paired per-seed sim100 read instrument: compare two flow_unseen jsons on the shared 100 seeds
 
-**boundary:** Queued 00:5xZ 08-18 work session (refill at disc post-processing close, charter section 4 + HTML-reports standing rule). Small GPU job (~minutes, probe-scale); GPU-guarded on the owner policy-server check like every local launch. No owner gate — instrumentation, not an experiment arm. · [pre-reg](posts/2026-08-17-prereg-sft-drift-discriminator.md)
+**boundary:** Queued 04:3xZ 08-18 work session (refill at the sim100-baseline close, charter section 4). CPU-side, un-gated; wants to land BEFORE the pdnorm endpoint read so the instrument is frozen pre-data. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
 
 <details><summary>full record</summary>
 
-Browsable HTML eval panel for grasp_sft_v2_demosonly_1gpu_disc/step_001000 (owner standing rule: every important checkpoint gets an HTML report generated + linked from reports/; evals include --report). Step-1000 is the first non-drifting v2-corpus checkpoint (verdict HEALTHY 00:42Z 08-18, banked on fontaine-checkpoints) — run the current-stack eval with --report on the probe-matched pins (holdout 0.1 / split-seed 0 / 256 samples seed 0 / chunk 30 / euler-10 / batch 12), land the panel under reports/ and link it from the blog reports page.
+Paired per-seed sim100 read instrument: compare two flow_unseen jsons on the shared 100 seeds — success-count delta with paired bootstrap CI, discordant-seed (McNemar-style) count, and progress delta CI; oracle-tested (sim100_reads.py bootstrap pattern). Registered consumer: the pdnorm endpoint's paired read vs the disc-1000 baseline (calibration note recorded in the draft pre-launch: baseline 11/100 sits inside the 11-19 ambiguous band, so the paired read rides alongside the frozen absolute bands). Also runnable retro as its own oracle: probe(44) vs disc1000(11) on the banked jsons.
 
 </details>
 
 ---
 
-**`disc-step1000-sim100-baseline`** · `gpu-local`
+**`disc1000-k4l2-panel-leg`** · `gpu-local`
 
-sim100 flow leg for grasp_sft_v2_demosonly_1gpu_disc/step_001000 (the pdnorm pre-reg's BASELINE grasp read, runnable independent of the GO): 100 unseen seeds, sim.rollout_sim episode 30 s / execute-horizon 30 / euler-10 / bfloat1…
+k4l2 panel leg (+prediction npz dump +--report HTML) for grasp_sft_v2_demosonly_1gpu_disc/step_001000: the pdnorm pre-reg's tertiary read pairs the pdnorm endpoint against 'the discriminator's banked step-1000 on the shared frame…
 
-**boundary:** Queued 01:5xZ 08-18 work session at the pdnorm draft cut (refill, charter section 4). Un-gated (eval of a banked checkpoint, not an experiment arm); GPU-guarded on the owner policy-server check. Read protocol + interpretation pre-registered in the pdnorm draft's baseline-arms section. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
+**boundary:** Queued 02:3xZ 08-18 work session (refill, charter section 4). Un-gated (eval of a banked checkpoint, not an experiment arm); GPU-guarded on the owner policy-server check. Runnable any time before the pdnorm endpoint read; if the pdnorm run is live when picked up, it waits (single H100). || RUNNING 04:30:39Z 08-18 (unit fontaine-disc1000-k4l2-panel-r2, babysit-registered): attempt 1 (04:25Z, batch 12/workers 8) input-starved at 66 f/min =&gt; killed 4.7 min in per the first-poll rule; r2 at batch 32/workers 20 reads 96% util ~300 f/min 24 GiB =&gt; ~1.3 GPU-h, done ~05:4x-05:5xZ. Protocol pinned in eval_disc1000_k4l2_panel.sh (euler-10 draws-1 stable, chunk 30, batch 32, panel_v2 plan + npz dump — the pdnorm endpoint leg copies it); chained session owns the close. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
 
 <details><summary>full record</summary>
 
-sim100 flow leg for grasp_sft_v2_demosonly_1gpu_disc/step_001000 (the pdnorm pre-reg's BASELINE grasp read, runnable independent of the GO): 100 unseen seeds, sim.rollout_sim episode 30 s / execute-horizon 30 / euler-10 / bfloat16 decoder, default worn-row lookup (demosonly ckpt: rig key misses -&gt; merged demos-native table, the correct window; record stats_repo_id from the out-json). Fills the demosonly-v2 grasp cell of the isolation grid (v2 pre-reg grid: &gt;= probe band 44 =&gt; demos were the lever; ~5 =&gt; data not the lever) and anchors the pdnorm rerun's paired grasp read. ~2 GPU-h, gate 3; +sim strip chart + result post.
+k4l2 panel leg (+prediction npz dump +--report HTML) for grasp_sft_v2_demosonly_1gpu_disc/step_001000: the pdnorm pre-reg's tertiary read pairs the pdnorm endpoint against 'the discriminator's banked step-1000 on the shared frames' (+0.05 CI guard, per-motor deltas recorded, wrist_flex/wrist_roll the predicted movers) — no such panel leg is banked yet, so pre-bank it now and take the pairing off the pdnorm critical path (also: first real-data panel row for the first non-drifting v2-corpus checkpoint). Protocol: the house panel_v2 k4l2 instrument verbatim (pin flags from the F-arm/tiny panel_v2 eval scripts at execution per the git-audit rule); ~1.5-2 GPU-h, gate 3.
 
 </details>
 
@@ -328,9 +328,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (220)
+## ✅ Done (222)
 
 *closed — the full record stays in each fold*
+
+**`disc-step1000-html-report`** · `gpu-local`
+
+Browsable HTML eval panel for grasp_sft_v2_demosonly_1gpu_disc/step_001000 (owner standing rule: every important checkpoint gets an HTML report generated + linked from reports/; evals include --report)
+
+**boundary:** Queued 00:5xZ 08-18 work session (refill at disc post-processing close, charter section 4 + HTML-reports standing rule). Small GPU job (~minutes, probe-scale); GPU-guarded on the owner policy-server check like every local launch. No owner gate — instrumentation, not an experiment arm. || DONE 02:1xZ 08-18 work session: current-stack eval on the probe-matched pins (scored 252/256 frames), chunk MAE 5.763 vs state-copy 7.671 (paired -1.95), wrist_roll 12.31 worst motor; reproduces the old-stack parity 5.7626 (in-train 5.8989 = the known x1.024 probe-vs-eval shift). HTML+JSON on fontaine-reports (curl 200), reports.md section added. Script: fontaine/scripts/eval_disc1000_html_report.sh (~0.1 GPU-h). · [pre-reg](posts/2026-08-17-prereg-sft-drift-discriminator.md)
+
+<details><summary>full record</summary>
+
+Browsable HTML eval panel for grasp_sft_v2_demosonly_1gpu_disc/step_001000 (owner standing rule: every important checkpoint gets an HTML report generated + linked from reports/; evals include --report). Step-1000 is the first non-drifting v2-corpus checkpoint (verdict HEALTHY 00:42Z 08-18, banked on fontaine-checkpoints) — run the current-stack eval with --report on the probe-matched pins (holdout 0.1 / split-seed 0 / 256 samples seed 0 / chunk 30 / euler-10 / batch 12), land the panel under reports/ and link it from the blog reports page.
+
+</details>
+
+---
 
 **`disc-verdict-checkpoint-upload`** · `cpu`
 
@@ -383,6 +397,20 @@ Restore local dataset mirrors post-box-kill (CPU/network, no GPU): the box delet
 <details><summary>full record</summary>
 
 Restore local dataset mirrors post-box-kill (CPU/network, no GPU): the box deletion (owner 18:09Z 08-17) left grasp_demos_v1 with NO local copy (~/datasets/fontaine has only grasp_sft_demos_v0; v2 re-pulled 18:2xZ for the discriminator). Pull mcobzarenco/fontaine-grasp-demos-v1 (28.1 GB at evacuation-verify) -&gt; ~/datasets/fontaine/grasp_demos_v1/merged via snapshot_download; verify file count + size vs HF. First audit which held gpu-local items (grasp-sft-bootstrap / grasp-sft-token-sft-arm / grpo-r2-post-sft) reference v1-era paths and record the mapping in their boundaries — pull what their launch gaps need, not speculatively beyond v1.
+
+</details>
+
+---
+
+**`disc-step1000-sim100-baseline`** · `gpu-local`
+
+sim100 flow leg for grasp_sft_v2_demosonly_1gpu_disc/step_001000 (the pdnorm pre-reg's BASELINE grasp read, runnable independent of the GO): 100 unseen seeds, sim.rollout_sim episode 30 s / execute-horizon 30 / euler-10 / bfloat1…
+
+**boundary:** Queued 01:5xZ 08-18 work session at the pdnorm draft cut (refill, charter section 4). Un-gated (eval of a banked checkpoint, not an experiment arm); GPU-guarded on the owner policy-server check. Read protocol + interpretation pre-registered in the pdnorm draft's baseline-arms section. || RUNNING 02:10:01Z 08-18 (unit fontaine-disc1000-sim100, babysit-registered progress-log): seeds 0-99, ~40 s/seed measured =&gt; done ~03:2x-03:3xZ; this work session rides it. || DONE 04:19Z 08-18 (ridden end-to-end, ~2.2/3 GPU-h, rc 0, 0 strikes): 11/100 successes (mean progress 2.04 cm, 64/100 moved, 7/11 success seeds shared with the probe's 44) — top edge of the broken class's CI (~2-11), far below probe band; sits inside the pdnorm draft's own 11-19 ambiguous band =&gt; calibration note recorded in the draft PRE-LAUNCH + owner flagged in-channel. Report+json+gallery on fontaine-reports (curl 200), reports.md extended, draft baseline-arms updated. Worn row = merged demos-native table (default fallback; json stats_repo_id field carries the pre-fix rig-key record, fix bba4a45 post-dates launch). · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
+
+<details><summary>full record</summary>
+
+sim100 flow leg for grasp_sft_v2_demosonly_1gpu_disc/step_001000 (the pdnorm pre-reg's BASELINE grasp read, runnable independent of the GO): 100 unseen seeds, sim.rollout_sim episode 30 s / execute-horizon 30 / euler-10 / bfloat16 decoder, default worn-row lookup (demosonly ckpt: rig key misses -&gt; merged demos-native table, the correct window; record stats_repo_id from the out-json). Fills the demosonly-v2 grasp cell of the isolation grid (v2 pre-reg grid: &gt;= probe band 44 =&gt; demos were the lever; ~5 =&gt; data not the lever) and anchors the pdnorm rerun's paired grasp read. ~2 GPU-h, gate 3; +sim strip chart + result post.
 
 </details>
 

@@ -934,6 +934,20 @@ HTML-reports rule.
   instrument shift from the [verdict post](posts/2026-08-18-sft-drift-discriminator-verdict.md).
   wrist_roll 12.31 stays the worst motor (3.5× state-copy's 3.99),
   the residue the `--per-dataset-flow-norm` rerun targets
+- [flow-head unseen-100 sim report](https://mcobzarenco-fontaine-reports.static.hf.space/eval__grasp_sft_v2_demosonly_1gpu_disc__step_001000__flow_unseen100.html)
+  ([json](https://mcobzarenco-fontaine-reports.static.hf.space/eval__grasp_sft_v2_demosonly_1gpu_disc__step_001000__flow_unseen100.json))
+  — the demosonly-v2 grasp cell of the isolation grid (04:19Z 08-18,
+  ~2.2 GPU-h): **11/100** successes on unseen seeds 0–99 (euler-10,
+  30 s episodes) vs probe 44 / v1-endpoint 5 / base 9; mean progress
+  2.04 cm (probe: 3.86), 64/100 moved, 0 strikes, 7/11 success seeds
+  shared with the probe. Healthy training + honest stats +
+  demos-only corpus does NOT restore probe-level grasping — sits at
+  the top edge of the broken class's CI (~2–11), inside the pdnorm
+  pre-reg's own 11–19 ambiguous band (calibration note recorded in
+  the draft pre-launch). Worn row: merged demos-native table via the
+  default fallback (the leg json's `stats_repo_id` field carries the
+  rig lookup key — the pre-fix record semantics; fixed for future
+  legs in `bba4a45`, which post-dates this leg's launch)
 - Weights: [`grasp_sft_v2_demosonly_1gpu_disc`](https://huggingface.co/mcobzarenco/fontaine-checkpoints/tree/main/grasp_sft_v2_demosonly_1gpu_disc)
   (steps 500 + 1000, weights-only, banked 00:5xZ 08-18)
 

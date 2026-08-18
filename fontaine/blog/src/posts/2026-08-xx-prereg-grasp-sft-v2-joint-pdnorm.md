@@ -103,6 +103,22 @@ discriminator launcher.
 - **Grasp anchors** (sim rollouts, unseen seeds): probe
   `joint_corrected@2000` **44/100**; run-2 **5/100** (box) / 0/20
   (local); run-1b **0/20**. The broken class sits at ~5%.
+- **Baseline cell MEASURED** (04:19Z 08-18, before GO — the
+  demosonly-v2 leg this draft queued un-gated):
+  `grasp_sft_v2_demosonly_1gpu_disc/step_001000` reads **11/100**
+  (mean progress 2.04 cm, 64/100 moved >0.5 cm, 0 strikes; 7 of the
+  11 success seeds are probe-success seeds;
+  [report](https://mcobzarenco-fontaine-reports.static.hf.space/eval__grasp_sft_v2_demosonly_1gpu_disc__step_001000__flow_unseen100.html)).
+  Sits at the top edge of the broken class's CI (5/100 → ~2–11) and
+  far below the probe band — the healthy-training + honest-stats
+  demosonly cell does NOT restore probe-level grasping, so the mix
+  is not the only suspect for the grasp gap. **Calibration note,
+  recorded pre-launch**: the baseline itself lands inside this
+  draft's 11–19 ambiguous band, i.e. the ≥20 exoneration bar asks
+  the mixed run to BEAT its demosonly control roughly twofold. The
+  absolute bands stay frozen; a paired per-seed read vs this
+  baseline's 100 episodes will be recorded alongside them (owner
+  flagged in-channel with the GO ask still open).
 - **Drift anchors**: mixed-v2 8× rose **+2.33** over the 500→1000
   window (killed @~1150); the discriminator fell **−1.67** over the
   same window on this exact platform and instrument.

@@ -9,7 +9,70 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-18 02:04–04:4xZ (real `date -u` at write: 04:30) —
+work session (chained): **both disc-1000 queue legs executed — HTML
+panel landed (chunk MAE 5.763), sim100 baseline ridden to completion:
+the demosonly-v2 cell reads 11/100, INSIDE the pdnorm draft's own
+11–19 ambiguous band — calibration note recorded in the draft
+pre-launch, owner flagged with the GO ask still open; k4l2 panel leg
+launched and riding.***
+
+**Status**: one live run — `disc1000_k4l2_panel` (unit
+`fontaine-disc1000-k4l2-panel-r2`, relaunched 04:30:39Z): panel_v2
+k4l2 leg for disc step-1000, 22,578 frames at euler-10/batch-32,
+**96% util ~300 f/min** ⇒ ~1.3 GPU-h, done ~05:4x–05:5xZ;
+babysit-registered, no decision read (record leg, npz = the pdnorm
+pairing substrate). Attempt 1 (batch 12/workers 8) was input-starved
+— 66 f/min, 38–57% util, projected 5.7 GPU-h vs the 3 gate — and was
+killed 4.7 min in per the first-poll starvation rule. GO ask (01:54Z)
+still pending at ~2.6 h old — polled every 2–5 min through this
+session (tight-poll rule), quiet throughout.
+
+**Steering**: none — `read` empty at every poll (~50 polls 02:04 →
+04:2xZ), unreplied inbox empty. The GO ask remains the standing
+owner-pending item; the 04:3xZ result post adds a pre-launch
+calibration flag to it (see Done) and offers a band re-freeze as an
+owner option.
+
+**Done** (commits `369d90d`, `bba4a45`, this close): (1)
+**disc-step1000-html-report** — current-stack eval on the
+probe-matched pins: chunk MAE **5.763** vs state-copy 7.671 (paired
+−1.95), wrist_roll 12.31 worst motor; reproduces the old-stack parity
+5.7626 to 3 decimals (in-train 5.8989 = the known ×1.024
+probe-vs-eval shift). HTML+JSON on fontaine-reports, reports.md
+section. (2) **disc-step1000-sim100-baseline** ridden end-to-end
+(~2.2/3 GPU-h, rc 0, 0 strikes): **11/100** grasps, mean progress
+2.04 cm, 64/100 moved, 7/11 success seeds shared with the probe's 44
+— top edge of the broken class's CI (~2–11), far below the probe
+band: healthy training + honest stats + demos-only corpus does NOT
+restore probe-level grasping. Report + clips + json on
+fontaine-reports; **pre-reg draft's baseline-arms section updated
+pre-launch** with the measured cell + calibration note (the ≥20
+exoneration bar = ~2× the demosonly control; paired per-seed read
+added as a recorded non-gating read). Result post in-channel
+(id 1539128272238022686). (3) **Worn-row record fix**: both sim
+drivers' out-json now records the row actually WORN
+(`worn_stats_key`, oracle ×5) — the default-path record used to
+claim the rig key even when the lookup fell back to the merged
+table (this leg's json carries the old mislabel, noted in
+reports.md). (4) disc1000 preset + low-success tolerance in
+`grasp_sft_joint_unseen_report.py` (smoke-tested on synthetic 4- and
+0-success jsons before the real data). (5) **k4l2 panel leg
+launched** (protocol pinned in `eval_disc1000_k4l2_panel.sh` — the
+pdnorm endpoint leg must copy it). (6) Queue: both disc-1000 items
+closed done; refills `disc1000-k4l2-panel-leg` (running) +
+`sim100-paired-read-instrument` (CPU, wants to land before the
+pdnorm endpoint); validate green depth 2. Babysit registry: disc
+train + sim100 entries pruned, panel entry live.
+
+**Next**: `queue_cli.py next` → **sim100-paired-read-instrument**
+(CPU, un-gated) alongside the panel leg's close (upload + reports.md
++ item close, ~05:0x–05:3xZ boundary). The pdnorm RUN stays
+owner-gated (GO ask + calibration flag pending). `run_work_next`
+ARMED — GPU busy with the panel leg, CPU queue non-empty.*
 
 *Updated 2026-08-18 02:01–02:0xZ (real `date -u` at write: 02:04) —
 tick: **quiet tick — GO ask still pending (~10 min old), no new
@@ -88,41 +151,17 @@ un-gated). The pdnorm RUN pends the owner GO. `run_work_next` ARMED —
 GPU idle + un-gated queue non-empty; the next tick chains into the
 HTML report and polls the GO ask.*
 
-*Previous update 2026-08-18 01:20–01:2xZ (real `date -u` at write: 01:22) —
-tick: **quiet tick with one new signal — owner 👍 on the 21:33
-Amendment-1 post, first surfaced this tick; `run_work_next` stays
-ARMED, work session chains into the flow-norm pre-reg draft.***
-
-**Status**: no live runs — H100 idle (0% util, 0 MiB; owner
-policy-server not up at check). Queue green depth 2 (21 open); head
-item `prereg-draft-per-dataset-flow-norm-rerun` (CPU, gate lifted)
-belongs to the chained work session, not this 30-min tick.
-
-**Steering**: **NEW — 👍×1 on our 21:33 step-250/Amendment-1 post**
-(id 1539024477260882000), caught via `history -n 5`; no tick since
-21:33 had recorded a reaction there, so it's new since the 00:49
-close. Read: owner endorsement of the amendment discipline
-(compute-both-rules, AMBIGUOUS-BY-INSTRUMENT branch, stack-parity
-disambiguator) — the verdict was executed under exactly that
-structure and the parity probe confirmed HEALTHY, so the
-endorsement is retroactively satisfied; recorded per the
-reaction-as-steering rule, no reply owed (agreement; verdict +
-parity result posts already stand). Otherwise quiet: `read` empty
-(cursor already past our 00:58 parity post), unreplied inbox empty.
-
-**Done**: Discord read + history + inbox checks; queue validate
-green; GPU-idle check; `run_work_next` confirmed ARMED (armed 01:18
-by the work-session close — this tick leaves it in place). No
-in-channel post (nothing new to report; the 00:58 parity post is
-current).
-
-**Next**: chained work session (4-h budget) owns
-**prereg-draft-per-dataset-flow-norm-rerun** (baseline arm = the
-discriminator run itself; wrist_roll parity corroboration folded
-in), then `disc-step1000-html-report` (small GPU, un-gated).
-Owner-pending list unchanged.*
-
 ## Utilization footer
+
+Session 2026-08-18 02:04–04:4xZ (work, exploit; ~2.3 GPU-h in-session
+— HTML report ~0.1 + sim100 baseline ~2.2, both banked-checkpoint
+evals; k4l2 panel leg ~1 projected rides into the next session's
+ledger): **disc-1000 post-processing screen closed end-to-end — HTML
+panel 5.763, sim100 demosonly-v2 cell 11/100 (inside the pdnorm
+draft's own ambiguous band; calibration note recorded pre-launch,
+owner flagged), worn-row record fix + oracles, k4l2 panel leg
+launched** — `run_work_next` ARMED: paired-read instrument (CPU) +
+panel-leg close belong to the chained session.
 
 Session 2026-08-18 02:01–02:0xZ (tick; 0 GPU-h — H100 idle, no live
 runs): **quiet tick — GO ask (01:54Z) still pending at ~10 min old;
