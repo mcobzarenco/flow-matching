@@ -6,7 +6,9 @@ the preset's ambiguous-band note, and stays absent when no paired json
 is passed. Plus the ladder-embed section (--ladder-b64): renders the
 pdnorm_panel_ladder_chart.py sidecar as an img below the meta line,
 rejects non-PNG payloads, quiet on a missing preset default, loud on a
-missing explicit flag."""
+missing explicit flag. Plus the estimator-seam line (--truthfit-json):
+renders pdnorm_endpoint_truthfit_rewear.py's ladder_read block
+verbatim under the ladder figure, same quiet/loud behavior split."""
 
 import base64
 import json
@@ -17,6 +19,7 @@ import pytest
 
 from fontaine.scripts.grasp_sft_joint_unseen_report import (
     PRESETS,
+    estimator_seam_line,
     ladder_section,
     main,
     paired_section,
@@ -322,6 +325,133 @@ def test_main_ladder_explicit_flag_missing_file_is_loud(
             monkeypatch,
             "--ladder-b64",
             str(tmp_path / "nope.b64"),
+        )
+
+
+def make_truthfit_payload(*, released: bool = True) -> dict:
+    """A ladder_read block shaped like pdnorm_endpoint_truthfit_rewear.py
+    output (values arbitrary; the line must render them verbatim)."""
+    read = {
+        "endpoint_native": 31.074,
+        "endpoint_truthfit": 30.551,
+        "estimator_seam_delta": 0.523,
+        "sft_disc1000_truthfit": 27.398,
+        "null_repo_midpoint": 25.153,
+    }
+    if released:
+        read["released_truthfit"] = 27.141
+    return {"npz": "endpoint.npz", "ladder_read": read}
+
+
+def write_truthfit(path: Path, **kwargs: bool) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(make_truthfit_payload(**kwargs)))
+
+
+def test_seam_line_renders_ladder_read_verbatim() -> None:
+    line = estimator_seam_line(make_truthfit_payload())
+    assert "Estimator seam" in line
+    assert "pdnorm_endpoint_truthfit_rewear.py" in line
+    assert "<b>31.07</b> &rarr; truth-fit 30.55 (seam +0.52)" in line
+    assert "disc-1000 27.40 / released 27.14 / repo-midpoint null 25.15" in line
+    # The headline stays the deployment-honest native row.
+    assert "native row stays the headline" in line
+
+
+def test_seam_line_without_released_row_omits_it() -> None:
+    line = estimator_seam_line(make_truthfit_payload(released=False))
+    assert "disc-1000 27.40 / repo-midpoint null 25.15" in line
+    assert "released" not in line
+
+
+def test_seam_line_rejects_foreign_json() -> None:
+    with pytest.raises(AssertionError, match="seam keys"):
+        estimator_seam_line({"ladder_read": {"endpoint_native": 1.0}})
+
+
+def test_main_truthfit_flag_renders_seam_under_ladder(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sidecar = tmp_path / "panel_ladder.b64"
+    make_ladder_sidecar(sidecar)
+    truthfit = tmp_path / "truthfit.json"
+    write_truthfit(truthfit)
+    out = run_main_pdnormendpoint(
+        tmp_path,
+        monkeypatch,
+        "--ladder-b64",
+        str(sidecar),
+        "--truthfit-json",
+        str(truthfit),
+    )
+    html = out.read_text()
+    # The seam line sits under the ladder figure, above the tiles and
+    # the anchors chart.
+    assert (
+        html.index("Panel anchor ladder")
+        < html.index("Estimator seam")
+        < html.index("Against the anchors")
+    )
+    assert "<b>31.07</b> &rarr; truth-fit 30.55 (seam +0.52)" in html
+
+
+def test_main_truthfit_renders_even_without_ladder_sidecar(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # The two embeds are independent: a missing (quiet-skipped) ladder
+    # sidecar must not drop an explicitly passed seam json.
+    monkeypatch.chdir(tmp_path)
+    truthfit = tmp_path / "truthfit.json"
+    write_truthfit(truthfit)
+    out = run_main_pdnormendpoint(
+        tmp_path,
+        monkeypatch,
+        "--truthfit-json",
+        str(truthfit),
+    )
+    html = out.read_text()
+    assert "Panel anchor ladder" not in html
+    assert "Estimator seam" in html
+
+
+def test_main_pdnormendpoint_defaults_to_truthfit_json_path(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # The preset default is the cross-check script's cwd-relative --out
+    # path; no flag needed once the ON-GO session has written it.
+    monkeypatch.chdir(tmp_path)
+    assert PRESETS["pdnormendpoint"]["truthfit_json"] == Path(
+        "reports/analysis__pdnorm_endpoint_truthfit_wear.json",
+    )
+    write_truthfit(tmp_path / "reports/analysis__pdnorm_endpoint_truthfit_wear.json")
+    out = run_main_pdnormendpoint(tmp_path, monkeypatch)
+    assert "Estimator seam" in out.read_text()
+
+
+def test_main_truthfit_absent_when_default_missing(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Preset default missing → quiet skip (the json exists only once
+    # the ON-GO endpoint npz does).
+    monkeypatch.chdir(tmp_path)
+    out = run_main_pdnormendpoint(tmp_path, monkeypatch)
+    assert "Estimator seam" not in out.read_text()
+
+
+def test_main_truthfit_explicit_flag_missing_file_is_loud(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    with pytest.raises(FileNotFoundError):
+        run_main_pdnormendpoint(
+            tmp_path,
+            monkeypatch,
+            "--truthfit-json",
+            str(tmp_path / "nope.json"),
         )
 
 

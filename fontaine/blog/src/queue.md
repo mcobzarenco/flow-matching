@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-18T10:00:00Z
+**Updated:** 2026-08-18T10:18:00Z
 
-**Depth call:** depth 2 queued (endpoint-report-ladder-embed cpu + pdnorm-endpoint-truthfit-wear-crosscheck cpu, both un-gated) after the released-row-honest-wear-reexpression close.
+**Depth call:** depth 2 queued (pdnorm-on-go-runbook cpu + owner-pending-decisions-digest cpu, both un-gated) after the report-seam-line close.
 
-**22 open** (Live 0 · Queued 2 · Blocked 20 · Done 233)
+**22 open** (Live 0 · Queued 2 · Blocked 20 · Done 234)
 
 ## 🔴 Live (0)
 
@@ -32,15 +32,15 @@ Pending-decisions digest for the owner (CPU, un-gated, condition-on-silence): ~2
 
 ---
 
-**`pdnorm-endpoint-report-seam-line`** · `cpu`
+**`pdnorm-on-go-runbook`** · `cpu`
 
-Wire the estimator-seam cross-check into the pdnormendpoint report preset (PRE-GO prep, CPU): grasp_sft_joint_unseen_report.py grows a --truthfit-json arg (preset-default path reports/analysis__pdnorm_endpoint_truthfit_wear.json,…
+Consolidate the pdnorm ON-GO checklist into an executable runbook (PRE-GO prep, CPU): fontaine/notes/pdnorm-on-go-runbook.md with the exact ordered copy-paste commands for GO-day
 
-**boundary:** Queued 10:0xZ 08-18 work session (refill at the truthfit-crosscheck close, charter section 4). CPU, PRE-GO landable; rides the same GO-path automation pattern as endpoint-report-ladder-embed. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
+**boundary:** Queued 10:1xZ 08-18 work session (refill at the report-seam-line close, charter section 4). CPU, PRE-GO landable; collapses GO-day improvisation to zero — the week's landed automations get exercised in order the moment the owner says GO. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
 
 <details><summary>full record</summary>
 
-Wire the estimator-seam cross-check into the pdnormendpoint report preset (PRE-GO prep, CPU): grasp_sft_joint_unseen_report.py grows a --truthfit-json arg (preset-default path reports/analysis__pdnorm_endpoint_truthfit_wear.json, quiet-skip on absent, loud on an explicit missing flag — the ladder-embed behavior split) rendering an 'estimator seam' line under the ladder section: endpoint native vs truthfit row, the seam delta, and the truthfit ladder anchors, read from pdnorm_endpoint_truthfit_rewear.py's ladder_read block. Oracles for render/absent/missing; check.py green — the ON-GO endpoint report then carries the estimator-consistent read with zero manual composition, same as the ladder figure.
+Consolidate the pdnorm ON-GO checklist into an executable runbook (PRE-GO prep, CPU): fontaine/notes/pdnorm-on-go-runbook.md with the exact ordered copy-paste commands for GO-day — stamp+post the pre-reg, fit smoke, bijou.train launch line (+ babysit.toml registry entry, first-poll util + free -g checks per standing rules), boundary reads (step-1000 drift guard PROVISIONAL, step-3000 endpoint), sim100 pair legs, panel leg + pdnorm_panel_ladder_chart.py --endpoint restamp, pdnorm_endpoint_truthfit_rewear.py invocation, report build (pdnormendpoint preset — ladder/seam/paired embeds automatic), checkpoint bank + verdict post. Every command git-audited against current script flags and the pre-reg's gates (21 GPU-h), not written from memory.
 
 </details>
 
@@ -328,9 +328,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (233)
+## ✅ Done (234)
 
 *closed — the full record stays in each fold*
+
+**`pdnorm-endpoint-report-seam-line`** · `cpu`
+
+Wire the estimator-seam cross-check into the pdnormendpoint report preset (PRE-GO prep, CPU): grasp_sft_joint_unseen_report.py grows a --truthfit-json arg (preset-default path reports/analysis__pdnorm_endpoint_truthfit_wear.json,…
+
+**boundary:** Queued 10:0xZ 08-18 work session (refill at the truthfit-crosscheck close, charter section 4). CPU, PRE-GO landable; rides the same GO-path automation pattern as endpoint-report-ladder-embed. CLOSED 10:1xZ 08-18 work session: --truthfit-json landed with the preset default + quiet/loud split exactly as queued; estimator_seam_line renders ladder_read verbatim (native -&gt; truthfit, seam delta, truthfit ladder disc-1000/released/null, released-row optional) under the ladder figure, above the tiles; foreign-json refusal (missing seam keys is loud). 7 oracles added to tests/test_grasp_sft_joint_unseen_report.py (render verbatim, released-omitted, foreign-json refusal, under-ladder placement, seam-without-sidecar independence, preset default path, quiet-absent, loud-explicit-missing); check.py 1045 green. Pre-reg calibration note updated: the ON-GO report carries the estimator-consistent read with no manual composition. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
+
+<details><summary>full record</summary>
+
+Wire the estimator-seam cross-check into the pdnormendpoint report preset (PRE-GO prep, CPU): grasp_sft_joint_unseen_report.py grows a --truthfit-json arg (preset-default path reports/analysis__pdnorm_endpoint_truthfit_wear.json, quiet-skip on absent, loud on an explicit missing flag — the ladder-embed behavior split) rendering an 'estimator seam' line under the ladder section: endpoint native vs truthfit row, the seam delta, and the truthfit ladder anchors, read from pdnorm_endpoint_truthfit_rewear.py's ladder_read block. Oracles for render/absent/missing; check.py green — the ON-GO endpoint report then carries the estimator-consistent read with zero manual composition, same as the ladder figure.
+
+</details>
+
+---
 
 **`pdnorm-endpoint-truthfit-wear-crosscheck`** · `cpu`
 

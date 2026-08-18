@@ -260,7 +260,13 @@ npz per repo through the native rows — per-repo inversion identity
 enforced — and re-expresses through the truth-fit rows, recording the
 native-vs-truth-fit estimator delta alongside the ladder read. The
 NATIVE row stays the headline number; the truth-fit row exists to
-read the ladder like for like.
+read the ladder like for like. The `pdnormendpoint` report preset
+renders the cross-check json as an "estimator seam" line under the
+ladder figure automatically (preset-default path
+`reports/analysis__pdnorm_endpoint_truthfit_wear.json`, wired
+10:xxZ 08-18) — the ON-GO endpoint report carries the
+estimator-consistent read with no manual composition, same as the
+ladder figure.
 
 ![panel anchor ladder, wear-corrected class — endpoint slot stamped on
 GO](../img/pdnorm/panel_ladder.png)

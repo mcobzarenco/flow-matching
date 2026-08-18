@@ -15,7 +15,8 @@ Usage:
       [--out-html reports/eval__grasp_sft_joint_step2000__flow_unseen100.html] \
       [--gallery-dir reports/joint_unseen_gallery] \
       [--paired-json reports/analysis__sim100_paired_probe_vs_disc1000.json] \
-      [--ladder-b64 reports/pdnorm_panel_ladder.b64]
+      [--ladder-b64 reports/pdnorm_panel_ladder.b64] \
+      [--truthfit-json reports/analysis__pdnorm_endpoint_truthfit_wear.json]
 
 --paired-json takes a frozen sim100_paired_read.py output and renders
 it as a "Paired read" section (delta tiles + discordant-seed chart)
@@ -30,6 +31,16 @@ textual ladder. The pdnormendpoint preset defaults to the chart
 script's sidecar path and skips the section quietly when the file is
 absent (reports/ is gitignored); an explicit flag is loud on a
 missing file.
+
+--truthfit-json renders a pdnorm_endpoint_truthfit_rewear.py output's
+ladder_read block as an "estimator seam" line directly under the
+ladder figure: the endpoint's native row vs its truth-fit
+re-expression, the seam delta, and the truth-fit ladder anchors read
+like for like. Same behavior split as --ladder-b64: the
+pdnormendpoint preset defaults to the cross-check script's output
+path and skips quietly when it is absent (the json exists only once
+the ON-GO endpoint npz does); an explicit flag is loud on a missing
+file.
 """
 
 from __future__ import annotations
@@ -187,6 +198,9 @@ PRESETS: dict[str, dict] = {
             " recorded, never gating."
         ),
         "ladder_b64": Path("reports/pdnorm_panel_ladder.b64"),
+        "truthfit_json": Path(
+            "reports/analysis__pdnorm_endpoint_truthfit_wear.json",
+        ),
     },
 }
 
@@ -367,6 +381,36 @@ def ladder_section(b64_path: Path) -> str:
     )
 
 
+def estimator_seam_line(payload: dict) -> str:
+    """Render a pdnorm_endpoint_truthfit_rewear.py output's ladder_read
+    block as an "estimator seam" line under the ladder figure: the
+    endpoint's native row vs its truth-fit re-expression, the seam
+    delta, and the truth-fit ladder anchors read like for like."""
+    read = payload["ladder_read"]
+    assert {
+        "endpoint_native",
+        "endpoint_truthfit",
+        "estimator_seam_delta",
+        "sft_disc1000_truthfit",
+        "null_repo_midpoint",
+    } <= read.keys(), "ladder_read is missing seam keys — stale or foreign json"
+    released = read.get("released_truthfit")
+    released_txt = "" if released is None else f" / released {released:.2f}"
+    return (
+        '<p class="meta"><b>Estimator seam</b>'
+        " (<code>pdnorm_endpoint_truthfit_rewear.py</code>, output-side"
+        " re-expression): endpoint native"
+        f" <b>{read['endpoint_native']:.2f}</b> &rarr; truth-fit"
+        f" {read['endpoint_truthfit']:.2f} (seam"
+        f" {read['estimator_seam_delta']:+.2f}); truth-fit ladder:"
+        f" disc-1000 {read['sft_disc1000_truthfit']:.2f}{released_txt}"
+        f" / repo-midpoint null {read['null_repo_midpoint']:.2f}."
+        " The native row stays the headline (a served rig wears recorded"
+        " tables); the truth-fit row reads the ladder like for"
+        " like.</p>\n"
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -408,6 +452,14 @@ def main() -> int:
         help="panel anchor-ladder b64 sidecar (pdnorm_panel_ladder_chart.py"
         " --out-b64) to embed below the meta line; defaults to the preset's"
         " sidecar path, skipped quietly when that default is absent",
+    )
+    parser.add_argument(
+        "--truthfit-json",
+        type=Path,
+        default=None,
+        help="pdnorm_endpoint_truthfit_rewear.py output to render as an"
+        " estimator-seam line under the ladder figure; defaults to the"
+        " preset's path, skipped quietly when that default is absent",
     )
     args = parser.parse_args()
     preset = PRESETS[args.preset]
@@ -511,6 +563,16 @@ def main() -> int:
     if ladder_b64 is not None and (args.ladder_b64 is not None or ladder_b64.exists()):
         ladder_html = ladder_section(ladder_b64)
 
+    # Same split for the estimator-seam line: the preset default (the
+    # cross-check json exists only once the ON-GO endpoint npz does) is
+    # quiet when absent, an explicit flag is loud.
+    seam_html = ""
+    truthfit_json = args.truthfit_json or preset.get("truthfit_json")
+    if truthfit_json is not None and (
+        args.truthfit_json is not None or truthfit_json.exists()
+    ):
+        seam_html = estimator_seam_line(json.loads(truthfit_json.read_text()))
+
     meta_html = preset["meta_html"].format(success=SUCCESS)
     bar_rows = [
         *preset["anchor_rows"],
@@ -541,7 +603,7 @@ def main() -> int:
 </style></head><body>
 <h1>{preset["h1"]}</h1>
 <p class="meta">{meta_html}</p>
-{ladder_html}<div class="tiles">{tiles_html}</div>
+{ladder_html}{seam_html}<div class="tiles">{tiles_html}</div>
 <h2>Against the anchors</h2>
 <img src="data:image/png;base64,{success_bar(bar_rows)}">
 {paired_html}<h2>Per-seed outcomes</h2>
