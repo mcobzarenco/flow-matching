@@ -14,7 +14,8 @@ Usage:
       [--video-dir outputs/sim/grasp_sft/joint_probes/flow_unseen] \
       [--out-html reports/eval__grasp_sft_joint_step2000__flow_unseen100.html] \
       [--gallery-dir reports/joint_unseen_gallery] \
-      [--paired-json reports/analysis__sim100_paired_probe_vs_disc1000.json]
+      [--paired-json reports/analysis__sim100_paired_probe_vs_disc1000.json] \
+      [--ladder-b64 reports/pdnorm_panel_ladder.b64]
 
 --paired-json takes a frozen sim100_paired_read.py output and renders
 it as a "Paired read" section (delta tiles + discordant-seed chart)
@@ -22,6 +23,13 @@ alongside the frozen absolute anchors; the read stays recorded,
 non-gating (registered consumer: the pdnorm endpoint vs the disc-1000
 demosonly baseline, whose 11/100 sits inside the pre-reg's own 11-19
 ambiguous band).
+
+--ladder-b64 embeds a pdnorm_panel_ladder_chart.py --out-b64 sidecar
+as a "Panel anchor ladder" figure directly below the meta line's
+textual ladder. The pdnormendpoint preset defaults to the chart
+script's sidecar path and skips the section quietly when the file is
+absent (reports/ is gitignored); an explicit flag is loud on a
+missing file.
 """
 
 from __future__ import annotations
@@ -178,6 +186,7 @@ PRESETS: dict[str, dict] = {
             " rides alongside the frozen absolute bands &mdash; it is"
             " recorded, never gating."
         ),
+        "ladder_b64": Path("reports/pdnorm_panel_ladder.b64"),
     },
 }
 
@@ -334,6 +343,30 @@ def paired_section(payload: dict, band_note: str) -> str:
     )
 
 
+def ladder_section(b64_path: Path) -> str:
+    """Render a pdnorm_panel_ladder_chart.py --out-b64 sidecar as an
+    embedded-figure section (sits below the meta line's textual
+    ladder). The payload must be a base64 PNG — the sidecar is written
+    from the rendered chart's bytes, so anything else is a stale or
+    corrupt file."""
+    payload = b64_path.read_text().strip()
+    assert base64.b64decode(payload)[:8] == b"\x89PNG\r\n\x1a\n", (
+        f"{b64_path} is not a base64-PNG ladder sidecar"
+    )
+    return (
+        "<h2>Panel anchor ladder</h2>\n"
+        '<p class="meta">Wear-corrected class (wear audit 08-18) &mdash;'
+        " the endpoint reads against this class, never the raw 58.14."
+        " The endpoint session re-runs"
+        " <code>pdnorm_panel_ladder_chart.py --endpoint &lt;row&gt;</code>"
+        " on GO, so the embedded sidecar"
+        f" <code>{html.escape(b64_path.name)}</code> carries the stamped"
+        " magenta rung.</p>\n"
+        f'<img src="data:image/png;base64,{payload}" '
+        'alt="pdnorm panel anchor ladder">\n'
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -367,6 +400,14 @@ def main() -> int:
         default=None,
         help="frozen sim100_paired_read.py output to render as a paired-read"
         " section (recorded, non-gating)",
+    )
+    parser.add_argument(
+        "--ladder-b64",
+        type=Path,
+        default=None,
+        help="panel anchor-ladder b64 sidecar (pdnorm_panel_ladder_chart.py"
+        " --out-b64) to embed below the meta line; defaults to the preset's"
+        " sidecar path, skipped quietly when that default is absent",
     )
     args = parser.parse_args()
     preset = PRESETS[args.preset]
@@ -462,6 +503,14 @@ def main() -> int:
             preset.get("paired_band_note", ""),
         )
 
+    # Explicit --ladder-b64 is loud on a missing file; the preset
+    # default (reports/ is gitignored, the sidecar is regenerable) is
+    # skipped quietly so PRE-GO builds work from any checkout.
+    ladder_html = ""
+    ladder_b64 = args.ladder_b64 or preset.get("ladder_b64")
+    if ladder_b64 is not None and (args.ladder_b64 is not None or ladder_b64.exists()):
+        ladder_html = ladder_section(ladder_b64)
+
     meta_html = preset["meta_html"].format(success=SUCCESS)
     bar_rows = [
         *preset["anchor_rows"],
@@ -492,7 +541,7 @@ def main() -> int:
 </style></head><body>
 <h1>{preset["h1"]}</h1>
 <p class="meta">{meta_html}</p>
-<div class="tiles">{tiles_html}</div>
+{ladder_html}<div class="tiles">{tiles_html}</div>
 <h2>Against the anchors</h2>
 <img src="data:image/png;base64,{success_bar(bar_rows)}">
 {paired_html}<h2>Per-seed outcomes</h2>

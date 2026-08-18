@@ -3,8 +3,12 @@
 section renders the frozen sim100_paired_read.py numbers verbatim
 (delta + CI wording, exact-p formatting, discordant counts), carries
 the preset's ambiguous-band note, and stays absent when no paired json
-is passed."""
+is passed. Plus the ladder-embed section (--ladder-b64): renders the
+pdnorm_panel_ladder_chart.py sidecar as an img below the meta line,
+rejects non-PNG payloads, quiet on a missing preset default, loud on a
+missing explicit flag."""
 
+import base64
 import json
 import sys
 from pathlib import Path
@@ -13,6 +17,7 @@ import pytest
 
 from fontaine.scripts.grasp_sft_joint_unseen_report import (
     PRESETS,
+    ladder_section,
     main,
     paired_section,
 )
@@ -198,6 +203,126 @@ def test_main_pdnormendpoint_preset_anchors_bands_and_paired_section(
         < html.index("Paired read:")
         < html.index("Per-seed outcomes")
     )
+
+
+def make_ladder_sidecar(path: Path) -> str:
+    """A tiny valid-PNG-header payload standing in for the real sidecar."""
+    payload = base64.b64encode(b"\x89PNG\r\n\x1a\n" + b"ladder-bytes").decode()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(payload)
+    return payload
+
+
+def run_main_pdnormendpoint(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    *extra: str,
+) -> Path:
+    leg = tmp_path / "flow_unseen.json"
+    write_leg(leg)
+    out = tmp_path / "report.html"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "grasp_sft_joint_unseen_report.py",
+            "--preset",
+            "pdnormendpoint",
+            "--leg-json",
+            str(leg),
+            "--video-dir",
+            str(tmp_path / "novideos"),
+            "--out-html",
+            str(out),
+            "--gallery-dir",
+            str(tmp_path / "gallery"),
+            *extra,
+        ],
+    )
+    assert main() == 0
+    return out
+
+
+def test_ladder_section_embeds_sidecar_payload(tmp_path: Path) -> None:
+    sidecar = tmp_path / "panel_ladder.b64"
+    payload = make_ladder_sidecar(sidecar)
+    section = ladder_section(sidecar)
+    assert "<h2>Panel anchor ladder</h2>" in section
+    assert f'<img src="data:image/png;base64,{payload}"' in section
+    assert "panel_ladder.b64" in section
+    # The figure reads against the wear-corrected class, never the raw row.
+    assert "never the raw 58.14" in section
+
+
+def test_ladder_section_rejects_non_png_payload(tmp_path: Path) -> None:
+    sidecar = tmp_path / "panel_ladder.b64"
+    sidecar.write_text(base64.b64encode(b"not a png").decode())
+    with pytest.raises(AssertionError, match="base64-PNG"):
+        ladder_section(sidecar)
+
+
+def test_main_ladder_flag_renders_section_below_meta(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sidecar = tmp_path / "panel_ladder.b64"
+    payload = make_ladder_sidecar(sidecar)
+    out = run_main_pdnormendpoint(
+        tmp_path,
+        monkeypatch,
+        "--ladder-b64",
+        str(sidecar),
+    )
+    html = out.read_text()
+    assert f'<img src="data:image/png;base64,{payload}"' in html
+    # The figure sits below the meta line's textual ladder, above the
+    # tiles and the anchors chart.
+    assert (
+        html.index("27.40 re-worn")
+        < html.index("Panel anchor ladder")
+        < html.index("Against the anchors")
+    )
+
+
+def test_main_pdnormendpoint_defaults_to_chart_sidecar_path(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # The preset default is the chart script's cwd-relative --out-b64
+    # path; no flag needed once the endpoint session has stamped it.
+    monkeypatch.chdir(tmp_path)
+    assert PRESETS["pdnormendpoint"]["ladder_b64"] == Path(
+        "reports/pdnorm_panel_ladder.b64",
+    )
+    payload = make_ladder_sidecar(tmp_path / "reports/pdnorm_panel_ladder.b64")
+    out = run_main_pdnormendpoint(tmp_path, monkeypatch)
+    html = out.read_text()
+    assert "Panel anchor ladder" in html
+    assert payload in html
+
+
+def test_main_ladder_absent_when_sidecar_missing(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Preset default missing → quiet skip (reports/ is gitignored, the
+    # sidecar is regenerable); the section simply does not render.
+    monkeypatch.chdir(tmp_path)
+    out = run_main_pdnormendpoint(tmp_path, monkeypatch)
+    assert "Panel anchor ladder" not in out.read_text()
+
+
+def test_main_ladder_explicit_flag_missing_file_is_loud(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    with pytest.raises(FileNotFoundError):
+        run_main_pdnormendpoint(
+            tmp_path,
+            monkeypatch,
+            "--ladder-b64",
+            str(tmp_path / "nope.b64"),
+        )
 
 
 def test_main_without_paired_json_has_no_section(

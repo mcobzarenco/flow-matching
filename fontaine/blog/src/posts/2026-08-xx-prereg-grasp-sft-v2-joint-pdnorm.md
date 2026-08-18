@@ -251,8 +251,11 @@ alongside — never in place of — the frozen guard.
 GO](../img/pdnorm/panel_ladder.png)
 
 *(Chart: `pdnorm_panel_ladder_chart.py` — the endpoint session re-runs
-it with `--endpoint <row>` to stamp the FILL slot; embeddable b64
-sidecar at `reports/pdnorm_panel_ladder.b64`.)*
+it with `--endpoint <row>` to stamp the FILL slot; b64 sidecar at
+`reports/pdnorm_panel_ladder.b64`, which the
+`grasp_sft_joint_unseen_report.py` `pdnormendpoint` preset embeds as a
+"Panel anchor ladder" section automatically — the report build after
+the stamp needs no manual figure step.)*
 
 Curve-level record: demos-slice breakdown vs the discriminator curve
 (same holdout episodes); rig-slice curves recorded as the first
