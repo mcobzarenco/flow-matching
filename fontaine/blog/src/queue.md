@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-18T13:30:00Z
+**Updated:** 2026-08-18T14:35:00Z
 
 **Depth call:** post-triage: 4 queued executable (pdnorm-endpoint-close gated ~23:3xZ, grasp-sft-bootstrap legs 3/4 GPU-free-gated, sim-clutter-patch-promotion CPU, expert-approach-quasistatic-redesign CPU) + owner-pending-decisions-digest closing this session
 
-**17 open** (Live 0 · Queued 4 · Blocked 13 · Done 240)
+**16 open** (Live 0 · Queued 3 · Blocked 13 · Done 242)
 
 ## 🔴 Live (0)
 
@@ -14,7 +14,7 @@
 
 *(empty)*
 
-## 🟢 Queued (4)
+## 🟢 Queued (3)
 
 *ready — waiting on a window or a boundary*
 
@@ -26,7 +26,7 @@ pdnorm endpoint close (GPU, gated on step-3000 ~23:4x-00:0xZ 18/19 08): run the 
 
 <details><summary>full record</summary>
 
-pdnorm endpoint close (GPU, gated on step-3000 ~23:4x-00:0xZ 18/19 08): run the frozen endpoint battery in order — sim100 flow leg on the endpoint (100 unseen seeds, --stats-repo-id grasp_demos_v2/merged per the worn-row rule) + the baseline disc-1000 leg already banked -&gt; sim100_paired_read.py vs the 11/100 baseline; k4l2 panel leg (protocol pinned in eval_disc1000_k4l2_panel.sh, npz dump); pdnorm_panel_ladder_chart.py --endpoint &lt;row&gt; restamp; pdnorm_endpoint_truthfit_rewear.py (native-&gt;truth-fit seam); report build (pdnormendpoint preset — ladder/seam/paired embeds automatic) + push; verdict post through the frozen grid (&gt;=20 exonerates mix / &lt;=10 convicts / 11-19 ambiguous); bank endpoint to fontaine-checkpoints if any gated read makes it load-bearing (a grasping mixed ckpt certainly is), weights-only + HTML report. Step-1000 drift-guard read (delta eval(1000-500) &lt;= +0.30, PROVISIONAL) rides the ~15:1xZ babysit boundary, not this item.
+pdnorm endpoint close (GPU, gated on step-3000 ~23:4x-00:0xZ 18/19 08): run the frozen endpoint battery in order — sim100 flow leg on the endpoint (100 unseen seeds, --stats-repo-id grasp_demos_v2/merged per the worn-row rule) + the baseline disc-1000 leg already banked -&gt; sim100_paired_read.py vs the 11/100 baseline; k4l2 panel leg (protocol pinned in eval_disc1000_k4l2_panel.sh, npz dump); pdnorm_panel_ladder_chart.py --endpoint &lt;row&gt; restamp; pdnorm_endpoint_truthfit_rewear.py (native-&gt;truth-fit seam); report build (pdnormendpoint preset — ladder/seam/paired embeds automatic) + push; verdict post through the frozen grid (&gt;=20 exonerates mix / &lt;=10 convicts / 11-19 ambiguous); bank endpoint to fontaine-checkpoints if any gated read makes it load-bearing (a grasping mixed ckpt certainly is), weights-only + HTML report. Step-1000 drift-guard read (delta eval(1000-500) &lt;= +0.30, PROVISIONAL) rides the ~15:1xZ babysit boundary, not this item. || SUBSTRATE PIN 14:1xZ 08-18 (prereg Amendment 1): the clutter-patch promotion flipped SO101Sim's default to clutter_appearance='patched' — every sim100 leg of this battery MUST run --clutter-appearance standins (registered v1/v2 protocol; demos + the 11/100 baseline are stand-ins-era; the pin keeps the read bit-identical to the code state at registration).
 
 </details>
 
@@ -55,20 +55,6 @@ Grasp-rich SFT bootstrap (owner go 22:07Z 08-14 on the 90%-of-seeds question; DR
 <details><summary>full record</summary>
 
 Grasp-rich SFT bootstrap (owner go 22:07Z 08-14 on the 90%-of-seeds question; DRAFT pre-reg posts/2026-08-14-prereg-grasp-sft-bootstrap.md): stage A scripted expert vs privileged sim state (waypoint policy over sim.data object pose, CPU + ~0.2 GPU-h validation on 20 NON-EVAL demo seeds 1000+, gate &gt;=70% scripted success else F-physics -&gt; Squint twin tier); stage B demo collection 300-600 kept successes ~2-4 GPU-h (production visual config, eval seeds 0-99 NEVER in demos); stage C SFT via molmoact2 --objective ar (new-stack objective matrix, rig-ft recipe class ~3-5 GPU-h, optional ftrig4k-recipe flow arm); stage D sim100 eval ~1-1.5 GPU-h, frozen primary: &gt;=20/100 successes -&gt; GRPO GO (fresh pre-reg per Decision 11), 5-19 -&gt; one B/C iteration, &lt;5 -&gt; F-transfer (wrist-screen read becomes the binding diagnosis). Worst-case ~11 GPU-h, gate &lt;=13. Finalization (frozen params + objection window + HEAD re-pin) BEFORE any GPU stage; stage A is CPU-executable now.
-
-</details>
-
----
-
-**`sim-clutter-patch-promotion`** · `cpu`
-
-Promote the real-crop clutter patch paste into production v3/v4: move clutter_patch.py paste into sim/so101_sim.py as the default clutter appearance (patched plate at _draw_content, clutter geoms dropped from the top render/mask/…
-
-**boundary:** Queued 05:4xZ 08-13 at the appearance-pass close. Implementation ~1 session CPU; re-gate on the pinned 20x5 probe (~0.02 GPU-h) before any behavioral eval moves. | STACK READ 10:58Z 08-14: clutter patches carry essentially the whole combined three-flag gain (stack 0.5521 vs patched-alone 0.5561, materials marginal absorbed) — this promotion is the payload; promote first or alone. | ROLLOUT-POSE READ 12:2xZ 08-14: no bearing on this item (wrist rides the raw render; clutter patch is top-composite only) — still the payload, promote first or alone. || DELEGATION TRIAGE 13:3xZ 08-18 (owner-pending-decisions-digest, under the 10:25Z no-go-asks delegation): DECIDED GO by Fontaine (announced in-channel) — the sign-off gate dissolves; the registered gate evidence PASS stands (patched 0.556 vs v3 0.713, carries the whole stack gain per the 10:58Z 08-14 stack read). CPU implementation next free work slot; the registered re-gate on the pinned 20x5 probe (~0.02 GPU-h) before any behavioral eval moves stays.
-
-<details><summary>full record</summary>
-
-Promote the real-crop clutter patch paste into production v3/v4: move clutter_patch.py paste into sim/so101_sim.py as the default clutter appearance (patched plate at _draw_content, clutter geoms dropped from the top render/mask/shadow; wrist path untouched, zero extra RNG draws so v3 slot-pairing survives), oracle-pinned (wrist bit-exact vs v3; top bit-exact outside clutter-affected pixels; tests/test_sim_appearance.py extension). Gate evidence: legs (b)+(c) PASS 05:4xZ 08-13 (patched 0.556 vs v3 0.713, beats no_clutter 0.576). OWNER_HOLD: no default flip without sign-off (asked in-channel 05:40Z 08-13).
 
 </details>
 
@@ -260,9 +246,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (240)
+## ✅ Done (242)
 
 *closed — the full record stays in each fold*
+
+**`clutter-patch-promotion-regate`** · `gpu-local`
+
+Clutter-patch promotion re-gate (~0.02 GPU-h, registered with the 08-13 in-channel gate pre-reg (05:23Z), report 2026-08-14-appearance-screen-report.md): render the pinned 20x5 slots through the PRODUCTION patched path (SO101Sim…
+
+**boundary:** Queued 14:1xZ 08-18 at the promotion close. Small GPU job; runnable alongside the pdnorm run only if VRAM headroom is proven (~13 GiB free at queue time, encoder-only embed), else first in the post-endpoint GPU window before grasp-sft-bootstrap token legs. · [pre-reg](posts/2026-08-18-prereg-clutter-patch-promotion-regate.md)
+
+<details><summary>full record</summary>
+
+Clutter-patch promotion re-gate (~0.02 GPU-h, registered with the 08-13 in-channel gate pre-reg (05:23Z), report 2026-08-14-appearance-screen-report.md): render the pinned 20x5 slots through the PRODUCTION patched path (SO101Sim v3 default) + a production standins arm, embed with the er_60k probe checkpoint, knn5 AUROC vs the same real_v2 reference — expect standins in the registered 0.708-0.718 band and patched within ~0.01 of the gate's 0.556 (the production implementation differs from the gate arm only at clutter-occluding-dynamic pixels, measured none on the oracle seeds). Gates any BEHAVIORAL eval on the patched substrate (demo-gen v1.1, future sim100 cells); tonight's pdnorm sim100 is pinned standins and does not wait on this. || EXECUTED 14:2x-14:3xZ 08-18 (same session as the promotion): PASS — production patched AUROC 0.554 vs gate 0.556 (dev -0.002, bar +/-0.010); standins anchor 0.713 (band 0.708-0.718, = the banked v3 anchor); clean 0.283. Instrument fontaine/scripts/sim_clutter_promotion_regate.py (2 production arms, no hooks; CPU model load + vision-only CUDA beside the live pdnorm run), report reports/analysis__clutter_patch_promotion_regate.json, frames dumped. NOTE: er_60k probe ckpt re-converted to current schema at ~/checkpoints/converted/er_60k_step_060000_vla_v2 (old _vla dir is schema-v1 stale). The patched substrate is CLEARED for behavioral evals (demo-gen v1.1, future sim100 cells); tonight's pdnorm sim100 stays pinned standins per Amendment 1.
+
+</details>
+
+---
 
 **`owner-pending-decisions-digest`** · `cpu`
 
@@ -1531,6 +1531,20 @@ Arm appearance leg: the rendered arm (~7.1% of pixels) carries the remaining cei
 <details><summary>full record</summary>
 
 Arm appearance leg: the rendered arm (~7.1% of pixels) carries the remaining ceiling to the real-fg anchor (patched 0.556 / no_clutter 0.576 &gt;&gt; real-fg 0.328; only_arm 0.654 vs plate 0.866 in leg (a)). Candidate fixes ladder (cheapest first): (1) photometric - the recolored flat-black arm vs the real arm's specular/texture (real-crop material stats or measured reflectance grade); (2) geometry-registered real-arm texture projection (hard: articulated, pose-dependent); scope a leg-(a)-style diagnostic first (WHICH arm sub-part carries it: gripper/links/mounts via geom-partition masks on the hooked harness, ~0.02 GPU-h). Pre-reg before any read. || CLOSED 06:4xZ 08-13: diagnostic COMPLETE, all gates green (in-run v3 0.713 in band; bridges plate_only 0.866 / only_arm 0.654 / no_arm 0.825 all in band). Registered rule names LINKS (88% of the only_arm paired delta on 6.1% px, CI-excl-0; gripper 26%, mount 31% — below both thresholds). Instance axis: follower/leader ~equal and sub-additive (only_follower -4.05e-6, only_leader -4.14e-6 vs whole arm -5.26e-6) — a fix must treat BOTH instances. Record-only: no_mount is the ONLY removal that moves v3 TOWARD real (0.713-&gt;0.654, 97/100, CI-excl-0) despite the absence-OOD confound — rendered mounts are per-pixel the most sim-distinctive class. Artifacts: analysis__sim_arm_split.json + chart + frame strip on fontaine-reports.
+
+</details>
+
+---
+
+**`sim-clutter-patch-promotion`** · `cpu`
+
+Promote the real-crop clutter patch paste into production v3/v4: move clutter_patch.py paste into sim/so101_sim.py as the default clutter appearance (patched plate at _draw_content, clutter geoms dropped from the top render/mask/…
+
+**boundary:** Queued 05:4xZ 08-13 at the appearance-pass close. Implementation ~1 session CPU; re-gate on the pinned 20x5 probe (~0.02 GPU-h) before any behavioral eval moves. | STACK READ 10:58Z 08-14: clutter patches carry essentially the whole combined three-flag gain (stack 0.5521 vs patched-alone 0.5561, materials marginal absorbed) — this promotion is the payload; promote first or alone. | ROLLOUT-POSE READ 12:2xZ 08-14: no bearing on this item (wrist rides the raw render; clutter patch is top-composite only) — still the payload, promote first or alone. || DELEGATION TRIAGE 13:3xZ 08-18 (owner-pending-decisions-digest, under the 10:25Z no-go-asks delegation): DECIDED GO by Fontaine (announced in-channel) — the sign-off gate dissolves; the registered gate evidence PASS stands (patched 0.556 vs v3 0.713, carries the whole stack gain per the 10:58Z 08-14 stack read). CPU implementation next free work slot; the registered re-gate on the pinned 20x5 probe (~0.02 GPU-h) before any behavioral eval moves stays.
+
+<details><summary>full record</summary>
+
+Promote the real-crop clutter patch paste into production v3/v4: move clutter_patch.py paste into sim/so101_sim.py as the default clutter appearance (patched plate at _draw_content, clutter geoms dropped from the top render/mask/shadow; wrist path untouched, zero extra RNG draws so v3 slot-pairing survives), oracle-pinned (wrist bit-exact vs v3; top bit-exact outside clutter-affected pixels; tests/test_sim_appearance.py extension). Gate evidence: legs (b)+(c) PASS 05:4xZ 08-13 (patched 0.556 vs v3 0.713, beats no_clutter 0.576). OWNER_HOLD: no default flip without sign-off (asked in-channel 05:40Z 08-13). || EXECUTED 14:1xZ 08-18 (work session): promoted — sim/clutter_patch.py (moved from fontaine/scripts, camera model inlined + oracle-pinned), SO101Sim clutter_appearance knob default 'patched' (v3/v4: crops pasted onto the drawn plate at _draw_content, stand-ins parked off-frustum -&gt; dropped from top render/mask/shadow; wrist path untouched; zero extra RNG draws). Oracles: tests/test_sim_appearance.py +5 (wrist bit-exact patched-vs-standins, top bit-exact outside clutter-affected px, physics/stream identity, camera-model freeze, validation) — all green incl. gpu-marked render legs. 'standins' kept for paired reads; pinned in archived gate instruments + rollout/collect CLIs (--clutter-appearance). Registered re-gate (pinned 20x5 probe on the production patched path) refiled as clutter-patch-promotion-regate — still gates behavioral evals ON THE PATCHED substrate; tonight's pdnorm sim100 is pinned standins (prereg Amendment 1) and does not wait on it.
 
 </details>
 

@@ -15,7 +15,50 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-18 13:44–14:4xZ (real `date -u` at write: 14:38) —
+work session (chained, bounded): **sim-clutter-patch-promotion
+EXECUTED + its registered re-gate PASSED same session — real-crop
+clutter patches are now the production v3/v4 clutter appearance.***
+
+**Status**: `grasp_sft_v2_joint_1gpu_pdnorm` LIVE — babysit exit 0 at
+14:19: 5 procs, step 740/3000, loss 0.5594, ~15.1 s/step effective
+(window figure spans probe pauses), VRAM 62.21/71 gate, probe
+8.24@500 vs disc 7.57; ~10 h to endpoint, ETA ~23:4x–00:0xZ. Queue
+green depth 3 (16 open).
+
+**Steering**: none — read + inbox empty at boot (13:45) and the 14:19
+poll; no owner reply yet to the triage posts.
+
+**Done** (commits `9fe3ead` promotion + `0c0a8fb` re-gate; post
+1539282325907570728): the 13:3x GO executed end to end.
+`sim/clutter_patch.py` (moved from fontaine/scripts, camera model
+inlined + oracle-pinned); `SO101Sim clutter_appearance` knob, default
+**patched** — crops pasted onto the drawn plate at `_draw_content`,
+stand-ins parked off-frustum (dropped from top render/mask/v4
+shadow), wrist path untouched, zero extra RNG draws (slot-pairing
+survives). Oracles +5 in `tests/test_sim_appearance.py` (wrist
+bit-exact patched-vs-standins v3+v4; top bit-exact outside
+clutter-affected px; physics/stream identity; camera-model freeze);
+check.py 1048 green + 3 gpu render legs. **Re-gate PASS**
+(`sim_clutter_promotion_regate.py`, ~0.02 GPU-h beside the live run):
+production patched AUROC 0.554 vs gate 0.556 (dev −0.002, bar
+±0.010), standins anchor 0.713 dead-center — patched substrate
+CLEARED for behavioral evals. Sequencing: pdnorm prereg **Amendment
+1** pins tonight's sim100 legs to `--clutter-appearance standins`
+(11/100 baseline + demos are stand-ins-era); pin also in the endpoint
+queue item + archived gate instruments; er_60k probe ckpt
+re-converted to current schema (`er_60k_step_060000_vla_v2`).
+
+**Next**: `queue_cli.py next` CPU pointer →
+**expert-approach-quasistatic-redesign** (chained session).
+~15:2xZ owns the step-1000 drift-guard read (bar eval@1000 ≤ 8.5419,
+PROVISIONAL) + the host-RAM re-check; **pdnorm-endpoint-close** at
+step 3000 (~23:4x–00:0xZ, sim100 pinned standins);
+**grasp-sft-bootstrap** token legs 3/4 after it. `run_work_next`
+ARMED at close.*
 
 *Updated 2026-08-18 13:41–13:4xZ (real `date -u` at write: 13:44) —
 tick: **quiet babysit ~2 min after the digest session closed — no
@@ -86,41 +129,16 @@ the host-RAM re-check. **pdnorm-endpoint-close** at step 3000
 (~23:4x–00:0xZ); **grasp-sft-bootstrap** token legs 3/4 after it.
 `run_work_next` ARMED — GPU busy, CPU queue non-empty.*
 
-*Updated 2026-08-18 13:17–13:3xZ (real `date -u` at write: 13:25) —
-tick: **quiet babysit — pdnorm healthy through step ~508/3000; one
-new fact: host-RAM available is 48 GiB (was ~90 at earlier polls) —
-investigated, flat, not a leak.***
-
-**Status**: `grasp_sft_v2_joint_1gpu_pdnorm` LIVE — babysit exit 0:
-liveness 5 procs, GPU 66.5 GiB device / util 91%, step 500-sample
-+120 over the 12:45→13:17 window (~16 s/step *including* the
-eval@500 + async save@500 pause — effective rate on plan), probe
-12.91@250 → 8.24@500 unchanged. **Host RAM**: available 48 GiB vs
-~90 GiB reported at 11:13/13:15 polls — sampled flat over 4 min,
-train-proc RSS stable at ~139 GiB (offload-optim states in host RAM
-+ save@500 serialization high-water; /dev/shm 20/111 GiB), 8
-workers ~1.5 GiB each. Verdict: stable plateau, not the
-rescale-dataloader leak class. **Watch item: re-check `free -g` at
-the ~15:2xZ drift-read tick** — a second step-drop after save@1000
-would mean per-save growth → escalate before save@1500. Endpoint
-ETA unchanged ~23:3x–23:4xZ. Queue green depth 2 (22 open).
-
-**Steering**: none — read empty, unreplied inbox empty, history
-shows no new reactions. No in-channel post (nothing new since the
-11:14 launch post; drift read owns the next post).
-
-**Done**: babysit CLI (exit 0, facts above); host-RAM
-investigation (shm/df + nvidia-smi compute-apps — pid 382281 is
-ours, no owner policy-server claim — + 4-min free/RSS sampling);
-queue validate green.
-
-**Next**: ~15:2xZ tick owns the step-1000 drift-guard read (bar
-eval@1000 ≤ 8.5419, PROVISIONAL) + the RAM re-check.
-`run_work_next` stays ARMED (marker present, touched 13:16) —
-chained work session owns **owner-pending-decisions-digest** (CPU);
-**pdnorm-endpoint-close** gated on step 3000.*
-
 ## Utilization footer
+
+Session 2026-08-18 13:44–14:4xZ (work, bounded, exploit-side; ~0.02
+GPU-h in-session (re-gate embeds) — pdnorm train continues, ~3.6 h
+elapsed at poll): **clutter-patch promotion EXECUTED + production
+re-gate PASS same session (patched 0.554 vs gate 0.556, standins
+anchor 0.713; commits `9fe3ead`+`0c0a8fb`); tonight's sim100 pinned
+standins via prereg Amendment 1** — `run_work_next` ARMED:
+quasistatic redesign next; ~15:2xZ drift read + RAM re-check;
+endpoint battery ~23:4x–00:0xZ.
 
 Session 2026-08-18 13:41–13:4xZ (tick; 0 GPU-h new — pdnorm train
 continues, ~2.6 h elapsed): **quiet babysit 2 min after the digest
@@ -138,15 +156,6 @@ GO, quasistatic redesign GO), 6 owner-holds → Fontaine-decides
 deferrals, owner-owned digest posted (4 entries)** — `run_work_next`
 ARMED: clutter promotion next; ticks own the 15:2xZ drift read;
 endpoint battery ~23:4x–00:0xZ.
-
-Session 2026-08-18 13:17–13:3xZ (tick; 0 GPU-h new — pdnorm train
-continues on the H100, ~2.3 h elapsed at poll): **quiet babysit —
-exit 0, step ~508/3000, probe 8.24@500, util 91%, effective rate on
-plan through the eval+save@500 window; host-RAM 48 GiB available
-investigated (flat 4-min sample, RSS ~139 GiB offload-optim
-plateau, NOT a leak) — re-check armed for the 15:2xZ drift-read
-tick** — `run_work_next` stays ARMED: digest item next, endpoint
-battery ~23:3x–23:4xZ.
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-10
 00:00Z → 2026-08-17 19:45Z; rebased 08-17 from per-run prune records
