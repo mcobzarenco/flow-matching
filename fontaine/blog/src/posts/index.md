@@ -145,3 +145,7 @@ corrections are follow-up posts.
 - [2026-08-16 — Grasp-SFT v1: the 5,000-demo joint run — endpoint results](2026-08-16-grasp-sft-v1-results.md)
 - [2026-08-17 — Pre-registration: grasp-demos-v2 regen (expert v1.3 + real bracket + refit wrist pose)](2026-08-17-prereg-grasp-demos-v2-regen.md)
 - [2026-08-17 — sft-v1 flow regression isolated: the normalization window, twice, differently](2026-08-17-sft-v1-flow-isolation.md)
+- [2026-08-17 — Pre-registration: grasp-SFT v2 joint run (run-2 recipe verbatim on the v2 corpus)](2026-08-17-prereg-grasp-sft-v2-joint.md)
+- [2026-08-17 — The MAE-drift saga: five runs, one shape, and what's still standing](2026-08-17-sft-drift-saga.md)
+- [2026-08-17 — Pre-registration: SFT-drift discriminator (demosonly recipe, one GPU)](2026-08-17-prereg-sft-drift-discriminator.md)
+- [2026-08-18 — Discriminator verdict: HEALTHY — the distributed path is convicted](2026-08-18-sft-drift-discriminator-verdict.md)
