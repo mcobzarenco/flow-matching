@@ -42,8 +42,9 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).parents[2]))
 sys.path.insert(0, str(Path(__file__).parent))
 import sim_encoder_ood_probe as probe
-from clutter_patch import ClutterCrops
 from sim_top_gap_decomposition import arm_read, knn5, paired_read
+
+from sim.clutter_patch import ClutterCrops
 
 N_SEEDS = 20
 N_DRAWS = 5
@@ -92,7 +93,11 @@ def render_arms(
 
     from sim.so101_sim import SO101Sim
 
-    sim = SO101Sim(render_style="v3", post_backend="numpy")
+    sim = SO101Sim(
+        render_style="v3",
+        post_backend="numpy",
+        clutter_appearance="standins",  # the gate's registered substrate
+    )
     clutter_ids = np.array(
         sorted(sim.model.geom(name).id for name in CLUTTER_NAMES),
     )

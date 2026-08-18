@@ -94,6 +94,7 @@ def _driver_args(root: Path, **overrides: Any) -> argparse.Namespace:
         "tint_band": "mix70",
         "bracket_appearance": "v1",
         "wrist_pose": "v1",
+        "clutter_appearance": "patched",
         "max_wall_hours": 1.0,
         "max_ticks": 600,
         "gpus": [0],
@@ -116,6 +117,7 @@ def test_driver_refuses_changed_plan(tmp_path: Path) -> None:
         "tint_band": args.tint_band,
         "bracket_appearance": args.bracket_appearance,
         "wrist_pose": args.wrist_pose,
+        "clutter_appearance": args.clutter_appearance,
         "target_kept": args.target_kept,
         "shards": [
             spec.__dict__

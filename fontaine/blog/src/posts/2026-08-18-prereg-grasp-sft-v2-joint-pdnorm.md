@@ -307,3 +307,20 @@ gated.
   endpoint banks to `fontaine-checkpoints` same-session if any gated
   read makes it load-bearing (a grasping mixed checkpoint certainly
   is), weights-only + logs, with the standing HTML report.
+
+---
+
+**Amendment 1 — substrate pin (2026-08-18 ~14:0xZ, pre-data for every
+gated read; announced in-channel).** The clutter-patch promotion
+(queue `sim-clutter-patch-promotion`, decided GO under the 10:25Z
+delegation) landed mid-run: `SO101Sim` now defaults to
+`clutter_appearance='patched'` — mined real crops pasted onto the
+drawn plate instead of rendered stand-in geoms. Every sim100 leg of
+THIS pre-registration (endpoint flow leg, token legs, any rescue
+read) runs `--clutter-appearance standins`: the registered protocol
+is "the v1/v2 sim100 protocol", the checkpoint's demos and the
+baseline 11/100 cell were both produced under the stand-ins
+substrate, and the pin makes the promotion a no-op for this run's
+reads — bit-identical to the code state at registration
+(oracle-pinned in `tests/test_sim_appearance.py`). No decision bound
+moves.

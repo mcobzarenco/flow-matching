@@ -266,6 +266,7 @@ class SO101Sim:
         disk_appearance: str = "v1",
         bracket_appearance: str = "v1",
         wrist_pose: str = "v1",
+        clutter_appearance: str = "patched",
     ) -> None:
         if render_style not in ("v0", "v1", "v2", "v3", "v4"):
             raise ValueError(
@@ -324,6 +325,18 @@ class SO101Sim:
         if wrist_pose not in ("v1", "refit"):
             raise ValueError(f"wrist_pose {wrist_pose!r} not in ('v1', 'refit')")
         self.wrist_pose = wrist_pose
+        # v3/v4 clutter appearance (no effect on other styles):
+        # 'patched' (default, promotion 2026-08-18) pastes the mined
+        # real crops onto the drawn plate and never renders the
+        # stand-in geoms on the top pass; 'standins' is the pre-
+        # promotion behavior, kept for paired reads and for evals
+        # registered on the old substrate.
+        if clutter_appearance not in ("patched", "standins"):
+            raise ValueError(
+                f"clutter_appearance {clutter_appearance!r} not in "
+                "('patched', 'standins')",
+            )
+        self.clutter_appearance = clutter_appearance
         self.spawn_version = spawn_version
         self.tint_band = tint_band
         # Spawn-v2 (pre-reg 2026-08-16, finalized): disk uniform over
@@ -914,6 +927,21 @@ class SO101Sim:
     # the clutter back to canonical (data-side, no mj_forward, so
     # physics never sees the swap; the stand-ins are contype 0
     # anyway).
+    #
+    # Clutter appearance promotion (2026-08-18; gate PASS 08-13,
+    # patched 0.556 vs v3 0.713 / no_clutter 0.576 on the pinned
+    # encoder probe, and the 08-14 stack read shows the patches carry
+    # the whole combined visual-stack gain): under the default
+    # clutter_appearance='patched' the drawn stand-ins never render on
+    # the top pass — the mined real crops (sim.clutter_patch) are
+    # pasted onto the drawn plate at the drawn poses instead, and the
+    # geoms park off-frustum so the top render, its segmentation mask
+    # and the v4 shadow depth pass all drop them. The paste consumes
+    # no RNG and the pose/presence draws are unchanged, so seed ->
+    # (spawn, plate, drawn clutter, lighting) is bit-identical to
+    # 'standins' and v3 slot-pairing survives. The wrist path still
+    # swaps the canonical poses in (bit-identical to v2, oracle-pinned
+    # in tests/test_sim_appearance.py).
     V3_ABSENT_POS = (2.5, 0.0, -1.0)  # outside both frusta
     V3_YAW_JITTER: ClassVar[dict[str, float]] = {"mouse": 0.3, "laptop": 0.15}
 
@@ -955,13 +983,21 @@ class SO101Sim:
         self._active_bias = np.zeros(3)
         # name -> (pos, yaw) as drawn for the current reset
         self._clutter_drawn: dict[str, tuple[np.ndarray, float]] = {}
+        self._clutter_crops = None
+        if self.clutter_appearance == "patched":
+            from .clutter_patch import ClutterCrops
+
+            self._clutter_crops = ClutterCrops(bank_dir / "crops")
 
     def _draw_content(self, rng: np.random.Generator) -> None:
-        """Per-reset plate + clutter draws (v3). Writes the drawn
-        poses into the model (physics-inert: contype 0) and remembers
-        them for the per-render canonical swap."""
+        """Per-reset plate + clutter draws (v3). The draw order and
+        count are frozen (slot-pairing guard); what the drawn poses
+        DRIVE depends on clutter_appearance — 'standins' writes them
+        into the model (physics-inert: contype 0) for the top render,
+        'patched' pastes the mined crops onto the plate instead and
+        parks every stand-in off-frustum. Both remember the draws for
+        the per-render canonical swap."""
         plate, gain, bias = self._bank[int(rng.integers(len(self._bank)))]
-        self._active_top_plate = plate
         self._active_gain = gain
         self._active_bias = bias
         self._clutter_drawn = {}
@@ -985,6 +1021,19 @@ class SO101Sim:
                 if jitter is not None:
                     yaw = base_yaw + float(rng.uniform(-jitter, jitter))
             self._clutter_drawn[name] = (pos, yaw)
+        if self._clutter_crops is not None:
+            self._active_top_plate = self._clutter_crops.paste(
+                plate,
+                self._clutter_drawn,
+                self._clutter_base,
+                gain,
+                bias,
+            )
+            for name in self._clutter_base:
+                self.model.geom_pos[self.model.geom(name).id] = self.V3_ABSENT_POS
+            return
+        self._active_top_plate = plate
+        for name, (pos, yaw) in self._clutter_drawn.items():
             gid = self.model.geom(name).id
             self.model.geom_pos[gid] = pos
             half = yaw / 2.0
@@ -1049,12 +1098,21 @@ class SO101Sim:
             max_points=20000,
         )
 
-    def _set_clutter(self, *, drawn: bool) -> None:
-        """Point the RENDER state (data.geom_xpos/xmat) at the drawn
-        or the canonical clutter poses — the wrist view renders the
-        canonical scene so its frames stay bit-identical to v2."""
+    def _set_clutter(self, *, canonical: bool) -> None:
+        """Point the RENDER state (data.geom_xpos/xmat) at the
+        canonical clutter poses — the wrist view renders the canonical
+        scene so its frames stay bit-identical to v2 — or back at the
+        resting state the model holds: the drawn poses under
+        'standins', off-frustum under 'patched' (the top pass never
+        sees the geoms; the pasted plate carries the clutter)."""
+        patched = self._clutter_crops is not None
         for name, (base_pos, _, base_yaw) in self._clutter_base.items():
-            pos, yaw = self._clutter_drawn[name] if drawn else (base_pos, base_yaw)
+            if canonical:
+                pos, yaw = base_pos, base_yaw
+            elif patched:
+                pos, yaw = np.array(self.V3_ABSENT_POS), base_yaw
+            else:
+                pos, yaw = self._clutter_drawn[name]
             gid = self.model.geom(name).id
             self.data.geom_xpos[gid] = pos
             c, s = np.cos(yaw), np.sin(yaw)
@@ -1092,14 +1150,14 @@ class SO101Sim:
             )
         swap = self.render_style in ("v3", "v4")
         if swap:
-            self._set_clutter(drawn=False)
+            self._set_clutter(canonical=True)
         renderer = self.renderer
         renderer.enable_segmentation_rendering()
         renderer.update_scene(self.data, camera="wrist_cam")
         seg = renderer.render()
         renderer.disable_segmentation_rendering()
         if swap:
-            self._set_clutter(drawn=True)
+            self._set_clutter(canonical=False)
         is_geom = seg[..., 1] == mujoco.mjtObj.mjOBJ_GEOM.value
         mask = (is_geom & np.isin(seg[..., 0], self._arm_geoms())).astype(
             np.float64,
@@ -1848,7 +1906,9 @@ class SO101Sim:
         top = self.renderer.render()
         if self.render_style in ("v3", "v4"):
             # Composite (and its segmentation mask) BEFORE the swap:
-            # drawn clutter is masked at its drawn poses; the wrist
+            # under 'standins' the drawn clutter is masked at its drawn
+            # poses; under 'patched' the geoms rest off-frustum and the
+            # pasted plate carries the clutter. Either way the wrist
             # then renders the canonical scene (bit-identical to v2).
             if self.arm_texture == "v1":
                 top = self._apply_arm_texture(top)
@@ -1859,10 +1919,10 @@ class SO101Sim:
                 else None
             )
             top = self._composite(top, mask, "top", shadow=shadow)
-            self._set_clutter(drawn=False)
+            self._set_clutter(canonical=True)
         wrist = self._render_wrist_source()
         if self.render_style in ("v3", "v4"):
-            self._set_clutter(drawn=True)
+            self._set_clutter(canonical=False)
             wrist = self._grade(self._apply_wrist_lens(wrist), "wrist")
         elif self.render_style == "v1":
             top = self._grade(self._apply_fisheye(top), "top")

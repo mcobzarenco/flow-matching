@@ -196,6 +196,17 @@ def parse_args() -> argparse.Namespace:
         "and every state read stay raw; 'freeze' replays the reset "
         "frame, 'arm_blur' is the W3 masked-arm corruption",
     )
+    parser.add_argument(
+        "--clutter-appearance",
+        default="patched",
+        choices=("patched", "standins"),
+        help="v3/v4 clutter appearance (promotion 2026-08-18): "
+        "'patched' pastes the mined real crops onto the drawn plate "
+        "(production default); 'standins' renders the pre-promotion "
+        "stand-in geoms — pin it for reads registered on the old "
+        "substrate (e.g. the pdnorm sim100 grid vs the 11/100 "
+        "baseline)",
+    )
     parser.add_argument("--out-dir", type=Path, default=OUTPUT_DIR)
     parser.add_argument(
         "--out-json",
@@ -601,7 +612,7 @@ def main() -> int:
         f"{replans * horizon / CONTROL_HZ:.1f} s at {CONTROL_HZ} Hz",
     )
 
-    sim = SO101Sim()
+    sim = SO101Sim(clutter_appearance=args.clutter_appearance)
     args.out_dir.mkdir(parents=True, exist_ok=True)
     results: list[EpisodeResult] = []
     for seed in range(args.seed, args.seed + args.num_seeds):

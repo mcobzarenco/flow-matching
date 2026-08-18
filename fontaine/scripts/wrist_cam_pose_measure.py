@@ -199,14 +199,14 @@ class SimMasker:
         sim.data.qpos[sim._joint_qpos] = np.deg2rad(state_deg)
         mujoco.mj_forward(sim.model, sim.data)
         if sim.render_style in ("v3", "v4"):
-            sim._set_clutter(drawn=False)
+            sim._set_clutter(canonical=True)
         renderer = sim.renderer
         renderer.enable_segmentation_rendering()
         renderer.update_scene(sim.data, camera="wrist_cam")
         seg = renderer.render()
         renderer.disable_segmentation_rendering()
         if sim.render_style in ("v3", "v4"):
-            sim._set_clutter(drawn=True)
+            sim._set_clutter(canonical=False)
         is_geom = seg[..., 1] == mujoco.mjtObj.mjOBJ_GEOM.value
         out = {}
         for part, geoms in self.parts.items():

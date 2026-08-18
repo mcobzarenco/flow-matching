@@ -116,6 +116,8 @@ def shard_command(spec: ShardSpec, root: Path, args: argparse.Namespace) -> list
         args.bracket_appearance,
         "--wrist-pose",
         args.wrist_pose,
+        "--clutter-appearance",
+        args.clutter_appearance,
     ]
 
 
@@ -169,6 +171,7 @@ def run(args: argparse.Namespace) -> int:
         "tint_band": args.tint_band,
         "bracket_appearance": args.bracket_appearance,
         "wrist_pose": args.wrist_pose,
+        "clutter_appearance": args.clutter_appearance,
         "target_kept": args.target_kept,
         "shards": [asdict(s) for s in specs],
     }
@@ -254,6 +257,13 @@ def main() -> int:
         "--wrist-pose",
         choices=("v1", "refit"),
         default="v1",
+    )
+    parser.add_argument(
+        "--clutter-appearance",
+        choices=("patched", "standins"),
+        default="patched",
+        help="v3/v4 clutter appearance (promotion 2026-08-18); "
+        "'standins' reproduces the pre-promotion substrate",
     )
     parser.add_argument(
         "--tint-band",

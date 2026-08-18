@@ -1,6 +1,14 @@
 """Paste the mined real clutter crops into a bank plate at the drawn
-poses (fg appearance pass leg (b), pre-reg in-channel 05:23Z
-2026-08-13).
+poses — the production clutter appearance for the v3/v4 composites
+(queue sim-clutter-patch-promotion, decided GO 2026-08-18 under the
+10:25Z delegation; gate evidence: fg appearance pass legs (b)+(c) PASS
+05:4xZ 2026-08-13, patched 0.556 vs v3 0.713 / no_clutter 0.576, and
+the 08-14 stack read shows the patches carry the whole combined
+visual-stack gain).
+
+Promoted verbatim from fontaine/scripts/clutter_patch.py (the gate
+instrument's paste); the camera model constants are inlined below so
+the sim package stays self-contained.
 
 Per drawn-present object the paste is an inverse warp through the
 same analytic fisheye camera model the bank mining pass verified
@@ -32,7 +40,20 @@ import json
 from pathlib import Path
 
 import numpy as np
-from make_clean_plates import CAM_POS, CAM_R, CENTER, F_DIST
+
+# Top camera model, matching SO101Sim exactly: top_cam pose from
+# assets/robotstudio_so101/bijou_pickplace.xml, equidistant fisheye
+# with center magnification pinned to the 52-deg pinhole
+# (SO101Sim.V1_CENTER_FOVY / _init_fisheye). The mining pass
+# (fontaine/scripts/make_clean_plates.py) carries the same constants;
+# tests/test_sim_appearance.py pins these against the frozen values.
+CAM_POS = np.array([-0.02, -0.125, 0.555])
+_CAM_X = np.array([0.0, -1.0, 0.0])
+_CAM_Y = np.array([0.9063, 0.0, 0.4226])
+CAM_R = np.stack([_CAM_X, _CAM_Y, np.cross(_CAM_X, _CAM_Y)], axis=1)
+WIDTH, HEIGHT = 640, 480
+F_DIST = (HEIGHT / 2.0) / np.tan(np.deg2rad(52.0) / 2.0)
+CENTER = np.array([(WIDTH - 1) / 2.0, (HEIGHT - 1) / 2.0])
 
 ABSENT_POS = (2.5, 0.0, -1.0)  # SO101Sim.V3_ABSENT_POS
 BBOX_PAD = 4

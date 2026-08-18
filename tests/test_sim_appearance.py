@@ -146,6 +146,164 @@ def test_wrist_pose_validated() -> None:
         SO101Sim(wrist_pose="v2")
 
 
+def test_clutter_appearance_validated() -> None:
+    with pytest.raises(ValueError, match="clutter_appearance"):
+        SO101Sim(clutter_appearance="v2")
+
+
+def test_patched_clutter_preserves_physics_and_streams() -> None:
+    # Clutter-patch promotion (2026-08-18): the paste consumes no RNG
+    # and the pose/presence draws are unchanged, so the same seed must
+    # give bit-identical settled physics, spawn, drawn-clutter slots,
+    # plate affine and appearance draws under both modes — the v3
+    # slot-pairing guarantee the gate evidence relied on.
+    standins = _physics_only(SO101Sim(clutter_appearance="standins"))
+    patched = _physics_only(SO101Sim())
+    assert patched.clutter_appearance == "patched"  # promotion default
+    for seed in (0, 7):
+        standins.reset(seed)
+        patched.reset(seed)
+        np.testing.assert_array_equal(standins.data.qpos, patched.data.qpos)
+        assert standins.reset_spawn_xy == patched.reset_spawn_xy
+        assert set(standins._clutter_drawn) == set(patched._clutter_drawn)
+        for name, (pos, yaw) in standins._clutter_drawn.items():
+            np.testing.assert_array_equal(pos, patched._clutter_drawn[name][0])
+            assert yaw == patched._clutter_drawn[name][1]
+        np.testing.assert_array_equal(standins._active_gain, patched._active_gain)
+        np.testing.assert_array_equal(standins._active_bias, patched._active_bias)
+        np.testing.assert_array_equal(
+            standins.model.mat_rgba[standins._benchy_mat],
+            patched.model.mat_rgba[patched._benchy_mat],
+        )
+        # the stand-ins rest off-frustum under patched, drawn under
+        # standins — the top pass drops them from render/mask/shadow
+        for name in patched._clutter_base:
+            np.testing.assert_array_equal(
+                patched.model.geom_pos[patched.model.geom(name).id],
+                patched.V3_ABSENT_POS,
+            )
+            np.testing.assert_array_equal(
+                standins.model.geom_pos[standins.model.geom(name).id],
+                standins._clutter_drawn[name][0],
+            )
+
+
+def test_clutter_patch_camera_model_frozen() -> None:
+    # The paste's inlined camera model must stay pinned to the mining
+    # pass's measured values (fontaine/scripts/make_clean_plates.py —
+    # "matching sim/so101_sim.py exactly"); a drift here silently
+    # misplaces every pasted crop.
+    from sim import clutter_patch as cp
+
+    assert pytest.approx((-0.02, -0.125, 0.555)) == cp.CAM_POS
+    assert (cp.WIDTH, cp.HEIGHT) == (640, 480)
+    assert pytest.approx((480 / 2.0) / np.tan(np.deg2rad(52.0) / 2.0)) == cp.F_DIST
+    assert pytest.approx((319.5, 239.5)) == cp.CENTER
+    assert cp.ABSENT_POS == SO101Sim.V3_ABSENT_POS
+    expected_r = np.stack(
+        [
+            np.array([0.0, -1.0, 0.0]),
+            np.array([0.9063, 0.0, 0.4226]),
+            np.cross([0.0, -1.0, 0.0], [0.9063, 0.0, 0.4226]),
+        ],
+        axis=1,
+    )
+    np.testing.assert_allclose(cp.CAM_R, expected_r)
+
+
+def _dilate(mask: np.ndarray, radius: int) -> np.ndarray:
+    """Separable Chebyshev (box) binary dilation — covers the blur
+    kernel's square footprint."""
+    out = mask.copy()
+    for axis in (0, 1):
+        acc = out.copy()
+        for shift in range(1, radius + 1):
+            acc |= np.roll(out, shift, axis=axis)
+            acc |= np.roll(out, -shift, axis=axis)
+        out = acc
+    return out
+
+
+@pytest.mark.gpu
+def test_patched_clutter_render_oracles() -> None:
+    # Promotion render oracles (registered with the queue item): the
+    # wrist frame is bit-exact across modes (it renders the canonical
+    # scene either way), and the top frame is bit-exact outside the
+    # clutter-affected pixels — the stand-ins' screen footprint plus
+    # the paste delta, dilated by the composite blur radius (weight
+    # and foreground differences spread that far, nothing else moves;
+    # the noise stream is seed-identical across modes).
+    import mujoco as mj
+
+    standins = SO101Sim(
+        render_style="v3",
+        post_backend="numpy",
+        clutter_appearance="standins",
+    )
+    patched = SO101Sim(render_style="v3", post_backend="numpy")
+    radius = int(np.ceil(2.5 * SO101Sim.V1_BLUR_SIGMA)) + 1
+    clutter_ids = np.array(
+        sorted(standins.model.geom(n).id for n in standins._clutter_base),
+    )
+    saw_clutter = False
+    for seed in (0, 7):
+        obs_standins = standins.reset(seed)
+        obs_patched = patched.reset(seed)
+        np.testing.assert_array_equal(obs_standins.wrist, obs_patched.wrist)
+        # stand-in footprint from a segmentation pass at the drawn
+        # poses (the standins sim rests there after observe())
+        renderer = standins.renderer
+        renderer.enable_segmentation_rendering()
+        renderer.update_scene(standins.data, camera="top_cam")
+        seg = renderer.render()
+        renderer.disable_segmentation_rendering()
+        footprint_src = (seg[..., 1] == mj.mjtObj.mjOBJ_GEOM.value) & np.isin(
+            seg[..., 0],
+            clutter_ids,
+        )
+        # the RGB render anti-aliases clutter edges ~1px past the hard
+        # segmentation footprint; then the composite remaps the source
+        # render through the fisheye — dilate in source space, push
+        # through the same gather into output space
+        footprint = (
+            standins._remap(
+                _dilate(footprint_src, 2)[..., None].astype(np.float64),
+            )[..., 0]
+            > 0
+        )
+        paste_delta = np.any(
+            standins._active_top_plate != patched._active_top_plate,
+            axis=-1,
+        )
+        affected = _dilate(footprint | paste_delta, radius)
+        outside = ~affected
+        np.testing.assert_array_equal(
+            obs_standins.top[outside],
+            obs_patched.top[outside],
+        )
+        if affected.any():
+            saw_clutter = True
+            assert np.any(obs_standins.top != obs_patched.top)
+    assert saw_clutter  # at least one seed drew present clutter
+
+
+@pytest.mark.gpu
+def test_patched_clutter_v4_wrist_bit_exact() -> None:
+    # v4 promotion: the shadow pass is top-only, so the wrist stays
+    # bit-exact across modes there too.
+    standins = SO101Sim(
+        render_style="v4",
+        post_backend="numpy",
+        clutter_appearance="standins",
+    )
+    patched = SO101Sim(render_style="v4", post_backend="numpy")
+    for seed in (0,):
+        np.testing.assert_array_equal(
+            standins.reset(seed).wrist,
+            patched.reset(seed).wrist,
+        )
+
+
 def test_wrist_pose_refit_is_camera_only() -> None:
     # wrist_pose='refit' (queue wrist-cam-pose-refit, fitted 2026-08-17):
     # a camera pos/quat change only — the settled physics state must stay

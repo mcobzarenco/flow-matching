@@ -118,8 +118,18 @@ def render_sim_arms() -> tuple[dict[str, list[np.ndarray]], np.ndarray]:
     constructed arms share the production arithmetic bit-for-bit."""
     from sim.so101_sim import SO101Sim
 
-    sim3 = SO101Sim(render_style="v3", post_backend="numpy")
-    sim4 = SO101Sim(render_style="v4", post_backend="numpy")
+    # standins: the decomposition's registered anchors (v3 0.713) are
+    # pre-promotion; the pasted-clutter production read lives elsewhere.
+    sim3 = SO101Sim(
+        render_style="v3",
+        post_backend="numpy",
+        clutter_appearance="standins",
+    )
+    sim4 = SO101Sim(
+        render_style="v4",
+        post_backend="numpy",
+        clutter_appearance="standins",
+    )
     noise_rng = np.random.default_rng(0)
     arms: dict[str, list[np.ndarray]] = {
         name: [] for name in ("v3", "v4", "fg_to_plate", "plate_only")

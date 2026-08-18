@@ -94,6 +94,7 @@ class WorkerConfig:
     hold: bool
     out_dir: Path | None
     post_backend: str
+    clutter_appearance: str = "patched"
     flip_camera_mount: bool = True
     # wrist-transfer screen treatment (pre-reg 2026-08-14 §1): rewrites
     # only the wrist frame each predict request carries — worker-local,
@@ -290,6 +291,17 @@ def parse_args() -> argparse.Namespace:
         help="T1 positive control (same pre-reg, arm grid): blackout "
         "the TOP frame the policy sees — same obs-only contract as "
         "--wrist-transform, composable with it",
+    )
+    parser.add_argument(
+        "--clutter-appearance",
+        default="patched",
+        choices=("patched", "standins"),
+        help="v3/v4 clutter appearance (promotion 2026-08-18): "
+        "'patched' pastes the mined real crops onto the drawn plate "
+        "(production default); 'standins' renders the pre-promotion "
+        "stand-in geoms — pin it for reads registered on the old "
+        "substrate (e.g. the pdnorm sim100 grid vs the 11/100 "
+        "baseline)",
     )
     parser.add_argument("--out-dir", type=Path, default=OUTPUT_DIR)
     parser.add_argument(
@@ -563,6 +575,7 @@ def _worker_main(config: WorkerConfig, conn: Connection) -> None:
     try:
         sim = SO101Sim(
             post_backend=config.post_backend,
+            clutter_appearance=config.clutter_appearance,
             flip_camera_mount=config.flip_camera_mount,
         )
         run_worker_episodes(sim, config, conn.send, conn.recv)
@@ -861,6 +874,7 @@ def main() -> int:
             hold=args.hold,
             out_dir=args.out_dir,
             post_backend=args.post_backend,
+            clutter_appearance=args.clutter_appearance,
             flip_camera_mount=not args.no_mount_flip,
             wrist_transform=args.wrist_transform,
             top_transform=args.top_transform,
