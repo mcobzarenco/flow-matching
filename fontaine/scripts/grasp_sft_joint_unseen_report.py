@@ -53,6 +53,7 @@ BASE_ANCHOR = 9
 CORRUPT_ANCHOR = 28
 PROBE_ANCHOR = 44  # route-C joint step2000, flow-unseen (banked 08-16)
 V1_ENDPOINT_ANCHOR = 5  # v1 run-2 step3000, flow-unseen (banked 08-17)
+DISC1000_ANCHOR = 11  # disc step1000 demosonly baseline (banked 04:19Z 08-18)
 
 # Page variants: step2000 (the original probe report, byte-identical
 # output) and v1endpoint (grasp_sft_v1_joint step 3000 on the 5,000-demo
@@ -135,6 +136,40 @@ PRESETS: dict[str, dict] = {
             " demos-native table) · fills the demosonly-v2 grasp cell of the"
             " isolation grid; baseline arm of the"
             " <code>--per-dataset-flow-norm</code> pre-reg"
+        ),
+        "paired_band_note": (
+            " The demosonly baseline's 11/100 sits inside the pdnorm"
+            " draft's own 11&ndash;19 ambiguous band, so the paired read"
+            " rides alongside the frozen absolute bands &mdash; it is"
+            " recorded, never gating."
+        ),
+    },
+    # ON-GO endpoint page for the pdnorm pre-reg (posts/2026-08-xx-prereg-
+    # grasp-sft-v2-joint-pdnorm.md). Checkpoint/run fields are
+    # FILL-AT-ENDPOINT placeholders the endpoint session stamps; the
+    # bands and panel anchors below are the pre-reg's frozen values.
+    "pdnormendpoint": {
+        "anchor_rows": [
+            ("base (no SFT)", BASE_ANCHOR, ANCHOR),
+            ("joint probe step2000 (313 demos)", PROBE_ANCHOR, "#f593bd"),
+            ("disc1000 demosonly baseline (paired arm)", DISC1000_ANCHOR, "#f593bd"),
+        ],
+        "subject_label": "pdnorm endpoint step3000",
+        "anchors_tile_label": "anchors: base / probe / disc1000 baseline",
+        "title": "pdnorm endpoint step3000 — flow head, unseen 100",
+        "h1": "Grasp-SFT v2 joint pdnorm — endpoint, flow head on unseen seeds",
+        "meta_html": (
+            "Checkpoint <code>FILL-AT-ENDPOINT/step_003000</code>"
+            " (per-dataset flow norm, mixed v2 corpus; launched"
+            " FILL-AT-ENDPOINT, run FILL-AT-ENDPOINT, ~FILL-AT-ENDPOINT"
+            " GPU-h) · euler-10, execute-horizon 30, seeds 0–99, 30 s"
+            " episodes; sim leg wears the sim demos' row (frozen"
+            " serving-row rule) · frozen decision grid: &le;10"
+            " broken-class band / 11&ndash;19 ambiguous band /"
+            ' <b style="color:{success}">&ge;20 exonerates the mix</b> ·'
+            " panel anchors, wear-corrected class: 27.40 re-worn"
+            " disc-1000 / 25.15 repo-midpoint null / 8.37 state-copy"
+            " (real bar) · verdict: <b>FILL-AT-ENDPOINT</b>"
         ),
         "paired_band_note": (
             " The demosonly baseline's 11/100 sits inside the pdnorm"

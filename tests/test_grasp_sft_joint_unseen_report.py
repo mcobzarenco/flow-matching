@@ -11,7 +11,11 @@ from pathlib import Path
 
 import pytest
 
-from fontaine.scripts.grasp_sft_joint_unseen_report import main, paired_section
+from fontaine.scripts.grasp_sft_joint_unseen_report import (
+    PRESETS,
+    main,
+    paired_section,
+)
 
 
 def make_paired_payload(
@@ -126,6 +130,66 @@ def test_main_disc1000_preset_wires_section_and_band_note(
     # The disc1000 preset carries the pre-reg's ambiguous-band context.
     assert "11&ndash;19 ambiguous band" in html
     # Section sits between the anchors chart and the per-seed strip.
+    assert (
+        html.index("Against the anchors")
+        < html.index("Paired read:")
+        < html.index("Per-seed outcomes")
+    )
+
+
+def test_main_pdnormendpoint_preset_anchors_bands_and_paired_section(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    leg = tmp_path / "flow_unseen.json"
+    write_leg(leg)
+    paired = tmp_path / "paired.json"
+    paired.write_text(json.dumps(make_paired_payload()))
+    out = tmp_path / "report.html"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "grasp_sft_joint_unseen_report.py",
+            "--preset",
+            "pdnormendpoint",
+            "--leg-json",
+            str(leg),
+            "--video-dir",
+            str(tmp_path / "novideos"),
+            "--out-html",
+            str(out),
+            "--gallery-dir",
+            str(tmp_path / "gallery"),
+            "--paired-json",
+            str(paired),
+        ],
+    )
+    assert main() == 0
+    html = out.read_text()
+    # Anchor rows: base 9 / probe 44 / disc1000 baseline 11 — the paired
+    # baseline arm gets its own row (labels render inside the chart PNG,
+    # so the rows are asserted structurally; the tile joins the values).
+    assert [(r[0], r[1]) for r in PRESETS["pdnormendpoint"]["anchor_rows"]] == [
+        ("base (no SFT)", 9),
+        ("joint probe step2000 (313 demos)", 44),
+        ("disc1000 demosonly baseline (paired arm)", 11),
+    ]
+    assert "9 / 44 / 11" in html
+    assert "anchors: base / probe / disc1000 baseline" in html
+    # Meta line names the pre-reg's frozen absolute bands and the
+    # wear-audit panel anchor ladder.
+    assert "&le;10" in html and "broken-class band" in html
+    assert "11&ndash;19 ambiguous band" in html
+    assert "&ge;20 exonerates the mix" in html
+    assert "27.40" in html and "25.15" in html and "8.37" in html
+    # Checkpoint/meta fields stay placeholders until the endpoint session
+    # stamps them.
+    assert "FILL-AT-ENDPOINT" in html
+    # --paired-json composes: section present, band note carried over,
+    # placed between the anchors chart and the per-seed strip.
+    assert "Paired read: pdnorm_endpoint vs disc1000_demosonly" in html
+    assert html.count("11&ndash;19 ambiguous band") == 2  # meta + band note
     assert (
         html.index("Against the anchors")
         < html.index("Paired read:")
