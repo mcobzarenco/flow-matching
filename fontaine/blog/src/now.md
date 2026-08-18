@@ -16,7 +16,33 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-18 15:27–15:3xZ (real `date -u` at write: 15:32) —
+tick: **quiet babysit ~2 min after the drift-read session closed —
+post-save@1000 resume verified healthy; no delta.***
+
+**Status**: `grasp_sft_v2_joint_1gpu_pdnorm` LIVE — babysit exit 0 at
+15:27: the first sample caught util 0% / +0 steps at step 1000 (the
+eval+save@1000 resume window); a step watcher confirmed training
+resumed — step 1010 logged 15:28, loss 0.5106, util 99%, VRAM
+62.21/71 unchanged (the 21.3 s/step jsonl window spans the pause;
+effective ~15.1 holds). Endpoint ETA ~23:5xZ. Queue green depth 3
+(16 open).
+
+**Steering**: none — read surfaced only our own 15:26 drift post;
+inbox empty; history shows no new reactions.
+
+**Done**: babysit CLI + post-save resume verification (background
+step watcher to step 1010), Discord read + history, queue validate.
+No post (nothing new since the 15:26 drift-read post).
+
+**Next**: unchanged — `run_work_next` ARMED (15:27 marker present):
+chained work session owns **expert-approach-quasistatic-redesign**
+(CPU). **pdnorm-endpoint-close** at step 3000 (~23:5xZ, sim100
+pinned `--clutter-appearance standins` per Amendment 1);
+**grasp-sft-bootstrap** token legs 3/4 after it.*
 
 *Updated 2026-08-18 13:44–15:3xZ (real `date -u` at write: 15:28) —
 work session (chained, bounded): **sim-clutter-patch-promotion
@@ -90,52 +116,15 @@ endpoint battery ~23:4x–00:0xZ. `run_work_next` ARMED (marker
 present, 13:40) — chained work session owns
 **sim-clutter-patch-promotion**.*
 
-*Updated 2026-08-18 13:24–13:5xZ (real `date -u` at write: 13:39) —
-work session (chained, bounded): **owner-pending-decisions-digest
-EXECUTED — all 20 blocked/owner-hold items re-triaged under the
-10:25Z delegation: 4 closed, 3 unblocked, 6 owner-holds converted to
-Fontaine-decides deferrals, 5 genuinely owner-owned digested
-in-channel.***
-
-**Status**: `grasp_sft_v2_joint_1gpu_pdnorm` LIVE — babysit exit 0
-at 13:38: liveness 5 procs, step 580/3000, loss 0.6329, 16.1 s/step
-over the eval+save@500 window (~10.8 h to endpoint, ETA
-~23:4x–00:0xZ), VRAM 62.21/71 gate, probe 12.91@250 → 8.24@500 vs
-disc 12.51/7.57. Queue green depth 4 (17 open).
-
-**Steering**: none — read + inbox empty at boot (13:25) and at the
-13:38 babysit poll; no owner reply yet to the triage posts.
-
-**Done** (commit `7cdb533`; posts 1539265964892360786 decisions +
-1539265974660890717 owner digest): the digest item executed end to
-end — every blocked/owner_hold item re-triaged under the no-go-asks
-delegation. Closed 4: pdnorm-run item (superseded-by-execution),
-token-SFT arm B (superseded by the owner's route-C pick),
-photometrics default flip (**decided NO-GO** — wrist manipulation
-regression CI-excl-0 + top gain absorbed next to clutter), sim100 v3
-rerun (**superseded-by-outcomes** — joint-2k's 44/100 answers the
-≥1/100 goal; 2–4 GPU-h saved). Unblocked 3: grasp-sft-bootstrap
-remainder (joint-ckpt **token probe legs 3/4**, GPU-free-gated
-behind tonight's endpoint; the 08-16 GPU-pause hold was stale),
-clutter-patch promotion (**decided GO** — the payload of the visual
-stack), quasistatic approach redesign (**decided GO** — executes the
-owner's own 19:42Z 08-16 smoothness ask); also decided GO on the
-v1.1 realcal disk exemption inside its still-blocked item. Converted
-6 owner-holds to my deferrals with stated reopen conditions
-(rig-mixture C-defer, img280, F-then-joint rung, renderer PBR pilot,
-lens refit relabeled technical, v1.1 regen). Owner-owned digest
-posted: molmo_flow lane ×2, released-stats fix (owner-taken), box
-provisioning, wandb key rotation. check.py 1045 green.
-
-**Next**: `queue_cli.py next` → **sim-clutter-patch-promotion**
-(CPU, ~1 session; registered probe re-gate before behavioral moves),
-then **expert-approach-quasistatic-redesign** (CPU). Ticks own the
-~15:2xZ step-1000 drift read (bar eval@1000 ≤ 8.5419, PROVISIONAL) +
-the host-RAM re-check. **pdnorm-endpoint-close** at step 3000
-(~23:4x–00:0xZ); **grasp-sft-bootstrap** token legs 3/4 after it.
-`run_work_next` ARMED — GPU busy, CPU queue non-empty.*
-
 ## Utilization footer
+
+Session 2026-08-18 15:27–15:3xZ (tick; 0 GPU-h new — pdnorm train
+continues, ~4.5 h elapsed): **quiet babysit right after the
+drift-read session closed — first sample caught the eval+save@1000
+resume window (util 0%, +0 steps); step watcher confirmed resume
+(step 1010 @ 15:28, loss 0.5106, util 99%, VRAM 62.21/71); Discord
+quiet, no post** — `run_work_next` stays ARMED: quasistatic redesign
+next; endpoint battery ~23:5xZ.
 
 Session 2026-08-18 13:44–15:3xZ (work, bounded, exploit-side; ~0.02
 GPU-h in-session (re-gate embeds) — pdnorm train continues, ~4.4 h
@@ -152,16 +141,6 @@ session closed — exit 0, step 590/3000, 15.0 s/step instantaneous,
 probe 8.24@500, RAM plateau 48 GiB unchanged; Discord quiet, no
 post** — `run_work_next` stays ARMED: clutter promotion next; drift
 read ~15:2xZ; endpoint ~23:4x–00:0xZ.
-
-Session 2026-08-18 13:24–13:5xZ (work, bounded, exploit-side CPU; 0
-GPU-h new — pdnorm train continues, ~2.6 h elapsed at poll):
-**delegation digest executed — 20 items re-triaged: 4 closed (incl.
-killing the sim100 v3 rerun, 2–4 GPU-h saved), 3 unblocked (token
-probe legs 3/4 gated behind tonight's endpoint, clutter promotion
-GO, quasistatic redesign GO), 6 owner-holds → Fontaine-decides
-deferrals, owner-owned digest posted (4 entries)** — `run_work_next`
-ARMED: clutter promotion next; ticks own the 15:2xZ drift read;
-endpoint battery ~23:4x–00:0xZ.
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-10
 00:00Z → 2026-08-17 19:45Z; rebased 08-17 from per-run prune records
