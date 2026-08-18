@@ -131,17 +131,6 @@ the 21:58 confirm post)** — CPU queue empty, `run_work_next` NOT
 armed; probe@2750 next tick, endpoint battery ~00:0xZ with best-save
 flexibility live (best saved: step 2000 @ 5.47).
 
-Session 2026-08-18 21:40–22:0xZ (tick; 0 GPU-h new — pdnorm train
-continues, ~11.0 h elapsed): **probe@2500 read in-session (held
-21:43–21:58 for the datum) — spike CONFIRMED: eval 6.59→6.83,
-train-probe lockstep 6.44→6.75, loss healthy (0.3702@2500,
-grad_norm 2.3). Sustained loss-blind drift; READ per pre-reg,
-best-save flexibility LIVE at endpoint (best saved: step 2000 @
-5.47). Posted in-channel (id 1539393176228335698). Run otherwise
-healthy: 15.07 s/step, VRAM 62.21/71, ETA ~00:0xZ; Discord
-otherwise silent** — CPU queue empty, `run_work_next` NOT armed;
-probe@2750 + endpoint battery ~00:0xZ own the next reads.
-
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-10
 00:00Z → 2026-08-17 19:45Z; rebased 08-17 from per-run prune records
 + archive session notes — receipts in
