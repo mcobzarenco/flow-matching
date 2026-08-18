@@ -2,43 +2,31 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-17T22:57:00Z
+**Updated:** 2026-08-18T00:56:00Z
 
-**Depth call:** depth 2 queued (per-dataset-flow-norm pre-reg draft, gated on the discriminator verdict ~23:0xZ; queue-box-kill-audit CPU unblocked) after the utilization-ledger-rebase close.
+**Depth call:** depth 2 queued (per-dataset-flow-norm pre-reg draft — gate lifted by the HEALTHY verdict + stack-parity confirmation, the designated next work item; disc-step1000-html-report — standing-rule instrumentation refill) after the disc post-processing close: run item + checkpoint-upload item both closed done.
 
-**22 open** (Live 1 · Queued 2 · Blocked 19 · Done 217)
+**21 open** (Live 0 · Queued 2 · Blocked 19 · Done 219)
 
-## 🔴 Live (1)
+## 🔴 Live (0)
 
 *running right now (GPU or owner-window)*
 
-**`sft-drift-discriminator-run`** · `gpu-local`
-
-1-GPU drift discriminator (OWNER-GATED, staged on box: launch_box_grasp_sft_v2_demosonly_1gpu_discriminator.sh): demosonly recipe on ONE box GPU, same eff-96/micro-12/seed/augment/recompute-stats/init
-
-**boundary:** Queued 15:1xZ 08-17 at the rigonly close (ambiguous-leaning-drift verdict posted; ask in-channel). BLOCKED on the owner's go — box is idle, launch is one systemd-run command (header of the staged script). | RE-PLATFORMED 17:2xZ 08-17: owner killing the 8xA100 box (order 16:59:20Z; evacuation complete + verified 17:20Z, all needed ckpts/datasets on HF). On GO the run targets the LOCAL H100 instead — same 1-GPU recipe, adapt the launcher paths (train data from fontaine-grasp-demos-v2 or local copy, init from local molmoact2 released ckpt); expected pace on H100 similar order to the A100 estimate. | STAGED-LOCAL 18:3xZ 08-17: everything pre-positioned, GO-&gt;launch is minutes. Launcher fontaine/scripts/launch_local_grasp_sft_v2_demosonly_1gpu_disc_h100.sh (command block byte-identical to the frozen box script; full-parse green vs merged d3dd4d0 CLI; aborts if any compute app holds the GPU — owner policy-server guard). Train data local: ~/datasets/fontaine/grasp_demos_v2/merged (35 GiB HF snapshot); init ckpt local. ON GO: date the draft post -&gt; add to SUMMARY.md -&gt; build+push blog -&gt; post in-channel -&gt; systemd-run per the launcher header -&gt; babysit.toml entry -&gt; first poll: util/rate + free -g (loader is workers 8 x prefetch 4 at batch-96 single-process; rescale declared as machinery-only knob if host RAM pressure). GPU-h gate 12. | GO 18:40:56Z 08-17 (owner: 'You can do whatever you want' in reply to the GO-gap post; ask open since 15:14Z) — tick session executing the ON-GO checklist: pre-reg dated+posted (2026-08-17-prereg-sft-drift-discriminator.md, in SUMMARY), launched via systemd-run unit fontaine-demosonly-1gpu-disc on the local H100. · [pre-reg](posts/2026-08-17-prereg-sft-drift-discriminator.md)
-
-<details><summary>full record</summary>
-
-1-GPU drift discriminator (OWNER-GATED, staged on box: launch_box_grasp_sft_v2_demosonly_1gpu_discriminator.sh): demosonly recipe on ONE box GPU, same eff-96/micro-12/seed/augment/recompute-stats/init — single delta = distributed machinery removed (torchrun+zero1+chunk-grad-allreduce). Every drifting run (run-1b/run-2/mixedv2/demosonly, + rigonly ambiguous) is 8x distributed; every healthy run (44/100 probe, 28/100 stage-C) was 1-GPU. Read: MAE probes every 250; flat-through-1000 convicts the distributed path, same-drift exonerates it (remaining deltas: augment/batch-geometry/recompute-at-launch/init). ~7-9 GPU-h, ~7-9 h wall on gpu0. On completion: verdict to the drift-saga page finalize slot + in-channel. NOTE: prereg field points at the staged frozen launcher (recipe + read rule in its header); cut a formal pre-reg post from it BEFORE launch on the owner go.
-
-</details>
-
----
+*(empty)*
 
 ## 🟢 Queued (2)
 
 *ready — waiting on a window or a boundary*
 
-**`disc-verdict-checkpoint-upload`** · `cpu`
+**`disc-step1000-html-report`** · `gpu-local`
 
-Upload the discriminator's verdict-evidence checkpoints to fontaine-checkpoints (owner standing rule: banked/consumable checkpoints leave the box/host same-session, weights-only unless seeding training): step_000500 + step_001000…
+Browsable HTML eval panel for grasp_sft_v2_demosonly_1gpu_disc/step_001000 (owner standing rule: every important checkpoint gets an HTML report generated + linked from reports/; evals include --report)
 
-**boundary:** Queued 22:5xZ 08-17 work session (refill at stack-parity-probe-instrument close). Executable after step 1000 writes save-1000 (~01:1xZ 08-18); network-only, no GPU. Pattern: upload_grasp_sft_v2_demosonly_checkpoint.py precedent (extend/parametrize for the two steps). · [pre-reg](posts/2026-08-17-prereg-sft-drift-discriminator.md)
+**boundary:** Queued 00:5xZ 08-18 work session (refill at disc post-processing close, charter section 4 + HTML-reports standing rule). Small GPU job (~minutes, probe-scale); GPU-guarded on the owner policy-server check like every local launch. No owner gate — instrumentation, not an experiment arm. · [pre-reg](posts/2026-08-17-prereg-sft-drift-discriminator.md)
 
 <details><summary>full record</summary>
 
-Upload the discriminator's verdict-evidence checkpoints to fontaine-checkpoints (owner standing rule: banked/consumable checkpoints leave the box/host same-session, weights-only unless seeding training): step_000500 + step_001000 of grasp_sft_v2_demosonly_1gpu_disc under grasp_sft_v2_demosonly_1gpu_disc/{step_000500,step_001000}, weights-only (drop optimizer.pt), plus the fresh train_log.jsonl + train_log_attempt1_oom250.jsonl as run records. These saves are Amendment 1's disambiguation substrate (stack-parity probe evaluates them) — they are evidence, not just artifacts.
+Browsable HTML eval panel for grasp_sft_v2_demosonly_1gpu_disc/step_001000 (owner standing rule: every important checkpoint gets an HTML report generated + linked from reports/; evals include --report). Step-1000 is the first non-drifting v2-corpus checkpoint (verdict HEALTHY 00:42Z 08-18, banked on fontaine-checkpoints) — run the current-stack eval with --report on the probe-matched pins (holdout 0.1 / split-seed 0 / 256 samples seed 0 / chunk 30 / euler-10 / batch 12), land the panel under reports/ and link it from the blog reports page.
 
 </details>
 
@@ -48,7 +36,7 @@ Upload the discriminator's verdict-evidence checkpoints to fontaine-checkpoints 
 
 Pre-reg DRAFT for the --per-dataset-flow-norm rerun (the 08-17 isolation verdict's recipe recommendation, posted 1538811601153425469): the per-channel occupancy analysis showed the pooled/merged table crushes wrist_flex to 0.24x…
 
-**boundary:** Queued 18:0xZ 08-17 work session at the ebaa8e0-merge close (refill, charter section 4). GATED behind the discriminator verdict (sft-drift-discriminator-run, owner-GO pending since 15:14Z 08-17): the verdict decides whether distributed machinery or recipe deltas own the drift, which fixes this rerun's baseline arm + platform. Draft is CPU-only; posting+launch owner-gated as always.
+**boundary:** Queued 18:0xZ 08-17 work session at the ebaa8e0-merge close (refill, charter section 4). GATED behind the discriminator verdict (sft-drift-discriminator-run, owner-GO pending since 15:14Z 08-17): the verdict decides whether distributed machinery or recipe deltas own the drift, which fixes this rerun's baseline arm + platform. Draft is CPU-only; posting+launch owner-gated as always. || GATE LIFTED 00:5xZ 08-18: discriminator verdict = HEALTHY/CONVICTED (distributed machinery owns the drift, recipe deltas exonerated) + stack-parity confirmation banked — per the pre-reg's interpretation grid the rerun proceeds on the single-GPU recipe class with drift risk retired; baseline arm = the discriminator run itself (same recipe, same platform, per_dataset_flow_norm=False, saves + full eval jsonl banked on fontaine-checkpoints). NEW corroboration for the draft: under the old checkpoint table the parity probe's worst motor is wrist_roll (16.87@500 / 12.31@1000 vs state-copy 3.99) — exactly the channel the 08-17 occupancy analysis showed overflowing 288%. Draft is CPU-only; posting+launch owner-gated as always. NEXT WORK ITEM.
 
 <details><summary>full record</summary>
 
@@ -326,9 +314,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (217)
+## ✅ Done (219)
 
 *closed — the full record stays in each fold*
+
+**`disc-verdict-checkpoint-upload`** · `cpu`
+
+Upload the discriminator's verdict-evidence checkpoints to fontaine-checkpoints (owner standing rule: banked/consumable checkpoints leave the box/host same-session, weights-only unless seeding training): step_000500 + step_001000…
+
+**boundary:** Queued 22:5xZ 08-17 work session (refill at stack-parity-probe-instrument close). Executable after step 1000 writes save-1000 (~01:1xZ 08-18); network-only, no GPU. Pattern: upload_grasp_sft_v2_demosonly_checkpoint.py precedent (extend/parametrize for the two steps). || DONE 00:5xZ 08-18 (work session): save-1000 complete at read; upload_grasp_sft_v2_disc_checkpoints.py exit 0 — steps 500+1000 weights-only (safetensors + metadata + tokenizer, optimizer.pt excluded) + both jsonls (attempt-2 full log, attempt-1 OOM log) at fontaine-checkpoints/grasp_sft_v2_demosonly_1gpu_disc. CLOSED. · [pre-reg](posts/2026-08-17-prereg-sft-drift-discriminator.md)
+
+<details><summary>full record</summary>
+
+Upload the discriminator's verdict-evidence checkpoints to fontaine-checkpoints (owner standing rule: banked/consumable checkpoints leave the box/host same-session, weights-only unless seeding training): step_000500 + step_001000 of grasp_sft_v2_demosonly_1gpu_disc under grasp_sft_v2_demosonly_1gpu_disc/{step_000500,step_001000}, weights-only (drop optimizer.pt), plus the fresh train_log.jsonl + train_log_attempt1_oom250.jsonl as run records. These saves are Amendment 1's disambiguation substrate (stack-parity probe evaluates them) — they are evidence, not just artifacts.
+
+</details>
+
+---
 
 **`stack-parity-probe-instrument`** · `cpu`
 
@@ -409,6 +411,20 @@ Discriminator post-processing kit (CPU, pre-staged so a GO turns around fast): e
 <details><summary>full record</summary>
 
 Discriminator post-processing kit (CPU, pre-staged so a GO turns around fast): extend sft_drift_saga_charts.py with a discriminator overlay — the 1-GPU run's eval/train MAE curve drawn against the banked demosonly/mixedv2/rigonly drift bands and run-2's healthy curve (same indexed-drift instrument), plus the verdict read (drifting =&gt; distributed stack exonerated, single-GPU path implicated; healthy =&gt; distributed machinery convicted). Consumes the babysit-rsynced train_log.jsonl only; dry-runnable now against the rigonly artifacts as a fixture.
+
+</details>
+
+---
+
+**`sft-drift-discriminator-run`** · `gpu-local`
+
+1-GPU drift discriminator (OWNER-GATED, staged on box: launch_box_grasp_sft_v2_demosonly_1gpu_discriminator.sh): demosonly recipe on ONE box GPU, same eff-96/micro-12/seed/augment/recompute-stats/init
+
+**boundary:** Queued 15:1xZ 08-17 at the rigonly close (ambiguous-leaning-drift verdict posted; ask in-channel). BLOCKED on the owner's go — box is idle, launch is one systemd-run command (header of the staged script). | RE-PLATFORMED 17:2xZ 08-17: owner killing the 8xA100 box (order 16:59:20Z; evacuation complete + verified 17:20Z, all needed ckpts/datasets on HF). On GO the run targets the LOCAL H100 instead — same 1-GPU recipe, adapt the launcher paths (train data from fontaine-grasp-demos-v2 or local copy, init from local molmoact2 released ckpt); expected pace on H100 similar order to the A100 estimate. | STAGED-LOCAL 18:3xZ 08-17: everything pre-positioned, GO-&gt;launch is minutes. Launcher fontaine/scripts/launch_local_grasp_sft_v2_demosonly_1gpu_disc_h100.sh (command block byte-identical to the frozen box script; full-parse green vs merged d3dd4d0 CLI; aborts if any compute app holds the GPU — owner policy-server guard). Train data local: ~/datasets/fontaine/grasp_demos_v2/merged (35 GiB HF snapshot); init ckpt local. ON GO: date the draft post -&gt; add to SUMMARY.md -&gt; build+push blog -&gt; post in-channel -&gt; systemd-run per the launcher header -&gt; babysit.toml entry -&gt; first poll: util/rate + free -g (loader is workers 8 x prefetch 4 at batch-96 single-process; rescale declared as machinery-only knob if host RAM pressure). GPU-h gate 12. | GO 18:40:56Z 08-17 (owner: 'You can do whatever you want' in reply to the GO-gap post; ask open since 15:14Z) — tick session executing the ON-GO checklist: pre-reg dated+posted (2026-08-17-prereg-sft-drift-discriminator.md, in SUMMARY), launched via systemd-run unit fontaine-demosonly-1gpu-disc on the local H100. || VERDICT 00:42Z 08-18 (boundary tick, posted 1539072109685379175): HEALTHY — distributed path (torchrun+zero1+chunk-grad-allreduce) CONVICTED; eval 5.8989@1000, delta(1000-500) = -1.67, raw AND Amendment-1 scale-adjusted rules agree (no AMBIGUOUS-BY-INSTRUMENT); run complete 1000/1000, ~5.8 GPU-h vs 12 gate. || STACK-PARITY CONFIRMATION 00:5xZ 08-18 (work session): pre-registered probe re-scored saves 500/1000 on the pre-merge surface (9094e60, old MolmoNorm.CHECKPOINT units) — ours 7.3137@500 -&gt; 5.7626@1000, delta(1000-500) = -1.551 vs healthy &lt;= +0.30 / drift_min +1.0158 / the drifting 8x comparator's actual +2.03 ON THE SAME INSTRUMENT: HEALTHY confirms in comparator-era units, the units-artifact half of the descent-asymmetry caveat is retired (residual: our curve hadn't plateaued by 1000 — only a longer run answers whether drift appears post-floor; carried as a footnote, not a live doubt). Instrument-shift refinement: same-checkpoint cross-stack ratios 7.5654/7.3137 = 1.034 @500, 5.8989/5.7626 = 1.024 @1000 — the family-norm merge moved the probe only ~2-3% at these saves; Amendment 1's s=3.613 (step-250 cross-run estimate) was dominated by genuine model-level difference at 250, not units. Both rules agreed so the verdict is unchanged. reports/stack_parity/step_000500.json + step_001000.json banked. CLOSED. · [pre-reg](posts/2026-08-17-prereg-sft-drift-discriminator.md)
+
+<details><summary>full record</summary>
+
+1-GPU drift discriminator (OWNER-GATED, staged on box: launch_box_grasp_sft_v2_demosonly_1gpu_discriminator.sh): demosonly recipe on ONE box GPU, same eff-96/micro-12/seed/augment/recompute-stats/init — single delta = distributed machinery removed (torchrun+zero1+chunk-grad-allreduce). Every drifting run (run-1b/run-2/mixedv2/demosonly, + rigonly ambiguous) is 8x distributed; every healthy run (44/100 probe, 28/100 stage-C) was 1-GPU. Read: MAE probes every 250; flat-through-1000 convicts the distributed path, same-drift exonerates it (remaining deltas: augment/batch-geometry/recompute-at-launch/init). ~7-9 GPU-h, ~7-9 h wall on gpu0. On completion: verdict to the drift-saga page finalize slot + in-channel. NOTE: prereg field points at the staged frozen launcher (recipe + read rule in its header); cut a formal pre-reg post from it BEFORE launch on the owner go.
 
 </details>
 
