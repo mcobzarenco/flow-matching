@@ -11,7 +11,52 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-18 10:37–13:2xZ (real `date -u` at write: 13:16) —
+work session (chained, bounded): **pdnorm LAUNCHED — the ON-GO
+checklist executed end to end under the 10:25Z delegation: pre-reg
+stamped + posted, fit smoke green, `grasp_sft_v2_joint_1gpu_pdnorm`
+live on the H100 since 11:02:21Z, ridden through the step-500
+boundary.***
+
+**Status**: `grasp_sft_v2_joint_1gpu_pdnorm` LIVE (unit
+`fontaine-v2-joint-pdnorm`, launched 11:02:21Z) — step 500/3000 at
+13:15Z, probe **12.91@250 → 8.24@500** (disc anchor 12.51/7.57 —
+slightly above the demosonly curve at both points, falling
+healthily), loss 0.70@380, 14.9–15.1 s/step, VRAM 62.21/71 gate,
+util median 86–100% (no starvation), host RAM ~90 GiB available,
+save@500 captured async 15.6 s. **Drift-guard bar set: eval@1000 ≤
+8.5419** (= 8.2419 + 0.30), read at the ~15:2xZ boundary
+(PROVISIONAL). Endpoint ETA **~23:3x–23:4xZ**. Queue green depth 2
+(22 open).
+
+**Steering**: none new — polled at boot 10:37, at every babysit
+checkpoint (11:11, 11:45, 12:15, 12:45, 13:15): read + inbox empty
+throughout.
+
+**Done** (this session, commits `a97636c` + `8d9a62d`; posts
+1539224047244546171 decision/pre-reg + 1539230915379859507 launch):
+pre-reg renamed to `2026-08-18-…-pdnorm.md`, header records the GO
+decision under the delegation, SUMMARY'd, blog pushed pre-post
+(page curl 200); fit smoke 10:52Z (62.18 GiB peak, ckpt metadata
+`q01q99_per_dataset` verified); launch 11:02:21Z via systemd-run;
+babysit.toml entry live (vram 71 / 15 GPU-h gates, drift + sim100
+anchors); first poll green; ridden through eval@250, eval@500,
+save@500. Queue: `pdnorm-on-go-runbook` closed superseded-by-
+execution → **pdnorm-endpoint-close** refill (gpu-local, gated on
+step 3000); `owner-pending-decisions-digest` re-scoped to the
+delegation frame (decide-and-announce sweep + short owner-owned
+digest).
+
+**Next**: `queue_cli.py next` → **owner-pending-decisions-digest**
+(CPU, un-gated — workable during the training window); then
+**pdnorm-endpoint-close** at step 3000 (~23:3x–23:4xZ 08-18: sim100
+pair → paired read vs 11/100, panel leg, ladder `--endpoint`
+restamp, truthfit rewear, `pdnormendpoint` report, verdict post,
+bank if load-bearing). Step-1000 drift read ~15:2xZ rides the tick
+babysit. `run_work_next` ARMED — GPU busy, CPU queue non-empty.*
 
 *Updated 2026-08-18 10:28–10:5xZ (real `date -u` at write: 10:32) —
 tick: **OWNER STEERING — GO-gating retired ("Don't ask for my GO,
@@ -102,36 +147,16 @@ ladder chart with `--endpoint`; ladder figure + estimator-seam line +
 paired read all automatic in the report build). `run_work_next`
 ARMED — GPU idle but the CPU queue is non-empty.*
 
-*Updated 2026-08-18 10:08–10:1xZ (real `date -u` at write: 10:11) —
-tick: **quiet tick — landed ~1 min after the 10:07 work close;
-GO-ask poll 10:08Z still unanswered at ~8h14m; nothing changed.***
-
-**Status**: no live runs — H100 idle by design (0% util, 0 MiB;
-`no_live_runs_reason` current, held for the owner-gated pdnorm
-launch). Queue green depth 2 (22 open). GO ask (01:54Z) + all
-subsequent notes (wear audit, recalibration, released row, ladder
-figure, same-wear re-expression, report embed, truthfit crosscheck)
-unanswered.
-
-**Steering**: none — `read` empty, unreplied inbox empty, `history
--n 5` shows only our own five posts (latest: the 10:07 work-close
-post on the estimator-seam instrument), no new reactions.
-
-**Done**: Discord read + history + inbox; GPU-idle check;
-queue validate green; `run_work_next` confirmed ARMED (touched
-10:07 at the work close). No in-channel post — nothing new since
-the 10:07 work-close post.
-
-**Next**: chained work session owns
-**pdnorm-endpoint-report-seam-line** (CPU, PRE-GO — wire the
-truthfit crosscheck json into the `pdnormendpoint` report preset),
-then **owner-pending-decisions-digest** (CPU,
-condition-on-silence), polling the GO ask at boot and each
-boundary. On GO: ON-GO checklist (date + post the pre-reg, fit
-smoke, launch pdnorm, re-run the ladder chart with `--endpoint`;
-report embed + truthfit crosscheck automatic).*
-
 ## Utilization footer
+
+Session 2026-08-18 10:37–13:2xZ (work, exploit; ~2.3 GPU-h
+in-session — smoke ~0.1 + pdnorm train 11:02→13:15Z, run continues):
+**pdnorm LAUNCHED under the delegation — pre-reg posted (commit
+a97636c), smoke green, run live 11:02:21Z, ridden through save@500;
+probe 12.91@250 → 8.24@500, drift bar 8.5419@1000 set; queue:
+runbook closed superseded → pdnorm-endpoint-close refill** —
+`run_work_next` ARMED: ticks own the 15:2xZ drift read; endpoint
+battery ~23:3x–23:4xZ.
 
 Session 2026-08-18 10:28–10:5xZ (tick; 0 GPU-h — steering + summary
 session, H100 idle at boot): **GO-gating retired by owner ("Don't

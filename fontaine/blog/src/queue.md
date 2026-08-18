@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-18T10:18:00Z
+**Updated:** 2026-08-18T11:05:00Z
 
-**Depth call:** depth 2 queued (pdnorm-on-go-runbook cpu + owner-pending-decisions-digest cpu, both un-gated) after the report-seam-line close.
+**Depth call:** depth 2 queued (owner-pending-decisions-digest cpu un-gated + pdnorm-endpoint-close gpu endpoint-gated) after the runbook close-as-superseded at the pdnorm launch.
 
-**22 open** (Live 0 · Queued 2 · Blocked 20 · Done 234)
+**22 open** (Live 0 · Queued 2 · Blocked 20 · Done 235)
 
 ## 🔴 Live (0)
 
@@ -18,29 +18,29 @@
 
 *ready — waiting on a window or a boundary*
 
-**`owner-pending-decisions-digest`** · `cpu`
+**`pdnorm-endpoint-close`** · `gpu-local`
 
-Pending-decisions digest for the owner (CPU, un-gated, condition-on-silence): ~20 of 22 open items pend an owner call, and the asks are scattered across days of channel history (GO ask 01:54Z 08-18 pdnorm RUN; approach-redesign g…
+pdnorm endpoint close (GPU, gated on step-3000 ~23:4x-00:0xZ 18/19 08): run the frozen endpoint battery in order
 
-**boundary:** Queued 09:2xZ 08-18 work session (refill at the endpoint-report-ladder-embed close, charter section 4). Value: the entire pdnorm pipeline and most of the queue are owner-gated; one digest answers 'what do you need from me' in a single read when the owner returns, instead of five unanswered result posts + week-old asks. Supersedes nothing; each underlying ask keeps its own item.
+**boundary:** Queued 11:0xZ 08-18 work session at the pdnorm launch (conversion of pdnorm-on-go-runbook's endpoint residue; charter section 4 refill). Gated on the run reaching step 3000 (ETA ~23:4x-00:0xZ); all instruments frozen pre-data, embeds automatic — the session that picks this up executes, it does not design. Screenwide gate 21 GPU-h (train ~13 spent by then + sim100 pair ~4 + panel/probes). · [pre-reg](posts/2026-08-18-prereg-grasp-sft-v2-joint-pdnorm.md)
 
 <details><summary>full record</summary>
 
-Pending-decisions digest for the owner (CPU, un-gated, condition-on-silence): ~20 of 22 open items pend an owner call, and the asks are scattered across days of channel history (GO ask 01:54Z 08-18 pdnorm RUN; approach-redesign go 20:1xZ 08-16; demo-gen v1.1 disk-mask exemption + smoothness sign-off; rig-mixture compute call; vision-unfreeze / actckpt-ladder / arm-a box items now VOID-host pending a new box). Compose ONE compact digest: a blog page (fontaine/blog/src/) listing each pending decision as decision / cost / default-if-silent / where-it-unblocks, plus a short structured in-channel pointer post (Discord-markdown, blog link; long-form stays on the blog). POST ONLY IF the owner is still silent at execution time — if steering has landed, fold the digest into the reply instead. No oracle (no math); check.py before commit as usual.
+pdnorm endpoint close (GPU, gated on step-3000 ~23:4x-00:0xZ 18/19 08): run the frozen endpoint battery in order — sim100 flow leg on the endpoint (100 unseen seeds, --stats-repo-id grasp_demos_v2/merged per the worn-row rule) + the baseline disc-1000 leg already banked -&gt; sim100_paired_read.py vs the 11/100 baseline; k4l2 panel leg (protocol pinned in eval_disc1000_k4l2_panel.sh, npz dump); pdnorm_panel_ladder_chart.py --endpoint &lt;row&gt; restamp; pdnorm_endpoint_truthfit_rewear.py (native-&gt;truth-fit seam); report build (pdnormendpoint preset — ladder/seam/paired embeds automatic) + push; verdict post through the frozen grid (&gt;=20 exonerates mix / &lt;=10 convicts / 11-19 ambiguous); bank endpoint to fontaine-checkpoints if any gated read makes it load-bearing (a grasping mixed ckpt certainly is), weights-only + HTML report. Step-1000 drift-guard read (delta eval(1000-500) &lt;= +0.30, PROVISIONAL) rides the ~15:1xZ babysit boundary, not this item.
 
 </details>
 
 ---
 
-**`pdnorm-on-go-runbook`** · `cpu`
+**`owner-pending-decisions-digest`** · `cpu`
 
-Consolidate the pdnorm ON-GO checklist into an executable runbook (PRE-GO prep, CPU): fontaine/notes/pdnorm-on-go-runbook.md with the exact ordered copy-paste commands for GO-day
+Decision-status sweep + digest under the 10:25Z delegation (CPU, un-gated): the old premise (~20 of 22 open items pend an owner call) is RETIRED by 'Don't ask for my GO, you decide what to run'
 
-**boundary:** Queued 10:1xZ 08-18 work session (refill at the report-seam-line close, charter section 4). CPU, PRE-GO landable; collapses GO-day improvisation to zero — the week's landed automations get exercised in order the moment the owner says GO. · [pre-reg](posts/2026-08-18-prereg-grasp-sft-v2-joint-pdnorm.md)
+**boundary:** Queued 09:2xZ 08-18 work session (as owner-pending-decisions-digest); RE-SCOPED 11:0xZ 08-18 work session at the pdnorm launch: the GO-ask entry is resolved (delegation, launch executed) and the delegation flips the digest's frame from 'what do you need from me' to 'here is what I decided + the short list that is genuinely yours'. Value: converts the blocked backlog into motion under the new standing rule.
 
 <details><summary>full record</summary>
 
-Consolidate the pdnorm ON-GO checklist into an executable runbook (PRE-GO prep, CPU): fontaine/notes/pdnorm-on-go-runbook.md with the exact ordered copy-paste commands for GO-day — stamp+post the pre-reg, fit smoke, bijou.train launch line (+ babysit.toml registry entry, first-poll util + free -g checks per standing rules), boundary reads (step-1000 drift guard PROVISIONAL, step-3000 endpoint), sim100 pair legs, panel leg + pdnorm_panel_ladder_chart.py --endpoint restamp, pdnorm_endpoint_truthfit_rewear.py invocation, report build (pdnormendpoint preset — ladder/seam/paired embeds automatic), checkpoint bank + verdict post. Every command git-audited against current script flags and the pre-reg's gates (21 GPU-h), not written from memory.
+Decision-status sweep + digest under the 10:25Z delegation (CPU, un-gated): the old premise (~20 of 22 open items pend an owner call) is RETIRED by 'Don't ask for my GO, you decide what to run' — re-triage every blocked/owner_hold item: (a) asks that dissolve into Fontaine-decides -&gt; decide + announce in-channel as decision posts (pre-reg discipline stays), unblock the items; (b) genuinely owner-owned calls (spend scale, scope changes, hardware/rig, kill authority) -&gt; one compact digest post listing exactly those. Output: queue.json re-triage commit + one in-channel digest of the surviving owner-owned asks.
 
 </details>
 
@@ -328,9 +328,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (234)
+## ✅ Done (235)
 
 *closed — the full record stays in each fold*
+
+**`pdnorm-on-go-runbook`** · `cpu`
+
+Consolidate the pdnorm ON-GO checklist into an executable runbook (PRE-GO prep, CPU): fontaine/notes/pdnorm-on-go-runbook.md with the exact ordered copy-paste commands for GO-day
+
+**boundary:** Queued 10:1xZ 08-18 work session (refill at the report-seam-line close, charter section 4). CPU, PRE-GO landable; collapses GO-day improvisation to zero — the week's landed automations get exercised in order the moment the owner says GO. | CLOSED 11:0xZ 08-18 work session, SUPERSEDED BY EXECUTION (the 10:28 tick's now.md note): the ON-GO checklist was executed live this session instead of transcribed — GO decided by Fontaine under the 10:25Z owner delegation (no-go-asks), pre-reg stamped+posted (commit a97636c, post 1539224047244546171), fit smoke green (62.18 GiB peak, 15.29 s/step, ckpt metadata q01q99_per_dataset), full run launched 11:02:21Z (unit fontaine-v2-joint-pdnorm), babysit.toml entry live. The runbook's endpoint-side residue converts to the new pdnorm-endpoint-close item (refill below). · [pre-reg](posts/2026-08-18-prereg-grasp-sft-v2-joint-pdnorm.md)
+
+<details><summary>full record</summary>
+
+Consolidate the pdnorm ON-GO checklist into an executable runbook (PRE-GO prep, CPU): fontaine/notes/pdnorm-on-go-runbook.md with the exact ordered copy-paste commands for GO-day — stamp+post the pre-reg, fit smoke, bijou.train launch line (+ babysit.toml registry entry, first-poll util + free -g checks per standing rules), boundary reads (step-1000 drift guard PROVISIONAL, step-3000 endpoint), sim100 pair legs, panel leg + pdnorm_panel_ladder_chart.py --endpoint restamp, pdnorm_endpoint_truthfit_rewear.py invocation, report build (pdnormendpoint preset — ladder/seam/paired embeds automatic), checkpoint bank + verdict post. Every command git-audited against current script flags and the pre-reg's gates (21 GPU-h), not written from memory.
+
+</details>
+
+---
 
 **`pdnorm-endpoint-report-seam-line`** · `cpu`
 
