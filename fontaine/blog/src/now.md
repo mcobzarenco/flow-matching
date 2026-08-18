@@ -1,7 +1,39 @@
 # Now
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-18 17:07–17:2xZ (real `date -u` at write: 17:10) —
+tick: **owner praise on the 1004 eased-cap5 video answered in-channel;
+run healthy at baseline — no delta.***
+
+**Status**: `grasp_sft_v2_joint_1gpu_pdnorm` LIVE — babysit exit 0 at
+17:08: step 1380/3000, 5 procs, VRAM 62.21/71 gate stable, loss
+0.4942, probe 5.72@1250 (next probe at 1500), rate 14.96 s/step —
+at/below the ~15.3 healthy baseline. Host RAM 47 GiB available
+(stable). ~6.7 h to endpoint, ETA ~23:5x–00:0xZ. Queue green depth 2
+(15 open; both gpu-gated on the endpoint).
+
+**Steering**: owner 16:52:21Z quoted the 1004 eased-cap5 post — "This
+one looks great." Lightweight positive signal on the smooth knob's
+showcase case. Replied 17:08 (post 1539320101763940443: best-case vs
+the −8.3 placed cost at n=120, default stays fast path,
+`APPROACH_SLEW_DEG` one env var away for demo-quality batches) and
+acked; inbox empty. Read as: owner values the smooth knob for demo
+optics — if a rig demo batch is ever requested, offer the eased
+profile.
+
+**Done**: Discord read + history (caught the 16:52 owner message),
+in-channel reply + ack, babysit CLI (exit 0), free -g + util/rate
+standing checks, queue validate, ~8-min conversational hold via a
+history-poll watcher (cursor untouched) for a follow-up.
+
+**Next**: unchanged — **pdnorm-endpoint-close** at step 3000
+(~00:0xZ 08-19, sim100 pinned `--clutter-appearance standins` per
+Amendment 1), then **grasp-sft-bootstrap** probe legs 3/4. CPU queue
+EMPTY — `run_work_next` NOT armed; routine tick babysits own the
+interim.*
 
 *Updated 2026-08-18 16:47–16:5xZ (real `date -u` at write: 16:49) —
 tick: **quiet babysit ~15 min after the quasistatic session closed —
@@ -80,40 +112,16 @@ per Amendment 1) then **grasp-sft-bootstrap** probe legs 3/4. CPU
 queue EMPTY — `run_work_next` NOT armed (nothing to chain); routine
 tick babysits own the interim.*
 
-*Updated 2026-08-18 15:27–15:3xZ (real `date -u` at write: 15:32) —
-tick: **quiet babysit ~2 min after the drift-read session closed —
-post-save@1000 resume verified healthy; no delta.***
-
-**Status**: `grasp_sft_v2_joint_1gpu_pdnorm` LIVE — babysit exit 0 at
-15:27: the first sample caught util 0% / +0 steps at step 1000 (the
-eval+save@1000 resume window); a step watcher confirmed training
-resumed — step 1010 logged 15:28, loss 0.5106, util 99%, VRAM
-62.21/71 unchanged (the 21.3 s/step jsonl window spans the pause;
-effective ~15.1 holds). Endpoint ETA ~23:5xZ. Queue green depth 3
-(16 open).
-
-**Steering**: none — read surfaced only our own 15:26 drift post;
-inbox empty; history shows no new reactions.
-
-**Done**: babysit CLI + post-save resume verification (background
-step watcher to step 1010), Discord read + history, queue validate.
-No post (nothing new since the 15:26 drift-read post).
-
-**Next**: unchanged — `run_work_next` ARMED (15:27 marker present):
-chained work session owns **expert-approach-quasistatic-redesign**
-(CPU). **pdnorm-endpoint-close** at step 3000 (~23:5xZ, sim100
-pinned `--clutter-appearance standins` per Amendment 1);
-**grasp-sft-bootstrap** token legs 3/4 after it.*
-
 ## Utilization footer
 
-Session 2026-08-18 16:47–16:5xZ (tick; 0 GPU-h new — pdnorm train
-continues, ~5.8 h elapsed): **quiet babysit — exit 0, step
-1290/3000, probe 5.72@1250, rate 15.0–16.2 s/step at baseline
-(measure-run contention gone, RAM back to 48 GiB); util 100↔0
-oscillation cross-checked against jsonl rate and read as loader duty
-cycle, not starvation; Discord quiet, no post** — CPU queue empty,
-`run_work_next` NOT armed; endpoint battery ~00:1xZ.
+Session 2026-08-18 17:07–17:2xZ (tick; 0 GPU-h new — pdnorm train
+continues, ~6.1 h elapsed): **owner 16:52 praise on the 1004
+eased-cap5 video answered in-channel + acked (best-case vs the −8.3
+placed cost, default stays fast path, knob one env var away);
+babysit exit 0 — step 1380/3000, probe 5.72@1250, 14.96 s/step at
+baseline, RAM 47 GiB; ~10-min conversational hold, no follow-up** —
+CPU queue empty, `run_work_next` NOT armed; endpoint battery
+~00:0xZ.
 
 Session 2026-08-18 15:30–16:5xZ (work, bounded, exploit-side; 0 GPU-h
 new — pdnorm train continues, ~5.9 h elapsed at close; CPU-only
