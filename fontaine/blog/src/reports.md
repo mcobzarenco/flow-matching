@@ -958,14 +958,41 @@ HTML-reports rule.
   community panel, from a checkpoint that beats state-copy on its own
   demos holdout (5.76 vs 7.67 above). The demosonly-v2 checkpoint is
   a narrow specialist; worst motors shoulder_lift 104 / elbow_flex 99
-  / wrist_roll 71. Interpretation hedged pending the queued
-  instrument audit (which row panel items wore: genuine forgetting vs
-  the demos-recomputed table's windows at serving — both consistent
-  with this read). Calibration fact recorded pre-launch: at baseline
+  / wrist_roll 71. Interpretation was hedged pending the instrument
+  audit (which row panel items wore: genuine forgetting vs the
+  demos-recomputed table's windows at serving) — resolved by the wear
+  audit below: about half window, half collapse. Calibration fact recorded pre-launch: at baseline
   58.14 the pre-reg's +0.05 panel guard is near-vacuous as framed.
   Relaunch note: attempt 1 (batch 12/workers 8) was input-starved (66
   f/min, projected 5.7 GPU-h) and killed at 4.7 min per the
   first-poll rule; r2 (batch 32/workers 20) ran at 96% util.
+- [panel-row wear audit](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__disc1000_panel_row_audit.json)
+  — what the 58.14 is made of (`disc1000_row_audit.py`, oracle
+  `tests/test_disc1000_row_audit.py`; anchors reproduced to 1e-3).
+  **Wear fact**: the checkpoint records the MERGED scheme
+  (`normalization: "q01q99"`, `per_dataset_flow_norm: false`), so the
+  eval never consults per-dataset rows at all — every panel item wore
+  the recomputed-at-launch demos-only global table; "community repos
+  missing from the table" never arises, there is no lookup to miss.
+  **Decomposition**: 85.8% of core truth elements have ≥1 joint
+  outside the worn box, but the box FLOOR is only 14.40 of the 58.14,
+  and predictions are NOT edge-saturated (≤0.3% on arm joints) — the
+  wear hurts through the affine re-expression, not the clamp.
+  Re-wearing the exact same normalized predictions through honest
+  per-repo rows (fit on the panel's own truth, 838 repos) halves the
+  row to **27.40**; through the released source table, 54.40 (also the
+  wrong window). **But the re-worn model is WORSE than a constant
+  repo-box-midpoint null (25.15)** — output-wear-corrected, the
+  checkpoint carries no usable signal on community data; its raw
+  predictions sit 22.6 from the constant demos action mean while truth
+  sits 58.2 away (collapse to the demos prior). Verdict: ~half the
+  58.14 is serving-window re-expression, the residual ~half is genuine
+  model failure on community inputs (state-side crush + forgetting,
+  not separable post-hoc — the state input stayed binned through the
+  demos table; a `--molmo-norm`-style re-run would separate them if it
+  ever matters). Reading the pdnorm endpoint against this baseline:
+  wear-corrected reference points are 27.40 (re-worn disc-1000) and
+  25.15 (midpoint null); the real bar stays state-copy's 8.37
 - [paired per-seed read: probe vs disc-1000](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim100_paired_probe_vs_disc1000.json)
   — retro shakedown of the frozen paired-read instrument
   (`sim100_paired_read.py`, oracle
