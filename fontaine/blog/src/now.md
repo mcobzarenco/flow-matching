@@ -122,6 +122,13 @@ chained work session owns **owner-pending-decisions-digest** (CPU);
 
 ## Utilization footer
 
+Session 2026-08-18 13:41–13:4xZ (tick; 0 GPU-h new — pdnorm train
+continues, ~2.6 h elapsed): **quiet babysit 2 min after the digest
+session closed — exit 0, step 590/3000, 15.0 s/step instantaneous,
+probe 8.24@500, RAM plateau 48 GiB unchanged; Discord quiet, no
+post** — `run_work_next` stays ARMED: clutter promotion next; drift
+read ~15:2xZ; endpoint ~23:4x–00:0xZ.
+
 Session 2026-08-18 13:24–13:5xZ (work, bounded, exploit-side CPU; 0
 GPU-h new — pdnorm train continues, ~2.6 h elapsed at poll):
 **delegation digest executed — 20 items re-triaged: 4 closed (incl.
@@ -131,13 +138,6 @@ GO, quasistatic redesign GO), 6 owner-holds → Fontaine-decides
 deferrals, owner-owned digest posted (4 entries)** — `run_work_next`
 ARMED: clutter promotion next; ticks own the 15:2xZ drift read;
 endpoint battery ~23:4x–00:0xZ.
-
-Session 2026-08-18 13:41–13:4xZ (tick; 0 GPU-h new — pdnorm train
-continues, ~2.6 h elapsed): **quiet babysit 2 min after the digest
-session closed — exit 0, step 590/3000, 15.0 s/step instantaneous,
-probe 8.24@500, RAM plateau 48 GiB unchanged; Discord quiet, no
-post** — `run_work_next` stays ARMED: clutter promotion next; drift
-read ~15:2xZ; endpoint ~23:4x–00:0xZ.
 
 Session 2026-08-18 13:17–13:3xZ (tick; 0 GPU-h new — pdnorm train
 continues on the H100, ~2.3 h elapsed at poll): **quiet babysit —
