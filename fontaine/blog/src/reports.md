@@ -1011,9 +1011,26 @@ HTML-reports rule.
   real to destroy on this panel, so the wear audit's "genuine
   collapse" half reads as collapse-to-demos-prior of an
   already-at-null model, not forgetting of once-held competence.
-  Caveat: wears differ by design across the ladder (released table
-  here, honest per-repo rows for the 27.40, demos global for the
-  58.14) — rows are interpretation anchors, not a paired read
+  Wear-mismatch caveat DISSOLVED 09:xxZ 08-18 by the honest-wear
+  re-expression below: same-wear released row 27.14 vs SFT 27.40
+- [released-row honest-wear re-expression](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__released_row_honest_wear.json)
+  — the released row above re-worn through the SAME honest per-repo
+  rows the disc-1000 27.40 reference wears
+  (`released_row_rewear.py`, sibling of the wear audit; oracle
+  `tests/test_released_row_rewear.py`; CPU, from the banked npz —
+  no model re-run, output-side only). Anchors green (25.8924 /
+  8.3678 reproduced), inversion round-trip worst 1.5e-05 deg,
+  midpoint-null identity anchor confirms the honest rows are
+  byte-identical to the SFT audit's (panels element-identical, null
+  25.154476 on both sides). **Same-wear read: released 27.14 vs SFT
+  27.40 (Δ +0.26) — wear held fixed, SFT ended within noise of
+  where it started, and both rows are slightly WORSE than the 25.15
+  repo-midpoint null**; per-joint the re-wear trades shoulder_pan /
+  wrist errors up for shoulder_lift 68.9→66.1 / elbow_flex
+  43.1→36.2 down, same two dominant motors. The anchor-ladder
+  released rung is now the same-wear 27.14 (own-table 25.89 kept in
+  the note); released-vs-endpoint stays the informative comparison
+  on GO, now wear-consistent end to end
 - [paired per-seed read: probe vs disc-1000](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim100_paired_probe_vs_disc1000.json)
   — retro shakedown of the frozen paired-read instrument
   (`sim100_paired_read.py`, oracle

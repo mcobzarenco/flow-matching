@@ -4,9 +4,11 @@ Renders the wear-audit panel ladder (pre-reg
 posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md, audit banked
 06:4xZ 08-18) as a labeled horizontal-bar rung figure: raw disc-1000
 58.14 (worn demos global table), re-worn 27.40 (same-model
-wear-corrected reference), released pre-SFT 25.89 (measured 08:22Z
-08-18, at the null), repo-midpoint null 25.15 (carries-any-signal
-bar), worn-box clamp floor 14.40, state-copy 8.37 (the real bar) —
+wear-corrected reference), released pre-SFT re-worn 27.14 (same
+honest rows, re-expressed 09:xxZ 08-18 from the banked own-table
+25.89 — released_row_rewear.py), repo-midpoint null 25.15
+(carries-any-signal bar), worn-box clamp floor 14.40, state-copy
+8.37 (the real bar) —
 plus a FILL-AT-ENDPOINT slot for the pdnorm endpoint row, stamped via
 --endpoint on GO. House eval-report dark scheme (page #121417; blue =
 measured rows, amber = the real bar, magenta = the stamped endpoint,
@@ -55,10 +57,10 @@ LADDER: list[tuple[str, float, str, str]] = [
         "same-model wear-corrected reference",
     ),
     (
-        "released pre-SFT (own table, measured 08-18)",
-        25.89,
+        "released pre-SFT re-worn (same honest rows)",
+        27.14,
         BLUE,
-        "AT the null — competence never in reach",
+        "own-table 25.89; same-wear: SFT ended where it started",
     ),
     ("repo-midpoint null (constant)", 25.15, GRAY, "carries-any-signal bar"),
     ("worn-box clamp floor", 14.40, GRAY, "clamp floor of the 58.14"),

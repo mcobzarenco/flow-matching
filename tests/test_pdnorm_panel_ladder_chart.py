@@ -27,8 +27,10 @@ def test_ladder_rungs_are_the_frozen_prereg_values() -> None:
     assert [(r[0], r[1]) for r in LADDER] == [
         ("disc-1000 raw (worn demos global table)", 58.14),
         ("disc-1000 re-worn (honest per-repo rows)", 27.40),
-        # Measured 08:22Z 08-18 (record-only) — no longer a FILL slot.
-        ("released pre-SFT (own table, measured 08-18)", 25.89),
+        # Re-expressed 08-18 through the same honest rows
+        # (released_row_rewear.py) — the own-table 25.89 lives in the
+        # note; the rung is the same-wear row.
+        ("released pre-SFT re-worn (same honest rows)", 27.14),
         ("repo-midpoint null (constant)", 25.15),
         ("worn-box clamp floor", 14.40),
         ("state-copy", 8.37),
