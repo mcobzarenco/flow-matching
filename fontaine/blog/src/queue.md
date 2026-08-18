@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-18T08:26:00Z
+**Updated:** 2026-08-18T08:47:00Z
 
-**Depth call:** depth 2 queued (pdnorm-panel-ladder-chart cpu + released-row-honest-wear-reexpression cpu, both un-gated) after the released-ckpt-k4l2-panel-row close.
+**Depth call:** depth 2 queued (released-row-honest-wear-reexpression cpu + endpoint-report-ladder-embed cpu, both un-gated) after the pdnorm-panel-ladder-chart close.
 
-**22 open** (Live 0 · Queued 2 · Blocked 20 · Done 229)
+**22 open** (Live 0 · Queued 2 · Blocked 20 · Done 230)
 
 ## 🔴 Live (0)
 
@@ -18,6 +18,20 @@
 
 *ready — waiting on a window or a boundary*
 
+**`endpoint-report-ladder-embed`** · `cpu`
+
+Wire the panel anchor-ladder figure into the pdnormendpoint report preset (PRE-GO prep, CPU): grasp_sft_joint_unseen_report.py grows a --ladder-b64 arg (or preset-default path reports/pdnorm_panel_ladder.b64) rendering the ladder…
+
+**boundary:** Queued 08:4xZ 08-18 work session (refill at the panel-ladder-chart close, charter section 4). CPU, un-gated, draft-only prep; composes with the pdnormendpoint preset landed 07:3xZ. On GO the endpoint session stamps the chart then builds the report — this item just removes the manual embed step. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
+
+<details><summary>full record</summary>
+
+Wire the panel anchor-ladder figure into the pdnormendpoint report preset (PRE-GO prep, CPU): grasp_sft_joint_unseen_report.py grows a --ladder-b64 arg (or preset-default path reports/pdnorm_panel_ladder.b64) rendering the ladder chart as a section of the ON-GO endpoint report, below the meta line's textual ladder — the endpoint session re-runs pdnorm_panel_ladder_chart.py --endpoint &lt;row&gt; first, so the report embeds the stamped figure with zero extra composition work. Oracle asserts the section renders from a sidecar (img tag with the b64 payload) and is absent when the file/flag is missing; check.py green.
+
+</details>
+
+---
+
 **`released-row-honest-wear-reexpression`** · `cpu`
 
 Released-row honest-wear re-expression (PRE-GO, record-only, CPU): the released checkpoint's panel row (25.89, banked 08:22Z 08-18) wears its own released global table, while the ladder's same-model reference 27.40 wears honest p…
@@ -27,20 +41,6 @@ Released-row honest-wear re-expression (PRE-GO, record-only, CPU): the released 
 <details><summary>full record</summary>
 
 Released-row honest-wear re-expression (PRE-GO, record-only, CPU): the released checkpoint's panel row (25.89, banked 08:22Z 08-18) wears its own released global table, while the ladder's same-model reference 27.40 wears honest per-repo rows — the wear classes differ, so the released-vs-SFT comparison carries a wear-mismatch caveat. Re-wear the released checkpoint's banked npz predictions (reports/eval__molmoact2_so101_released__panel_v2_k4l2_euler10_draws1_stable.npz, local) through the honest per-repo rows via the disc1000_row_audit.py re-expression path (same 838-repo truth-fit rows; extend the script with a --npz/--source-table flag or a sibling entry point, oracle on the re-expression identity anchors, check.py green). Output: the honest-wear released row alongside 27.40 in analysis json + a reports.md sentence — this dissolves the ladder caveat and makes released-vs-disc1000 a same-wear read (is the SFT checkpoint actually WORSE than where it started, wear held fixed?).
-
-</details>
-
----
-
-**`pdnorm-panel-ladder-chart`** · `cpu`
-
-Panel anchor-ladder chart for the pdnorm endpoint read (PRE-GO prep, CPU): a small standalone dark-mode chart script (house eval-report scheme, owner standing preference: chart-led reports) rendering the wear-audit panel ladder a…
-
-**boundary:** Queued 07:3xZ 08-18 work session (refill at the endpoint-report-preset close, charter section 4). CPU, un-gated, draft-only prep; the endpoint session (or the released-row session) stamps the FILL slots. If GO lands first this waits for the endpoint session and lands with the endpoint report. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
-
-<details><summary>full record</summary>
-
-Panel anchor-ladder chart for the pdnorm endpoint read (PRE-GO prep, CPU): a small standalone dark-mode chart script (house eval-report scheme, owner standing preference: chart-led reports) rendering the wear-audit panel ladder as a labeled horizontal-bar/rung figure — raw disc-1000 58.14 (worn demos global table), re-worn 27.40 (same-model wear-corrected reference), repo-midpoint null 25.15 (carries-any-signal bar), worn-box clamp floor 14.40, state-copy 8.37 (real bar) — with FILL-AT-ENDPOINT slots for the pdnorm endpoint row and the released-ckpt row (released-ckpt-k4l2-panel-row lands it when measured). Output a PNG + embeddable b64 for the endpoint report and the pre-reg post; oracle asserts rung values + labels + placeholder slots; check.py green.
 
 </details>
 
@@ -328,9 +328,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (229)
+## ✅ Done (230)
 
 *closed — the full record stays in each fold*
+
+**`pdnorm-panel-ladder-chart`** · `cpu`
+
+Panel anchor-ladder chart for the pdnorm endpoint read (PRE-GO prep, CPU): a small standalone dark-mode chart script (house eval-report scheme, owner standing preference: chart-led reports) rendering the wear-audit panel ladder a…
+
+**boundary:** Queued 07:3xZ 08-18 work session (refill at the endpoint-report-preset close, charter section 4). CPU, un-gated, draft-only prep; the endpoint session (or the released-row session) stamps the FILL slots. If GO lands first this waits for the endpoint session and lands with the endpoint report. CLOSED done 08:4xZ 08-18 work session: pdnorm_panel_ladder_chart.py landed (PNG fontaine/blog/src/img/pdnorm/panel_ladder.png + b64 sidecar reports/pdnorm_panel_ladder.b64; --endpoint stamps the FILL slot on GO). Queue-vs-git drift resolved per the audit rule: the released-ckpt row was measured 25.89 last session, so it renders as a real rung; only the pdnorm endpoint slot stays FILL-AT-ENDPOINT. Figure embedded in the pre-reg draft; oracle tests/test_pdnorm_panel_ladder_chart.py (rungs + labels + placeholder + PNG/b64 roundtrip); check.py 1020 green. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
+
+<details><summary>full record</summary>
+
+Panel anchor-ladder chart for the pdnorm endpoint read (PRE-GO prep, CPU): a small standalone dark-mode chart script (house eval-report scheme, owner standing preference: chart-led reports) rendering the wear-audit panel ladder as a labeled horizontal-bar/rung figure — raw disc-1000 58.14 (worn demos global table), re-worn 27.40 (same-model wear-corrected reference), repo-midpoint null 25.15 (carries-any-signal bar), worn-box clamp floor 14.40, state-copy 8.37 (real bar) — with FILL-AT-ENDPOINT slots for the pdnorm endpoint row and the released-ckpt row (released-ckpt-k4l2-panel-row lands it when measured). Output a PNG + embeddable b64 for the endpoint report and the pre-reg post; oracle asserts rung values + labels + placeholder slots; check.py green.
+
+</details>
+
+---
 
 **`released-ckpt-k4l2-panel-row`** · `gpu-local`
 

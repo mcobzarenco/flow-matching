@@ -243,6 +243,13 @@ pre-SFT released checkpoint's panel row (now measured: 25.89, at the
 null), read through these anchors; all are recorded alongside — never
 in place of — the frozen guard.
 
+![panel anchor ladder, wear-corrected class — endpoint slot stamped on
+GO](../img/pdnorm/panel_ladder.png)
+
+*(Chart: `pdnorm_panel_ladder_chart.py` — the endpoint session re-runs
+it with `--endpoint <row>` to stamp the FILL slot; embeddable b64
+sidecar at `reports/pdnorm_panel_ladder.b64`.)*
+
 Curve-level record: demos-slice breakdown vs the discriminator curve
 (same holdout episodes); rig-slice curves recorded as the first
 per-dataset-normalized rig numbers. Token-leg sim100 and further
