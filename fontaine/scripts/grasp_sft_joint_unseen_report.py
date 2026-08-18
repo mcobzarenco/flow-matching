@@ -108,6 +108,27 @@ PRESETS: dict[str, dict] = {
             " primary anchor: the probe checkpoint's <b>44/100</b>"
         ),
     },
+    "disc1000": {
+        "anchor_rows": [
+            ("base (no SFT)", BASE_ANCHOR, ANCHOR),
+            ("joint probe step2000 (313 demos)", PROBE_ANCHOR, "#f593bd"),
+            ("v1 step3000 (5k demos + rig mix)", V1_ENDPOINT_ANCHOR, "#f593bd"),
+        ],
+        "subject_label": "disc step1000 (demosonly v2, 1×H100)",
+        "anchors_tile_label": "anchors: base / probe / v1-endpoint",
+        "title": "disc step1000 — flow head, unseen 100 (demosonly-v2 cell)",
+        "h1": "Drift discriminator — step 1000, flow head on unseen seeds",
+        "meta_html": (
+            "Checkpoint <code>grasp_sft_v2_demosonly_1gpu_disc/step_001000</code>"
+            " — the first non-drifting v2-corpus checkpoint (verdict HEALTHY"
+            " 00:42Z 08-18; demos-only corpus, 1×H100, honest recomputed"
+            " stats) · euler-10, execute-horizon 30, seeds 0–99, 30 s"
+            " episodes, default worn-row lookup (no rig key ⇒ merged"
+            " demos-native table) · fills the demosonly-v2 grasp cell of the"
+            " isolation grid; baseline arm of the"
+            " <code>--per-dataset-flow-norm</code> pre-reg"
+        ),
+    },
 }
 
 
@@ -214,16 +235,21 @@ def main() -> int:
     # Deterministic gallery: best 3 successes by success_tick (fastest),
     # plus the median success and the nearest miss by final_cm.
     by_tick = sorted(succ, key=lambda e: e["success_tick"])
-    picks: list[tuple[str, dict]] = [
-        ("fastest success", by_tick[0]),
-        ("2nd fastest success", by_tick[1]),
-        ("median success", by_tick[len(by_tick) // 2]),
-    ]
+    picks: list[tuple[str, dict]] = []
+    if by_tick:
+        picks.append(("fastest success", by_tick[0]))
+    if len(by_tick) >= 2:
+        picks.append(("2nd fastest success", by_tick[1]))
+    if len(by_tick) >= 3:
+        picks.append(("median success", by_tick[len(by_tick) // 2]))
     misses = sorted(
         (e for e in eps if e.get("success_tick") is None),
         key=lambda e: e["final_cm"],
     )
-    picks.append(("nearest miss", misses[0]))
+    # Low-success legs: show the near-miss tail instead of a success
+    # gallery (nearest misses are the diagnostic clips there).
+    for i, miss in enumerate(misses[: max(1, 4 - len(picks))]):
+        picks.append(("nearest miss" if i == 0 else f"miss #{i + 1}", miss))
 
     args.gallery_dir.mkdir(parents=True, exist_ok=True)
     gallery_html = ""

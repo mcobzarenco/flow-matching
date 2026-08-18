@@ -14,7 +14,7 @@ import pytest
 pytest.importorskip("mujoco")
 
 from bijou.data import DatasetStats, PolicyInfo
-from sim.rollout_sim import STATS_REPO_ID, resolve_worn_stats
+from sim.rollout_sim import STATS_REPO_ID, resolve_worn_stats, worn_stats_key
 
 DIM = 6
 
@@ -64,3 +64,20 @@ def test_explicit_row_resolves_exactly() -> None:
 def test_explicit_row_never_falls_back() -> None:
     with pytest.raises(SystemExit, match="grasp_demos_v2/merged"):
         resolve_worn_stats(info({STATS_REPO_ID: row(2.0)}), "grasp_demos_v2/merged")
+
+
+def test_worn_key_records_the_resolved_row_not_the_lookup_key() -> None:
+    """The out-json record must name the row actually worn: the default
+    lookup's merged-table fallback is NOT the rig key it looked up
+    (recording the key there mislabeled the demosonly sim100 legs)."""
+    assert worn_stats_key(info({STATS_REPO_ID: row(2.0)}), None) == STATS_REPO_ID
+    assert worn_stats_key(info({"grasp_demos_v2/merged": row(3.0)}), None) == (
+        "<merged-table>"
+    )
+    assert (
+        worn_stats_key(
+            info({STATS_REPO_ID: row(2.0), "grasp_demos_v2/merged": row(3.0)}),
+            "grasp_demos_v2/merged",
+        )
+        == "grasp_demos_v2/merged"
+    )

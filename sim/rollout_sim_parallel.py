@@ -62,6 +62,7 @@ from .rollout_sim import (
     resolve_worn_stats,
     run_episode_loop,
     sim_item,
+    worn_stats_key,
 )
 from .so101_sim import CONTROL_HZ, SimObservation, SO101Sim
 from .wrist_transform import (
@@ -712,6 +713,9 @@ def main() -> int:
 
     predictor = None
     discrete_shim = None
+    # Resolved worn-row identity for the out-json record; stays None on
+    # arms that wear no bijou stats row (hold, molmoact2 shim).
+    worn_row: str | None = None
     if args.hold:
         policy = None
         horizon = args.execute_horizon
@@ -814,7 +818,12 @@ def main() -> int:
                 "sample_steps": args.sample_steps,
                 "method": args.method,
                 "flow_decoder_dtype": args.flow_decoder_dtype,
-                "stats_repo_id": args.stats_repo_id or STATS_REPO_ID,
+                "stats_repo_id": args.stats_repo_id,
+                "worn_row": (
+                    "<convmap-seam>"
+                    if args.convmap_seam_stats is not None
+                    else worn_stats_key(policy.info, args.stats_repo_id)
+                ),
                 "commit": commit,
                 # The RNG-key convention: each row's sampling stream is
                 # stable_sample_rng(run_seed, repo_id(draw),
@@ -939,6 +948,7 @@ def main() -> int:
             )
             policy._molmo_norm_maps["sim/eval100"] = seam.item_maps
             stats = seam.seam_stats
+            worn_row = "<convmap-seam>"
             print(
                 f"convmap seam {args.convmap_seam_stats.name}: "
                 f"scale {seam.map.scale.tolist()} "
@@ -952,6 +962,7 @@ def main() -> int:
             # per-dataset table — their items must wear the checkpoint's
             # MERGED stats (same fallback as the sequential driver).
             stats = resolve_worn_stats(policy.info, args.stats_repo_id)
+            worn_row = worn_stats_key(policy.info, args.stats_repo_id)
 
         def predict_batch(requests: list[tuple[Any, ...]]) -> list[np.ndarray]:
             items = []
@@ -1071,7 +1082,8 @@ def main() -> int:
                 "top_transform": args.top_transform,
                 "control_hz": CONTROL_HZ,
                 "task": TASK,
-                "stats_repo_id": args.stats_repo_id or STATS_REPO_ID,
+                "stats_repo_id": args.stats_repo_id,
+                "worn_row": worn_row,
                 "mount_flip": not args.no_mount_flip,
                 "commit": commit,
                 # Off-contract provenance: the resolved seam map (fit +

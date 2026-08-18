@@ -1131,7 +1131,7 @@ log = "/home/ubuntu/eval__disc1000_sim100_flow_unseen.log"
 progress_re = "seed [0-9]+ replan [0-9]+"
 started_utc = "2026-08-18T02:10:01Z"
 gpu_hours_per_wall_hour = 1.0
-boundary = "sim100 flow leg, seeds 0-99 (unit fontaine-disc1000-sim100): ~40 s/seed measured at seed 0 => ~70-80 min, done ~03:2x-03:3xZ 08-18. Read: grasp count vs pdnorm pre-reg anchors (probe 44/100, broken class ~5/100) — fills the demosonly-v2 grasp cell of the isolation grid; interpretation pre-registered in the pdnorm draft's baseline-arms section, NOT a decision gate on its own."
+boundary = "sim100 flow leg, seeds 0-99 (unit fontaine-disc1000-sim100): ~80 s/seed measured over seeds 0-8 (02:21Z re-estimate; full 30-replan episodes dominate) => ~2.2 h, done ~04:2xZ 08-18. Read: grasp count vs pdnorm pre-reg anchors (probe 44/100, broken class ~5/100) — fills the demosonly-v2 grasp cell of the isolation grid; interpretation pre-registered in the pdnorm draft's baseline-arms section, NOT a decision gate on its own."
 anchors = [
     "eval leg of a banked checkpoint (disc step-1000, first non-drifting v2-corpus ckpt) — no kill bars beyond liveness + the GPU-h gate; ride to 100/100",
     "GPU util ~30-40% is NORMAL for the sequential rollout_sim driver (policy calls alternate with CPU sim stepping) — not input starvation, do not touch",

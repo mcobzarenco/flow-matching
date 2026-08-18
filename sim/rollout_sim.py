@@ -75,6 +75,18 @@ def resolve_worn_stats(info: PolicyInfo, stats_repo_id: str | None) -> DatasetSt
     return row
 
 
+def worn_stats_key(info: PolicyInfo, stats_repo_id: str | None) -> str:
+    """The identity of the row ``resolve_worn_stats`` wears, for the
+    out-json record. The default lookup can fall back to the merged
+    table; recording the lookup KEY there would claim a row the model
+    never wore."""
+    if stats_repo_id is not None:
+        return stats_repo_id
+    if STATS_REPO_ID in info.per_dataset_normalization:
+        return STATS_REPO_ID
+    return "<merged-table>"
+
+
 class RolloutSim(Protocol):
     """What the episode loop needs from an environment — SO101Sim in
     production; the parallel-harness oracle substitutes a pure-python
@@ -650,7 +662,12 @@ def main() -> int:
                 "wrist_transform": args.wrist_transform,
                 "control_hz": CONTROL_HZ,
                 "task": TASK,
-                "stats_repo_id": args.stats_repo_id or STATS_REPO_ID,
+                "stats_repo_id": args.stats_repo_id,
+                "worn_row": (
+                    worn_stats_key(policy.info, args.stats_repo_id)
+                    if policy is not None
+                    else None
+                ),
                 "commit": commit,
             },
             "episodes": [
