@@ -4,7 +4,36 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-18 09:18–09:2xZ (real `date -u` at write: 09:19) —
+tick: **quiet tick — landed ~2 min after the 09:16 work close;
+GO-ask poll 09:18Z still unanswered at ~7h24m; nothing changed.***
+
+**Status**: no live runs — H100 idle by design (0% util, 0 MiB;
+`no_live_runs_reason` current, declared 08:2xZ, held for the
+owner-gated pdnorm launch). Queue green depth 2 (22 open). GO ask
+(01:54Z) + all subsequent notes (wear audit, paired read,
+recalibration, endpoint preset, released row, ladder figure,
+same-wear re-expression) unanswered.
+
+**Steering**: none — `read` empty, unreplied inbox empty, `history
+-n 5` shows only our own five posts (latest: the 09:16 same-wear
+re-expression post with the updated ladder figure), no new
+reactions.
+
+**Done**: Discord read + history + inbox; GPU-idle check; registry
+reason verified current; queue validate green; `run_work_next`
+confirmed ARMED (touched 09:17 at the work close). No in-channel
+post — nothing new since the 09:16 re-expression post.
+
+**Next**: chained work session owns **endpoint-report-ladder-embed**
+(CPU, wire the b64 sidecar into the `pdnormendpoint` preset), then
+**pdnorm-endpoint-truthfit-wear-crosscheck** (CPU, instrument can
+land dry PRE-GO), polling the GO ask at boot and each boundary. On
+GO: ON-GO checklist (date + post the pre-reg, fit smoke, launch
+pdnorm, re-run the ladder chart with `--endpoint`).*
 
 *Updated 2026-08-18 09:01–09:2xZ (real `date -u` at write: 09:16) —
 work session (chained, bounded):
@@ -80,44 +109,15 @@ polling the GO ask at boot and each boundary. On GO: ON-GO checklist
 (date + post the pre-reg, fit smoke, launch pdnorm, re-run the ladder
 chart with `--endpoint`).*
 
-*Updated 2026-08-18 08:37–08:5xZ (real `date -u` at write: 08:49) —
-work session (chained, bounded): **pdnorm-panel-ladder-chart DONE —
-the wear-audit anchor ladder is now a figure; the endpoint slot stamps
-on GO.***
-
-**Status**: no live runs — H100 idle by design (0% util, 0 MiB at
-boot; `no_live_runs_reason` current, held for the owner-gated pdnorm
-launch). Queue green depth 2 (22 open). GO ask (01:54Z) still
-unanswered at ~6h55m; polled at boot 08:37 (read + inbox empty).
-
-**Steering**: none — `read` empty at boot, unreplied inbox empty.
-
-**Done** (this session): `fontaine/scripts/pdnorm_panel_ladder_chart.py`
-— house dark-scheme horizontal-rung figure of the pre-reg's
-wear-corrected ladder (raw 58.14 / re-worn 27.40 / released 25.89 /
-midpoint null 25.15 / clamp floor 14.40 / state-copy 8.37), the
-pending pdnorm-endpoint slot rendered as a dashed full-width outline
-(deliberately not a bar), `--endpoint <row>` stamps it magenta on GO.
-Queue-vs-git drift resolved per the audit rule: the released row
-(measured 25.89 last session) renders as a real rung, not a FILL
-slot. Outputs: PNG `img/pdnorm/panel_ladder.png` + b64 sidecar
-`reports/pdnorm_panel_ladder.b64`; figure embedded in the pre-reg
-draft; oracle `tests/test_pdnorm_panel_ladder_chart.py` (rungs +
-labels + placeholder + PNG/b64 roundtrip); check.py 1020 green.
-Queue: item closed done; refill **endpoint-report-ladder-embed** (CPU
-— wire the b64 sidecar into the `pdnormendpoint` report preset so the
-ON-GO report embeds the stamped figure automatically).
-
-**Next**: `queue_cli.py next` →
-**released-row-honest-wear-reexpression** (CPU, dissolves the
-ladder's wear-mismatch caveat — its output feeds a rung, so it stays
-ahead of the embed item), then **endpoint-report-ladder-embed**
-(CPU). The pdnorm RUN stays owner-gated (ON-GO checklist unchanged:
-date + post the pre-reg, fit smoke, launch — now also re-run the
-ladder chart with `--endpoint`). `run_work_next` ARMED — GPU idle but
-the CPU queue is non-empty.*
-
 ## Utilization footer
+
+Session 2026-08-18 09:18–09:2xZ (tick; 0 GPU-h — H100 idle by
+design, no live runs): **quiet tick — landed ~2 min after the 09:16
+work close; GO-ask poll 09:18Z still unanswered (~7h24m), read +
+history + inbox empty, registry reason current, queue green depth 2
+(22 open)** — `run_work_next` stays ARMED: chained session owns
+endpoint-report-ladder-embed then
+pdnorm-endpoint-truthfit-wear-crosscheck.
 
 Session 2026-08-18 09:01–09:2xZ (work, exploit; 0 GPU-h — CPU
 re-expression from the banked npz, H100 idle by design):
@@ -127,21 +127,6 @@ released 27.14 vs SFT 27.40 (Δ +0.26, both slightly worse than the
 wear-consistent, queue refilled with the ON-GO estimator
 cross-check** — `run_work_next` ARMED: endpoint-report-ladder-embed
 next, GO ask polled boot + close (quiet).
-
-Session 2026-08-18 08:55–09:0xZ (tick; 0 GPU-h — H100 idle by
-design, no live runs): **quiet tick — GO-ask poll 08:56Z still
-unanswered (~7h02m), read + history + inbox empty, registry reason
-current, queue green depth 2 (22 open)** — `run_work_next` stays
-ARMED: chained session owns released-row-honest-wear-reexpression
-then endpoint-report-ladder-embed.
-
-Session 2026-08-18 08:37–08:5xZ (work, exploit; 0 GPU-h — CPU chart
-prep, H100 idle by design): **pdnorm-panel-ladder-chart landed — the
-wear-audit ladder is a stampable figure (PNG + b64 sidecar, oracle
-green), released row rendered as a real rung per the git-audit rule,
-queue refilled with endpoint-report-ladder-embed** — `run_work_next`
-ARMED: released-row-honest-wear-reexpression next, GO ask polled at
-boot (quiet).
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-10
 00:00Z → 2026-08-17 19:45Z; rebased 08-17 from per-run prune records
