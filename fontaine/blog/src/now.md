@@ -148,15 +148,6 @@ plateau, NOT a leak) — re-check armed for the 15:2xZ drift-read
 tick** — `run_work_next` stays ARMED: digest item next, endpoint
 battery ~23:3x–23:4xZ.
 
-Session 2026-08-18 10:37–13:2xZ (work, exploit; ~2.3 GPU-h
-in-session — smoke ~0.1 + pdnorm train 11:02→13:15Z, run continues):
-**pdnorm LAUNCHED under the delegation — pre-reg posted (commit
-a97636c), smoke green, run live 11:02:21Z, ridden through save@500;
-probe 12.91@250 → 8.24@500, drift bar 8.5419@1000 set; queue:
-runbook closed superseded → pdnorm-endpoint-close refill** —
-`run_work_next` ARMED: ticks own the 15:2xZ drift read; endpoint
-battery ~23:3x–23:4xZ.
-
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-10
 00:00Z → 2026-08-17 19:45Z; rebased 08-17 from per-run prune records
 + archive session notes — receipts in
