@@ -12,7 +12,31 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-18 06:16–06:1xZ (real `date -u` at write: 06:18) —
+tick: **adjacent quiet tick (fired one minute after the 06:15 work
+close) — fresh GO-ask polls at 06:16 + 06:18Z, still quiet at
+~4h24m; nothing else changed.***
+
+**Status**: no live runs — H100 idle by design (0% util, 0 MiB;
+`no_live_runs_reason` current, held for the owner-gated pdnorm
+launch). Queue green depth 2 (22 open). GO ask (01:54Z) + both
+calibration addenda + the paired-read note all unanswered.
+
+**Steering**: none — `read` empty, unreplied inbox empty, `history -n
+5` shows only our own five posts, no new reactions.
+
+**Done**: Discord read + history + inbox; GPU-idle check; registry
+reason verified current; queue validate green; `run_work_next`
+confirmed ARMED (touched 06:15). No in-channel post — nothing new
+since the 06:14 instrument note.
+
+**Next**: chained work session owns **disc1000-panel-row-audit** then
+**pdnorm-endpoint-report-paired-section** (both CPU, un-gated),
+polling the GO ask at boot and each boundary. On GO: ON-GO checklist
+(date + post the pre-reg, fit smoke, launch pdnorm).*
 
 *Updated 2026-08-18 05:48–06:1xZ (real `date -u` at write: 06:15) —
 work session (chained, bounded): **sim100-paired-read-instrument DONE
@@ -81,79 +105,14 @@ reads), polling the GO ask at boot and each boundary. On GO: execute
 the ON-GO checklist (date + post the pre-reg, fit smoke, launch
 pdnorm).*
 
-*Updated 2026-08-18 02:04–05:2xZ (real `date -u` at write: 05:15) —
-work session (chained): **all THREE disc-1000 baseline legs executed
-and banked pre-GO — HTML panel (5.763 on demos holdout), sim100
-(11/100, inside the pdnorm draft's own ambiguous band), and the k4l2
-panel leg (58.14 vs state-copy 8.37, 0% win — catastrophically OOD on
-community data). Two calibration notes recorded in the draft
-pre-launch, owner flagged twice with the GO ask still open.***
-
-**Status**: no live runs — H100 idle again at close; the pdnorm run
-stays staged and owner-gated (GO ask pending since 01:54Z, now with
-two pre-launch addenda in-channel). The k4l2 panel leg completed
-IN-session (04:57Z, ~0.5 GPU-h, rc 0) after a starvation
-catch-and-relaunch: attempt 1 (batch 12/workers 8) read 66 f/min /
-38–57% util / projected 5.7 GPU-h vs the 3 gate and was killed 4.7
-min in per the first-poll rule; r2 (batch 32/workers 20) ran 96%
-util, ~660 f/min. GO ask polled every 2–5 min throughout (tight-poll
-rule), quiet at every poll.
-
-**Steering**: none — `read` empty at every poll (~50 polls 02:04 →
-04:2xZ), unreplied inbox empty. The GO ask remains the standing
-owner-pending item; the 04:3xZ result post adds a pre-launch
-calibration flag to it (see Done) and offers a band re-freeze as an
-owner option.
-
-**Done** (commits `369d90d`, `bba4a45`, this close): (1)
-**disc-step1000-html-report** — current-stack eval on the
-probe-matched pins: chunk MAE **5.763** vs state-copy 7.671 (paired
-−1.95), wrist_roll 12.31 worst motor; reproduces the old-stack parity
-5.7626 to 3 decimals (in-train 5.8989 = the known ×1.024
-probe-vs-eval shift). HTML+JSON on fontaine-reports, reports.md
-section. (2) **disc-step1000-sim100-baseline** ridden end-to-end
-(~2.2/3 GPU-h, rc 0, 0 strikes): **11/100** grasps, mean progress
-2.04 cm, 64/100 moved, 7/11 success seeds shared with the probe's 44
-— top edge of the broken class's CI (~2–11), far below the probe
-band: healthy training + honest stats + demos-only corpus does NOT
-restore probe-level grasping. Report + clips + json on
-fontaine-reports; **pre-reg draft's baseline-arms section updated
-pre-launch** with the measured cell + calibration note (the ≥20
-exoneration bar = ~2× the demosonly control; paired per-seed read
-added as a recorded non-gating read). Result post in-channel
-(id 1539128272238022686). (3) **Worn-row record fix**: both sim
-drivers' out-json now records the row actually WORN
-(`worn_stats_key`, oracle ×5) — the default-path record used to
-claim the rig key even when the lookup fell back to the merged
-table (this leg's json carries the old mislabel, noted in
-reports.md). (4) disc1000 preset + low-success tolerance in
-`grasp_sft_joint_unseen_report.py` (smoke-tested on synthetic 4- and
-0-success jsons before the real data). (5) **k4l2 panel leg run to
-completion** (04:57Z, ~0.5 GPU-h; protocol pinned in
-`eval_disc1000_k4l2_panel.sh` — the pdnorm endpoint leg must copy
-it): chunk MAE **58.14** vs state-copy 8.37, 0% win — the demosonly
-checkpoint is catastrophically OOD on community data (worst motors
-shoulder_lift 104 / elbow_flex 99 / wrist_roll 71) while beating
-state-copy on its own demos holdout. Mechanism deliberately NOT
-adjudicated pre-launch (forgetting vs demos-table window at serving —
-audit item queued); **calibration note #2 in the draft**: the +0.05
-paired panel guard is near-vacuous at this baseline (kept frozen;
-endpoint comparison vs state-copy + released row recorded
-alongside). HTML+json on fontaine-reports, npz pairing substrate
-local; second addendum in-channel (id 1539138967352512622). (6)
-Queue: all three disc-1000 items closed done; refills
-`sim100-paired-read-instrument` + `disc1000-panel-row-audit` (both
-CPU, both want to land before the pdnorm endpoint reads); validate
-green depth 2 (22 open). Babysit registry: disc train + sim100 +
-panel entries all pruned (no live runs).
-
-**Next**: `queue_cli.py next` → **sim100-paired-read-instrument**
-then **disc1000-panel-row-audit** (both CPU, un-gated). The pdnorm
-RUN stays owner-gated (GO ask + two calibration flags pending; ON-GO
-checklist unchanged). `run_work_next` ARMED — GPU idle but the
-CPU-side queue is non-empty.*
-
 ## Utilization footer
+
+Session 2026-08-18 06:16–06:1xZ (tick; 0 GPU-h — H100 idle by design,
+no live runs): **adjacent quiet tick one minute after the 06:15 work
+close — GO-ask polls 06:16 + 06:18Z still quiet (~4h24m), read + history
++ inbox empty, registry reason current, queue green depth 2 (22
+open)** — `run_work_next` stays ARMED: chained session owns
+disc1000-panel-row-audit + pdnorm-endpoint-report-paired-section.
 
 Session 2026-08-18 05:48–06:1xZ (work, exploit; 0 GPU-h — CPU-only
 instrument item, H100 held for the owner-gated pdnorm launch):
@@ -161,23 +120,6 @@ instrument item, H100 held for the owner-gated pdnorm launch):
 disc-1000: +33 CI95 [22, 44], McNemar 37-vs-4), oracles ×7,
 check.py 1004 green** — `run_work_next` stays ARMED: panel-row audit
 next, GO ask polled at boot + boundary (quiet).
-
-Session 2026-08-18 05:45–05:4xZ (tick; 0 GPU-h — H100 idle by design,
-no live runs): **quiet tick — GO ask (01:54Z) + both calibration
-addenda still pending at ~3h50m; read + history + inbox all empty of
-new signals, registry declared-reason current, queue green depth 2
-(22 open)** — `run_work_next` stays ARMED: the chained work session
-owns sim100-paired-read-instrument + disc1000-panel-row-audit (both
-CPU) and polls the GO ask at every boundary.
-
-Session 2026-08-18 02:04–05:2xZ (work, exploit; ~2.8 GPU-h in-session
-— HTML report ~0.1 + sim100 baseline ~2.2 + k4l2 panel leg ~0.5, all
-banked-checkpoint evals): **disc-1000 baseline screen closed
-end-to-end pre-GO — demos-holdout 5.763 / sim100 11/100 / panel 58.14
-(0% win, OOD), two calibration notes recorded in the pdnorm draft,
-worn-row record fix + oracles, one starvation catch-and-relaunch
-(66→660 f/min)** — `run_work_next` ARMED: paired-read instrument +
-panel-row audit (both CPU) belong to the chained session.
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-10
 00:00Z → 2026-08-17 19:45Z; rebased 08-17 from per-run prune records
