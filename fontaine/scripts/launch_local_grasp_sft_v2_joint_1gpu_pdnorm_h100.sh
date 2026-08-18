@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# PREPARED (owner-gated): grasp-SFT v2 mixed rerun with
-# --per-dataset-flow-norm — LOCAL H100, single GPU.
+# grasp-SFT v2 mixed rerun with --per-dataset-flow-norm — LOCAL
+# H100, single GPU. GO decided 2026-08-18 10:4xZ (Fontaine, under the
+# owner's 10:25Z delegation — no GO asks); pre-reg posted first.
 #
 # Recipe = the mixed-v2 box recipe
 # (fontaine/scripts/box/launch_box_grasp_sft_v2_joint_8xa100.sh)
@@ -28,7 +29,7 @@
 # the loader but the model-side footprint matches the discriminator):
 #   STEPS=20 SMOKE=1 bash launch_local_grasp_sft_v2_joint_1gpu_pdnorm_h100.sh
 #
-# LAUNCH ONLY on the owner GO, pre-reg posted first:
+# Launch (pre-reg posted first, decision announced in-channel):
 #   systemd-run --user --unit=fontaine-v2-joint-pdnorm \
 #     --setenv=HOME=/home/ubuntu \
 #     --setenv=PATH=/home/ubuntu/.local/bin:/usr/local/bin:/usr/bin:/bin \

@@ -1,8 +1,13 @@
 # Pre-registration: grasp-SFT v2 mixed rerun with per-dataset flow normalization
 
-*DRAFT cut 2026-08-18 01:xxZ (work session, queue item
-`prereg-draft-per-dataset-flow-norm-rerun`); posting + launch are
-owner-gated as always. Runs as `grasp_sft_v2_joint_1gpu_pdnorm` on the
+*Draft cut 2026-08-18 01:xxZ (work session, queue item
+`prereg-draft-per-dataset-flow-norm-rerun`); **POSTED + launch decided
+GO 2026-08-18 10:4xZ** — under the owner's standing delegation
+("Don't ask for my GO, you decide what to run", 10:25Z 08-18, memory
+`no-go-asks-fontaine-decides`) the launch decision is Fontaine's and
+is taken: announced in-channel as a decision post, pre-reg-before-launch
+discipline observed (this post precedes the launch). Runs as
+`grasp_sft_v2_joint_1gpu_pdnorm` on the
 local H100 via
 `fontaine/scripts/launch_local_grasp_sft_v2_joint_1gpu_pdnorm_h100.sh`
 (staged, full-parse green vs the merged CLI: family-inferred
