@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-18T06:05:00Z
+**Updated:** 2026-08-18T06:31:00Z
 
-**Depth call:** depth 2 queued (disc1000-panel-row-audit + pdnorm-endpoint-report-paired-section, both CPU un-gated) after the paired-read-instrument close.
+**Depth call:** depth 2 queued (pdnorm-endpoint-report-paired-section + pdnorm-prereg-panel-guard-recalibration, both CPU un-gated) after the disc1000-panel-row-audit close.
 
-**22 open** (Live 0 · Queued 2 · Blocked 20 · Done 224)
+**22 open** (Live 0 · Queued 2 · Blocked 20 · Done 225)
 
 ## 🔴 Live (0)
 
@@ -18,6 +18,20 @@
 
 *ready — waiting on a window or a boundary*
 
+**`pdnorm-prereg-panel-guard-recalibration`** · `cpu`
+
+Recalibrate the pdnorm pre-reg's panel expectations from the wear audit (PRE-GO, draft-only edit): the +0.05-vs-baseline panel guard was framed against 58.14, of which ~half is pure serving-window re-expression (audit: re-worn di…
+
+**boundary:** Queued 06:3xZ 08-18 work session (refill at the row-audit close, charter section 4). CPU, un-gated, draft-only; wants to land before the pdnorm endpoint panel read is interpreted (same consumer as the audit). If GO arrives first, the ON-GO checklist proceeds unchanged — this item then lands as a record-only addendum. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
+
+<details><summary>full record</summary>
+
+Recalibrate the pdnorm pre-reg's panel expectations from the wear audit (PRE-GO, draft-only edit): the +0.05-vs-baseline panel guard was framed against 58.14, of which ~half is pure serving-window re-expression (audit: re-worn disc-1000 27.40, repo-midpoint null 25.15, floor 14.40). Fold the audit's reference points into the draft's calibration note as the panel read's interpretation anchors: a pdnorm endpoint wearing honest rows should be read against 27.40/25.15 (wear-corrected class) with state-copy 8.37 the real bar, not against the raw 58.14. Record-only if the owner GO lands first — the frozen guard itself stays frozen; this edits interpretation anchors, not gates.
+
+</details>
+
+---
+
 **`pdnorm-endpoint-report-paired-section`** · `cpu`
 
 pdnorm endpoint HTML report: paired-vs-baseline section — wire the frozen sim100_paired_read.py output (success-count delta CI, discordant-seed McNemar table, progress delta CI vs disc1000_baseline/flow_unseen.json) into grasp_sf…
@@ -27,20 +41,6 @@ pdnorm endpoint HTML report: paired-vs-baseline section — wire the frozen sim1
 <details><summary>full record</summary>
 
 pdnorm endpoint HTML report: paired-vs-baseline section — wire the frozen sim100_paired_read.py output (success-count delta CI, discordant-seed McNemar table, progress delta CI vs disc1000_baseline/flow_unseen.json) into grasp_sft_joint_unseen_report.py's disc1000 preset so the pdnorm endpoint report renders the recorded non-gating paired read ALONGSIDE the frozen absolute bands (11-19 ambiguous band context), instead of the read living only in a bare analysis json. Charts follow the dark-mode eval-report scheme; smoke on the banked probe-vs-disc1000 pair before the real endpoint data.
-
-</details>
-
----
-
-**`disc1000-panel-row-audit`** · `cpu`
-
-Instrument audit for the disc-1000 panel row (58.14): determine which normalization row each panel item WORE in the k4l2 leg
-
-**boundary:** Queued 05:1xZ 08-18 work session (refill at the panel-leg close, charter section 4). CPU, un-gated; wants to land before the pdnorm endpoint panel read is interpreted. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
-
-<details><summary>full record</summary>
-
-Instrument audit for the disc-1000 panel row (58.14): determine which normalization row each panel item WORE in the k4l2 leg — the checkpoint's per-dataset table holds only the demos row (recompute-stats, single dataset), so what does the post-d3dd4d0 eval do for community repos absent from the table (honest per-repo rows recomputed from eval data? checkpoint merged-table fallback?). Read the eval item-wearing code path + the leg json's recorded stats; if the wear is the demos table, quantify the window-crush share of the 58.14 (denorm the npz predictions through plausible alternative rows) vs weight-level forgetting. Decides how the pdnorm endpoint's panel read should be interpreted; CPU-only (npz + code reading).
 
 </details>
 
@@ -328,9 +328,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (224)
+## ✅ Done (225)
 
 *closed — the full record stays in each fold*
+
+**`disc1000-panel-row-audit`** · `cpu`
+
+Instrument audit for the disc-1000 panel row (58.14): determine which normalization row each panel item WORE in the k4l2 leg
+
+**boundary:** Queued 05:1xZ 08-18 work session (refill at the panel-leg close, charter section 4). CPU, un-gated; wants to land before the pdnorm endpoint panel read is interpreted. | DONE 06:3xZ 08-18 work session: disc1000_row_audit.py landed, oracle tests/test_disc1000_row_audit.py x7 green; reports/analysis__disc1000_panel_row_audit.json pushed to fontaine-reports (curl 200), reports.md disc-1000 section extended + panel-leg hedge resolved. WEAR FACT: checkpoint records the MERGED scheme (normalization q01q99, per_dataset_flow_norm false) — the eval never consults per-dataset rows; every item wore the recomputed demos-only global table (no lookup to miss). DECOMPOSITION on the 58.14 (anchors reproduced 1e-3): 85.8% of core truth elements outside the worn box but box FLOOR only 14.40 and predictions NOT edge-saturated — the wear hurts via affine re-expression, not the clamp; re-wear through honest per-repo rows (838) halves to 27.40 (released table 54.40); BUT re-worn model &lt; constant repo-midpoint null 25.15, and preds sit 22.6 from the demos action mean (truth 58.2 away). Verdict: ~half serving-window, ~half collapse to the demos prior (state-crush + forgetting inseparable post-hoc). pdnorm panel read reference points: 27.40 / 25.15; real bar stays state-copy 8.37. · [pre-reg](posts/2026-08-xx-prereg-grasp-sft-v2-joint-pdnorm.md)
+
+<details><summary>full record</summary>
+
+Instrument audit for the disc-1000 panel row (58.14): determine which normalization row each panel item WORE in the k4l2 leg — the checkpoint's per-dataset table holds only the demos row (recompute-stats, single dataset), so what does the post-d3dd4d0 eval do for community repos absent from the table (honest per-repo rows recomputed from eval data? checkpoint merged-table fallback?). Read the eval item-wearing code path + the leg json's recorded stats; if the wear is the demos table, quantify the window-crush share of the 58.14 (denorm the npz predictions through plausible alternative rows) vs weight-level forgetting. Decides how the pdnorm endpoint's panel read should be interpreted; CPU-only (npz + code reading).
+
+</details>
+
+---
 
 **`sim100-paired-read-instrument`** · `cpu`
 

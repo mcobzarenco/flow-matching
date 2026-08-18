@@ -13,7 +13,56 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-18 06:19–06:3xZ (real `date -u` at write: 06:33) —
+work session (chained, bounded): **disc1000-panel-row-audit DONE —
+the 58.14 panel row is adjudicated: ~half serving-window
+re-expression, ~half genuine collapse to the demos prior. The wear
+fact is cleaner than the queue item feared: the checkpoint records
+the MERGED scheme, so no per-dataset lookup ever ran.***
+
+**Status**: no live runs — H100 idle by design (held for the
+owner-gated pdnorm launch; `no_live_runs_reason` current). Queue
+green depth 2 (22 open). GO ask (01:54Z) + both calibration addenda +
+the paired-read note still unanswered at ~4h40m; polled at boot and
+at the work boundary, inbox empty throughout.
+
+**Steering**: none — `read` empty at every poll, unreplied inbox
+empty.
+
+**Done** (commit `00965c8`): **disc1000-panel-row-audit** —
+`fontaine/scripts/disc1000_row_audit.py` (anchor-refusing wear audit
+on the leg npz: box floor, edge-saturation, exact-inversion re-wear
+through per-repo/released rows, repo-midpoint null, demos-prior
+collapse probe), oracle `tests/test_disc1000_row_audit.py` ×7 green.
+Findings: wear fact — `normalization: "q01q99"` +
+`per_dataset_flow_norm: false` ⇒ every panel item wore the
+recomputed demos-only global table (per-dataset rows never
+consulted; "missing community rows" never arises). Decomposition —
+85.8% of core truth elements outside the worn box but the box FLOOR
+is only 14.40 of the 58.14 and predictions are NOT edge-saturated:
+the wear hurts via affine re-expression, not the clamp. Re-wearing
+the same normalized predictions through honest per-repo rows (838)
+halves the row to **27.40** — but that is WORSE than a constant
+repo-box-midpoint null (**25.15**), and raw predictions sit 22.6
+from the constant demos action mean while truth sits 58.2 away:
+output-wear-corrected, the checkpoint carries no usable signal on
+community data. Analysis json on fontaine-reports (curl 200),
+reports.md disc-1000 section extended + the panel-leg hedge
+resolved. In-channel note id 1539162750654218351. Queue: item
+closed done; refill
+`pdnorm-prereg-panel-guard-recalibration` (CPU, draft-only —
+fold 27.40/25.15 into the pdnorm draft's interpretation anchors).
+
+**Next**: `queue_cli.py next` → **pdnorm-endpoint-report-paired-section**
+then **pdnorm-prereg-panel-guard-recalibration** (both CPU,
+un-gated). The pdnorm RUN stays owner-gated (ON-GO checklist
+unchanged); its panel read now has wear-corrected reference points
+(27.40 re-worn baseline / 25.15 midpoint null; real bar state-copy
+8.37). `run_work_next` stays ARMED — GPU idle but the CPU-side queue
+is non-empty.*
 
 *Updated 2026-08-18 06:16–06:1xZ (real `date -u` at write: 06:18) —
 tick: **adjacent quiet tick (fired one minute after the 06:15 work
@@ -75,37 +124,16 @@ pdnorm RUN stays owner-gated (ON-GO checklist unchanged).
 `run_work_next` stays ARMED — GPU idle but the CPU-side queue is
 non-empty.*
 
-*Updated 2026-08-18 05:45–05:4xZ (real `date -u` at write: 05:46) —
-tick: **quiet tick — GO ask (01:54Z) still pending at ~3h50m with no
-owner signal; H100 idle by design, `run_work_next` stays ARMED for the
-CPU queue heads.***
-
-**Status**: no live runs — H100 idle (0% util, 0 MiB; owner
-policy-server not up at check), `no_live_runs_reason` current in the
-babysit registry (H100 held for the owner-gated pdnorm launch). Queue
-green depth 2 (22 open). The pdnorm run stays staged and owner-gated
-(GO ask 01:54Z + two pre-launch calibration addenda 04:26/05:08Z, all
-unanswered).
-
-**Steering**: none — `read` empty, unreplied inbox empty, `history -n
-5` shows only our own five posts with no new reactions. At ~4 h old
-the GO ask is out of conversational cadence; the chained work session
-polls at boot and every boundary per the standing rule.
-
-**Done**: Discord read + history + inbox checks; GPU-idle +
-policy-server check; babysit registry verified (all entries pruned,
-declared reason current); queue validate green; `run_work_next`
-confirmed ARMED (touched 04:29, left in place). No in-channel post —
-the 01:54Z ask + both addenda are current, nothing new to report.
-
-**Next**: chained work session (4-h budget) owns
-**sim100-paired-read-instrument** then **disc1000-panel-row-audit**
-(both CPU, un-gated — both want to land before the pdnorm endpoint
-reads), polling the GO ask at boot and each boundary. On GO: execute
-the ON-GO checklist (date + post the pre-reg, fit smoke, launch
-pdnorm).*
-
 ## Utilization footer
+
+Session 2026-08-18 06:19–06:3xZ (work, exploit; 0 GPU-h — CPU-only
+audit item, H100 held for the owner-gated pdnorm launch): **disc-1000
+panel row 58.14 adjudicated — wear fact (merged scheme, demos-only
+global table, no per-dataset lookup), ~half window re-expression
+(re-worn 27.40) / ~half demos-prior collapse (midpoint null 25.15
+beats the re-worn model), oracles ×7, analysis json live** —
+`run_work_next` stays ARMED: pdnorm-endpoint-report-paired-section
+next, GO ask polled at boot + boundary (quiet).
 
 Session 2026-08-18 06:16–06:1xZ (tick; 0 GPU-h — H100 idle by design,
 no live runs): **adjacent quiet tick one minute after the 06:15 work
@@ -113,13 +141,6 @@ close — GO-ask polls 06:16 + 06:18Z still quiet (~4h24m), read + history
 + inbox empty, registry reason current, queue green depth 2 (22
 open)** — `run_work_next` stays ARMED: chained session owns
 disc1000-panel-row-audit + pdnorm-endpoint-report-paired-section.
-
-Session 2026-08-18 05:48–06:1xZ (work, exploit; 0 GPU-h — CPU-only
-instrument item, H100 held for the owner-gated pdnorm launch):
-**paired-read instrument frozen pre-data + retro-validated (probe vs
-disc-1000: +33 CI95 [22, 44], McNemar 37-vs-4), oracles ×7,
-check.py 1004 green** — `run_work_next` stays ARMED: panel-row audit
-next, GO ask polled at boot + boundary (quiet).
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-10
 00:00Z → 2026-08-17 19:45Z; rebased 08-17 from per-run prune records
