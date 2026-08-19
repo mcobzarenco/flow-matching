@@ -1,19 +1,41 @@
 # Now
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-19 12:10–12:1xZ (real `date -u` at write: 12:13) —
+tick: **quiet tick, one new signal — owner 👍 on the 11:02Z
+v1-fleet-upgrade post caught via the history check (agreement with
+the schema-1 fleet retirement, recorded per the reaction-steering
+rule, no reply owed). Both owner calls still unanswered ~55 min after
+the 11:19Z summary; `run_work_next` already armed, closing fast to
+hand off.***
+
+**Status**: no live runs — babysit registry empty (declared reason
+current), H100 idle (0 MiB / 0%), policy-server not up; RAM 196 GiB
+available, disk 202 GB free (93% used —
+`disk-retirement-sweep-banked-sources` queued, ~41G payoff). The
+staged demos+one-rig cell remains the only GPU item and pends the
+owner isolation call.
+
+**Steering**: NEW — owner 👍 on the v1-fleet-upgrade EXECUTED post
+(11:02:44Z, surfaced only via `history -n 5`; the 11:40 tick's
+history check predates it and the 12:03 work close didn't run one).
+Read + inbox empty otherwise. The reaction shows the owner has been
+in-channel, yet the two calls stay open (11:19Z post …522815, ~55
+min): (1) demos+one-rig isolation → rec GO; (2) R2 band → rec AMEND
++ ACTIVATE from 7%. The registered pdnorm carve-out keeps (1) an
+owner call despite the standing launch delegation; the chained
+session keeps the polls.
+
+**Done**: boot (pull clean, queue validate green depth 2 / 16 open),
+Discord read + history, standing GPU/free/df checks, 👍 recorded. No
+post (reaction = agreement, no reply owed; result posts current). No
+in-session hold — the marker was already armed.
+
+**Next**: chained work session takes CPU items
+`flow-train-memorization-panel` (all inputs banked) and
+`disk-retirement-sweep-banked-sources`, and keeps the owner-call
+polls; `demos-plus-one-rig-exec` + R2 activation stay owner calls.*
 
 *Updated 2026-08-19 11:42–12:0xZ (real `date -u` at write: 12:03) —
 work session (chained): **token-probe-html-gallery EXECUTED + CLOSED —
@@ -87,50 +109,18 @@ armed at the 11:39 work-session close.
 `disk-retirement-sweep-banked-sources`, and keeps the owner-call
 polls; `demos-plus-one-rig-exec` + R2 activation stay owner calls.*
 
-*Updated 2026-08-19 11:07–11:2xZ (real `date -u` at write: 11:20) —
-work session (chained): **hf-evacuation-audit-v2-fleet EXECUTED +
-CLOSED — the schema-2 fleet is fully recoverable off-box, ZERO weight
-gaps, zero uploads needed; every claim verified by sha256 or a live
-converter re-run. Owner surfaced mid-session ("What are my calls?") —
-answered in-channel with both pending calls + recommendations.***
-
-**Status**: no live runs — babysit registry empty, H100 idle (0 MiB /
-0%) all session, policy-server not up; RAM 196 GiB available, disk
-208 GB free. CPU + network only (0 GPU-h). The staged demos+one-rig
-cell remains the only GPU item and pends the owner isolation call.
-
-**Steering**: owner asked "What are my calls?" (11:12:53Z, id
-…921930) — replied 11:19Z (post …522815) with the two open calls +
-recs: (1) demos+one-rig isolation → **rec GO** (frozen cell, launcher
-parse-green, H100 idle); (2) R2 band → **rec AMEND + ACTIVATE R2
-from the 7% checkpoint** (decode diagnosis: greedy magnitude
-attenuation, not calibration; R2 samples T=1.0), wave-0 abort bar
-mixed <20%. Acked; awaiting the decisions — tight polls live.
-
-**Done**: `hf-evacuation-audit-v2-fleet` EXECUTED + CLOSED. Method:
-343 HF LFS sha256s enumerated + local `sha256sum` + two live
-`convert_molmoact2` re-runs. Verified per `_v2`: er_60k trainer
-source bitwise on HF (backbone/expert/prompt; `aux_loss_weight 0.5`
-in the banked config reproduces `narration_weight 0.5` through the
-committed rename fallback); joint_corrected v1 dir bitwise on HF
-(schema_version 1); base + jointsurface experts re-extracted from
-the public allenai snapshot **bitwise equal** (`4517d649…`); stage-C
-pair re-extracted from the stagec-hf export **bitwise equal**
-(`d840174d…`), with the HF model-delta bitwise = local staging
-(`98f32f4d…`) and the overlay README banked. corrected_v1 ==
-stagec expert bitwise (metadata-only variant). The two 2.2G legacy
-expert-source dirs hold zero unique bytes — safe to retire. Public
-allenai repo dependency flagged as a recorded acceptance. Mapping
-table: posts/2026-08-19-hf-evacuation-audit-v2-fleet.md.
-
-**Next**: `queue_cli.py next` → CPU items `token-probe-html-gallery`
-(all inputs banked) and NEW refill
-`disk-retirement-sweep-banked-sources` (er_60k trainer dir 37G
-sha-audit + the two legacy dirs, ~41G payoff, disk 93% used);
-`demos-plus-one-rig-exec` + R2 activation pend the owner replies to
-…522815.*
-
 ## Utilization footer
+
+Session 2026-08-19 12:10–12:1xZ (tick; 0 GPU-h — no live runs, H100
+idle): **quiet tick with one new signal — owner 👍 on the 11:02Z
+v1-fleet-upgrade post caught via the history check, recorded as
+agreement steering (no reply owed); read + inbox empty otherwise;
+owner calls (demos+one-rig, R2 band) still unanswered ~55 min after
+the 11:19Z summary; `run_work_next` already armed, tick closed fast
+to hand off** — the chained work session takes CPU items
+`flow-train-memorization-panel` + `disk-retirement-sweep-banked-sources`
+and keeps the owner-call polls; both GPU actions stay owner-gated.
+Queue green depth 2 (16 open). Disk 202 GB free (93% used).
 
 Session 2026-08-19 11:42–12:0xZ (work, chained; 0 GPU-h — CPU only,
 H100 idle throughout): **token-probe-html-gallery CLOSED — the token
@@ -143,18 +133,6 @@ post-processing); Discord quiet at boot + both boundary polls; owner
 calls (demos+one-rig, R2 band) still pending, re-surfaced in the
 pointer post; queue green depth 2 (16 open: refill
 `flow-train-memorization-panel`).
-
-Session 2026-08-19 11:40–11:4xZ (tick; 0 GPU-h — no live runs, H100
-idle): **quiet tick right after the hf-evacuation-audit close — GPU
-0 MiB / 0%, RAM 196 GiB available, disk 205 GB free (93% used);
-Discord fully quiet (read empty, inbox empty, no new reactions);
-no in-session hold — `run_work_next` was already armed at the 11:39
-close, so the tick closed fast to hand off** — the chained work
-session takes CPU items `token-probe-html-gallery` +
-`disk-retirement-sweep-banked-sources` and keeps the owner-call polls
-(demos+one-rig isolation, R2 band — both still unanswered ~22 min
-after the 11:19Z summary post); both GPU actions stay owner-gated.
-Queue green depth 2 (16 open).
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
