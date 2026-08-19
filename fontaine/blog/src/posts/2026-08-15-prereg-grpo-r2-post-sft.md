@@ -464,3 +464,82 @@ preflight 2.25 (ran ~1.7× the greedy leg's pace) + aborted wave ~1.2
 steps ~10 + boundary legs re-priced at measured paces (greedy ~1.3,
 sampled ~2.25, flow ~1.3) ≈ ~14.9. **Total expected ~18.5, gate
 ≤ 20.** Kill rules unchanged.
+
+### A5 Serving-parity postmortem + launch gate (2026-08-19 19:4xZ — the fix behind the 18:06:48Z kill)
+
+**What the A4 relaunch showed (kill post 18:08Z).** The 17:46:56Z
+relaunch — substrate genuinely `standins`, verified in meta and at
+the worker seam — read 0/20 at the step-0 in-loop eval with **all 20
+scenes bit-frozen** replan 0→29, while the greedy anchor leg
+displaces the boat in 59/100 episodes (P(0 of 20 move) ≈ 2×10⁻⁸).
+The loop's serving path is inert on the v2 base independent of
+substrate. Killed at 18:06:48Z, ~0.33 GPU-h in (lane total ~4.0).
+
+**Root cause (convicted in code, quantified).** The retirement
+phase-4 re-point swapped the loop's port predictor for
+`MolmoAct2DiscreteStack` but carried the port era's **hardcoded
+v30→v21 joint-frame shim** (shoulder_lift mirrored, lift/elbow +90°)
+over unconditionally. That shim is correct exactly for a checkpoint
+whose recorded q01/q99 table is in the pre-PR#777 **v2.1** frame —
+the unremapped official releases the port served (R1-B, which
+interacted, ran `allenai/MolmoAct2-SO100_101`, a v2.1-table HF
+layout). Every bijou-format table in play today is **v3.0-frame**
+(bijou-trained like the v2 base, corrected-table recomputes, and the
+conversion-remapped release alike — docs/so101-joint-conventions.md
+§3–6). On the v2 base the numbers are decisive: the shim maps sim
+lift ∈ [−103, +29]° to [61, 193]° against a table row of
+[−110, +12]° — the normalized value clamps at **+1.0 on every
+frame** (elbow likewise), so the policy is state-blind on the two
+joints that matter; and the decoded chunk comes back through the
+shim's inverse (lift 90−a, elbow a−90), commanding poses outside the
+trained range every replan. Arm pinned off-workspace, boat never
+touched, distances bit-frozen — the exact telemetry of both kills.
+The doc's §6 warned nothing automatic catches a missing/double remap;
+this was a missing-identity (extra) remap at a seam with no check.
+
+**Exonerated:** the `_batch` seam flagged in the kill post (ACTION
+quantiles passed as `state_stats`) is **inert** — `predict_ar` on the
+ar/joint families detokenizes under the family's own
+`action_quantiles` table and never reads the batch stats; prompt
+state normalizes in `prompt_inputs` before `_batch` is built. Left
+as-is.
+
+**Fix (landed this session, oracle-tested).** `--joint-frame
+{auto, rig, v30-to-v21}` on BOTH sim discrete drivers
+(`sim.grpo_loop`, `sim.rollout_sim_parallel --molmoact2-discrete`),
+resolved through one helper (`resolve_joint_frame`) that reuses
+`JointFrameTransform`'s literals (the rollout CLI's vocabulary —
+`rig` = identity, exactly what BijouPolicy's path applies): `auto`
+fingerprints the checkpoint's state table per the conventions doc §4
+(descending lift pair or far-negative lift → v3.0; lift ≥ +30 with
+elbow corroboration → v2.1) and **refuses** an unclassifiable table;
+an explicit mode that contradicts a classified table is refused too
+— the mismatch class is now unrepresentable at this seam, for old
+lineages and new. Resolved frame recorded in `meta.json`, the rows
+meta (`state_units`), and the driver out-json.
+
+**Parity oracle (CPU, in the suite).**
+`tests/test_joint_frame_parity.py`: the classifier pinned on the
+three real table shapes; refusal semantics pinned; the shim literals
+pinned against `JointFrameTransform` both directions; and **prompt
+parity** — the loop stack's `prompt_inputs` vs the BijouPolicy
+collator on the same observation collate to bit-equal
+`MolmoAct2Inputs` tensors on the tiny fixture. Beyond that seam the
+two paths share `predict_ar` and the family's one quantile table, so
+prompt parity + the identity frame map IS serving parity.
+
+**GPU parity read (REQUIRED LAUNCH GATE, wired).**
+`launch_grpo_r2.sh parity` (~0.7 GPU-h, next free GPU window —
+onerig owns the H100 to ~07:0xZ 08-20): seeds 200–219 greedy on
+standins through BOTH paths — the loop stack under `--joint-frame
+rig` vs BijouPolicy `--serve-head ar`.
+`grpo_r2_parity_verdict.py` rule, registered here: interacted :=
+min_cm < initial_cm − 1e-6 or final_cm ≠ initial_cm; **PASS** iff
+|Δsuccesses| ≤ 2 AND |Δinteracted_frac| ≤ 0.30 (the convicted mode
+reads 0.00 vs ~0.59 — decades outside; the band absorbs decode-stack
+noise, which moves seeds, not fractions). `launch` now refuses
+without a PASS verdict — no override exists. The frozen argv gains
+`--joint-frame rig` (parse-check asserts it); all other pins and the
+A4 budget stand: spent ~4.0, parity +0.7, relaunch ~14.9 → expected
+~19.6 against the **≤ 20 gate** — no re-price, but zero slack: any
+further abort ends the lane at the gate.

@@ -3,7 +3,62 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-19 19:0x–19:5xZ (work session, chained on the 19:04
+tick) — **R2 serving-parity fix EXECUTED + CLOSED (ad70476): the
+18:06Z kill's root cause was the phase-4 re-point carrying the
+port-era v30→v21 joint-frame shim unconditionally — every bijou-format
+table is v3.0-frame, so lift/elbow state bins clamped at +1 every
+frame and the inverted chunk map drove the arm out of range. The
+mismatch class is now UNREPRESENTABLE at the seam (fingerprint + loud
+refusal), parity is oracle-pinned on CPU, and the GPU parity read is
+wired into the launcher as the A5 launch gate.***
+
+**Status**: `grasp_sft_v2_joint_1gpu_pdnorm_onerig` step 250/3000 at
+the 19:35Z poll, ~15.4 s/step (3.9 steps/min), first probe row
+eval_chunk_mae 12.85@250, 67.2 GiB vs the 71 gate, 83% util —
+healthy. Endpoint ETA holds ~07:0x–07:1xZ 08-20; step-1000 drift read
+~22:3x–22:4xZ tonight (tick duty, READ not kill, Δ ≤ +0.30 raw).
+
+**Steering**: none — read + inbox empty at boot and both babysit
+polls (19:07, 19:35).
+
+**Done**: `grpo-r2-serving-parity-fix` EXECUTED + CLOSED (ad70476,
+check.py 1093 green): (1) root cause pinned in code AND quantified —
+the shim maps sim lift [−103,+29]° to [61,193]° against the v2 table
+row [−110,+12]° → normalized state clamps at +1.0 every frame (elbow
+likewise), and chunks return through the inverse (lift 90−a, elbow
+a−90) → poses outside the trained range every replan; exact kill
+telemetry both times. R1-B is no counterexample: it ran the port-era
+HF predictor on a genuine v2.1 table where the shim is correct. (2)
+The kill post's suspect seam (`_batch` action-quantiles-as-
+state_stats) EXONERATED — predict_ar detokenizes under the family
+table; batch stats never reach a decode. (3) Fix: `--joint-frame
+{auto,rig,v30-to-v21}` on both sim discrete drivers through ONE
+resolver (JointFrameTransform literals, test-pinned); auto
+fingerprints the state table (conventions doc §4), refuses
+unclassifiable tables and explicit-vs-classified mismatches; frame
+recorded in meta/rows/out-json. (4) CPU parity oracle
+(`tests/test_joint_frame_parity.py`): classifier on the three real
+table shapes + refusal semantics + shim math both directions +
+loop-vs-BijouPolicy prompt parity BIT-EQUAL on the tiny fixture. (5)
+GPU parity read wired as REQUIRED launch gate: `launch_grpo_r2.sh
+parity` → `grpo_r2_parity_verdict.py` (registered rule: PASS iff
+|Δsucc| ≤ 2 AND |Δinteracted| ≤ 0.30); `launch` refuses without PASS;
+frozen argv pins `--joint-frame rig`. (6) A5 on the pre-reg page;
+budget: lane ~4.0 spent + 0.7 parity + ~14.9 relaunch ≈ 19.6 vs gate
+≤20 — zero slack, any further abort ends the lane. Queue:
+`grpo-r2-boundary-legs-launcher` UNBLOCKED (was gated on this fix),
+`grpo-r2-parity-read-and-relaunch` refilled (gpu-local, post-onerig
+window); depth 3.
+
+**Next**: `queue_cli.py next` → `grpo-r2-boundary-legs-launcher`
+(CPU, stageable any window — chained work session). Boundaries:
+onerig step-1000 drift read ~22:3xZ 08-19 (tick), onerig endpoint
+~07:0xZ 08-20 → `onerig-endpoint-close`, then the R2 parity read +
+relaunch in the freed window (A5 gate, no GO ask).*
 
 *Updated 2026-08-19 19:04Z (tick) — **onerig healthy at first
 post-warmup read; work session chained for the R2 parity fix.***
@@ -78,87 +133,6 @@ parity oracle, launcher-gated); onerig boundaries: step-1000 drift
 read ~22:3xZ 08-19 (tick duty), endpoint ~07:0xZ 08-20 →
 `onerig-endpoint-close`. R2 relaunch only on parity green +
 re-registration (A5).*
-
-*Updated 2026-08-19 16:21–17:5xZ (real `date -u` at write: 17:49) —
-work session (chained): **R2 wave-0 gate FIRED (mixed 0.0 < 0.20,
-17:19Z) → substrate bug convicted in ~20 min → fixed + RELAUNCHED
-17:46:56Z. The loop rendered the 08-18 `patched` production default
-while every R2 anchor + preflight ran `standins` — the stand-ins-era
-policy is fully inert on patched (64/64 wave episodes zero
-interaction, distances bit-frozen). Probe driver on the SAME seeds
-under standins: 6/8 interact — seed band exonerated. Boundary-reads
-instrument also landed; the endpoint is now reads-not-code.***
-
-**Status**: `grpo_r2` LIVE (relaunch 17:46:56Z, unit `grpo-r2`) —
-same A3.4 frozen argv + `--clutter-appearance standins` (A4); first
-poll 3 procs, 28.8 GiB / 64%, step-0 eval rolling. Gates re-armed
-fresh (wave-0 mixed 0.20, knockaway wave0 self-capture, kl_stop
-0.06). Budget: ~3.7 GPU-h spent pre-relaunch (preflight 2.25 +
-aborted patched wave ~1.2 + probe 0.24), expected total ~18.5, gate
-≤20 (A4 re-price, supersedes A3.5's 15). Measured startup gaps: eval
-row ~+16 min (~18:0xZ), wave-0 gate row ~+70 min (~18:5xZ) — riding
-that read in-session. RAM fine, disk 227 GB free (92%).
-
-**Steering**: none — read + inbox empty all session; abort +
-diagnosis + relaunch posted 17:48:09Z (decide + announce, no GO ask
-per the standing rule).
-
-**Done**: (1) `grpo-r2-boundary-reads-instrument` EXECUTED + CLOSED
-(0a405a2, check.py 1083 green): `grpo_r2_boundary_verdict.py` — all
-three A3.4 endpoint legs mechanized (PRIMARY paired per-seed exact
-sign test vs 7/100 with oracle-pinned band edges; sampled vs
-preflight floor record-only, decode-gap movement priced; flow
-euler-10 vs 44/100 with the material line at the exact 5% tail
-≤35/100), loud per-leg provenance guards, `overall_surface` combines
-mechanically. (2) Wave-0 abort postmortem: gate fired 17:19Z, zero
-interaction across 64 episodes diagnosed → probe driver A/B on the
-same seeds convicted the substrate (patched vs standins), receipts
-`outputs/sim/grpo_r2/wave0_diag/` + `loop_wave0abort_patched/`. (3)
-Fix landed (4914f80): `--clutter-appearance` on `sim.grpo_loop`
-(default patched, zero change elsewhere), threaded through wave +
-eval seams, meta-recorded, launcher pins standins, parse-check
-asserts, oracles green. A4 postmortem+re-price on the pre-reg page.
-(4) R2 relaunched on the standing PASS verdict; registry updated
-(started_utc, gate 20, measured startup gaps).
-
-**Next**: in-session — ride to the wave-0 gate row (~18:5xZ): mixed
-≥0.20 (predicted 0.487) = calibration read PASSES and the run
-proceeds; below = a REAL calibration fail this time (group shape is
-the amendment path). `queue_cli.py next` → CPU item
-`grpo-r2-boundary-legs-launcher` (stage the endpoint's three GPU
-legs as one command); R2 boundary ~step 10 (~0x:xxZ 08-20) → three
-legs + `grpo_r2_boundary_verdict` (instrument banked), then
-`demos-plus-one-rig-exec` takes the GPU (owner GO banked).*
-
-*Updated 2026-08-19 16:17–16:2xZ (real `date -u` at write: 16:20) —
-tick: **first babysit poll of live `grpo_r2` — healthy in the
-pre-registered startup window. Liveness by procs+GPU (3 procs,
-28.8 GiB, 62→100% util); babysit exit 1 "no parseable rows" is the
-KNOWN startup read (first train.jsonl row ~17:1xZ). Discord fully
-quiet; `run_work_next` already armed at 16:13, tick closes fast.***
-
-**Status**: `grpo_r2` LIVE and healthy 7 min post-launch — 3 procs,
-28.8 GiB / 100% util (62% momentarily mid-poll: step-0 eval + wave-0
-rollout phase, replan/env cycles). No gate crossing (exit 3 did not
-fire); nothing to judge yet — wave-0 gates (mixed ≥0.20 predicted
-0.487, knockaway self-baseline) read at the first heartbeat row
-~17:1xZ. RAM 162 GiB available, disk 227 GB free (92%).
-
-**Steering**: none — read + inbox empty, history shows nothing after
-our 16:11:50Z launch post, no reactions. No owner calls pending
-(both closed 13:25Z).
-
-**Done**: boot (pull clean), babysit CLI (exit 1 = the registry's
-declared startup gap, procs+GPU confirm liveness), history + inbox
-checks, queue validate green (depth 2, 15 open), standing
-GPU/RAM/disk checks. No post owed (launch post 16:11Z is current;
-next post-worthy event is the first heartbeat read).
-
-**Next**: chained work session (marker armed 16:13) takes CPU item
-`grpo-r2-boundary-reads-instrument` and reads the first train.jsonl
-row ~17:1xZ (wave-0 gate judgment); ride cadence ~30-min babysit;
-boundary ~step 10 (~0x:xxZ 08-20) → boundary legs per A3.4/A3.5,
-then `demos-plus-one-rig-exec` takes the GPU.*
 
 ## Utilization footer
 

@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-19T18:34:00Z
+**Updated:** 2026-08-19T19:41:56Z
 
-**Depth call:** post grpo-r2-activation-amendment-draft close 12:5xZ 08-19: 2 queued CPU-executable (grpo-r2-launch-kit refill, disk-retirement-sweep-banked-sources); demos-plus-one-rig-exec owner-gated, grpo-r2-post-sft owner-band (A3 amendment now frozen, ACTIVATE executes mechanically); H100 free pending the owner isolation call
+**Depth call:** post grpo-r2-serving-parity-fix close 19:5xZ 08-19: 3 queued - grpo-r2-boundary-legs-launcher (CPU, unblocked by the fix), grpo-r2-parity-read-and-relaunch (gpu-local, gated on the onerig window), onerig-endpoint-close (gpu-local, gated on step 3000 ~07:0xZ 08-20)
 
-**16 open** (Live 0 · Queued 2 · Blocked 14 · Done 259)
+**16 open** (Live 0 · Queued 3 · Blocked 13 · Done 260)
 
 ## 🔴 Live (0)
 
@@ -14,9 +14,23 @@
 
 *(empty)*
 
-## 🟢 Queued (2)
+## 🟢 Queued (3)
 
 *ready — waiting on a window or a boundary*
+
+**`grpo-r2-boundary-legs-launcher`** · `cpu`
+
+GRPO R2 boundary-legs launcher (CPU; makes the R2 endpoint one command end-to-end): a `boundary` subcommand on launch_grpo_r2.sh that takes the endpoint checkpoint dir and fires the three A3.4 legs sequentially as ONE detached un…
+
+**boundary:** Queued 16:3xZ 08-19 work session (charter section 4 refill at the grpo-r2-boundary-reads-instrument close; depth-2 restore). Wanted before the R2 boundary (~0x:xxZ 08-20) so the endpoint session is fire-and-read; executable any CPU window while R2 rides. || BLOCKED 18:3xZ 08-19: R2 lane PARKED — run killed 18:06:48Z, the loop's serving stack (MolmoAct2DiscreteStack + official shim) is inert on v2 corrected-table checkpoints while every anchor serves via BijouPolicy. This item resumes only after grpo-r2-serving-parity-fix lands and an R2 relaunch is re-registered. | UNBLOCKED 19:5xZ 08-19: the serving-parity fix landed (A5); this item is CPU-stageable any window again. · [pre-reg](posts/2026-08-15-prereg-grpo-r2-post-sft.md)
+
+<details><summary>full record</summary>
+
+GRPO R2 boundary-legs launcher (CPU; makes the R2 endpoint one command end-to-end): a `boundary` subcommand on launch_grpo_r2.sh that takes the endpoint checkpoint dir and fires the three A3.4 legs sequentially as ONE detached unit — (1) greedy token sim100 (--serve-head ar, no temperature), (2) sampled T=1.0 sim100, (3) flow unseen100 euler-10 — each with the anchors' exact driver + substrate pins (standins, stats_repo_id so101_pick_place_v2, seeds 0-99), ~3.9 GPU-h total per A3.5, chaining into python -m fontaine.scripts.grpo_r2_boundary_verdict (guards already refuse wrong-leg jsons; the launcher's job is to never produce one). Refuses to fire while the grpo-r2 unit is still alive. Parse-check oracle-tested like the kit's, check.py green. NO GPU in this item — it stages; the boundary session fires it.
+
+</details>
+
+---
 
 **`onerig-endpoint-close`** · `gpu-local`
 
@@ -32,21 +46,21 @@ Demos+one-rig endpoint close (gated on unit fontaine-v2-joint-pdnorm-onerig reac
 
 ---
 
-**`grpo-r2-serving-parity-fix`** · `cpu`
+**`grpo-r2-parity-read-and-relaunch`** · `gpu-local`
 
-GRPO R2 serving-parity fix (CPU-first; LAUNCH GATE for any future R2): the loop's rollout/replay serving path (MolmoAct2DiscreteStack + hardcoded official SO-101 shim, er60k-era convention) is INERT on the v2 corrected-table chec…
+GRPO R2 serving-parity GPU read + relaunch (A5 launch gate; next free GPU window - onerig owns the H100 to ~07:0xZ 08-20, endpoint close has priority): (1) ./launch_grpo_r2.sh parity (~0.7 GPU-h detached unit: seeds 200-219 greed…
 
-**boundary:** Queued 18:3xZ 08-19 work session at the R2 kill (post 18:08Z id ...864582). CPU-first executable any window (code diff + oracle); the cheap GPU parity read waits for a GPU-free window (onerig owns the H100 through ~07:0xZ 08-20). R2 relaunch (fresh ~12.6 GPU-h) only on parity green + re-registration. · [pre-reg](posts/2026-08-15-prereg-grpo-r2-post-sft.md)
+**boundary:** Queued 19:5xZ 08-19 at the serving-parity fix close (A5). Fires in the first GPU-free window AFTER onerig-endpoint-close (endpoint ETA ~07:0xZ 08-20 + eval legs ~1.5 GPU-h). · [pre-reg](posts/2026-08-15-prereg-grpo-r2-post-sft.md)
 
 <details><summary>full record</summary>
 
-GRPO R2 serving-parity fix (CPU-first; LAUNCH GATE for any future R2): the loop's rollout/replay serving path (MolmoAct2DiscreteStack + hardcoded official SO-101 shim, er60k-era convention) is INERT on the v2 corrected-table checkpoint while BijouPolicy (every R2 anchor, the preflight PASS, the wave0_diag probe) interacts — receipts: relaunch step-0 eval 0/20 ALL scenes bit-frozen under verified standins (P~2e-8 vs the greedy anchor leg's 59/100 displacement); R1-B on the released ckpt through the same stack interacted (knockaway 0.33-0.45). Work: (1) diff the two serving paths on the v2 checkpoint end-to-end (state normalization in, action denorm out; FIRST look: grpo_replay._batch builds ONE NormStats from ACTION q01/q99 and passes it as BOTH action_stats and state_stats; also the unconditional official shim vs the corrected table); (2) fix so the loop path is convention-identical to BijouPolicy for v2-class checkpoints (or serves THROUGH the same seam), defaults preserving er60k-era behavior for old runs; (3) PARITY ORACLE: fixed synthetic inputs through both paths must produce matching sim-unit actions (tolerance stated), plus a cheap GPU parity read (in-loop eval band vs rollout_sim on the same seeds, counts must be compatible) wired into the R2 launcher as a required preflight leg; (4) A5 amendment on the pre-reg page + relaunch decision announced. check.py green; oracles pin the seam.
+GRPO R2 serving-parity GPU read + relaunch (A5 launch gate; next free GPU window - onerig owns the H100 to ~07:0xZ 08-20, endpoint close has priority): (1) ./launch_grpo_r2.sh parity (~0.7 GPU-h detached unit: seeds 200-219 greedy standins through BOTH serving paths - loop stack --joint-frame rig vs BijouPolicy --serve-head ar - chaining grpo_r2_parity_verdict.py; registered rule PASS iff |dSuccesses|&lt;=2 AND |dInteractedFrac|&lt;=0.30, the convicted mode reads 0.00 vs ~0.59); (2) on PASS: ./launch_grpo_r2.sh launch fires the A3.4/A4/A5 frozen argv mechanically (preflight PASS stands, gates re-arm fresh, no GO ask per the standing rule) + babysit entry + announce; (3) on FAIL: park the lane, bank the two jsons, postmortem post - no override exists. Budget: lane spent ~4.0 + parity 0.7 + relaunch ~14.9 = ~19.6 vs the A4 gate &lt;=20 (zero slack: any further abort ends the lane at the gate).
 
 </details>
 
 ---
 
-## 🟡 Blocked (14)
+## 🟡 Blocked (13)
 
 *waiting on a prerequisite, a boundary, or the owner*
 
@@ -232,21 +246,7 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-**`grpo-r2-boundary-legs-launcher`** · `cpu`
-
-GRPO R2 boundary-legs launcher (CPU; makes the R2 endpoint one command end-to-end): a `boundary` subcommand on launch_grpo_r2.sh that takes the endpoint checkpoint dir and fires the three A3.4 legs sequentially as ONE detached un…
-
-**boundary:** Queued 16:3xZ 08-19 work session (charter section 4 refill at the grpo-r2-boundary-reads-instrument close; depth-2 restore). Wanted before the R2 boundary (~0x:xxZ 08-20) so the endpoint session is fire-and-read; executable any CPU window while R2 rides. || BLOCKED 18:3xZ 08-19: R2 lane PARKED — run killed 18:06:48Z, the loop's serving stack (MolmoAct2DiscreteStack + official shim) is inert on v2 corrected-table checkpoints while every anchor serves via BijouPolicy. This item resumes only after grpo-r2-serving-parity-fix lands and an R2 relaunch is re-registered. · [pre-reg](posts/2026-08-15-prereg-grpo-r2-post-sft.md)
-
-<details><summary>full record</summary>
-
-GRPO R2 boundary-legs launcher (CPU; makes the R2 endpoint one command end-to-end): a `boundary` subcommand on launch_grpo_r2.sh that takes the endpoint checkpoint dir and fires the three A3.4 legs sequentially as ONE detached unit — (1) greedy token sim100 (--serve-head ar, no temperature), (2) sampled T=1.0 sim100, (3) flow unseen100 euler-10 — each with the anchors' exact driver + substrate pins (standins, stats_repo_id so101_pick_place_v2, seeds 0-99), ~3.9 GPU-h total per A3.5, chaining into python -m fontaine.scripts.grpo_r2_boundary_verdict (guards already refuse wrong-leg jsons; the launcher's job is to never produce one). Refuses to fire while the grpo-r2 unit is still alive. Parse-check oracle-tested like the kit's, check.py green. NO GPU in this item — it stages; the boundary session fires it.
-
-</details>
-
----
-
-## ✅ Done (259)
+## ✅ Done (260)
 
 *closed — the full record stays in each fold*
 
@@ -3869,6 +3869,20 @@ Rebase the now.md utilization footer's trailing-7-day GPU-hours figure: the base
 <details><summary>full record</summary>
 
 Rebase the now.md utilization footer's trailing-7-day GPU-hours figure: the baseline is dated 2026-08-06 23:3xZ (11 days stale) and the 'since then' narrative accretes per-run fragments instead of a number. Recompute the true trailing-7-day window (08-10 onward) from the dated session notes in the now archive pages + babysit registry prune records (box runs end at the 08-17 box kill), split experiments/total as before, rewrite the footer baseline to the fresh as-of stamp, and prune the accreted narrative to the standard 2-note form.
+
+</details>
+
+---
+
+**`grpo-r2-serving-parity-fix`** · `cpu`
+
+GRPO R2 serving-parity fix (CPU-first; LAUNCH GATE for any future R2): the loop's rollout/replay serving path (MolmoAct2DiscreteStack + hardcoded official SO-101 shim, er60k-era convention) is INERT on the v2 corrected-table chec…
+
+**boundary:** Queued 18:3xZ 08-19 work session at the R2 kill (post 18:08Z id ...864582). CPU-first executable any window (code diff + oracle); the cheap GPU parity read waits for a GPU-free window (onerig owns the H100 through ~07:0xZ 08-20). R2 relaunch (fresh ~12.6 GPU-h) only on parity green + re-registration. | EXECUTED + CLOSED 19:5xZ 08-19 work session: root cause = the phase-4 re-point carried the port-era v30-to-v21 shim unconditionally while every bijou-format table is v3.0-frame (lift/elbow state bins clamp at +1 every frame, chunk map inverted -&gt; arm out of range, boat untouched); the _batch action-quantiles-as-state_stats seam EXONERATED (predict_ar detokenizes under the family table, batch stats never reach a decode). Fix: --joint-frame {auto,rig,v30-to-v21} on sim.grpo_loop + sim.rollout_sim_parallel --molmoact2-discrete via resolve_joint_frame (JointFrameTransform literals reused; auto fingerprints the state table per docs/so101-joint-conventions.md #4; unclassifiable and explicit-vs-classified mismatches REFUSED loudly). CPU parity oracle tests/test_joint_frame_parity.py (classifier on the 3 real table shapes, refusal semantics, shim literals both directions, loop-vs-BijouPolicy prompt parity BIT-EQUAL on the tiny fixture). GPU parity read wired: launch_grpo_r2.sh parity (~0.7 GPU-h, seeds 200-219 greedy both paths) -&gt; grpo_r2_parity_verdict.py (PASS iff |dSucc|&lt;=2 AND |dInteracted|&lt;=0.30); launch REFUSES without PASS; frozen argv gains --joint-frame rig (parse-check asserts). A5 on the pre-reg page. check.py green. · [pre-reg](posts/2026-08-15-prereg-grpo-r2-post-sft.md)
+
+<details><summary>full record</summary>
+
+GRPO R2 serving-parity fix (CPU-first; LAUNCH GATE for any future R2): the loop's rollout/replay serving path (MolmoAct2DiscreteStack + hardcoded official SO-101 shim, er60k-era convention) is INERT on the v2 corrected-table checkpoint while BijouPolicy (every R2 anchor, the preflight PASS, the wave0_diag probe) interacts — receipts: relaunch step-0 eval 0/20 ALL scenes bit-frozen under verified standins (P~2e-8 vs the greedy anchor leg's 59/100 displacement); R1-B on the released ckpt through the same stack interacted (knockaway 0.33-0.45). Work: (1) diff the two serving paths on the v2 checkpoint end-to-end (state normalization in, action denorm out; FIRST look: grpo_replay._batch builds ONE NormStats from ACTION q01/q99 and passes it as BOTH action_stats and state_stats; also the unconditional official shim vs the corrected table); (2) fix so the loop path is convention-identical to BijouPolicy for v2-class checkpoints (or serves THROUGH the same seam), defaults preserving er60k-era behavior for old runs; (3) PARITY ORACLE: fixed synthetic inputs through both paths must produce matching sim-unit actions (tolerance stated), plus a cheap GPU parity read (in-loop eval band vs rollout_sim on the same seeds, counts must be compatible) wired into the R2 launcher as a required preflight leg; (4) A5 amendment on the pre-reg page + relaunch decision announced. check.py green; oracles pin the seam.
 
 </details>
 
