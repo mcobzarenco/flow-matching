@@ -10,7 +10,51 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-19 11:07–11:2xZ (real `date -u` at write: 11:20) —
+work session (chained): **hf-evacuation-audit-v2-fleet EXECUTED +
+CLOSED — the schema-2 fleet is fully recoverable off-box, ZERO weight
+gaps, zero uploads needed; every claim verified by sha256 or a live
+converter re-run. Owner surfaced mid-session ("What are my calls?") —
+answered in-channel with both pending calls + recommendations.***
+
+**Status**: no live runs — babysit registry empty, H100 idle (0 MiB /
+0%) all session, policy-server not up; RAM 196 GiB available, disk
+208 GB free. CPU + network only (0 GPU-h). The staged demos+one-rig
+cell remains the only GPU item and pends the owner isolation call.
+
+**Steering**: owner asked "What are my calls?" (11:12:53Z, id
+…921930) — replied 11:19Z (post …522815) with the two open calls +
+recs: (1) demos+one-rig isolation → **rec GO** (frozen cell, launcher
+parse-green, H100 idle); (2) R2 band → **rec AMEND + ACTIVATE R2
+from the 7% checkpoint** (decode diagnosis: greedy magnitude
+attenuation, not calibration; R2 samples T=1.0), wave-0 abort bar
+mixed <20%. Acked; awaiting the decisions — tight polls live.
+
+**Done**: `hf-evacuation-audit-v2-fleet` EXECUTED + CLOSED. Method:
+343 HF LFS sha256s enumerated + local `sha256sum` + two live
+`convert_molmoact2` re-runs. Verified per `_v2`: er_60k trainer
+source bitwise on HF (backbone/expert/prompt; `aux_loss_weight 0.5`
+in the banked config reproduces `narration_weight 0.5` through the
+committed rename fallback); joint_corrected v1 dir bitwise on HF
+(schema_version 1); base + jointsurface experts re-extracted from
+the public allenai snapshot **bitwise equal** (`4517d649…`); stage-C
+pair re-extracted from the stagec-hf export **bitwise equal**
+(`d840174d…`), with the HF model-delta bitwise = local staging
+(`98f32f4d…`) and the overlay README banked. corrected_v1 ==
+stagec expert bitwise (metadata-only variant). The two 2.2G legacy
+expert-source dirs hold zero unique bytes — safe to retire. Public
+allenai repo dependency flagged as a recorded acceptance. Mapping
+table: posts/2026-08-19-hf-evacuation-audit-v2-fleet.md.
+
+**Next**: `queue_cli.py next` → CPU items `token-probe-html-gallery`
+(all inputs banked) and NEW refill
+`disk-retirement-sweep-banked-sources` (er_60k trainer dir 37G
+sha-audit + the two legacy dirs, ~41G payoff, disk 93% used);
+`demos-plus-one-rig-exec` + R2 activation pend the owner replies to
+…522815.*
 
 *Updated 2026-08-19 11:04–11:0xZ (real `date -u` at write: 11:05) —
 tick: **quiet tick right after the v1-fleet-upgrade close — no live
@@ -84,36 +128,18 @@ legacy bijou_config expert-source dirs included before any retirement
 decision); `demos-plus-one-rig-exec` + R2 activation stay owner
 calls. `run_work_next` armed at close (CPU queue non-empty).*
 
-*Updated 2026-08-19 10:42–10:5xZ (real `date -u` at write: 10:44) —
-tick: **quiet tick right after the decode-diagnosis close — no live
-runs, H100 idle (0 MiB / 0%), channel quiet; `run_work_next` already
-armed (10:32 marker), so this tick closes fast to hand off to the
-chained work session.***
-
-**Status**: no live runs — babysit registry empty
-(`no_live_runs_reason` current), GPU 0 MiB / 0% (H100 free;
-policy-server not up). RAM 196 GiB available, disk 257 GB free. The
-staged demos+one-rig cell remains the only GPU item and pends the
-owner isolation call.
-
-**Steering**: none — read empty, inbox empty, history (last 5) shows
-no new reactions. OWNER CALLS PENDING: (1) demos+one-rig isolation
-(draft 04:25:54Z, id …759115); (2) the B §3 R2 band (post
-…840340) — now carrying the ACTIVATE-from-7% recommendation +
-receipts (diagnosis post 1539581325588041780).
-
-**Done**: boot (pull clean, queue validate green depth 2 / 16 open),
-Discord read + history, standing free/df + GPU checks. No post
-(quiet interval); no in-session hold — the marker was already armed,
-so the fastest path to resumed polling + queue work is the chained
-session itself.
-
-**Next**: chained work session takes CPU items `v1-fleet-upgrade`
-(staggered, disk checks + no-blind-delete greps) and refill
-`token-probe-html-gallery`, and keeps the owner-call polls;
-`demos-plus-one-rig-exec` + R2 activation stay owner calls.*
-
 ## Utilization footer
+
+Session 2026-08-19 11:07–11:2xZ (work, chained; 0 GPU-h — CPU +
+network only, H100 idle throughout): **hf-evacuation-audit-v2-fleet
+CLOSED — schema-2 fleet fully recoverable off-box, zero weight gaps,
+zero uploads: er_60k + joint_corrected sources bitwise on HF, base +
+stage-C experts proven byte-derivable by live converter re-runs,
+delta bitwise-verified; the two 2.2G legacy dirs hold no unique
+bytes** — exploit (integrity/infra debt); owner surfaced ("What are
+my calls?") — both calls + recs posted in-channel 11:19Z, acked,
+tight polls live; queue green depth 2 (16 open: refill
+`disk-retirement-sweep-banked-sources`).
 
 Session 2026-08-19 11:04–11:0xZ (tick; 0 GPU-h — no live runs, H100
 idle): **quiet tick right after the v1-fleet-upgrade close — GPU
@@ -125,17 +151,6 @@ closed fast to hand off** — the chained work session takes CPU items
 the owner-call polls (demos+one-rig isolation, R2 band — both still
 unanswered); both GPU actions stay owner-gated. Queue green depth 2
 (16 open).
-
-Session 2026-08-19 10:46–11:0xZ (work, chained; 0 GPU-h — CPU-only
-integrity sweep, H100 idle throughout): **v1-fleet-upgrade CLOSED
-(b1d1b27) — 6 schema-1 originals retired (audit found 2 beyond the
-queue's 4), 4 fresh `_v2` conversions load-smoked, er_60k `_v2`
-regenerated with narration_weight 0.5 (weights bitwise-unchanged),
-zero v1 dirs remain; disk 257→212 GB free** — exploit
-(integrity/infra debt); queue green depth 2 (16 open: refill
-`hf-evacuation-audit-v2-fleet`); Discord quiet all session, polls at
-every stage; both GPU actions stay owner-gated; `run_work_next` armed
-at close.
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
