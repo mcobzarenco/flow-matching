@@ -2,6 +2,36 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-19 16:17–16:2xZ (real `date -u` at write: 16:20) —
+tick: **first babysit poll of live `grpo_r2` — healthy in the
+pre-registered startup window. Liveness by procs+GPU (3 procs,
+28.8 GiB, 62→100% util); babysit exit 1 "no parseable rows" is the
+KNOWN startup read (first train.jsonl row ~17:1xZ). Discord fully
+quiet; `run_work_next` already armed at 16:13, tick closes fast.***
+
+**Status**: `grpo_r2` LIVE and healthy 7 min post-launch — 3 procs,
+28.8 GiB / 100% util (62% momentarily mid-poll: step-0 eval + wave-0
+rollout phase, replan/env cycles). No gate crossing (exit 3 did not
+fire); nothing to judge yet — wave-0 gates (mixed ≥0.20 predicted
+0.487, knockaway self-baseline) read at the first heartbeat row
+~17:1xZ. RAM 162 GiB available, disk 227 GB free (92%).
+
+**Steering**: none — read + inbox empty, history shows nothing after
+our 16:11:50Z launch post, no reactions. No owner calls pending
+(both closed 13:25Z).
+
+**Done**: boot (pull clean), babysit CLI (exit 1 = the registry's
+declared startup gap, procs+GPU confirm liveness), history + inbox
+checks, queue validate green (depth 2, 15 open), standing
+GPU/RAM/disk checks. No post owed (launch post 16:11Z is current;
+next post-worthy event is the first heartbeat read).
+
+**Next**: chained work session (marker armed 16:13) takes CPU item
+`grpo-r2-boundary-reads-instrument` and reads the first train.jsonl
+row ~17:1xZ (wave-0 gate judgment); ride cadence ~30-min babysit;
+boundary ~step 10 (~0x:xxZ 08-20) → boundary legs per A3.4/A3.5,
+then `demos-plus-one-rig-exec` takes the GPU.*
+
 *Updated 2026-08-19 13:07–16:1xZ (real `date -u` at write: 16:12) —
 work session (chained): **GRPO R2 IS LIVE. Owner steering landed
 mid-session (13:25:15Z agree-with-recs → demos+one-rig GO, R2 AMEND +
@@ -137,6 +167,13 @@ calibration emit, makes ACTIVATE one-command) and
 
 ## Utilization footer
 
+Session 2026-08-19 16:17–16:2xZ (tick; `grpo_r2` riding, ~0.2 GPU-h
+elapsed of ~14 expected): **first poll of live R2 healthy in the
+declared startup window (procs+GPU liveness, babysit exit 1 = known
+train.jsonl gap until ~17:1xZ); Discord quiet, no gate crossings;
+`run_work_next` already armed — fast close** — queue green depth 2
+(15 open). Disk 227 GB free (92%).
+
 Session 2026-08-19 13:07–16:1xZ (work, chained; ~2.25 GPU-h banked —
 preflight leg 0 — + `grpo_r2` live from 16:10Z, ~14 expected / gate
 ≤15): **owner agree-with-recs mid-session → A3 ACTIVATED end-to-end:
@@ -148,15 +185,6 @@ infra debt); queue green depth 2 (15 open: `grpo-r2-launch-kit` +
 `disk-retirement-sweep-banked-sources` closed,
 `grpo-r2-boundary-reads-instrument` refilled). Disk 231 GB free
 (92%).
-
-Session 2026-08-19 13:04–13:0xZ (tick; 0 GPU-h — no live runs, H100
-idle): **fully quiet tick — read + inbox empty, history no new owner
-activity; owner calls (demos+one-rig, R2 band) still unanswered ~105
-min after the 11:19Z summary; `run_work_next` already armed, tick
-closed fast to hand off** — the chained work session takes CPU items
-`grpo-r2-launch-kit` + `disk-retirement-sweep-banked-sources` and
-keeps the owner-call polls; both GPU actions stay owner-gated. Queue
-green depth 2 (16 open). Disk 198 GB free (93% used).
 
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
