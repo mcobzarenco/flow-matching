@@ -5,7 +5,46 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-19 01:18–01:2xZ (real `date -u` at write: 01:20) —
+tick: **quiet mid-battery babysit ~20 min after the 00:58 entry — leg
+1 sim100 healthy at one-third mark; 0 successes in 22 completed
+episodes (per-seed min benchy→disk 4.2 cm — no placement anywhere),
+early-convict trend firm but the frozen grid reads only at 100/100 —
+no mid-run action.***
+
+**Status**: `pdnorm_endpoint_battery` LIVE — babysit exit 0 at 01:19:
+2 procs, GPU 12.7 GiB / 28–35% duty (6-sample; sim-rollout profile
+unchanged), host RAM 192 GiB available. Progress: 23 seeds started
+(seed 22 in flight) in ~35 min ≈ 0.65 ep/min — tracking the disc
+baseline 0.76 net of model load; replans steady ~550 ms. Raw-log
+success read: 0/22 — best any seed managed was 4.2 cm (seed 9); most
+final distances 8–25 cm. Grid anchors unchanged (≥20 exonerates /
+≤10 convicts / 11–19 ambiguous; baseline demosonly 11/100). Leg-1 rc
+projects ~02:4x–03:0xZ (registry boundary; disc baseline ~2.2
+GPU-h), then panel leg ~0.5 GPU-h. GPU-h gate 5.0, cumulative
+projection 0.6. Queue green depth 2 (15 open; both gpu-gated).
+
+**Steering**: none — read empty (not even cursor catch-up), inbox
+empty; history shows no new reactions (all three 👍 previously
+recorded).
+
+**Done**: babysit CLI (exit 0, includes Discord read + history),
+free -g + 6-sample GPU util standing checks, queue validate, raw-log
+per-seed distance sweep (23 seeds, min/final distances tabulated —
+the success-count method: a success requires a placement, i.e.
+near-zero benchy→disk; none present). No post (quiet interval;
+verdict post belongs to the session holding the 100/100 read).
+
+**Next**: unchanged from 00:58 — the tick that catches leg-1 rc
+(~02:4x–03:1xZ) reads sim100 through the frozen grid and arms
+`run_work_next` for the verdict battery (paired read vs disc1000
+11/100, ladder `--endpoint` restamp, truthfit rewear, pdnormendpoint
+report, verdict post) with **best-save flexibility LIVE**:
+endpoint-3000 (probe 6.17) vs **step 2000 @ 5.47**. CPU queue EMPTY
+→ `run_work_next` NOT armed this tick.*
 
 *Updated 2026-08-19 00:58–01:0xZ (real `date -u` at write: 01:02) —
 tick: **first babysit of the endpoint battery — the chained work
@@ -83,39 +122,21 @@ final probe + save, then the **pdnorm-endpoint-close** battery
 vs **step 2000 @ 5.47**. Then **grasp-sft-bootstrap** probe legs
 3/4.*
 
-*Updated 2026-08-18 23:25–23:3xZ (real `date -u` at write: 23:28) —
-tick: **quiet babysit ~20 min after the 23:04 entry — run healthy in
-its final stretch, probe curve complete (no probe boundary left
-before 3000); endpoint projects ~00:07Z, past this tick's 23:55 hard
-kill — the endpoint battery (pdnorm-endpoint-close) falls to the
-next tick.***
-
-**Status**: `grasp_sft_v2_joint_1gpu_pdnorm` LIVE — babysit exit 0 at
-23:26: step 2840/3000, 5 procs, VRAM 62.21/71 gate stable, loss
-0.3319 (+0.0018 vs 23:05's new low 0.3301 — holding at the low end,
-below the old 0.34–0.43 band), rate 15.172 s/step healthy
-(since-last-sample 80 steps / 21 min agrees), GPU duty-cycling 0–100%
-with troughs recovering (6-sample check), host RAM 45 GiB available.
-Probe curve final: 6.11/5.72/5.62/**5.45/5.47**/6.59/6.83/**6.32** —
-next datum is the endpoint itself (~160 steps, ~40 min). Queue green
-depth 2 (15 open; both gpu-gated).
-
-**Steering**: none — read surfaced only our own 23:05 probe post
-(cursor catch-up), inbox empty; history shows no new reactions (the
-👍 on the 21:01 post was already recorded).
-
-**Done**: babysit CLI (exit 0, includes Discord read + history),
-free -g + 6-sample GPU util standing checks, queue validate. No post
-(quiet interval; nothing new since the 23:05 retrace post).
-
-**Next**: endpoint at step 3000 (~00:07Z 08-19) — final probe + save,
-then the **pdnorm-endpoint-close** battery (sim100 pinned
-`--clutter-appearance standins` per Amendment 1) with **best-save
-flexibility LIVE**: candidates are endpoint-3000 (probe TBD) vs
-**step 2000 @ 5.47**. Then **grasp-sft-bootstrap** probe legs 3/4.
-CPU queue EMPTY — `run_work_next` NOT armed.*
-
 ## Utilization footer
+
+Session 2026-08-19 01:18–01:2xZ (tick; 0 GPU-h new — endpoint
+battery leg 1 live since 00:44:37Z, ~0.6 GPU-h elapsed of gate 5.0):
+**quiet mid-battery babysit — babysit exit 0: 2 procs, GPU 12.7
+GiB / 28–35% duty (sim-rollout profile), RAM 192 GiB; 23 seeds
+started in ~35 min ≈ 0.65 ep/min (disc baseline 0.76 net of load),
+replans ~550 ms; raw-log per-seed sweep: 0 successes in 22 completed
+episodes (min benchy→disk anywhere 4.2 cm — no placement),
+early-convict trend firm but no read before 100/100 per the frozen
+grid; Discord fully quiet (read empty, inbox empty, no new
+reactions)** — CPU queue empty, `run_work_next` NOT armed; leg-1 rc
+~02:4x–03:1xZ, that tick reads sim100 through the frozen grid and
+arms the verdict-battery work session (best-save flexibility live:
+endpoint-3000 probe 6.17 vs step 2000 @ 5.47).
 
 Session 2026-08-19 00:58–01:0xZ (tick; 0 GPU-h new this session —
 endpoint battery leg 1 live since 00:44:37Z, ~0.3 GPU-h elapsed of
@@ -130,20 +151,6 @@ endpoint post, inbox empty, no new reactions)** — CPU queue empty,
 sim100 through the frozen grid and arms the verdict-battery work
 session (best-save flexibility live: endpoint-3000 probe 6.17 vs
 step 2000 @ 5.47).
-
-Session 2026-08-18 23:46–23:5xZ (tick; 0 GPU-h new — pdnorm train
-continues, ~12.9 h elapsed): **final-stretch babysit — babysit exit
-0: step 2920/3000, loss 0.3137 (−0.0182 vs 23:26, another new low
-while probes sit elevated — loss-blind signature intact), rate
-15.098 s/step healthy (since-last-sample agrees), VRAM 62.21/71, GPU
-duty-cycling 0→99–100% (6-sample check, troughs recover), RAM 46
-GiB; two new 👍 reactions recorded (21:58 confirm + 23:05 retrace
-posts — owner agreement), read+inbox otherwise empty** — endpoint
-~00:07Z lands inside the window but the battery exceeds the 00:17Z
-hard kill → `run_work_next` ARMED; the chained 4-h work session owns
-the endpoint (final probe + save) and the pdnorm-endpoint-close
-battery with best-save flexibility live (best saved: step 2000 @
-5.47).
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-10
 00:00Z → 2026-08-17 19:45Z; rebased 08-17 from per-run prune records
