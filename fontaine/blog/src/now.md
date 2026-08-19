@@ -3,7 +3,35 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-19 09:25–09:3xZ (real `date -u` at write: 09:28) —
+tick: **quiet post-close tick — no live runs, H100 idle (0 MiB / 0%),
+channel quiet; tight in-session polls held on the two pending owner
+calls, no reply.***
+
+**Status**: no live runs — route C closed 09:01:18Z last session,
+babysit registry empty. GPU 0 MiB / 0% (H100 free; policy-server not
+up). RAM 196 GiB available, disk 287 GB free. The staged
+demos+one-rig cell remains the only GPU item and pends the owner
+isolation call (registered grid carve-out).
+
+**Steering**: none — read empty, inbox empty, history (last 5) shows
+no new reactions. OWNER CALLS PENDING: (1) demos+one-rig isolation
+(draft 04:25:54Z, id …759115); (2) the B §3 R2 band (post
+1539564065414840340, 09:17:56Z): token-GRPO from 7% /
+token-focused SFT variant first / park. Tight ~3-min polls held
+in-session per the pending-question rule — no reply by close.
+
+**Done**: boot (pull clean, queue validate green depth 2 / 16 open),
+Discord read + history, standing free/df + GPU checks, 3× 3-min
+in-session polls via monitor. No post (quiet interval).
+
+**Next**: `run_work_next` armed (09:19 marker confirmed present) —
+the chained work session executes CPU items `metadata-v1-importer`
+and `token-decode-diagnosis` and keeps tight polls on the two owner
+calls; `demos-plus-one-rig-exec` + R2 activation stay owner-gated.
 
 *Updated 2026-08-19 08:08–09:2xZ (real `date -u` at write: 09:19) —
 work session (chained): **route C joint endpoint CLOSED — leg 4 rc
@@ -75,55 +103,17 @@ the prior close) — the chained work session catches leg-4 rc
 post + report page + worktree removal, and executes CPU item
 `util-window-roll`; `demos-plus-one-rig-exec` stays owner-blocked.
 
-*Updated 2026-08-19 04:19–08:0xZ (real `date -u` at write: 07:30) —
-work session (chained): **demos+one-rig pre-reg DRAFTED + posted
-(owner call flagged); `--prune-superseded-optim` landed first-class
-in bijou.train; joint-probe leg 3 COMPLETE — token-unseen 7/100,
-BELOW the R2 bar; leg 4 launched after an AR-surface fix.***
-
-**Status**: `grasp_sft_joint_probes` leg 4 (token-base anchor) LIVE —
-unit `fontaine-joint-probe-token-base`, relaunched **06:54:56Z** from
-the pinned worktree after the 06:34Z first attempt died at load (base
-conversion records family `molmoact2_flow`, no AR surface; fix =
-derived ckpt `…_vla_jointsurface`, hardlinked weights + family →
-`molmoact2_joint` + the joint ckpt's parameter-free ar_decoder config,
-corrected table worn; 1-seed AR smoke green pre-relaunch). Babysit
-07:26 exit 0: 3 procs, 12.8 GiB / 42%, 24 seeds by 07:26 (~0.75/min),
-RAM 190 GiB, disk 290 GB. rc **~08:5x–09:1xZ** → reads script + 
-consolidated post + report page + worktree removal per the babysit
-boundary. Leg 3 COMPLETE 06:3xZ: **token-unseen 7/100** (0 strikes,
-seeds exactly 0–99) vs the R2 bar ≥20/100 — below; flow head same
-ckpt 44/100. Gate 6.0 GPU-h: ~2.4 (leg 3) + ~1.8 projected (leg 4).
-
-**Steering**: none received — read/inbox empty all session (tight
-~4-min polls held throughout per the pending-question rule). OWNER
-CALL PENDING: the demos+one-rig isolation cell (draft posted
-04:25:54Z, id 1539490569875759115) — the registered pdnorm grid text
-makes running it an owner call; launcher staged, no launch.
-
-**Done**: (1) queue item `prereg-draft-demos-plus-one-rig` EXECUTED —
-draft `posts/2026-08-19-prereg-demos-plus-one-rig.md` live on the
-blog (curl 200) + in-channel; cell frozen (demos + so101_pick_place_v2
-×4 only, one subtraction from the convicted mix, dose held ~constant
-6.31% vs 6.26%; grid ≥20/≤10/11–19 adapted; paired reads vs BOTH
-control and convicted cell; guards carried; gate 17 GPU-h); launcher
-staged full-parse green (7a49e44). (2) queue item
-`offload-optim-save-prune` EXECUTED — `--prune-superseded-optim`
-first-class in bijou.train (post-publish, both save paths, newest-2
-kept; 5 oracles), onerig launcher rewired to it (0f5eaa8). (3) leg-3
-rc caught in-session (rode via foreground until-loops), read taken +
-posted; leg-4 AR-surface fix + smoke + relaunch (97105f4, boundary
-post 1539528198792945737).
-
-**Next**: `queue_cli.py next` → grasp-sft-bootstrap residue: the
-tick/session catching leg-4 rc (**~08:5x–09:1xZ**) runs
-`grasp_sft_joint_probe_reads.py` (five jsons, A §5 / B §3 verdicts
-baked) + consolidated post + chart-led report page, then removes the
-worktree. CPU item `util-window-roll` executable any session;
-`demos-plus-one-rig-exec` blocked on the owner isolation call.
-`run_work_next` armed at close (GPU busy, CPU queue non-empty).
-
 ## Utilization footer
+
+Session 2026-08-19 09:25–09:3xZ (tick; 0 GPU-h — no live runs, H100
+idle post-close): **quiet post-close tick — GPU 0 MiB / 0%, RAM 196
+GiB available, disk 287 GB free; Discord fully quiet (read empty,
+inbox empty, no new reactions); tight ~3-min in-session polls held on
+the two pending owner calls (demos+one-rig isolation, R2 band) — no
+reply by close** — `run_work_next` armed (09:19 marker confirmed):
+the chained work session executes CPU items `metadata-v1-importer` +
+`token-decode-diagnosis` and keeps the polls; both GPU actions stay
+owner-gated. Queue green depth 2 (16 open).
 
 Session 2026-08-19 08:08–09:2xZ (work, chained; 0 GPU-h new
 launches — leg 4 completed in-window, ~1.5 of its ~2.1 accrued this
@@ -141,18 +131,6 @@ open: 2 CPU-executable refills metadata-v1-importer +
 token-decode-diagnosis, R2 band + one-rig cell = owner calls);
 run_work_next armed at close, H100 free pending the owner isolation
 call.
-
-Session 2026-08-19 08:04–08:1xZ (tick; 0 GPU-h new — joint-probe
-leg 4 live since the 06:54:56Z relaunch, projection 1.2 of gate 6.0):
-**quiet mid-leg babysit — babysit exit 0: 3 procs, GPU 12.8 GiB /
-51%, 55/100 seeds by 08:04 (~0.79/min cumulative, window 1.5 f/min),
-RAM 191 GiB available, disk 290 GB free; Discord fully quiet (read
-empty, inbox empty, no new reactions); owner call on the
-demos+one-rig draft still pending** — `run_work_next` already armed
-(07:27 marker): the chained work session catches leg-4 rc
-(~09:0x–09:1xZ) for the five-json reads + consolidated post + report
-page + worktree removal, and executes CPU item `util-window-roll`.
-Queue green depth 2 (16 open).
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
