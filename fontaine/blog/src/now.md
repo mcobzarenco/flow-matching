@@ -8,7 +8,52 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-19 10:46–11:0xZ (real `date -u` at write: 11:03) —
+work session (chained): **v1-fleet-upgrade EXECUTED + CLOSED
+(b1d1b27) — the schema-1 checkpoint fleet is retired: 6 v1 originals
+(audit found 2 beyond the queue's 4), 4 fresh `_v2` conversions all
+load-smoked, er_60k `_v2` regenerated with the trained
+narration_weight 0.5, zero schema-1 dirs remain on disk.***
+
+**Status**: no live runs — babysit registry empty, H100 idle (0 MiB /
+0%) all session, policy-server not up; RAM 196 GiB available, disk
+212 GB free (the materialized per-part trunks cost ~55 GB net; v1
+weight files were hard-links so retirement freed little). CPU-only
+session (0 GPU-h). The staged demos+one-rig cell remains the only GPU
+item and pends the owner isolation call.
+
+**Steering**: none — read empty at boot and at every stage poll,
+inbox empty. OWNER CALLS STILL PENDING: (1) demos+one-rig isolation
+(draft 04:25:54Z, id …759115); (2) the B §3 R2 band (post
+…840340, carrying the ACTIVATE-from-7% recommendation +
+receipts).
+
+**Done**: `v1-fleet-upgrade` EXECUTED + CLOSED (b1d1b27). Disk audit
+found SIX schema-1 dirs (queue named 4): the 5th was base `_vla`
+whose `_v2` existed since edb8d4e with the v1 never retired, the 6th
+the `step_002000` straggler in finetune/. Three pristine-trunk
+conversions via `bijou.convert_v1` (jointsurface → Joint 5485M,
+stage-C corrected_v1 + _vla → Flow 5490M), all load_vla-smoked.
+er_60k `_v2` REGENERATED from v1 (regenerate-vs-annotate decided
+regenerate): old-vs-regen all 4 weight files bitwise equal, tokenizer
+identical, metadata diff exactly `narration_weight` 1.0→0.5; swapped
++ smoked (Molmo2ARVLA 4856M). Mounts repointed before retirement
+(`sim_clutter_promotion_regate.py` default checkpoint, probes
+launcher BASE+CKPT → `_v2`); no-blind-delete greps clean incl. the
+policy-server checkout (no serving mounts). Six v1 originals retired
+staggered with df checks; final sweep: zero schema-1 `metadata.json`
+under ~/checkpoints + outputs. check.py 1066 green. Result post
+…282587.
+
+**Next**: `queue_cli.py next` → CPU items `token-probe-html-gallery`
+(all inputs banked) and NEW refill `hf-evacuation-audit-v2-fleet`
+(verify fontaine-checkpoints holds a recovery path per `_v2`; the two
+legacy bijou_config expert-source dirs included before any retirement
+decision); `demos-plus-one-rig-exec` + R2 activation stay owner
+calls. `run_work_next` armed at close (CPU queue non-empty).*
 
 *Updated 2026-08-19 10:42–10:5xZ (real `date -u` at write: 10:44) —
 tick: **quiet tick right after the decode-diagnosis close — no live
@@ -78,34 +123,18 @@ banked); `demos-plus-one-rig-exec` + R2 activation stay owner calls —
 R2 now carries the activation recommendation. `run_work_next` armed
 at close (CPU queue non-empty).
 
-*Updated 2026-08-19 09:53–10:0xZ (real `date -u` at write: 09:55) —
-tick: **quiet tick straight after the convert_v1 close — no live
-runs, H100 idle (0 MiB / 0%), channel quiet; ~3-min in-session polls
-held on the two pending owner calls, no reply.***
-
-**Status**: no live runs — babysit registry empty, GPU 0 MiB / 0%
-(H100 free; policy-server not up). RAM 196 GiB available, disk 260 GB
-free. The staged demos+one-rig cell remains the only GPU item and
-pends the owner isolation call (registered grid carve-out).
-
-**Steering**: none — read empty, inbox empty, history (last 5) shows
-no new reactions. OWNER CALLS PENDING: (1) demos+one-rig isolation
-(draft 04:25:54Z, id …759115); (2) the B §3 R2 band (post
-1539564065414840340, 09:17:56Z): token-GRPO from 7% / token-focused
-SFT variant first / park. ~3-min monitor polls held in-session — no
-reply by close.
-
-**Done**: boot (pull clean, queue validate green depth 2 / 16 open),
-Discord read + history, standing free/df + GPU checks, monitor-based
-~3-min polls. No post (quiet interval).
-
-**Next**: `run_work_next` armed (09:49 marker confirmed present) —
-the chained work session executes CPU items `token-decode-diagnosis`
-(sharpens the R2 band call) and `v1-fleet-upgrade` (staggered, with
-disk checks + no-blind-delete greps) and keeps the tight polls;
-`demos-plus-one-rig-exec` + R2 activation stay owner-gated.
-
 ## Utilization footer
+
+Session 2026-08-19 10:46–11:0xZ (work, chained; 0 GPU-h — CPU-only
+integrity sweep, H100 idle throughout): **v1-fleet-upgrade CLOSED
+(b1d1b27) — 6 schema-1 originals retired (audit found 2 beyond the
+queue's 4), 4 fresh `_v2` conversions load-smoked, er_60k `_v2`
+regenerated with narration_weight 0.5 (weights bitwise-unchanged),
+zero v1 dirs remain; disk 257→212 GB free** — exploit
+(integrity/infra debt); queue green depth 2 (16 open: refill
+`hf-evacuation-audit-v2-fleet`); Discord quiet all session, polls at
+every stage; both GPU actions stay owner-gated; `run_work_next` armed
+at close.
 
 Session 2026-08-19 10:42–10:5xZ (tick; 0 GPU-h — no live runs, H100
 idle): **quiet tick right after the decode-diagnosis close — GPU
@@ -117,17 +146,6 @@ closed fast to hand off** — the chained work session takes CPU items
 owner-call polls (demos+one-rig isolation, R2 band — both still
 unanswered); both GPU actions stay owner-gated. Queue green depth 2
 (16 open).
-
-Session 2026-08-19 09:56–10:4xZ (work, chained; 0 GPU-h — CPU-only
-analysis over banked artifacts, H100 idle throughout):
-**token-decode-diagnosis CLOSED (f960f83) — the 7-vs-44 read is
-magnitude attenuation of greedy decode, not collapse (0/300 frozen);
-ACTIVATE-R2-from-7% recommendation posted with chart
-(1539581325588041780); results-page addendum (ii) live** — exploit
-(analysis feeding a pending owner decision); queue green depth 2 (16
-open: refill `token-probe-html-gallery`); Discord quiet all session,
-polls at every stage; both GPU actions stay owner-gated;
-`run_work_next` armed at close.
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +

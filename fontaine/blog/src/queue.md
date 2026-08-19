@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-19T10:28:30Z
+**Updated:** 2026-08-19T10:57:35Z
 
-**Depth call:** post token-decode-diagnosis close 10:2xZ 08-19: 2 queued CPU-executable (v1-fleet-upgrade, token-probe-html-gallery refill); demos-plus-one-rig-exec owner-gated, grpo-r2-post-sft owner-band (activation recommendation posted with receipts); H100 free pending the owner isolation call
+**Depth call:** post v1-fleet-upgrade close 10:5xZ 08-19: 2 queued CPU-executable (token-probe-html-gallery, hf-evacuation-audit-v2-fleet refill); demos-plus-one-rig-exec owner-gated, grpo-r2-post-sft owner-band (activation recommendation posted with receipts); H100 free pending the owner isolation call
 
-**16 open** (Live 0 · Queued 2 · Blocked 14 · Done 250)
+**16 open** (Live 0 · Queued 2 · Blocked 14 · Done 251)
 
 ## 🔴 Live (0)
 
@@ -18,6 +18,20 @@
 
 *ready — waiting on a window or a boundary*
 
+**`hf-evacuation-audit-v2-fleet`** · `cpu`
+
+HF evacuation audit for the schema-2 checkpoint fleet (standing rule upload-valuable-checkpoints; follows v1-fleet-upgrade retiring all local v1 originals): for each local _v2 dir (er_60k_step_060000_vla_v2, molmoact2_base_correc…
+
+**boundary:** Queued 10:57Z 08-19 work session (charter section 4 refill at the v1-fleet-upgrade close; depth-2 restore).
+
+<details><summary>full record</summary>
+
+HF evacuation audit for the schema-2 checkpoint fleet (standing rule upload-valuable-checkpoints; follows v1-fleet-upgrade retiring all local v1 originals): for each local _v2 dir (er_60k_step_060000_vla_v2, molmoact2_base_corrected_stats_v0_vla_v2 + _jointsurface_v2, molmoact2_grasp_sft_stagec_ar_step2000_corrected_v1_v2 + _vla_v2, finetune/fontaine_grasp_sft_joint_corrected/step_002000_v2) verify fontaine-checkpoints holds a recovery path: either the _v2 itself or a v1/legacy source (convert_v1/convert_legacy are deterministic frozen readers, so a banked source + committed converter counts). Upload weights-only gaps same-session; record the mapping in a short table on the blog. CPU+network only, no GPU. Note: the two legacy bijou_config dirs in converted/ (base_corrected_stats_v0, grasp_sft_stagec_ar_step2000, 2.2G each) are the stage-C expert sources - include them in the audit before any retirement decision.
+
+</details>
+
+---
+
 **`token-probe-html-gallery`** · `cpu`
 
 Token probe legs HTML panel (CPU, standing rule html-reports-for-important-checkpoints): the joint checkpoint's flow leg got its browsable panel 08-16 (eval__grasp_sft_joint_step2000__flow_unseen100.html) but the token legs never…
@@ -27,20 +41,6 @@ Token probe legs HTML panel (CPU, standing rule html-reports-for-important-check
 <details><summary>full record</summary>
 
 Token probe legs HTML panel (CPU, standing rule html-reports-for-important-checkpoints): the joint checkpoint's flow leg got its browsable panel 08-16 (eval__grasp_sft_joint_step2000__flow_unseen100.html) but the token legs never did. Build the same-class report for token_unseen (7/100) + token_base (0/100) from the banked episode JSONs/videos via grasp_sft_joint_unseen_report.py (or its token generalization), embedding the decode-diagnosis funnel/envelope numbers; upload to fontaine-reports Space, link from reports.md, short in-channel pointer. Success/near-miss video picks: seeds 35/96 (flow-overlap successes), 29/41 (timeout-holding carries), one far-spawn no-touch.
-
-</details>
-
----
-
-**`v1-fleet-upgrade`** · `cpu`
-
-Upgrade the remaining on-disk schema-1 checkpoints via bijou.convert_v1 (integrity/infra sweep, follows metadata-v1-importer edb8d4e): still v1 on disk
-
-**boundary:** Queued 09:48Z 08-19 work session (charter section 4 refill at the metadata-v1-importer close).
-
-<details><summary>full record</summary>
-
-Upgrade the remaining on-disk schema-1 checkpoints via bijou.convert_v1 (integrity/infra sweep, follows metadata-v1-importer edb8d4e): still v1 on disk — converted/molmoact2_base_corrected_stats_v0_vla_jointsurface (the leg-4 derived surface), converted/molmoact2_grasp_sft_stagec_ar_step2000_corrected_v1 + _vla (stage-C AR pair), converted/er_60k_step_060000_vla (v1 original; its _v2 sibling carries the narration_weight 1.0 drift — decide regenerate-vs-annotate, inference unaffected). Per-dir: upgrade, validate, then RETIRE the v1 original only after a grep proves nothing mounts it (rsync-box memory class: no blind deletes). Disk note: trained-trunk upgrades materialize ~9-18 GB each; 266 GB free at queue time — stagger and delete v1 originals as each upgrade verifies.
 
 </details>
 
@@ -246,9 +246,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (250)
+## ✅ Done (251)
 
 *closed — the full record stays in each fold*
+
+**`v1-fleet-upgrade`** · `cpu`
+
+Upgrade the remaining on-disk schema-1 checkpoints via bijou.convert_v1 (integrity/infra sweep, follows metadata-v1-importer edb8d4e): still v1 on disk
+
+**boundary:** Queued 09:48Z 08-19 work session (charter section 4 refill at the metadata-v1-importer close). ||| EXECUTED 10:46-10:5xZ 08-19 work session: audit found FIVE v1 dirs in converted/ (queue named 4; molmoact2_base_corrected_stats_v0_vla's _v2 existed from edb8d4e but the v1 was never retired) plus a sixth straggler finetune/fontaine_grasp_sft_joint_corrected/step_002000 (its _v2 also from edb8d4e). 3 pristine-trunk conversions (jointsurface -&gt; Joint 5485M, stage-C corrected_v1 + _vla -&gt; Flow 5490M) all load_vla-smoked; er_60k _v2 REGENERATED from v1 via convert_v1 (regenerate-vs-annotate: regenerate) - old drifted _v2 vs regen: all 4 weight files BITWISE EQUAL + tokenizer identical, metadata diff exactly narration_weight 1.0-&gt;0.5, swapped + smoked (Molmo2ARVLA 4856M). Mounts repointed before retirement: sim_clutter_promotion_regate.py --checkpoint default and launch_local_grasp_sft_joint_probes.sh BASE+CKPT -&gt; _v2 paths; no-blind-delete greps clean (remaining hits provenance comments/display strings only; policy-server checkout has no serving mounts). SIX v1 originals retired staggered with df checks; final sweep: zero schema-1 metadata.json under ~/checkpoints + outputs. Disk 257-&gt;212 GB free (materialized per-part trunks are the cost, v1 weight files were hard-links). check.py 1066 green.
+
+<details><summary>full record</summary>
+
+Upgrade the remaining on-disk schema-1 checkpoints via bijou.convert_v1 (integrity/infra sweep, follows metadata-v1-importer edb8d4e): still v1 on disk — converted/molmoact2_base_corrected_stats_v0_vla_jointsurface (the leg-4 derived surface), converted/molmoact2_grasp_sft_stagec_ar_step2000_corrected_v1 + _vla (stage-C AR pair), converted/er_60k_step_060000_vla (v1 original; its _v2 sibling carries the narration_weight 1.0 drift — decide regenerate-vs-annotate, inference unaffected). Per-dir: upgrade, validate, then RETIRE the v1 original only after a grep proves nothing mounts it (rsync-box memory class: no blind deletes). Disk note: trained-trunk upgrades materialize ~9-18 GB each; 266 GB free at queue time — stagger and delete v1 originals as each upgrade verifies.
+
+</details>
+
+---
 
 **`token-decode-diagnosis`** · `cpu`
 
