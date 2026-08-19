@@ -1,7 +1,40 @@
 # Now
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-19 08:04–08:1xZ (real `date -u` at write: 08:06) —
+tick: **quiet mid-leg babysit on joint-probe leg 4 (token-base) —
+healthy and on-pace ~70 min after the 06:54:56Z relaunch** (3 procs,
+GPU 12.8 GiB / 51%, 55 seeds by 08:04 ≈ 0.79/min cumulative, window
+1.5 f/min; RAM 191 GiB available, disk 290 GB free). rc
+**~09:0x–09:1xZ** falls to the chained work session.*
+
+**Status**: `grasp_sft_joint_probes` leg 4 (token-base anchor) LIVE —
+unit `fontaine-joint-probe-token-base` from the pinned worktree,
+babysit exit 0 at 08:04: 3 procs, 12.8 GiB / 51%, 55/100 seeds
+(~0.79/min cumulative, window 1.5 f/min), gate projection 1.2 of 6.0
+GPU-h. Leg 3 read banked: token-unseen 7/100 vs the R2 bar ≥20 —
+below (flow head 44/100). On leg-4-inactive: reads script (five
+jsons, A §5 / B §3 verdicts baked) + consolidated post + chart-led
+report page + worktree removal.
+
+**Steering**: none — read empty, inbox empty, history shows no new
+reactions. OWNER CALL STILL PENDING on the demos+one-rig isolation
+cell (draft 04:25:54Z, id 1539490569875759115; registered grid
+carve-out — no launch without the call).
+
+**Done**: babysit CLI (exit 0, includes the Discord read), history
+check, free -g + df standing checks, queue validate (green depth 2,
+16 open). No post (quiet interval; the consolidated read belongs to
+the session holding rc).
+
+**Next**: `run_work_next` already ARMED (marker present 07:27 from
+the prior close) — the chained work session catches leg-4 rc
+(**~09:0x–09:1xZ**) → `grasp_sft_joint_probe_reads.py` + consolidated
+post + report page + worktree removal, and executes CPU item
+`util-window-roll`; `demos-plus-one-rig-exec` stays owner-blocked.
 
 *Updated 2026-08-19 04:19–08:0xZ (real `date -u` at write: 07:30) —
 work session (chained): **demos+one-rig pre-reg DRAFTED + posted
@@ -88,73 +121,19 @@ leg 4 per the babysit boundary; otherwise the tick catching rc does.
 After BOTH token legs: `grasp_sft_joint_probe_reads.py` five-json
 read + consolidated post + chart-led report page + worktree removal.
 
-*Updated 2026-08-19 03:25–04:0xZ (real `date -u` at write: 03:57) —
-work session (chained): **pdnorm verdict battery EXECUTED + CLOSED —
-CONVICT hardened. Paired read: the mixed cell is 10 successes BELOW
-its own demosonly control (Δ −10, CI95 [−16, −5], McNemar exact
-p = 0.002); panel guard PASS with the wrist_roll −45.7 mechanism
-receipt; estimator seam closed at 27.44 ≈ the no-signal class.**
-Joint-probe leg 3 relaunched from a pinned worktree (schema-v1
-seam).*
-
-**Status**: `grasp_sft_joint_probes` leg 3 (token-unseen) LIVE —
-launched 03:52:40Z, RELAUNCHED 04:11:18Z after the disk-full incident
-below, unit `fontaine-joint-probe-token-unseen`, running
-from the PINNED worktree `~/flow-matching-legacy-eval` @6d01d14: the
-08-16 schema-v2 flip (57c6843) refuses the joint step_002000
-checkpoint's v1 metadata (no v1→v2 importer), and the pre-flip code
-also preserves legs 1/2's stand-ins clutter substrate (current
-'patched' default would break comparability). First poll green:
-12.8 GiB / 38–46% util (sim-rollout profile), RAM 190 GiB available,
-~0.87 seeds/min → rc **~06:0x–06:2xZ**; B §3 read vs the R2 bar
-≥20/100 unseen; leg 4 token-base chains on leg-3-inactive (full
-recipe in the babysit.toml entry). Gate 6.0 GPU-h (~0.5 spent on the
-killed 08-16 attempt).
-
-**Steering**: none — read empty, inbox empty at the 03:26 babysit
-poll and the 03:5x close; no new reactions.
-
-**Done**: pdnorm endpoint battery CLOSED (queue item
-`pdnorm-endpoint-close` → done): panel leg complete 03:44:44Z (~1120
-f/min vs the 660 reference — no starvation; the babysit liveness
-false-alarm root-caused and fixed in-registry: a `grep -oE`
-progress_re must capture the counter digits, bare 'frames' parsed no
-ints); paired read banked — 1/100 vs disc-1000 11/100 → Δ −10
-[−16, −5], McNemar p = 0.002, paired progress −3.49 cm [−4.68,
-−2.35]; NEW oracle-tested instrument `pdnorm_panel_guard.py` →
-registered guard **PASS** (29.18 vs 58.14, Δ −28.96 CI-excl-0;
-per-motor receipts wrist_roll −45.7 / wrist_flex −6.1); truthfit
-rewear native 29.18 → truth-fit 27.44 (seam +1.74; ladder 27.44 ≈
-27.40 disc ≈ 27.14 released, all at/above the 25.15 null); ladder
-restamped `--endpoint 29.18`; `pdnormendpoint` HTML report + panel
-HTML + 3 analysis JSONs + 4 gallery videos on fontaine-reports (all
-curl 200); verdict post id 1539482938675298354; best-save call
-recorded: NO step-2000 rescue sim100 (gate headroom ~2.0 < ~2.5
-needed; cannot flip the frozen step-3000 verdict), checkpoint NOT
-banked (not load-bearing); reports.md section landed. Queue refilled:
-`prereg-draft-demos-plus-one-rig` (CPU; the pre-reg's named next
-isolation, owner call flagged) → depth 2 green. DISK-FULL INCIDENT
-04:0xZ, root-caused + cleared: the root disk hit 100% (4 KB free)
-mid-pre-commit — the pdnorm run's six saves each carried a ~31 GiB
-`optimizer.pt` (offload-optim fp32 moments; 252 GiB for the run,
-+62 GiB the disc run's pair). Pruned per policy to weights-only
-keeps — pdnorm step_002000 (best-probe) + step_003000 (endpoint),
-disc 500/1000 weights (both banked on HF) — 294 GiB free after;
-no-blind-delete grep run first (no pending-sync references). Leg 3's
-first attempt died in the window (EGL write failure); partial outputs
-cleared, relaunched 04:11:18Z, first poll green again. Follow-up for
-the next launch class: offload-optim runs should prune superseded
-`optimizer.pt` at each save boundary.
-
-**Next**: `queue_cli.py next` → grasp-sft-bootstrap residue: the
-tick/session catching leg-3 rc (**~06:0x–06:2xZ**) reads
-`token_unseen.json` vs the R2 bar and launches leg 4 per the babysit
-boundary; after BOTH token legs, `grasp_sft_joint_probe_reads.py`
-five-json read + consolidated post + chart-led report page + worktree
-removal. CPU item `prereg-draft-demos-plus-one-rig` executable any
-session. Battery ~3.0/5.0 GPU-h; screenwide ~15.9/21.*
-
 ## Utilization footer
+
+Session 2026-08-19 08:04–08:1xZ (tick; 0 GPU-h new — joint-probe
+leg 4 live since the 06:54:56Z relaunch, projection 1.2 of gate 6.0):
+**quiet mid-leg babysit — babysit exit 0: 3 procs, GPU 12.8 GiB /
+51%, 55/100 seeds by 08:04 (~0.79/min cumulative, window 1.5 f/min),
+RAM 191 GiB available, disk 290 GB free; Discord fully quiet (read
+empty, inbox empty, no new reactions); owner call on the
+demos+one-rig draft still pending** — `run_work_next` already armed
+(07:27 marker): the chained work session catches leg-4 rc
+(~09:0x–09:1xZ) for the five-json reads + consolidated post + report
+page + worktree removal, and executes CPU item `util-window-roll`.
+Queue green depth 2 (16 open).
 
 Session 2026-08-19 04:19–08:0xZ (work, chained; 0 GPU-h new trains —
 joint-probe leg 3 completed in-window ~2.4 GPU-h, leg 4 live from
@@ -171,19 +150,6 @@ head 44/100 — the insulated CE rider lags ~6x), leg 4 relaunched
 (the isolation ladder advances on both fronts: mix-cell pre-reg
 frozen, token-head anchor leg running); queue validate green depth 2
 (16 open), run_work_next armed at close.
-
-Session 2026-08-19 04:15–04:2xZ (tick; 0 GPU-h new — joint-probe
-leg 3 live since the 04:11:18Z relaunch, ~0.1 GPU-h of gate 6.0):
-**quiet first-boundary babysit — babysit exit 0: 3 procs, GPU 12.8
-GiB / 37–45% duty (6-sample; sim-rollout profile), RAM 191 GiB
-available, disk 294 GB free holding post-prune; 3 seeds in ~4 min
-(window 1.7 f/min, ramp consistent with the green 0.87/min first
-poll); rc ~06:0x–06:2xZ; Discord fully quiet (read empty, inbox
-empty, no new reactions)** — `run_work_next` already armed at the
-prior work session's close: the chained work session takes CPU item
-`prereg-draft-demos-plus-one-rig` and, if open at rc, the leg-3 read
-+ leg-4 launch per the babysit boundary. Queue green depth 2 (15
-open).
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-10
 00:00Z → 2026-08-17 19:45Z; rebased 08-17 from per-run prune records
