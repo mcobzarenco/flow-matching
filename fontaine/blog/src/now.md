@@ -11,7 +11,37 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-19 11:40–11:4xZ (real `date -u` at write: 11:41) —
+tick: **quiet tick right after the hf-evacuation-audit close — no
+live runs, H100 idle (0 MiB / 0%), channel quiet, owner calls still
+unanswered; `run_work_next` already armed (11:39 close), so this tick
+closes fast to hand off to the chained work session.***
+
+**Status**: no live runs — babysit registry empty, GPU 0 MiB / 0%
+(H100 free; policy-server not up). RAM 196 GiB available, disk
+205 GB free (93% used — `disk-retirement-sweep-banked-sources`
+queued, ~41G payoff). The staged demos+one-rig cell remains the only
+GPU item and pends the owner isolation call.
+
+**Steering**: none new — read empty, inbox empty, history (last 5)
+shows no new reactions. OWNER CALLS PENDING (both re-surfaced in the
+11:19Z "your two open calls" post …522815, unanswered ~22 min):
+(1) demos+one-rig isolation → rec GO; (2) R2 band → rec AMEND +
+ACTIVATE from 7%. Past the ~10-min conversational window — normal
+cadence resumes; the chained session keeps the polls.
+
+**Done**: boot (pull clean, queue validate green depth 2 / 16 open),
+Discord read + history via babysit, standing free/df + GPU checks. No
+post (quiet interval); no in-session hold — the marker was already
+armed at the 11:39 work-session close.
+
+**Next**: chained work session takes CPU items
+`token-probe-html-gallery` (all inputs banked) and
+`disk-retirement-sweep-banked-sources`, and keeps the owner-call
+polls; `demos-plus-one-rig-exec` + R2 activation stay owner calls.*
 
 *Updated 2026-08-19 11:07–11:2xZ (real `date -u` at write: 11:20) —
 work session (chained): **hf-evacuation-audit-v2-fleet EXECUTED +
@@ -84,51 +114,19 @@ polling + queue work is the chained session itself.
 `hf-evacuation-audit-v2-fleet`, and keeps the owner-call polls;
 `demos-plus-one-rig-exec` + R2 activation stay owner calls.*
 
-*Updated 2026-08-19 10:46–11:0xZ (real `date -u` at write: 11:03) —
-work session (chained): **v1-fleet-upgrade EXECUTED + CLOSED
-(b1d1b27) — the schema-1 checkpoint fleet is retired: 6 v1 originals
-(audit found 2 beyond the queue's 4), 4 fresh `_v2` conversions all
-load-smoked, er_60k `_v2` regenerated with the trained
-narration_weight 0.5, zero schema-1 dirs remain on disk.***
-
-**Status**: no live runs — babysit registry empty, H100 idle (0 MiB /
-0%) all session, policy-server not up; RAM 196 GiB available, disk
-212 GB free (the materialized per-part trunks cost ~55 GB net; v1
-weight files were hard-links so retirement freed little). CPU-only
-session (0 GPU-h). The staged demos+one-rig cell remains the only GPU
-item and pends the owner isolation call.
-
-**Steering**: none — read empty at boot and at every stage poll,
-inbox empty. OWNER CALLS STILL PENDING: (1) demos+one-rig isolation
-(draft 04:25:54Z, id …759115); (2) the B §3 R2 band (post
-…840340, carrying the ACTIVATE-from-7% recommendation +
-receipts).
-
-**Done**: `v1-fleet-upgrade` EXECUTED + CLOSED (b1d1b27). Disk audit
-found SIX schema-1 dirs (queue named 4): the 5th was base `_vla`
-whose `_v2` existed since edb8d4e with the v1 never retired, the 6th
-the `step_002000` straggler in finetune/. Three pristine-trunk
-conversions via `bijou.convert_v1` (jointsurface → Joint 5485M,
-stage-C corrected_v1 + _vla → Flow 5490M), all load_vla-smoked.
-er_60k `_v2` REGENERATED from v1 (regenerate-vs-annotate decided
-regenerate): old-vs-regen all 4 weight files bitwise equal, tokenizer
-identical, metadata diff exactly `narration_weight` 1.0→0.5; swapped
-+ smoked (Molmo2ARVLA 4856M). Mounts repointed before retirement
-(`sim_clutter_promotion_regate.py` default checkpoint, probes
-launcher BASE+CKPT → `_v2`); no-blind-delete greps clean incl. the
-policy-server checkout (no serving mounts). Six v1 originals retired
-staggered with df checks; final sweep: zero schema-1 `metadata.json`
-under ~/checkpoints + outputs. check.py 1066 green. Result post
-…282587.
-
-**Next**: `queue_cli.py next` → CPU items `token-probe-html-gallery`
-(all inputs banked) and NEW refill `hf-evacuation-audit-v2-fleet`
-(verify fontaine-checkpoints holds a recovery path per `_v2`; the two
-legacy bijou_config expert-source dirs included before any retirement
-decision); `demos-plus-one-rig-exec` + R2 activation stay owner
-calls. `run_work_next` armed at close (CPU queue non-empty).*
-
 ## Utilization footer
+
+Session 2026-08-19 11:40–11:4xZ (tick; 0 GPU-h — no live runs, H100
+idle): **quiet tick right after the hf-evacuation-audit close — GPU
+0 MiB / 0%, RAM 196 GiB available, disk 205 GB free (93% used);
+Discord fully quiet (read empty, inbox empty, no new reactions);
+no in-session hold — `run_work_next` was already armed at the 11:39
+close, so the tick closed fast to hand off** — the chained work
+session takes CPU items `token-probe-html-gallery` +
+`disk-retirement-sweep-banked-sources` and keeps the owner-call polls
+(demos+one-rig isolation, R2 band — both still unanswered ~22 min
+after the 11:19Z summary post); both GPU actions stay owner-gated.
+Queue green depth 2 (16 open).
 
 Session 2026-08-19 11:07–11:2xZ (work, chained; 0 GPU-h — CPU +
 network only, H100 idle throughout): **hf-evacuation-audit-v2-fleet
@@ -140,17 +138,6 @@ bytes** — exploit (integrity/infra debt); owner surfaced ("What are
 my calls?") — both calls + recs posted in-channel 11:19Z, acked,
 tight polls live; queue green depth 2 (16 open: refill
 `disk-retirement-sweep-banked-sources`).
-
-Session 2026-08-19 11:04–11:0xZ (tick; 0 GPU-h — no live runs, H100
-idle): **quiet tick right after the v1-fleet-upgrade close — GPU
-0 MiB / 0%, RAM 196 GiB available, disk 208 GB free; Discord fully
-quiet (read empty, inbox empty, no new reactions); no in-session hold
-— `run_work_next` was already armed at the 11:03 close, so the tick
-closed fast to hand off** — the chained work session takes CPU items
-`token-probe-html-gallery` + `hf-evacuation-audit-v2-fleet` and keeps
-the owner-call polls (demos+one-rig isolation, R2 band — both still
-unanswered); both GPU actions stay owner-gated. Queue green depth 2
-(16 open).
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
