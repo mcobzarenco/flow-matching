@@ -6,7 +6,47 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-19 09:56–10:4xZ (real `date -u` at write: 10:29) —
+work session (chained): **token-decode-diagnosis EXECUTED + CLOSED
+(f960f83) — the 7-vs-44 dissection banked: not decode collapse,
+magnitude attenuation; ACTIVATE-R2 recommendation posted in-channel
+with the receipts + 4-panel chart.***
+
+**Status**: no live runs — babysit registry empty, H100 idle (0 MiB /
+0%) all session, policy-server not up; RAM 196 GiB available, disk
+257 GB free. CPU-only session (0 GPU-h). The staged demos+one-rig
+cell remains the only GPU item and pends the owner isolation call.
+
+**Steering**: none — read empty at boot and at every stage poll,
+inbox empty. OWNER CALLS STILL PENDING: (1) demos+one-rig isolation
+(draft 04:25:54Z, id …759115); (2) the B §3 R2 band (post
+1539564065414840340) — now SHARPENED by this session's diagnosis post
+(1539581325588041780, chart attached): recommendation ACTIVATE from
+7% with a wave-0 abort bar (mixed-groups <20%), token-SFT-first and
+park argued against with receipts.
+
+**Done**: `token-decode-diagnosis` EXECUTED + CLOSED (f960f83).
+Instrument `fontaine/scripts/token_decode_diagnosis.py` + 4 CPU
+oracles over the banked route-C probe JSONs + all 300 videos.
+Findings: NOT the zeros/no-op class (0/300 frozen via motion
+instrument; no stereotypy) — greedy magnitude attenuation: funnel
+touch→pinch→success 60→22→7 vs flow 91→59→44 on the same trunk (base
+7→0→0); reach envelope truncated (1/14 touch at 11–13 cm, 0 successes
+past 10 cm); carry speed 0.81 vs 2.00 cm/s with 2 timeouts still
+holding the boat (flow 0); knock-aways 25 vs 7. Record: complementary
+envelopes (token owns the 6–8 cm band 14/14 vs flow 9/14), 5/7 token
+successes flow-disjoint. Analysis JSON + chart banked; results-page
+Addendum 08-19 (ii); R2 queue item annotated. check.py 1066 green.
+
+**Next**: `queue_cli.py next` → CPU items `v1-fleet-upgrade`
+(staggered, disk checks + no-blind-delete greps) and NEW refill
+`token-probe-html-gallery` (standing HTML-panel rule; all inputs
+banked); `demos-plus-one-rig-exec` + R2 activation stay owner calls —
+R2 now carries the activation recommendation. `run_work_next` armed
+at close (CPU queue non-empty).
 
 *Updated 2026-08-19 09:53–10:0xZ (real `date -u` at write: 09:55) —
 tick: **quiet tick straight after the convert_v1 close — no live
@@ -77,34 +117,18 @@ dirs left on disk, staggered with disk checks + no-blind-delete
 greps); `demos-plus-one-rig-exec` + R2 activation stay owner calls.
 `run_work_next` armed at close (CPU queue non-empty).
 
-*Updated 2026-08-19 09:25–09:3xZ (real `date -u` at write: 09:28) —
-tick: **quiet post-close tick — no live runs, H100 idle (0 MiB / 0%),
-channel quiet; tight in-session polls held on the two pending owner
-calls, no reply.***
-
-**Status**: no live runs — route C closed 09:01:18Z last session,
-babysit registry empty. GPU 0 MiB / 0% (H100 free; policy-server not
-up). RAM 196 GiB available, disk 287 GB free. The staged
-demos+one-rig cell remains the only GPU item and pends the owner
-isolation call (registered grid carve-out).
-
-**Steering**: none — read empty, inbox empty, history (last 5) shows
-no new reactions. OWNER CALLS PENDING: (1) demos+one-rig isolation
-(draft 04:25:54Z, id …759115); (2) the B §3 R2 band (post
-1539564065414840340, 09:17:56Z): token-GRPO from 7% /
-token-focused SFT variant first / park. Tight ~3-min polls held
-in-session per the pending-question rule — no reply by close.
-
-**Done**: boot (pull clean, queue validate green depth 2 / 16 open),
-Discord read + history, standing free/df + GPU checks, 3× 3-min
-in-session polls via monitor. No post (quiet interval).
-
-**Next**: `run_work_next` armed (09:19 marker confirmed present) —
-the chained work session executes CPU items `metadata-v1-importer`
-and `token-decode-diagnosis` and keeps tight polls on the two owner
-calls; `demos-plus-one-rig-exec` + R2 activation stay owner-gated.
-
 ## Utilization footer
+
+Session 2026-08-19 09:56–10:4xZ (work, chained; 0 GPU-h — CPU-only
+analysis over banked artifacts, H100 idle throughout):
+**token-decode-diagnosis CLOSED (f960f83) — the 7-vs-44 read is
+magnitude attenuation of greedy decode, not collapse (0/300 frozen);
+ACTIVATE-R2-from-7% recommendation posted with chart
+(1539581325588041780); results-page addendum (ii) live** — exploit
+(analysis feeding a pending owner decision); queue green depth 2 (16
+open: refill `token-probe-html-gallery`); Discord quiet all session,
+polls at every stage; both GPU actions stay owner-gated;
+`run_work_next` armed at close.
 
 Session 2026-08-19 09:53–10:0xZ (tick; 0 GPU-h — no live runs, H100
 idle): **quiet tick straight after the convert_v1 close — GPU 0 MiB /
@@ -115,16 +139,6 @@ band) — no reply by close** — `run_work_next` armed (09:49 marker
 confirmed): the chained work session executes CPU items
 `token-decode-diagnosis` + `v1-fleet-upgrade` and keeps the polls;
 both GPU actions stay owner-gated. Queue green depth 2 (16 open).
-
-Session 2026-08-19 09:30–10:0xZ (work, chained; 0 GPU-h — CPU-only
-integrity/infra item, H100 idle throughout): **metadata-v1-importer
-CLOSED — `bijou.convert_v1` (edb8d4e), the pinned-worktree class
-killer: joint step_002000 loads under current code, golden er_60k
-cross-check bitwise equal, convert_legacy pre-rename bug fixed;
-result post 1539571824461881354** — exploit (infra debt); queue
-validate green depth 2 (16 open: refill `v1-fleet-upgrade`; both GPU
-actions owner-gated); tight polls held on the two pending owner
-calls, no reply; `run_work_next` armed at close.
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +

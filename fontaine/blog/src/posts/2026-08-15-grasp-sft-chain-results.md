@@ -321,3 +321,56 @@ convicted its 3-dataset mix against exactly this class of artifact);
 the token read puts R2 token-GRPO activation to the owner with
 receipts — activate from a 7% base, precede it with a token-weighted
 SFT arm (λ>1 or uninsulated), or park R2.
+
+## Addendum 2026-08-19 (ii) — the decode diagnosis: why 7 vs 44 on one trunk
+
+The queued CPU dissection ran the same day (instrument
+`fontaine/scripts/token_decode_diagnosis.py`, f960f83; JSON in
+`reports/analysis__token_decode_diagnosis.json`; every number below is
+computed from the banked probe episodes and videos, no GPU touched).
+The question it was queued to answer: is the token head's 7/100 a
+broken decode, a broken head, or something narrower — and which of the
+three R2 options does the evidence support?
+
+![Token-head decode diagnosis: funnel, reach envelope, carry speed, carry traces](../img/grasp_sft/token_decode_diagnosis.png)
+
+**What it is not.** Not the 08-13 zeros-fallback class: a motion
+instrument over all 300 banked videos (frame differencing at 0.5 s)
+finds **zero frozen episodes** in any arm — grammar masking has fully
+retired the no-op-chunk failure. Not mode collapse to one canonical
+trajectory either: cross-seed frame dissimilarity for the token head
+is *higher* than flow's, not lower.
+
+**What it is: magnitude attenuation.** The grip channel is
+contact-coded in the sim, so the funnel reads directly off the traces.
+Flow converts touch → pinch → success at 91 → 59 → 44; the token head
+at 60 → 22 → 7; the token base at 7 → 0 → 0. SFT bought *reach* (touch
+7 → 60) but greedy decode under-commands amplitude everywhere past it:
+the touch rate collapses with spawn distance (14/14 at 6–8 cm down to
+1/14 at 11–13 cm; zero successes past 10 cm, where flow still succeeds
+out to 11.8), and grasped carries move at **0.81 cm/s vs flow's
+2.00** — 9 of 15 pinch-failures are genuine carries that stall short
+of the disk, two of them running out the 30 s clock *still holding the
+boat* (flow: zero). Same trunk, same features; the discrete argmax
+path just commands smaller motions. It is the ar-draws mean-collapse
+shape, finally visible in closed loop.
+
+Record-only curiosities: the two heads' competence envelopes are
+complementary (in the close 6–8 cm band the token head touches 14/14
+with 4 successes vs flow's 9/14 with 1), and 5 of the 7 token
+successes are on seeds flow fails — the token pathway adds coverage
+rather than shadowing flow.
+
+**The recommendation posted with the receipts: activate R2 from 7%.**
+The CE stream already owned every trunk update in route C (insulation
+gave it the whole gradient; final CE 0.155), so a token-focused SFT
+variant on the same 313 demos would mostly re-buy reach it already
+has — the deficit sits in the decode distribution. That is exactly the
+pathway GRPO trains: R2's rollouts sample at T=1.0, not greedy, and
+the 08-13 dT table showed this attenuation class relaxing monotonically
+with temperature. The failure mass being late-funnel (60 touch / 22
+pinch) means group-relative advantage sees dense signal; at p = 0.07
+the expected mixed-group rate in 8-groups is ≈44%, and R2's wave-0
+calibration read stays the cheap abort (proposed bar: mixed < 20%).
+Parking is the option the data argues against hardest: the head is
+success-capable and flow-disjoint. The owner call stands.

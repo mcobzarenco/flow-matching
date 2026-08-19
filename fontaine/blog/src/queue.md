@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-19T09:48:09Z
+**Updated:** 2026-08-19T10:28:30Z
 
-**Depth call:** post metadata-v1-importer close 09:4xZ 08-19: 2 queued CPU-executable (token-decode-diagnosis, v1-fleet-upgrade refill); demos-plus-one-rig-exec owner-gated (registered grid carve-out), grpo-r2-post-sft owner-band; H100 free pending the owner isolation call
+**Depth call:** post token-decode-diagnosis close 10:2xZ 08-19: 2 queued CPU-executable (v1-fleet-upgrade, token-probe-html-gallery refill); demos-plus-one-rig-exec owner-gated, grpo-r2-post-sft owner-band (activation recommendation posted with receipts); H100 free pending the owner isolation call
 
-**16 open** (Live 0 · Queued 2 · Blocked 14 · Done 249)
+**16 open** (Live 0 · Queued 2 · Blocked 14 · Done 250)
 
 ## 🔴 Live (0)
 
@@ -18,6 +18,20 @@
 
 *ready — waiting on a window or a boundary*
 
+**`token-probe-html-gallery`** · `cpu`
+
+Token probe legs HTML panel (CPU, standing rule html-reports-for-important-checkpoints): the joint checkpoint's flow leg got its browsable panel 08-16 (eval__grasp_sft_joint_step2000__flow_unseen100.html) but the token legs never…
+
+**boundary:** Queued 10:2xZ 08-19 work session (charter section 4 refill at the token-decode-diagnosis close; depth-2 restore). All inputs banked on disk — no GPU.
+
+<details><summary>full record</summary>
+
+Token probe legs HTML panel (CPU, standing rule html-reports-for-important-checkpoints): the joint checkpoint's flow leg got its browsable panel 08-16 (eval__grasp_sft_joint_step2000__flow_unseen100.html) but the token legs never did. Build the same-class report for token_unseen (7/100) + token_base (0/100) from the banked episode JSONs/videos via grasp_sft_joint_unseen_report.py (or its token generalization), embedding the decode-diagnosis funnel/envelope numbers; upload to fontaine-reports Space, link from reports.md, short in-channel pointer. Success/near-miss video picks: seeds 35/96 (flow-overlap successes), 29/41 (timeout-holding carries), one far-spawn no-touch.
+
+</details>
+
+---
+
 **`v1-fleet-upgrade`** · `cpu`
 
 Upgrade the remaining on-disk schema-1 checkpoints via bijou.convert_v1 (integrity/infra sweep, follows metadata-v1-importer edb8d4e): still v1 on disk
@@ -27,20 +41,6 @@ Upgrade the remaining on-disk schema-1 checkpoints via bijou.convert_v1 (integri
 <details><summary>full record</summary>
 
 Upgrade the remaining on-disk schema-1 checkpoints via bijou.convert_v1 (integrity/infra sweep, follows metadata-v1-importer edb8d4e): still v1 on disk — converted/molmoact2_base_corrected_stats_v0_vla_jointsurface (the leg-4 derived surface), converted/molmoact2_grasp_sft_stagec_ar_step2000_corrected_v1 + _vla (stage-C AR pair), converted/er_60k_step_060000_vla (v1 original; its _v2 sibling carries the narration_weight 1.0 drift — decide regenerate-vs-annotate, inference unaffected). Per-dir: upgrade, validate, then RETIRE the v1 original only after a grep proves nothing mounts it (rsync-box memory class: no blind deletes). Disk note: trained-trunk upgrades materialize ~9-18 GB each; 266 GB free at queue time — stagger and delete v1 originals as each upgrade verifies.
-
-</details>
-
----
-
-**`token-decode-diagnosis`** · `cpu`
-
-Token-head decode diagnosis (CPU, banked artifacts only — feeds the owner's R2 band call): the joint ckpt reads 7/100 grammar-greedy while its flow sibling reads 44/100 ON THE SAME TRUNK (which the CE stream alone trained
-
-**boundary:** Queued 09:2xZ 08-19 work session (charter section 4 refill; the B SS3 owner-decision band fired at the route-C close, post 1539564065414840340).
-
-<details><summary>full record</summary>
-
-Token-head decode diagnosis (CPU, banked artifacts only — feeds the owner's R2 band call): the joint ckpt reads 7/100 grammar-greedy while its flow sibling reads 44/100 ON THE SAME TRUNK (which the CE stream alone trained — flow was insulated), and the base-token anchor reads 0/100. Dissect the banked token_unseen/token_base episode JSONs + videos vs flow_unseen: per-replan predicted-chunk agreement flow-vs-token on shared seeds, magnitude/bin saturation in greedy decode (the 6.8% zero-fallback class from the 08-13 ar100 read is prior art), where the 7 successes' decodes differ from the 93 failures, near-miss geometry. Output: a short analysis json + one chart + in-channel brief with a recommendation for the R2 band (activate / token-SFT variant first / park).
 
 </details>
 
@@ -96,7 +96,7 @@ OWNER-TAKEN 15:30:26Z 08-16 ('I'll fix the different joint convention at convers
 
 GRPO R2 on the grasp-SFT policy (DRAFT pre-reg posted 08-15): fresh Decision-11 run on the first-class stack (bijou/grpo_replay.py over the CONVERTED stage-C endpoint
 
-**boundary:** DRAFT posted 07:5xZ 08-15 (queue-refill slice of the stage-C ride session; stage C launched 07:29:55Z same session). ACTIVATION RULE: stage-D verdict owns this item — GRPO_GO (&gt;=20/100) -&gt; finalization per prereg SS6 (base count + checkpoint receipt + lr decision + setback wire call + HEAD re-pin + objection window) THEN launch; ITERATE_BC_ONCE (5-19) -&gt; the bootstrap's iterate arm consumes the GPU slot first, this item waits; F_TRANSFER (&lt;5) -&gt; PARK this item (visual/renderer lane becomes binding per bootstrap SS4). Fresh budget — the bootstrap &lt;=13 gate does NOT carry over. || AMENDMENT A2 REGISTERED 14:4xZ 08-15 (SS8): token-SFT arm pre-reg DRAFT posted (posts/2026-08-15-prereg-grasp-sft-token-sft-arm.md, per A1 decision 2) — if the owner routes token-GRPO, R2 RE-BASES on that arm's endpoint and the activation bar becomes the arm's primary read (unseen sim100 &gt;=20/100 on the DISCRETE head, greedy decode); the stage-D flow-head verdict no longer activates this item. Table lineage inherited (fast codec normalizes token targets with baked q01/q99 — corrected-base init mandatory). Checkpoint receipt re-spelled per owner main 4fd6875 (VLA format: convert_legacy + validate_checkpoint, stats_note provenance). || GPU QUEUE PAUSED 10:2xZ 08-16 (owner 10:13:32Z: local rollouts of the 2k policy; leg-3 eval stopped mid-seed-24, GPU freed+verified): owner_hold set, no GPU launches until they hand it back in-channel; resume recipe in babysit.toml pruned-entry note. || V1-MIRROR AUDIT 19:1xZ 08-17 (local-dataset-mirrors-restore): NO dataset dependency at all — consumes the converted stage-C endpoint checkpoint; reward models are banked. Launch gap unaffected by the box kill. ||| B SS3 BAND FIRED 09:1xZ 08-19: joint ckpt token head 7/100 vs bar &gt;=20 (base-token anchor 0/100) — 5-19 owner-decision band; receipts posted 1539564065414840340. Options put to owner: activate from 7% / token-focused SFT arm first / park. token-decode-diagnosis (CPU) queued to sharpen the call. · [pre-reg](posts/2026-08-15-prereg-grpo-r2-post-sft.md)
+**boundary:** DRAFT posted 07:5xZ 08-15 (queue-refill slice of the stage-C ride session; stage C launched 07:29:55Z same session). ACTIVATION RULE: stage-D verdict owns this item — GRPO_GO (&gt;=20/100) -&gt; finalization per prereg SS6 (base count + checkpoint receipt + lr decision + setback wire call + HEAD re-pin + objection window) THEN launch; ITERATE_BC_ONCE (5-19) -&gt; the bootstrap's iterate arm consumes the GPU slot first, this item waits; F_TRANSFER (&lt;5) -&gt; PARK this item (visual/renderer lane becomes binding per bootstrap SS4). Fresh budget — the bootstrap &lt;=13 gate does NOT carry over. || AMENDMENT A2 REGISTERED 14:4xZ 08-15 (SS8): token-SFT arm pre-reg DRAFT posted (posts/2026-08-15-prereg-grasp-sft-token-sft-arm.md, per A1 decision 2) — if the owner routes token-GRPO, R2 RE-BASES on that arm's endpoint and the activation bar becomes the arm's primary read (unseen sim100 &gt;=20/100 on the DISCRETE head, greedy decode); the stage-D flow-head verdict no longer activates this item. Table lineage inherited (fast codec normalizes token targets with baked q01/q99 — corrected-base init mandatory). Checkpoint receipt re-spelled per owner main 4fd6875 (VLA format: convert_legacy + validate_checkpoint, stats_note provenance). || GPU QUEUE PAUSED 10:2xZ 08-16 (owner 10:13:32Z: local rollouts of the 2k policy; leg-3 eval stopped mid-seed-24, GPU freed+verified): owner_hold set, no GPU launches until they hand it back in-channel; resume recipe in babysit.toml pruned-entry note. || V1-MIRROR AUDIT 19:1xZ 08-17 (local-dataset-mirrors-restore): NO dataset dependency at all — consumes the converted stage-C endpoint checkpoint; reward models are banked. Launch gap unaffected by the box kill. ||| B SS3 BAND FIRED 09:1xZ 08-19: joint ckpt token head 7/100 vs bar &gt;=20 (base-token anchor 0/100) — 5-19 owner-decision band; receipts posted 1539564065414840340. Options put to owner: activate from 7% / token-focused SFT arm first / park. token-decode-diagnosis (CPU) queued to sharpen the call. ||| DECODE DIAGNOSIS BANKED 10:2xZ 08-19 (f960f83, post 1539581325588041780): the 7/100 is magnitude attenuation of greedy decode, not head incapacity — funnel 60 touch/22 pinch, reach + carry under-command, no frozen/no-op class. Fontaine recommendation IN-CHANNEL: ACTIVATE from 7% with wave-0 abort bar mixed-groups &lt;20% (at p=.07 expected ~44% in 8-groups); token-SFT-first argued against (CE owned all route-C trunk updates), park argued against (success-capable + flow-disjoint coverage). Owner call still owns activation. · [pre-reg](posts/2026-08-15-prereg-grpo-r2-post-sft.md)
 
 <details><summary>full record</summary>
 
@@ -246,9 +246,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (249)
+## ✅ Done (250)
 
 *closed — the full record stays in each fold*
+
+**`token-decode-diagnosis`** · `cpu`
+
+Token-head decode diagnosis (CPU, banked artifacts only — feeds the owner's R2 band call): the joint ckpt reads 7/100 grammar-greedy while its flow sibling reads 44/100 ON THE SAME TRUNK (which the CE stream alone trained
+
+**boundary:** Queued 09:2xZ 08-19 work session (charter section 4 refill; the B SS3 owner-decision band fired at the route-C close, post 1539564065414840340). ||| EXECUTED + CLOSED 10:2xZ 08-19 work session (f960f83): instrument fontaine/scripts/token_decode_diagnosis.py + 4 CPU oracles; analysis json + 4-panel chart banked; brief posted 1539581325588041780 with the chart. FINDINGS: not decode collapse (0/300 frozen via motion instrument over every banked video; no stereotypy; zeros-fallback class gone under grammar masking) — magnitude attenuation: funnel 60-&gt;22-&gt;7 vs flow 91-&gt;59-&gt;44 (base 7-&gt;0-&gt;0), reach envelope truncated (1/14 touch at 11-13 cm, 0 successes past 10 cm), carry speed 0.81 vs 2.00 cm/s (2 timeouts still holding the boat vs flow 0), knock-aways 25 vs 7. Complementary envelopes + 5/7 flow-disjoint successes (record). RECOMMENDATION POSTED: activate R2 from 7% — CE owned all trunk updates so token-SFT re-buys reach not calibration; R2 samples T=1.0 (dT table shows T-monotone relief of this class); wave-0 stays the cheap abort, proposed bar mixed&lt;20%. Results-page addendum (ii) live.
+
+<details><summary>full record</summary>
+
+Token-head decode diagnosis (CPU, banked artifacts only — feeds the owner's R2 band call): the joint ckpt reads 7/100 grammar-greedy while its flow sibling reads 44/100 ON THE SAME TRUNK (which the CE stream alone trained — flow was insulated), and the base-token anchor reads 0/100. Dissect the banked token_unseen/token_base episode JSONs + videos vs flow_unseen: per-replan predicted-chunk agreement flow-vs-token on shared seeds, magnitude/bin saturation in greedy decode (the 6.8% zero-fallback class from the 08-13 ar100 read is prior art), where the 7 successes' decodes differ from the 93 failures, near-miss geometry. Output: a short analysis json + one chart + in-channel brief with a recommendation for the R2 band (activate / token-SFT variant first / park).
+
+</details>
+
+---
 
 **`metadata-v1-importer`** · `cpu`
 
