@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-19T14:59:16Z
+**Updated:** 2026-08-19T16:36:00Z
 
 **Depth call:** post grpo-r2-activation-amendment-draft close 12:5xZ 08-19: 2 queued CPU-executable (grpo-r2-launch-kit refill, disk-retirement-sweep-banked-sources); demos-plus-one-rig-exec owner-gated, grpo-r2-post-sft owner-band (A3 amendment now frozen, ACTIVATE executes mechanically); H100 free pending the owner isolation call
 
-**15 open** (Live 0 · Queued 2 · Blocked 13 · Done 257)
+**15 open** (Live 0 · Queued 2 · Blocked 13 · Done 258)
 
 ## 🔴 Live (0)
 
@@ -18,20 +18,6 @@
 
 *ready — waiting on a window or a boundary*
 
-**`grpo-r2-boundary-reads-instrument`** · `cpu`
-
-GRPO R2 boundary-reads instrument (CPU, oracle-gated; the endpoint's three registered legs mechanized before any launch so the boundary session is reads-not-code): (1) PRIMARY paired per-seed exact test, boundary greedy sim100 vs…
-
-**boundary:** Queued 13:3xZ 08-19 work session (charter section 4 refill at the grpo-r2-launch-kit close; depth-2 restore alongside disk-retirement-sweep-banked-sources). Executable any CPU window; wanted before the R2 endpoint regardless of which A3.7 reply lands (HOLD-BAND's iterate-once arm reuses leg-1's paired instrument against its own anchor). · [pre-reg](posts/2026-08-15-prereg-grpo-r2-post-sft.md)
-
-<details><summary>full record</summary>
-
-GRPO R2 boundary-reads instrument (CPU, oracle-gated; the endpoint's three registered legs mechanized before any launch so the boundary session is reads-not-code): (1) PRIMARY paired per-seed exact test, boundary greedy sim100 vs the frozen 7/100 anchor (A3.4; exact McNemar-style discordant-pair binomial, seeds 0-99 paired by construction) with the 5-19 style band surfaces baked; (2) record-only sampled T=1.0 sim100 vs the preflight leg-0 floor (decode-gap movement priced); (3) flow-head F-regression leg read vs the 44/100 anchor (material-regression surface stated, judge owns the call); consumes the rollout_sim out-jsons + preflight_verdict.json, emits a machine-readable boundary verdict + chart-ready facts (house dark-mode chart at report time). Oracle tests on synthetic jsons pin every band edge; check.py green. NO GPU.
-
-</details>
-
----
-
 **`demos-plus-one-rig-exec`** · `gpu-local`
 
 Demos + ONE rig dataset isolation cell EXECUTION (OWNER-GATED: the pdnorm pre-reg's registered &lt;=10 grid text makes the next isolation an owner call
@@ -41,6 +27,20 @@ Demos + ONE rig dataset isolation cell EXECUTION (OWNER-GATED: the pdnorm pre-re
 <details><summary>full record</summary>
 
 Demos + ONE rig dataset isolation cell EXECUTION (OWNER-GATED: the pdnorm pre-reg's registered &lt;=10 grid text makes the next isolation an owner call — draft posted 04:25:54Z 08-19 id 1539490569875759115, awaiting GO / other-arm pick / edit-as-amendment). On GO at a GPU-free boundary: STEPS=20 SMOKE=1 fit smoke, then systemd-run unit fontaine-v2-joint-pdnorm-onerig via the staged launcher launch_local_grasp_sft_v2_joint_1gpu_pdnorm_onerig_h100.sh (demos+so101_pick_place_v2 x4, pdnorm, joint+insulate, eff-96, seed 0, 3000 steps, sidecar optimizer.pt pruner); babysit entry at launch, first poll util+rate+free-g+df; boundaries step-1000 drift read, step-3000 endpoint -&gt; sim100 (stand-ins pin, --stats-repo-id grasp_demos_v2/merged) + panel guard vs disc-1000 npz + paired reads vs control AND convicted cell + verdict post through the frozen grid. Gate 17 GPU-h.
+
+</details>
+
+---
+
+**`grpo-r2-boundary-legs-launcher`** · `cpu`
+
+GRPO R2 boundary-legs launcher (CPU; makes the R2 endpoint one command end-to-end): a `boundary` subcommand on launch_grpo_r2.sh that takes the endpoint checkpoint dir and fires the three A3.4 legs sequentially as ONE detached un…
+
+**boundary:** Queued 16:3xZ 08-19 work session (charter section 4 refill at the grpo-r2-boundary-reads-instrument close; depth-2 restore). Wanted before the R2 boundary (~0x:xxZ 08-20) so the endpoint session is fire-and-read; executable any CPU window while R2 rides. · [pre-reg](posts/2026-08-15-prereg-grpo-r2-post-sft.md)
+
+<details><summary>full record</summary>
+
+GRPO R2 boundary-legs launcher (CPU; makes the R2 endpoint one command end-to-end): a `boundary` subcommand on launch_grpo_r2.sh that takes the endpoint checkpoint dir and fires the three A3.4 legs sequentially as ONE detached unit — (1) greedy token sim100 (--serve-head ar, no temperature), (2) sampled T=1.0 sim100, (3) flow unseen100 euler-10 — each with the anchors' exact driver + substrate pins (standins, stats_repo_id so101_pick_place_v2, seeds 0-99), ~3.9 GPU-h total per A3.5, chaining into python -m fontaine.scripts.grpo_r2_boundary_verdict (guards already refuse wrong-leg jsons; the launcher's job is to never produce one). Refuses to fire while the grpo-r2 unit is still alive. Parse-check oracle-tested like the kit's, check.py green. NO GPU in this item — it stages; the boundary session fires it.
 
 </details>
 
@@ -232,9 +232,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (257)
+## ✅ Done (258)
 
 *closed — the full record stays in each fold*
+
+**`grpo-r2-boundary-reads-instrument`** · `cpu`
+
+GRPO R2 boundary-reads instrument (CPU, oracle-gated; the endpoint's three registered legs mechanized before any launch so the boundary session is reads-not-code): (1) PRIMARY paired per-seed exact test, boundary greedy sim100 vs…
+
+**boundary:** Queued 13:3xZ 08-19 work session (charter section 4 refill at the grpo-r2-launch-kit close; depth-2 restore alongside disk-retirement-sweep-banked-sources). Executable any CPU window; wanted before the R2 endpoint regardless of which A3.7 reply lands (HOLD-BAND's iterate-once arm reuses leg-1's paired instrument against its own anchor). ||| EXECUTED + CLOSED 16:3xZ 08-19 work session: instrument landed as fontaine/scripts/grpo_r2_boundary_verdict.py + oracles tests/test_grpo_r2_boundary_verdict.py, check.py 1083 green. All three A3.4 legs mechanized behind loud provenance guards (per-leg serve_head/temperature, flow euler-10, seeds exactly 0-99, ONE shared boundary checkpoint that refuses the pinned base, preflight must be PASS): (1) PRIMARY paired per-seed exact sign test on discordant pairs vs frozen 7/100 (band edges oracle-pinned: 5 wins/0 losses is the minimal IMPROVED, each extra loss buys the edge 2 wins; REGRESSED mirrors; FLAT else); (2) sampled T=1.0 vs the preflight floor record-only, decode-gap movement priced vs base gap +1; (3) flow euler-10 vs 44/100 with the material line pinned at the exact 5% tail (&lt;=35/100), materially_below stated + judge_owns_call named. overall_surface combines mechanically (f-regression evidence outranks accumulation; wire cleanliness named as judged-separately). CLI smoke via python -m verified; boundary session is now reads-not-code. · [pre-reg](posts/2026-08-15-prereg-grpo-r2-post-sft.md)
+
+<details><summary>full record</summary>
+
+GRPO R2 boundary-reads instrument (CPU, oracle-gated; the endpoint's three registered legs mechanized before any launch so the boundary session is reads-not-code): (1) PRIMARY paired per-seed exact test, boundary greedy sim100 vs the frozen 7/100 anchor (A3.4; exact McNemar-style discordant-pair binomial, seeds 0-99 paired by construction) with the 5-19 style band surfaces baked; (2) record-only sampled T=1.0 sim100 vs the preflight leg-0 floor (decode-gap movement priced); (3) flow-head F-regression leg read vs the 44/100 anchor (material-regression surface stated, judge owns the call); consumes the rollout_sim out-jsons + preflight_verdict.json, emits a machine-readable boundary verdict + chart-ready facts (house dark-mode chart at report time). Oracle tests on synthetic jsons pin every band edge; check.py green. NO GPU.
+
+</details>
+
+---
 
 **`disk-retirement-sweep-banked-sources`** · `cpu`
 

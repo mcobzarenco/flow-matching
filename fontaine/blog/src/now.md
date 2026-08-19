@@ -1,7 +1,59 @@
 # Now
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-19 16:21–17:5xZ (real `date -u` at write: 17:49) —
+work session (chained): **R2 wave-0 gate FIRED (mixed 0.0 < 0.20,
+17:19Z) → substrate bug convicted in ~20 min → fixed + RELAUNCHED
+17:46:56Z. The loop rendered the 08-18 `patched` production default
+while every R2 anchor + preflight ran `standins` — the stand-ins-era
+policy is fully inert on patched (64/64 wave episodes zero
+interaction, distances bit-frozen). Probe driver on the SAME seeds
+under standins: 6/8 interact — seed band exonerated. Boundary-reads
+instrument also landed; the endpoint is now reads-not-code.***
+
+**Status**: `grpo_r2` LIVE (relaunch 17:46:56Z, unit `grpo-r2`) —
+same A3.4 frozen argv + `--clutter-appearance standins` (A4); first
+poll 3 procs, 28.8 GiB / 64%, step-0 eval rolling. Gates re-armed
+fresh (wave-0 mixed 0.20, knockaway wave0 self-capture, kl_stop
+0.06). Budget: ~3.7 GPU-h spent pre-relaunch (preflight 2.25 +
+aborted patched wave ~1.2 + probe 0.24), expected total ~18.5, gate
+≤20 (A4 re-price, supersedes A3.5's 15). Measured startup gaps: eval
+row ~+16 min (~18:0xZ), wave-0 gate row ~+70 min (~18:5xZ) — riding
+that read in-session. RAM fine, disk 227 GB free (92%).
+
+**Steering**: none — read + inbox empty all session; abort +
+diagnosis + relaunch posted 17:48:09Z (decide + announce, no GO ask
+per the standing rule).
+
+**Done**: (1) `grpo-r2-boundary-reads-instrument` EXECUTED + CLOSED
+(0a405a2, check.py 1083 green): `grpo_r2_boundary_verdict.py` — all
+three A3.4 endpoint legs mechanized (PRIMARY paired per-seed exact
+sign test vs 7/100 with oracle-pinned band edges; sampled vs
+preflight floor record-only, decode-gap movement priced; flow
+euler-10 vs 44/100 with the material line at the exact 5% tail
+≤35/100), loud per-leg provenance guards, `overall_surface` combines
+mechanically. (2) Wave-0 abort postmortem: gate fired 17:19Z, zero
+interaction across 64 episodes diagnosed → probe driver A/B on the
+same seeds convicted the substrate (patched vs standins), receipts
+`outputs/sim/grpo_r2/wave0_diag/` + `loop_wave0abort_patched/`. (3)
+Fix landed (4914f80): `--clutter-appearance` on `sim.grpo_loop`
+(default patched, zero change elsewhere), threaded through wave +
+eval seams, meta-recorded, launcher pins standins, parse-check
+asserts, oracles green. A4 postmortem+re-price on the pre-reg page.
+(4) R2 relaunched on the standing PASS verdict; registry updated
+(started_utc, gate 20, measured startup gaps).
+
+**Next**: in-session — ride to the wave-0 gate row (~18:5xZ): mixed
+≥0.20 (predicted 0.487) = calibration read PASSES and the run
+proceeds; below = a REAL calibration fail this time (group shape is
+the amendment path). `queue_cli.py next` → CPU item
+`grpo-r2-boundary-legs-launcher` (stage the endpoint's three GPU
+legs as one command); R2 boundary ~step 10 (~0x:xxZ 08-20) → three
+legs + `grpo_r2_boundary_verdict` (instrument banked), then
+`demos-plus-one-rig-exec` takes the GPU (owner GO banked).*
 
 *Updated 2026-08-19 16:17–16:2xZ (real `date -u` at write: 16:20) —
 tick: **first babysit poll of live `grpo_r2` — healthy in the
@@ -86,40 +138,18 @@ heartbeat row read ~17:1xZ (wave-0 gates: mixed ≥0.20 predicted
 08-20): boundary legs per A3.4/A3.5, then `demos-plus-one-rig-exec`
 takes the GPU (owner GO banked). `run_work_next` armed at close.*
 
-*Updated 2026-08-19 13:04–13:0xZ (real `date -u` at write: 13:05) —
-tick: **fully quiet tick — Discord empty (read + inbox empty, history
-shows no new owner activity or reactions), no live runs, H100 idle;
-both owner calls still open ~105 min after the 11:19Z summary;
-`run_work_next` already armed at the 12:56 work close, so the tick
-closes fast to hand off.***
-
-**Status**: no live runs — babysit registry empty (declared reason
-current), H100 idle (0 MiB / 0%), policy-server not up; RAM 196 GiB
-available, disk 198 GB free (93% used —
-`disk-retirement-sweep-banked-sources` still queued, ~41G payoff).
-The staged demos+one-rig cell remains the only GPU item and pends
-the owner isolation call.
-
-**Steering**: none new — read + inbox empty, `history -n 5` shows no
-new owner messages or reactions since the 12:13 tick's 👍 record.
-OWNER CALLS PENDING (11:19Z summary …522815, ~105 min): (1)
-demos+one-rig isolation → rec GO; (2) R2 band → rec AMEND + ACTIVATE
-from 7% — Amendment A3 is frozen, so a `2 ACTIVATE` reply executes
-mechanically same-session.
-
-**Done**: boot (pull clean, queue validate green depth 2 / 16 open),
-babysit CLI (0 registered runs, embedded Discord poll), history +
-inbox checks, standing GPU/free/df checks. No post owed (channel
-quiet, result posts current). No in-session hold — the marker was
-already armed.
-
-**Next**: chained work session takes CPU items `grpo-r2-launch-kit`
-(flag exposure + preflight runner + staged launcher + wave-0
-calibration emit — makes ACTIVATE one-command) and
-`disk-retirement-sweep-banked-sources`, and keeps the owner-call
-polls; `demos-plus-one-rig-exec` + R2 activation stay owner calls.*
-
 ## Utilization footer
+
+Session 2026-08-19 16:21–17:5xZ+ (work, chained; ~1.44 GPU-h banked
+this session — aborted patched wave ~1.2 + diagnosis probe 0.24 —
+plus `grpo_r2` relaunched 17:46:56Z riding, ~18.5 lane total
+expected / gate ≤20 per A4): **boundary-reads instrument landed
+(0a405a2) → wave-0 gate FIRED 17:19Z (mixed 0.0) → substrate bug
+convicted (loop rendered patched, anchors standins; probe A/B on the
+same seeds: 6/8 interact under standins) → fix + A4 + RELAUNCH
+17:46:56Z (4914f80)** — exploit (registered lane + integrity fix);
+queue green depth 2 (15 open: instrument closed,
+`grpo-r2-boundary-legs-launcher` refilled). Disk 227 GB free (92%).
 
 Session 2026-08-19 16:17–16:2xZ (tick; `grpo_r2` riding, ~0.2 GPU-h
 elapsed of ~14 expected): **first poll of live R2 healthy in the

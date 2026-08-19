@@ -33,11 +33,11 @@ jsonl = "/home/ubuntu/flow-matching/outputs/sim/grpo_r2/loop/train.jsonl"
 total_steps = 10
 probe_key = "eval_successes"
 vram_key = "vram_gib"
-started_utc = "2026-08-19T16:10:02Z"
+started_utc = "2026-08-19T17:46:56Z"
 gpu_hours_per_wall_hour = 1.0
-boundary = "step 10 endpoint: greedy sim100 vs 7 (PRIMARY, paired exact) + sampled T=1.0 sim100 vs the preflight floor 8/100 (record-only) + flow unseen100 euler-10 vs 44 (F-regression leg); pace anchor ~0.98 GPU-h/step, budget ~14 expected / gate <=15 GPU-h incl. the ~2.25 preflight (A3.5). Boundary instrument queued: grpo-r2-boundary-reads-instrument."
+boundary = "step 10 endpoint: greedy sim100 vs 7 (PRIMARY, paired exact) + sampled T=1.0 sim100 vs the preflight floor 8/100 (record-only) + flow unseen100 euler-10 vs 44 (F-regression leg); pace anchor ~0.98 GPU-h/step, budget ~18.5 expected / gate <=20 GPU-h incl. the ~3.7 spent pre-relaunch (A4). Boundary instrument LANDED: python -m fontaine.scripts.grpo_r2_boundary_verdict (0a405a2)."
 anchors = [
-    "STARTUP GAP (expected, NOT a crash): train.jsonl's first row lands only after the step-0 eval (20 seeds) + wave-0 rollout + train pass — ~17:1xZ at R1-class pace; babysit exit 1 'no parseable rows' before then is the known train-jsonl startup read (launch 16:10, procs+GPU are the liveness truth in this window). Judged at launch first poll: 3 procs, 28.8 GiB / 100%, eval seeds 200-207 rolling",
+    "STARTUP GAP (expected, NOT a crash): step-0 eval row ~+16 min, first WAVE row (mixed_groups_frac carrier) ~+70 min (both MEASURED on the 16:10 patched launch) — from the 17:46:56Z relaunch expect eval row ~18:0xZ, wave-0 gate row ~18:5xZ; babysit exit 1 before then is the known startup read, procs+GPU are the liveness truth. RELAUNCH (A4): 16:10 launch aborted at wave 0 on the substrate bug (loop rendered patched, anchors are standins) — fixed via --clutter-appearance standins in the argv; all gates re-armed fresh",
     "token greedy 7/100 (A3.1 frozen anchor; success seeds 34,35,63,68,71,91,96)",
     "flow sibling 44/100 same trunk (A3.4 regression leg at boundary — option B moves the flow read too)",
     "preflight sampled T=1.0 = 8/100 PASS (P=0.734) — the recorded training-decode floor; verdict json outputs/sim/grpo_r2/preflight/preflight_verdict.json",
@@ -48,7 +48,7 @@ anchors = [
 ]
 [[run.gates]]
 kind = "gpu_hours_max"
-value = 15.0                      # A3.5 budget gate (~14 expected incl. boundary legs)
+value = 20.0                      # A4 re-priced gate (~18.5 expected total; ~3.7 already spent pre-relaunch: preflight 2.25 + aborted patched wave ~1.2 + diagnosis probe ~0.24)
 [[run.gates]]
 kind = "vram_max_gib"
 value = 75.0                      # R1-B envelope on the 80G H100
