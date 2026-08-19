@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-19T04:27:04Z",
+ "updated_utc": "2026-08-19T04:36:11Z",
  "depth_reason": "post-triage: 4 queued executable (pdnorm-endpoint-close gated ~23:3xZ, grasp-sft-bootstrap legs 3/4 GPU-free-gated, sim-clutter-patch-promotion CPU, expert-approach-quasistatic-redesign CPU) + owner-pending-decisions-digest closing this session",
  "items": [
   {
@@ -2352,12 +2352,21 @@
   {
    "id": "offload-optim-save-prune",
    "class": "cpu",
+   "status": "done",
+   "owner_hold": false,
+   "prereg": null,
+   "title": "First-class superseded-optimizer prune in bijou.train saving (infra debt from the 08-19 root-disk-full incident: six ~31 GiB offload-optim optimizer.pt saves filled the disk mid-battery and killed the joint-probe leg-3 attempt). Implement --prune-superseded-optim (default OFF; keep latest N=2 step_* saves' optimizer.pt, weights never touched) in bijou/train saving, oracle-tested (tmpdir save ladder: correct files removed, latest-2 kept, resume from latest still loads); wire into the staged onerig launcher in place of the sidecar loop once landed. CPU-executable any session; check.py + oracles before commit per charter. ||| EXECUTED 04:3x-04:4xZ 08-19 same session (no-idle window while joint-probe leg 3 runs): --prune-superseded-optim landed in bijou.train (TrainArgs defaulted field + CLI flag + prune_superseded_optimizers() in train/saving.py, called post-publish on BOTH the sync and async save paths \u2014 async runs on the saver thread where writes serialize, so the newest dir is always complete). 5 oracles green (tests/test_prune_superseded_optim.py: newest-2 kept, weights untouched, .tmp debris + foreign names + step-named files ignored, already-pruned skipped, flag parses + defaults off). Staged onerig launcher rewired to the flag (sidecar loop deleted), full-parse green.",
+   "boundary": "Queued 04:2xZ 08-19 work session (charter section 4 refill at the prereg-draft close; depth-2 restore). The staged onerig launcher carries a launcher-level sidecar pruner as the interim fix \u2014 this item promotes it into the trainer where every future offload-optim run inherits it. | CLOSED 04:4xZ 08-19."
+  },
+  {
+   "id": "util-window-roll",
+   "class": "cpu",
    "status": "queued",
    "owner_hold": false,
    "prereg": null,
-   "title": "First-class superseded-optimizer prune in bijou.train saving (infra debt from the 08-19 root-disk-full incident: six ~31 GiB offload-optim optimizer.pt saves filled the disk mid-battery and killed the joint-probe leg-3 attempt). Implement --prune-superseded-optim (default OFF; keep latest N=2 step_* saves' optimizer.pt, weights never touched) in bijou/train saving, oracle-tested (tmpdir save ladder: correct files removed, latest-2 kept, resume from latest still loads); wire into the staged onerig launcher in place of the sidecar loop once landed. CPU-executable any session; check.py + oracles before commit per charter.",
-   "boundary": "Queued 04:2xZ 08-19 work session (charter section 4 refill at the prereg-draft close; depth-2 restore). The staged onerig launcher carries a launcher-level sidecar pruner as the interim fix \u2014 this item promotes it into the trainer where every future offload-optim run inherits it."
+   "title": "Utilization footer window roll (ledger maintenance, charter session-boot footer): the trailing-7-day figure in now.md still reads window 2026-08-10 -> 2026-08-17 19:45Z (rebased 08-17, box-final). Recompute for a current 7-day window with fontaine/scripts/util_ledger_extract.py + the per-run prune records and the archive session notes since 08-17 (discriminator ~4.8 roll-in, pdnorm ~15.9 screenwide, joint-probe legs), restate local-only (box killed 08-17), land the new footer figure + receipts note in fontaine/notes/. CPU-executable any session.",
+   "boundary": "Queued 04:4xZ 08-19 work session (charter section 4 refill at the offload-optim-save-prune close; depth-2 restore)."
   }
  ],
- "updated": "2026-08-19T04:27:04Z"
+ "updated": "2026-08-19T04:36:11Z"
 }

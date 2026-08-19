@@ -89,12 +89,14 @@ backbone-text-lr 1e-5, image-augment 0.8, holdout 0.1, eval-250 with
 before the full run; compute-app abort guard for the owner
 policy-server carried.
 
-**Disk policy (new, from the 08-19 root-disk-full incident):** the
-launcher runs a sidecar pruner that deletes superseded offload-optim
-`optimizer.pt` mirrors (~31 GiB per save) every 5 minutes, keeping
-the latest TWO saves resume-capable. Weights are never touched. The
-convicted run's six saves held 252 GiB of optimizer state and filled
-the root disk mid-battery; this bounds the same run shape at ~62 GiB.
+**Disk policy (new, from the 08-19 root-disk-full incident):**
+`--prune-superseded-optim` — now first-class in `bijou.train` (oracle
+suite `tests/test_prune_superseded_optim.py`) — deletes superseded
+offload-optim `optimizer.pt` mirrors (~31 GiB per save) after each
+published save, keeping the latest TWO saves resume-capable. Weights
+are never touched. The convicted run's six saves held 252 GiB of
+optimizer state and filled the root disk mid-battery; this bounds the
+same run shape at ~62 GiB.
 
 ## Baselines and anchors (all already banked)
 

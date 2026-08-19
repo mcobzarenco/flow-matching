@@ -29,6 +29,7 @@ rigs without their own stats.
 from __future__ import annotations
 
 import dataclasses
+import re
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
@@ -408,6 +409,30 @@ def write_checkpoint(
     finally:
         optimizer_scratch.unlink(missing_ok=True)
     return checkpoint_dir
+
+
+_STEP_DIR_RE = re.compile(r"step_\d+")
+
+
+def prune_superseded_optimizers(save_dir: Path, *, keep: int = 2) -> list[Path]:
+    """Delete ``optimizer.pt`` from all but the newest ``keep``
+    published ``step_*`` checkpoints under ``save_dir`` (weights and
+    metadata untouched — the pruned directories stay loadable for eval,
+    only ``--resume`` loses them). Runs strictly AFTER a publish, so the
+    newest directory is always complete; ``.tmp`` staging debris and
+    foreign directory names never match. Returns the deleted paths."""
+    steps = sorted(
+        d
+        for d in save_dir.glob("step_*")
+        if d.is_dir() and _STEP_DIR_RE.fullmatch(d.name)
+    )
+    pruned: list[Path] = []
+    for directory in steps[: max(0, len(steps) - keep)]:
+        optimizer_file = directory / "optimizer.pt"
+        if optimizer_file.exists():
+            optimizer_file.unlink()
+            pruned.append(optimizer_file)
+    return pruned
 
 
 def save_checkpoint(

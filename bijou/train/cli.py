@@ -197,6 +197,7 @@ from .saving import (
     build_vla_metadata,
     capture_checkpoint_tensors,
     objective_to_json,
+    prune_superseded_optimizers,
     save_checkpoint,
     serving_to_json,
     write_checkpoint,
@@ -2627,6 +2628,14 @@ def main() -> int:
                                 "behind the boundary)",
                                 flush=True,
                             )
+                            # Post-publish, on the saver thread: writes
+                            # serialize through the saver, so the newest
+                            # directory is complete when this runs.
+                            if args.prune_superseded_optim:
+                                for pruned in prune_superseded_optimizers(
+                                    args.save_dir,
+                                ):
+                                    print(f"pruned {pruned}", flush=True)
                             return path
 
                         write = write_async
@@ -2673,6 +2682,9 @@ def main() -> int:
                         stats_note=recompute_note,
                     )
                     print(f"saved {path}", flush=True)
+                    if args.prune_superseded_optim:
+                        for pruned in prune_superseded_optimizers(args.save_dir):
+                            print(f"pruned {pruned}", flush=True)
                     # Frozen parts link this save's files from now on.
                     if args.backbone_text_lr is None:
                         frozen_text_source = backbone_files(path).text

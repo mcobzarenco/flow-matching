@@ -16,10 +16,12 @@
 # eff-96 = micro-12 x 8 chunks, act-ckpt + offload-optim, seed 0
 # (same-seed comparability policy), STEPS default 3000.
 #
-# Disk policy (2026-08-19 root-disk-full incident follow-up): a
-# sidecar pruner deletes superseded offload-optim optimizer.pt
-# mirrors (~31 GiB per save), keeping the latest TWO saves
-# resume-capable. Weights are never touched.
+# Disk policy (2026-08-19 root-disk-full incident follow-up):
+# --prune-superseded-optim (first-class in bijou.train, oracle suite
+# tests/test_prune_superseded_optim.py) deletes superseded
+# offload-optim optimizer.pt mirrors (~31 GiB per save) after each
+# publish, keeping the latest TWO saves resume-capable. Weights are
+# never touched.
 #
 # Guard: aborts if any compute process holds the GPU — the owner
 # policy-server (port 8144) silently claims the H100 for rig serving
@@ -56,20 +58,6 @@ if [[ "${SMOKE:-0}" == "1" ]]; then
   SAVE_DIR=/tmp/${RUN_NAME}
 fi
 
-# Superseded-optimizer pruner: every 5 min drop optimizer.pt from all
-# but the latest TWO step_* saves (latest may be mid-write; the one
-# before it stays resume-capable).
-(
-  while true; do
-    sleep 300
-    ls -d "$SAVE_DIR"/step_* 2>/dev/null | sort | head -n -2 | while read -r d; do
-      rm -f "$d/optimizer.pt"
-    done
-  done
-) &
-PRUNE_PID=$!
-trap 'kill "$PRUNE_PID" 2>/dev/null || true' EXIT
-
 uv run python -m bijou.train \
   --train-data ~/datasets/fontaine/grasp_demos_v2/merged \
                ~/datasets/mcobzarenco/so101_pick_place_v2 \
@@ -83,6 +71,7 @@ uv run python -m bijou.train \
   --decoder-lr 5e-5 --backbone-text-lr 1e-5 \
   --steps "$STEPS" --batch-size 96 --backward-chunks 8 \
   --activation-checkpointing --offload-optim \
+  --prune-superseded-optim \
   --holdout-episodes 0.1 --eval-every 250 --eval-samples 256 \
   --eval-dataset-breakdown \
   --save-every 500 \

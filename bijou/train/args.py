@@ -346,6 +346,14 @@ class TrainArgs:
     # Defaulted (like sync_save) so checkpoints predating the flag
     # replay their train_args cleanly.
     offload_optim: bool = False
+    # Post-publish checkpoint hygiene: after each save lands, delete
+    # optimizer.pt from all but the newest TWO step_* directories
+    # (weights never touched, the latest two stay resume-capable).
+    # Under --offload-optim the fp32 payload is ~31 GiB per boundary —
+    # six unpruned saves filled the root disk mid-run on 2026-08-19.
+    # Defaulted (like sync_save) so checkpoints predating the flag
+    # replay their train_args cleanly.
+    prune_superseded_optim: bool = False
     # λ of the joint objective — a run hyperparameter like the LRs
     # (re-passable on --resume; recorded for provenance and in the
     # objective payload). 1.0 = the KI no-tuning default.
@@ -1009,6 +1017,7 @@ class TrainArgs:
                 chunk_grad_allreduce=raw.chunk_grad_allreduce,
                 activation_checkpointing=raw.activation_checkpointing,
                 offload_optim=raw.offload_optim,
+                prune_superseded_optim=raw.prune_superseded_optim,
                 steps=raw.steps,
                 decoder_lr=(raw.decoder_lr if raw.decoder_lr is not None else 1e-4),
                 backbone_text_lr=raw.backbone_text_lr,
@@ -1582,6 +1591,15 @@ def _build_parser() -> argparse.ArgumentParser:
         "4.2B-param molmoact2_joint set) never touches the GPU, at "
         "~2x trainable-bytes PCIe traffic per step. Single-process "
         "only (refused under torchrun; exclusive with --zero1)",
+    )
+    parser.add_argument(
+        "--prune-superseded-optim",
+        action="store_true",
+        help="after each published save, delete optimizer.pt from all "
+        "but the newest two step_* checkpoints (weights untouched; the "
+        "latest two boundaries stay resume-capable). Bounds the run's "
+        "optimizer-state footprint at ~2 saves — under --offload-optim "
+        "the fp32 payload is ~31 GiB per boundary",
     )
     parser.add_argument(
         "--activation-checkpointing",
