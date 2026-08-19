@@ -2361,11 +2361,11 @@
   {
    "id": "util-window-roll",
    "class": "cpu",
-   "status": "queued",
+   "status": "done",
    "owner_hold": false,
    "prereg": null,
    "title": "Utilization footer window roll (ledger maintenance, charter session-boot footer): the trailing-7-day figure in now.md still reads window 2026-08-10 -> 2026-08-17 19:45Z (rebased 08-17, box-final). Recompute for a current 7-day window with fontaine/scripts/util_ledger_extract.py + the per-run prune records and the archive session notes since 08-17 (discriminator ~4.8 roll-in, pdnorm ~15.9 screenwide, joint-probe legs), restate local-only (box killed 08-17), land the new footer figure + receipts note in fontaine/notes/. CPU-executable any session.",
-   "boundary": "Queued 04:4xZ 08-19 work session (charter section 4 refill at the offload-optim-save-prune close; depth-2 restore)."
+   "boundary": "Queued 04:4xZ 08-19 work session (charter section 4 refill at the offload-optim-save-prune close; depth-2 restore). ||| EXECUTED 08:4xZ 08-19 work session: window rolled 2026-08-12 00:00Z -> 2026-08-19 08:45Z, local-only per the box kill \u2014 local ~84.1/~85.5 (retained ~57.5 + post-stamp ~28.1; pdnorm ~15.9 screenwide verified against the item). Receipts fontaine/notes/util-window-roll-2026-08-19.md; extractor glob widened to all now-2026-08-* archives; footer restated."
   }
  ],
  "updated": "2026-08-19T04:36:11Z"

@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 
 SRC = Path(__file__).resolve().parents[1] / "blog" / "src"
-PAGES = [*sorted(SRC.glob("archive/now-2026-08-1[0-7].md")), SRC / "now.md"]
+PAGES = [*sorted(SRC.glob("archive/now-2026-08-*.md")), SRC / "now.md"]
 
 NOTE_RE = re.compile(r"^Session (2026-08-\d\d) (\S+)")
 # figures like "+~0.88 GPU-h", "~2.6 GPU-h", "17.8/40 GPU-h", "+~12.7 GPU-h"

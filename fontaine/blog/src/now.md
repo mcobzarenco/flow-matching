@@ -151,17 +151,19 @@ head 44/100 — the insulated CE rider lags ~6x), leg 4 relaunched
 frozen, token-head anchor leg running); queue validate green depth 2
 (16 open), run_work_next armed at close.
 
-Trailing-7-day GPU-hours on experiments / total (window 2026-08-10
-00:00Z → 2026-08-17 19:45Z; rebased 08-17 from per-run prune records
-+ archive session notes — receipts in
-`fontaine/notes/utilization-rebase-2026-08-17.md`, instrument
-`fontaine/scripts/util_ledger_extract.py`): local **~80.0 / ~80.2**
-(incl. the discriminator at ~1.0 in-window; run COMPLETE 08-18
-00:42Z at ~5.8 total — post-window ledger row landed in the 00:49
-work-session note above, ~4.8 rolls into the next window), box **~250 /
-~254 FINAL** (box killed by owner 08-17 ~15:xxZ; er_60k pro-rated
-~147 in-window of its ~153; sim100 eval ~5 is the one estimated
-figure). Older dated snapshots and session notes: rolled verbatim to
+Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
+00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
+prune records + archive session notes — receipts in
+`fontaine/notes/util-window-roll-2026-08-19.md`, instrument
+`fontaine/scripts/util_ledger_extract.py`): local **~84.1 / ~85.5**
+(retained 08-12→stamp ~57.5 + post-stamp ~28.1: discriminator
+roll-in ~4.8, pdnorm screen-wide ~15.9 train+battery, joint-probe
+legs 3+4 ~3.9 incl. leg 4 live at stamp; ops/loss ~1.4 =
+discriminator attempt-1 OOM + smokes). Local-only from this roll —
+the box was killed 08-17 (~106 box GPU-h fall in-window for the
+record; final box history in
+`fontaine/notes/utilization-rebase-2026-08-17.md`). Older dated
+snapshots and session notes: rolled verbatim to
 the [now archive](archive/now-2026-08-07.md); the superseded 08-06
 baseline + its accreted narrative: rolled verbatim to
 [archive 08-17](archive/now-2026-08-17.md).
