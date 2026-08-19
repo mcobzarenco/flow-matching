@@ -1,18 +1,43 @@
 # Now
 
-
-
-
-
-
-
-
-
-
-
-
-
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-19 04:15–04:2xZ (real `date -u` at write: 04:16) —
+tick: **quiet first-boundary babysit on the relaunched joint-probe
+leg 3 — healthy and on-rate 4 min after the 04:11:18Z clean
+relaunch** (3 procs, GPU 12.8 GiB / 37–45% duty, window 1.7
+seeds/min; RAM 191 GiB available, disk 294 GB free holding
+post-prune). No mid-run action; rc **~06:0x–06:2xZ** falls to a
+later session.*
+
+**Status**: `grasp_sft_joint_probes` leg 3 (token-unseen) LIVE from
+the pinned worktree `~/flow-matching-legacy-eval` @6d01d14, unit
+`fontaine-joint-probe-token-unseen`, relaunched 04:11:18Z after the
+disk-full incident — babysit exit 0 at 04:15: 3 procs, 12.8 GiB /
+37–45% (6-sample; sim-rollout profile), 3 seeds started in ~4 min
+(window 1.7 f/min, ramp consistent with the ~0.87/min green first
+poll). rc **~06:0x–06:2xZ**; B §3 read vs the R2 bar ≥20/100
+unseen; leg 4 token-base chains on leg-3-inactive per the
+babysit.toml boundary. Gate 6.0 GPU-h, cumulative projection ~0.1
+this attempt (+~0.5 spent on the killed 08-16 try). Disk 294 GB
+free — the offload-optim prune is holding.
+
+**Steering**: none — read empty, inbox empty, history shows no new
+reactions (both probe-post 👍 previously recorded).
+
+**Done**: babysit CLI (exit 0, includes the Discord read), history
+check, free -g + df + 6-sample GPU util standing checks, queue
+validate (green depth 2, 15 open). No post (quiet interval; the
+leg-3 read belongs to the session holding rc).
+
+**Next**: `run_work_next` was already ARMED at the prior work
+session's close (marker present 04:15) — the chained work session
+executes CPU item `prereg-draft-demos-plus-one-rig` (the pre-reg's
+named next isolation cell) and, if still open at **~06:0x–06:2xZ**,
+takes the leg-3 `token_unseen.json` read vs the R2 bar and launches
+leg 4 per the babysit boundary; otherwise the tick catching rc does.
+After BOTH token legs: `grasp_sft_joint_probe_reads.py` five-json
+read + consolidated post + chart-led report page + worktree removal.
 
 *Updated 2026-08-19 03:25–04:0xZ (real `date -u` at write: 03:57) —
 work session (chained): **pdnorm verdict battery EXECUTED + CLOSED —
@@ -118,47 +143,20 @@ step-2000-vs-3000 choice part of the battery's remit). Panel guard
 read at leg-2 rc: worse-by > +0.05 CI-excl-0 vs disc-1000 banked npz
 fails.*
 
-*Previous update 2026-08-19 02:42–02:4xZ (real `date -u` at write: 02:44) —
-tick: **quiet three-quarters babysit — 1/77 (seed 29 still the sole
-success, last-replan-< 29 method). Exoneration now needs 19 of the
-remaining 23 (>80% of the remainder vs 1.3% observed) — convict all
-but sealed arithmetically — but the frozen grid reads only at
-100/100; no mid-run action. Leg-1 rc ~03:1x–03:2xZ lands past this
-tick's 03:12 cap: the next tick takes the read.***
-
-**Status**: `pdnorm_endpoint_battery` LIVE — babysit exit 0 at 02:43:
-2 procs, GPU 12.7 GiB / 28–38% duty (6-sample; sim-rollout profile),
-host RAM 192 GiB available. Progress: 78 seeds started (seed 77 in
-flight) in ~118 min, window 0.6 f/min, avg 0.65/min, replans steady
-~540–556 ms. Success read: **1/77 completed** (seed 29); near-miss
-cluster unchanged just above the disk radius (4.2 cm seed 9 / 5.2
-seed 30 / 6.5 seeds 1 & 61 / 6.7 seed 32; next 7.0 seed 16). Leg-1
-rc **~03:1x–03:2xZ** (23 seeds left at ~0.62/min ≈ 37 min) — past
-this session's hard kill, so the ~03:1x tick reads sim100 through
-the frozen grid. GPU-h gate 5.0, cumulative projection 2.0. Queue
-green depth 2 (15 open; both gpu-gated).
-
-**Steering**: none — read empty, inbox empty; history shows no new
-reactions (all three 👍 previously recorded, none on the 00:46
-post).
-
-**Done**: babysit CLI (exit 0, includes Discord read + history),
-free -g + 6-sample GPU util standing checks, corrected-method
-per-seed sweep (last replan < 29 over 77 completed episodes + min
-distances), queue validate. No post (quiet interval; the 100/100
-verdict post belongs to the session holding the read).
-
-**Next**: unchanged — the tick that catches leg-1 rc
-(**~03:1x–03:2xZ**) reads sim100 through the frozen grid — count
-successes as episodes with last replan < 29 plus any summary-table
-`success_tick`, never by final distance — and arms `run_work_next`
-for the verdict battery (paired read vs disc1000 11/100, ladder
-`--endpoint` restamp, truthfit rewear, pdnormendpoint report,
-verdict post) with best-save flexibility LIVE: endpoint-3000 (probe
-6.17) vs **step 2000 @ 5.47**. CPU queue EMPTY → `run_work_next`
-NOT armed this tick.*
-
 ## Utilization footer
+
+Session 2026-08-19 04:15–04:2xZ (tick; 0 GPU-h new — joint-probe
+leg 3 live since the 04:11:18Z relaunch, ~0.1 GPU-h of gate 6.0):
+**quiet first-boundary babysit — babysit exit 0: 3 procs, GPU 12.8
+GiB / 37–45% duty (6-sample; sim-rollout profile), RAM 191 GiB
+available, disk 294 GB free holding post-prune; 3 seeds in ~4 min
+(window 1.7 f/min, ramp consistent with the green 0.87/min first
+poll); rc ~06:0x–06:2xZ; Discord fully quiet (read empty, inbox
+empty, no new reactions)** — `run_work_next` already armed at the
+prior work session's close: the chained work session takes CPU item
+`prereg-draft-demos-plus-one-rig` and, if open at rc, the leg-3 read
++ leg-4 launch per the babysit boundary. Queue green depth 2 (15
+open).
 
 Session 2026-08-19 03:25–04:0xZ (work, chained; battery panel tail
 ~0.45 GPU-h ran into this session — battery total ~3.0 of gate 5.0;
@@ -177,22 +175,6 @@ pruned to weights-only keeps 2000+3000 per policy, 294 GiB freed —
 leg 3 relaunched 04:11:18Z clean, rc ~06:0x–06:2xZ, leg 4 chains** —
 exploit (the verdict + guards close the pdnorm screen); queue
 refilled with the demos+one-rig pre-reg draft, depth 2 green.
-
-Session 2026-08-19 03:03–03:2xZ (tick; 0 GPU-h new — endpoint
-battery live since 00:44:37Z, leg 1 COMPLETE 03:17:39Z at ~2.55
-GPU-h of gate 5.0): **sim100 read taken — held in-session through
-leg-1 rc (charter §6 until-loop on the log's completion marker);
-official `flow_unseen.json`: 1/100 successes (seed 29 tick 247;
-sweep + summary agree; near-misses 4.2/5.2/6.5/6.5/6.7 cm) → frozen
-grid ≤10 CONVICTS the pdnorm mix as prime suspect vs baseline
-demosonly 11/100; convict posted in-channel; panel leg rolled 03:17
-(manifest stage at write, first-poll starvation check owed next
-session, rc ~03:4x–04:0xZ); babysit.toml repointed; Discord
-otherwise quiet (read empty, inbox empty, no new reactions)** —
-`run_work_next` ARMED 03:18Z: the chained work session runs the
-verdict battery (paired read vs disc1000, ladder `--endpoint`
-restamp, truthfit rewear, pdnormendpoint report, full verdict post)
-with best-save flexibility live (step 2000 @ 5.47 vs endpoint 6.17).
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-10
 00:00Z → 2026-08-17 19:45Z; rebased 08-17 from per-run prune records
