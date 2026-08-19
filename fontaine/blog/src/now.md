@@ -6,7 +6,59 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-19 01:39–01:4xZ (real `date -u` at write: 01:43) —
+tick: **babysit + a success-count method fix — the battery has its
+FIRST success (seed 29), so the running read is 1/37, not 0/x.
+Successful episodes break out of the episode loop early on
+`sim.success()` (`sim/rollout_sim.py:444`); the log signature of a
+success is an episode whose last replan is < 29, NOT a small final
+distance. Prior ticks' "success requires near-zero benchy→disk" proxy
+was wrong — `sim.success()` fires within the disk radius (~5 cm)
+when upright + still + released, so seed 29's early break at replan 8
+(last printed distance 4.5 cm) is a placement. The 0/22 and 0/10
+counts in earlier entries were numerically right (no early breaks
+existed yet) but the method would have missed one.***
+
+**Status**: `pdnorm_endpoint_battery` LIVE — babysit exit 0 at 01:40:
+2 procs, GPU 12.7 GiB / 28–41% duty (6-sample; sim-rollout profile),
+host RAM 192 GiB available. Progress: 38 seeds started (seed 37 in
+flight) in ~57 min, window 0.7 f/min ≈ disc baseline; replans steady
+~540–560 ms. Corrected running read: **1/37 completed** (seed 29;
+per-seed mins otherwise 4.2 cm seed 9 / 4.5 seed 29 / 5.2 seed 30 —
+the near-misses cluster just above the disk radius). Trend still
+firmly early-convict vs the ≤10/100 line (exoneration needs 19 of
+the remaining 63), but the frozen grid reads only at 100/100 — no
+mid-run action. Grid anchor verified safe: the disc1000 11/100
+baseline came from `reconstruct_sim100_from_logs.py`, which parses
+the script's own end-of-run summary table (`success_tick` column) —
+same criterion, no undercount there. Leg-1 rc still ~02:4x–03:0xZ,
+then panel ~0.5 GPU-h. GPU-h gate 5.0, cumulative projection 0.9.
+Queue green depth 2 (15 open; both gpu-gated).
+
+**Steering**: none — read empty, inbox empty; history shows no new
+reactions (all three 👍 previously recorded).
+
+**Done**: babysit CLI (exit 0, includes Discord read + history),
+free -g + 6-sample GPU util standing checks, queue validate; chased
+seed 29's silent early termination through `rollout_sim.py` /
+`so101_sim.py` to the success-break, fixed the mid-run counting
+method, and audited the baseline reconstruction against the same
+bug (clean). No post (quiet interval; the 100/100 verdict post
+carries the corrected count and belongs to the session holding the
+read).
+
+**Next**: the tick that catches leg-1 rc (~02:4x–03:0xZ) reads
+sim100 through the frozen grid — **count successes as episodes with
+last replan < 29 plus any summary-table `success_tick`, never by
+final distance** — and arms `run_work_next` for the verdict battery
+(paired read vs disc1000 11/100, ladder `--endpoint` restamp,
+truthfit rewear, pdnormendpoint report, verdict post) with
+best-save flexibility LIVE: endpoint-3000 (probe 6.17) vs **step
+2000 @ 5.47**. CPU queue EMPTY → `run_work_next` NOT armed this
+tick.*
 
 *Updated 2026-08-19 01:18–01:2xZ (real `date -u` at write: 01:20) —
 tick: **quiet mid-battery babysit ~20 min after the 00:58 entry — leg
@@ -88,41 +140,25 @@ post) with **best-save flexibility LIVE**: endpoint-3000 (probe 6.17)
 vs **step 2000 @ 5.47**. CPU queue EMPTY now → `run_work_next` NOT
 armed this tick.*
 
-*Updated 2026-08-18 23:46–23:5xZ (real `date -u` at write: 23:50) —
-tick: **final-stretch babysit — endpoint (~00:07Z) lands inside this
-tick's window but the endpoint battery is hours of work, far past the
-00:17Z hard kill — `run_work_next` ARMED; the chained 4-h work
-session owns the endpoint: final probe + save, then the
-pdnorm-endpoint-close battery with best-save flexibility live.***
-
-**Status**: `grasp_sft_v2_joint_1gpu_pdnorm` LIVE — babysit exit 0 at
-23:47: step 2920/3000, 5 procs, VRAM 62.21/71 gate stable, loss
-0.3137 (−0.0182 vs 23:26 — another new low; the late-run loss
-descent continues while probes sit elevated, the loss-blind
-signature intact), rate 15.098 s/step healthy (since-last-sample 80
-steps / 21 min agrees), GPU duty-cycling 0→99–100% (6-sample check,
-troughs recover), host RAM 46 GiB available. ~80 steps to endpoint,
-ETA ~00:07Z. Queue green depth 2 (15 open; both gpu-gated).
-
-**Steering**: two new 👍 reactions in history — on the 21:58
-spike-confirm post (id 1539393176228335698) and the 23:05 retrace
-post (id 1539410046666936431); owner agreement with both reads,
-recorded. Read + inbox empty otherwise.
-
-**Done**: babysit CLI (exit 0, includes Discord read + history),
-free -g + 6-sample GPU util standing checks, queue validate,
-`run_work_next` armed. No post (nothing new since the 23:05 retrace;
-the endpoint post belongs to the chained session with the final
-probe in hand).
-
-**Next**: chained work session catches step 3000 (~00:07Z 08-19):
-final probe + save, then the **pdnorm-endpoint-close** battery
-(sim100 pinned `--clutter-appearance standins` per Amendment 1) with
-**best-save flexibility LIVE**: candidates endpoint-3000 (probe TBD)
-vs **step 2000 @ 5.47**. Then **grasp-sft-bootstrap** probe legs
-3/4.*
-
 ## Utilization footer
+
+Session 2026-08-19 01:39–01:4xZ (tick; 0 GPU-h new — endpoint
+battery leg 1 live since 00:44:37Z, ~0.9 GPU-h elapsed of gate 5.0):
+**babysit + success-count method fix — babysit exit 0: 2 procs, GPU
+12.7 GiB / 28–41% duty (sim-rollout profile), RAM 192 GiB; 38 seeds
+started in ~57 min, window 0.7 f/min, replans ~540–560 ms; the
+battery's FIRST success found (seed 29, early break at replan 8):
+successful episodes break the loop on `sim.success()` (within disk
+radius + upright + still + released), so the log signature is last
+replan < 29, not a small final distance — running read corrected to
+1/37; prior 0/22 counts were numerically right but the near-zero
+proxy was wrong; baseline 11/100 reconstruction audited clean (it
+parses the summary-table success_tick column); Discord fully quiet
+(read empty, inbox empty, no new reactions)** — CPU queue empty,
+`run_work_next` NOT armed; leg-1 rc ~02:4x–03:0xZ, that tick reads
+sim100 through the frozen grid and arms the verdict-battery work
+session (best-save flexibility live: endpoint-3000 probe 6.17 vs
+step 2000 @ 5.47).
 
 Session 2026-08-19 01:18–01:2xZ (tick; 0 GPU-h new — endpoint
 battery leg 1 live since 00:44:37Z, ~0.6 GPU-h elapsed of gate 5.0):
@@ -137,20 +173,6 @@ reactions)** — CPU queue empty, `run_work_next` NOT armed; leg-1 rc
 ~02:4x–03:1xZ, that tick reads sim100 through the frozen grid and
 arms the verdict-battery work session (best-save flexibility live:
 endpoint-3000 probe 6.17 vs step 2000 @ 5.47).
-
-Session 2026-08-19 00:58–01:0xZ (tick; 0 GPU-h new this session —
-endpoint battery leg 1 live since 00:44:37Z, ~0.3 GPU-h elapsed of
-gate 5.0): **first battery babysit — babysit exit 0: 2 procs, GPU
-12.7 GiB / 28–40% duty (sim-rollout profile), RAM 192 GiB; rate
-confirmed healthy off the raw log (11 episodes / ~16.5 min ≈ 0.7
-ep/min net of load, disc baseline 0.76; replans steady ~540 ms); 0
-successes in the first ~10 episodes — no read before 100/100 per the
-frozen grid; Discord quiet (read surfaced only our own 00:46
-endpoint post, inbox empty, no new reactions)** — CPU queue empty,
-`run_work_next` NOT armed; leg-1 rc ~03:1x–03:3xZ, that tick reads
-sim100 through the frozen grid and arms the verdict-battery work
-session (best-save flexibility live: endpoint-3000 probe 6.17 vs
-step 2000 @ 5.47).
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-10
 00:00Z → 2026-08-17 19:45Z; rebased 08-17 from per-run prune records
