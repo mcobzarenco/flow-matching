@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-19T13:57:25Z",
+ "updated_utc": "2026-08-19T14:59:16Z",
  "depth_reason": "post grpo-r2-activation-amendment-draft close 12:5xZ 08-19: 2 queued CPU-executable (grpo-r2-launch-kit refill, disk-retirement-sweep-banked-sources); demos-plus-one-rig-exec owner-gated, grpo-r2-post-sft owner-band (A3 amendment now frozen, ACTIVATE executes mechanically); H100 free pending the owner isolation call",
  "items": [
   {
@@ -2442,11 +2442,11 @@
   {
    "id": "disk-retirement-sweep-banked-sources",
    "class": "cpu",
-   "status": "queued",
+   "status": "done",
    "owner_hold": false,
    "prereg": null,
    "title": "Disk-retirement sweep of locally-redundant banked sources (extends the hf-evacuation-audit method, 08-19 post): (a) ~/checkpoints/er_60k trainer dir (37G) \u2014 sha256-audit every local step dir vs fontaine-checkpoints fontaine_molmo2_er_60k_ddp4/* LFS hashes (step_060000 already verified bitwise), retire only bitwise-banked steps; (b) the two proven-derivable legacy expert-source dirs converted/molmoact2_base_corrected_stats_v0 + converted/molmoact2_grasp_sft_stagec_ar_step2000 (2.2G each, zero unique bytes per the audit). Staggered rm with df checks + no-blind-delete greps (incl. policy-server checkout) per the v1-fleet-upgrade pattern. CPU-only. Disk is 93% used \u2014 ~41G payoff.",
-   "boundary": "Queued 11:2xZ 08-19 work session (charter section 4 refill at the hf-evacuation-audit close; depth-2 restore)."
+   "boundary": "Queued 11:2xZ 08-19 work session (charter section 4 refill at the hf-evacuation-audit close; depth-2 restore). ||| EXECUTED + CLOSED 14:5xZ 08-19 work session (inside the grpo-r2-preflight ride window, CPU/IO only): (a) er_60k trainer dir sha-audited 16/16 BITWISE vs fontaine-checkpoints fontaine_molmo2_er_60k_ddp4 (12 safetensors via LFS sha256, 4 bijou_config.json via direct byte-compare; receipt reports/analysis__er60k_trainer_dir_sha_audit.json) -> all four step dirs retired, 37G freed (df 194->231 GB, 93->92%); (b) the two audit-proven legacy expert-source dirs (molmoact2_base_corrected_stats_v0 + molmoact2_grasp_sft_stagec_ar_step2000, 2.2G each) retired after no-blind-delete greps (queue/now/babysit + policy-server checkout: historical narrative only; live iterate-once arm targets the _vla_v2 fleet, which is intact 3/3). Staggered rm with df checks per the v1-fleet-upgrade pattern. ~41.4G total payoff."
   },
   {
    "id": "grpo-r2-boundary-reads-instrument",
@@ -2458,5 +2458,5 @@
    "boundary": "Queued 13:3xZ 08-19 work session (charter section 4 refill at the grpo-r2-launch-kit close; depth-2 restore alongside disk-retirement-sweep-banked-sources). Executable any CPU window; wanted before the R2 endpoint regardless of which A3.7 reply lands (HOLD-BAND's iterate-once arm reuses leg-1's paired instrument against its own anchor)."
   }
  ],
- "updated": "2026-08-19T13:57:25Z"
+ "updated": "2026-08-19T14:59:16Z"
 }
