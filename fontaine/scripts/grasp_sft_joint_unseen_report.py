@@ -178,9 +178,9 @@ PRESETS: dict[str, dict] = {
         "title": "pdnorm endpoint step3000 — flow head, unseen 100",
         "h1": "Grasp-SFT v2 joint pdnorm — endpoint, flow head on unseen seeds",
         "meta_html": (
-            "Checkpoint <code>FILL-AT-ENDPOINT/step_003000</code>"
+            "Checkpoint <code>grasp_sft_v2_joint_1gpu_pdnorm/step_003000</code>"
             " (per-dataset flow norm, mixed v2 corpus; launched"
-            " FILL-AT-ENDPOINT, run FILL-AT-ENDPOINT, ~FILL-AT-ENDPOINT"
+            " 2026-08-18 11:02Z, run complete 00:1xZ 08-19, ~12.9"
             " GPU-h) · euler-10, execute-horizon 30, seeds 0–99, 30 s"
             " episodes; sim leg wears the sim demos' row (frozen"
             " serving-row rule) · frozen decision grid: &le;10"
