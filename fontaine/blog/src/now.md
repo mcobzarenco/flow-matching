@@ -2,7 +2,46 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-19 08:08–09:2xZ (real `date -u` at write: 09:19) —
+work session (chained): **route C joint endpoint CLOSED — leg 4 rc
+caught in-session, all five reads banked, both registered verdicts
+in; util footer rolled; chain gate crossing recorded.***
+
+**Status**: no live runs — leg 4 (token-base) COMPLETE 09:01:18Z
+clean (~2.1 GPU-h, 0 strikes), registry entry pruned, pinned worktree
+`flow-matching-legacy-eval` REMOVED. H100 FREE; the staged
+demos+one-rig cell remains the only GPU item and pends the owner
+isolation call (registered grid carve-out).
+
+**Steering**: none — read/inbox empty all session. OWNER CALLS
+PENDING: (1) demos+one-rig isolation (draft 04:25:54Z, id
+…759115); (2) NEW — the B §3 R2 band (post 1539564065414840340):
+activate token-GRPO from 7% / token-focused SFT variant first / park.
+
+**Done**: (1) leg-4 rc + `grasp_sft_joint_probe_reads.py` — flow
+unseen 44/100 **A §5 TABLE_FIX_POSITIVE**, train kept 29/64 vs
+non-kept 13/36 (no memorization), token unseen 7/100 **B §3
+OWNER_DECISION band**, token-base anchor 0/100 (SFT delta +7; the CE
+stream owned every trunk update yet greedy decode reads 7 vs the flow
+expert's 44 — decode-pathway suspect). **Chain gate CROSSED ~13.7 vs
+≤13** (token legs ~2.2–2.4 vs ~1.3/leg class + ~0.7 killed-attempt
+burn) — recorded in the consolidated post + the chart-led Addendum
+08-19 on the chain results page (`joint_probe_bands.png`);
+`grasp-sft-bootstrap` queue item CLOSED. (2) `util-window-roll`
+EXECUTED — footer window 08-12→08-19 08:45Z local-only ~84.1/~85.5
+(receipts `fontaine/notes/util-window-roll-2026-08-19.md`) (8731feb).
+(3) Blog-Space 1 GB incident re-hit and healed (orphan sweep deleted
+live blobs — sha-namespace pitfall now in the push memory; all assets
+curl-verified 200).
+
+**Next**: `queue_cli.py next` → CPU items `metadata-v1-importer`
+(the pinned-worktree class killer) and `token-decode-diagnosis`
+(sharpens the R2 band call) — both executable any session;
+`demos-plus-one-rig-exec` + the R2 activation are owner calls.
+`run_work_next` armed at close (CPU queue non-empty).
 
 *Updated 2026-08-19 08:04–08:1xZ (real `date -u` at write: 08:06) —
 tick: **quiet mid-leg babysit on joint-probe leg 4 (token-base) —
@@ -84,44 +123,24 @@ worktree. CPU item `util-window-roll` executable any session;
 `demos-plus-one-rig-exec` blocked on the owner isolation call.
 `run_work_next` armed at close (GPU busy, CPU queue non-empty).
 
-*Updated 2026-08-19 04:15–04:2xZ (real `date -u` at write: 04:16) —
-tick: **quiet first-boundary babysit on the relaunched joint-probe
-leg 3 — healthy and on-rate 4 min after the 04:11:18Z clean
-relaunch** (3 procs, GPU 12.8 GiB / 37–45% duty, window 1.7
-seeds/min; RAM 191 GiB available, disk 294 GB free holding
-post-prune). No mid-run action; rc **~06:0x–06:2xZ** falls to a
-later session.*
-
-**Status**: `grasp_sft_joint_probes` leg 3 (token-unseen) LIVE from
-the pinned worktree `~/flow-matching-legacy-eval` @6d01d14, unit
-`fontaine-joint-probe-token-unseen`, relaunched 04:11:18Z after the
-disk-full incident — babysit exit 0 at 04:15: 3 procs, 12.8 GiB /
-37–45% (6-sample; sim-rollout profile), 3 seeds started in ~4 min
-(window 1.7 f/min, ramp consistent with the ~0.87/min green first
-poll). rc **~06:0x–06:2xZ**; B §3 read vs the R2 bar ≥20/100
-unseen; leg 4 token-base chains on leg-3-inactive per the
-babysit.toml boundary. Gate 6.0 GPU-h, cumulative projection ~0.1
-this attempt (+~0.5 spent on the killed 08-16 try). Disk 294 GB
-free — the offload-optim prune is holding.
-
-**Steering**: none — read empty, inbox empty, history shows no new
-reactions (both probe-post 👍 previously recorded).
-
-**Done**: babysit CLI (exit 0, includes the Discord read), history
-check, free -g + df + 6-sample GPU util standing checks, queue
-validate (green depth 2, 15 open). No post (quiet interval; the
-leg-3 read belongs to the session holding rc).
-
-**Next**: `run_work_next` was already ARMED at the prior work
-session's close (marker present 04:15) — the chained work session
-executes CPU item `prereg-draft-demos-plus-one-rig` (the pre-reg's
-named next isolation cell) and, if still open at **~06:0x–06:2xZ**,
-takes the leg-3 `token_unseen.json` read vs the R2 bar and launches
-leg 4 per the babysit boundary; otherwise the tick catching rc does.
-After BOTH token legs: `grasp_sft_joint_probe_reads.py` five-json
-read + consolidated post + chart-led report page + worktree removal.
-
 ## Utilization footer
+
+Session 2026-08-19 08:08–09:2xZ (work, chained; 0 GPU-h new
+launches — leg 4 completed in-window, ~1.5 of its ~2.1 accrued this
+session; probes gate closed 5.2 of 6.0, chain gate CROSSED ~13.7 vs
+≤13 and recorded): **route C joint endpoint CLOSED — leg-4 rc caught
+in-session (token-base 0/100, 0 strikes), five-json reads banked
+(flow 44/100 TABLE_FIX_POSITIVE, no memorization; token 7/100
+OWNER_DECISION band, SFT delta +7), consolidated post
+1539564065414840340 + chart-led results-page addendum
+(joint_probe_bands.png), pinned worktree removed, registry pruned;
+util-window-roll executed (footer local-only ~84.1/~85.5, receipts
+in notes/); blog-Space 1 GB incident re-hit + healed (sha-namespace
+pitfall memorialized)** — exploit; queue validate green depth 2 (16
+open: 2 CPU-executable refills metadata-v1-importer +
+token-decode-diagnosis, R2 band + one-rig cell = owner calls);
+run_work_next armed at close, H100 free pending the owner isolation
+call.
 
 Session 2026-08-19 08:04–08:1xZ (tick; 0 GPU-h new — joint-probe
 leg 4 live since the 06:54:56Z relaunch, projection 1.2 of gate 6.0):
@@ -134,22 +153,6 @@ demos+one-rig draft still pending** — `run_work_next` already armed
 (~09:0x–09:1xZ) for the five-json reads + consolidated post + report
 page + worktree removal, and executes CPU item `util-window-roll`.
 Queue green depth 2 (16 open).
-
-Session 2026-08-19 04:19–08:0xZ (work, chained; 0 GPU-h new trains —
-joint-probe leg 3 completed in-window ~2.4 GPU-h, leg 4 live from
-06:54:56Z ~1.8 projected, gate 6.0): **two CPU queue items executed
-while riding the probe legs — demos+one-rig isolation pre-reg drafted
-+ posted with the owner call flagged (launcher staged, full-parse
-green, NO launch: the registered grid text carve-out outranks the
-launch delegation) and --prune-superseded-optim landed first-class in
-bijou.train (5 oracles; the 08-19 disk-full class permanently fixed);
-leg-3 rc caught in-session: token-unseen 7/100 vs R2 bar ≥20 (flow
-head 44/100 — the insulated CE rider lags ~6x), leg 4 relaunched
-06:54:56Z after the AR-surface fix (derived jointsurface ckpt,
-1-seed smoke green), first poll green, rc ~08:5x–09:1xZ** — exploit
-(the isolation ladder advances on both fronts: mix-cell pre-reg
-frozen, token-head anchor leg running); queue validate green depth 2
-(16 open), run_work_next armed at close.
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +

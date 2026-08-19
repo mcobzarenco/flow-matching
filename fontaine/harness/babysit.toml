@@ -8,6 +8,8 @@
 # anchors/kill rules in the new vocabulary; old runs' jsonls keep their
 # historical keys (read-time mapping: fontaine/scripts/loss_keys.py).
 
+no_live_runs_reason = "declared 09:1xZ 08-19 work session: route C joint endpoint probes CLOSED (leg 4 done 09:01:18Z, reads banked, worktree removed — see the grasp_sft_joint_probes prune below). Local H100 FREE. Next GPU leg: demos-plus-one-rig-exec pends the OWNER isolation call (registered pdnorm-grid carve-out, draft 04:25:54Z 08-19); no other GPU item queued. Owner policy-server check applies before any local launch."
+
 # (no_live_runs_reason cleared 14:25Z 08-16 — demo_gen_v1 launched on the A100 box; prior: HOME-GPU-only declaration of 10:2xZ 08-16.)
 
 
@@ -969,28 +971,25 @@
 # the boundary text inside the commented entry below has the full
 # state (legs 1-2 done, eval256 done).
 
-[[run]]
-name = "grasp_sft_joint_probes"
-kind = "progress-log"
-host = "local"
-pgrep = "rollout_sim"
-pgrep_min = 1
-gpu_indices = [0]
-gpu_mem_min_mib = 4000
-log = "/home/ubuntu/eval__grasp_sft_joint_token_base.log"
-progress_re = "seed [0-9]+ replan [0-9]+"
-started_utc = "2026-08-19T06:54:56Z"
-gpu_hours_per_wall_hour = 1.0
-boundary = "route C joint endpoint probes FINAL LEG (amendment SS4, posts/2026-08-16-amendment-grasp-sft-route-c-joint.md): leg 3 token-unseen COMPLETE 06:3xZ 08-19 (clean full run post-04:11:18Z relaunch, ~2.4 GPU-h) — informal read 7/100 unseen successes (seeds 34/35/63/68/71/91/96; 0 strikes; seeds exactly 0-99) vs the R2 bar >=20/100 -> BELOW BAR (flow head same ckpt 44/100; official B SS3 verdict bakes via the reads script after leg 4). Leg 4 token-base LIVE unit fontaine-joint-probe-token-base, RELAUNCHED 06:54:56Z from the pinned worktree (first attempt 06:34Z died at load: the base conversion records family molmoact2_flow — NO AR surface; pinned convert_molmoact2 hardcodes that family. FIX: derived checkpoint ~/checkpoints/converted/molmoact2_base_corrected_stats_v0_vla_jointsurface — hardlinked weights, metadata family -> molmoact2_joint + objective joint + the joint ckpt's parameter-free ar_decoder config section verbatim (weights false, trunk-native rows); base's corrected stats table untouched and worn. 1-seed AR smoke green pre-relaunch, provenance json records jointsurface + serve_head ar. Leg script BASE= repointed). rc ~08:5x-09:1xZ at the ~0.8 seeds/min leg-3 pace (base ckpt may pace differently). SCHEMA SEAM: the joint step_002000 ckpt is metadata schema v1 and the 08-16 v2 flip (57c6843) REFUSES it with no v1->v2 importer — legs 3/4 run from the PINNED WORKTREE /home/ubuntu/flow-matching-legacy-eval (6d01d14, the leg-1/2-era code; gitignored assets symlinked from main) via its run_joint_probe_leg.sh — which ALSO preserves the pre-promotion stand-ins clutter substrate legs 1/2 measured (the current 'patched' default would break comparability). On leg-4-inactive (ALL legs then complete): the catching session runs grasp_sft_joint_probe_reads.py (CURRENT repo code; all five jsons, kept-split automatic, A SS5 / B SS3 verdicts baked) + consolidated boundary post + chart-led report page; then REMOVE the worktree (git worktree remove --force flow-matching-legacy-eval). Leg 1 flow-unseen 44/100 (posted 1538462820751114270); leg 2 flow-train 42/100 no-memorization (posted 1538484526651547658); eval256 owner-ask DONE (3.24 vs 12.56, posted 1538476581104779335). Owner reply STILL pending on the loss_aux->loss_ce_actions rename proposal (08:53Z 08-16) — do not land until answered"
-anchors = [
-    "flow legs anchor: base 9/100 unseen, corrupt-table 28/100 (the retired stage-C AE read); A SS5 verdict surface baked in reads script",
-    "token legs anchor: R2 bar >=20/100 unseen (grammar-greedy); token-base leg is the B SS3 default-run anchor on molmoact2_base_corrected_stats_v0_vla",
-    "gates: reset strikes == 0 everywhere; seeds exactly 0-99 (unseen) / 1000-1099 (train); reads script refuses otherwise",
-    "chain budget: train 5.7 + probes <=5.3 vs gate <=13 total (amendment); per-leg ~1.3 GPU-h class; ~0.5 already spent on the killed 08-16 leg-3 attempt",
-]
-[[run.gates]]
-kind = "gpu_hours_max"
-value = 6.0
+# grasp_sft_joint_probes entry PRUNED 09:1xZ 08-19 work session — ALL
+# FOUR LEGS + reads COMPLETE, route C endpoint probes CLOSED. Leg 4
+# token-base finished 09:01:18Z (unit inactive, rc clean; 0/100
+# successes, 6/100 moved, 0 strikes, seeds exactly 0-99, ~2.1 GPU-h).
+# Reads script run (CURRENT repo code): reports/
+# analysis__grasp_sft_joint_probes.json — flow unseen 44/100 A SS5
+# TABLE_FIX_POSITIVE; flow train 42/100 kept 29/64 vs non-kept 13/36
+# = no memorization; token unseen 7/100 B SS3 OWNER_DECISION band
+# (5-19); token-base anchor 0/100 -> SFT delta +7 real but ~6x below
+# the flow sibling. CHAIN GATE CROSSED: train 5.7 + probes ~8.0 =
+# ~13.7 vs the amendment <=13 (token legs ~2.2-2.4 vs the ~1.3/leg
+# class + ~0.7 killed-attempt burn) — recorded in the consolidated
+# post + results-page addendum, no further chain spend (all remaining
+# work CPU). Pinned worktree flow-matching-legacy-eval REMOVED.
+# Chart-led addendum on posts/2026-08-15-grasp-sft-chain-results.md
+# (joint_probe_bands.png); consolidated post in-channel. Owner reply
+# STILL pending on the loss_aux->loss_ce_actions rename proposal
+# (08:53Z 08-16) — do not land until answered.
+
 
 # grasp_sft_v1_joint entry PRUNED 02:0xZ 08-17 work session — run 2
 # COMPLETE 01:07:43Z at 3000/3000 (~31 GPU-h wall*8 vs the 40 gate,

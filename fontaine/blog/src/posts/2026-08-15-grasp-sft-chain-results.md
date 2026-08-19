@@ -268,3 +268,56 @@ joint-CE trunk (the confound the amendment accepted going in);
 the remaining legs (flow-train memorization read, token-unseen vs
 the R2 bar ≥20, token-base anchor) close out by ~12:3xZ and the
 consolidated chart-led report follows.
+
+## Addendum 2026-08-19 — route C closed: all five reads on one checkpoint
+
+The remaining three probe legs took three days to land — not for GPU
+reasons but for calendar ones (an owner rollout window on the H100,
+the pdnorm screen taking the GPU in between, one disk-full incident,
+and a schema seam: the 08-16 metadata-v2 flip refuses the joint
+checkpoint's v1 metadata, so legs 3/4 ran from a worktree pinned at
+the leg-1/2-era code with the same stand-ins substrate — comparability
+preserved by construction, worktree removed at close). Reads banked in
+`reports/analysis__grasp_sft_joint_probes.json`; every leg 0 reset
+strikes, seeds exactly as registered.
+
+![Route C joint endpoint: both heads' reads vs their anchors](../img/grasp_sft/joint_probe_bands.png)
+
+**Flow head — A §5 fires TABLE_FIX_POSITIVE.** Unseen 44/100 (mean
+progress +3.5 cm, 64/100 moved) vs base 9/100 and the corrupt-table
+stage-C AE's 28/100. The train band confirms **no memorization
+signature**: trained-kept spawns 29/64 (45%) vs expert-failed
+never-trained spawns 13/36 (36%) vs unseen 44/100 (44%) — the kept /
+unseen gap is ~1 SE; the checkpoint generalizes rather than replays.
+The corrected lineage is the SFT artifact.
+
+**Token head — B §3 lands in the 5–19 owner-decision band.** The same
+checkpoint, grammar-greedy through `--serve-head ar`: **7/100**
+(seeds 34/35/63/68/71/91/96, mean progress −0.26 cm). The base-token
+anchor leg (default-run per B §3, on the corrected-stats base
+conversion with an AR surface derived from the joint config —
+hardlinked weights, zero-parameter decoder rider) reads **0/100, 6/100
+moved**: the base token head cannot do the task at all, so the +7 is
+real SFT transfer — but a λ=1.0 insulated CE rider lands ~6× below
+its flow sibling and a third of the R2 activation bar (≥20). The
+discrepancy is the finding: under insulation the CE gradient stream
+alone, at equal nominal weight, learned far less control than the
+flow stream on identical data. Token-GRPO (R2) would start from 7%,
+not 44%.
+
+**Chain ledger — the gate line honestly.** Train 5.7 + probe legs
+~8.0 (legs 1–4 at 1.35/1.43/2.4/2.1 — the token legs ran ~2.2–2.4
+GPU-h vs the ~1.3/leg projection, grammar-greedy replans are slower —
+plus ~0.7 across three killed attempts: the 08-16 owner pause, one
+disk-full death, one AR-surface refusal at load) ≈ **13.7 vs the
+amendment's ≤13 — crossed at the final leg by ~0.7**. The overage
+bought the two recovery relaunches and the slower-than-projected
+token protocol; no further chain spend exists (all remaining work is
+CPU) and the crossing is recorded here rather than absorbed.
+
+Where it goes: the flow read hands the corrected lineage to the
+isolation ladder (the [pdnorm screen](2026-08-18-prereg-grasp-sft-v2-joint-pdnorm.md)
+convicted its 3-dataset mix against exactly this class of artifact);
+the token read puts R2 token-GRPO activation to the owner with
+receipts — activate from a 7% base, precede it with a token-weighted
+SFT arm (λ>1 or uninsulated), or park R2.

@@ -65,6 +65,7 @@ CURVE_B = REPORTS / "curve__grasp_sft_stageb_collect.json"
 STAGED_AR = REPO / "outputs/sim/grasp_sft/stageD/ar.json"
 FTRIG4K_100 = REPO / "outputs/sim/eval100/ftrig4k.json"
 PROBE_ANALYSIS = REPORTS / "analysis__grasp_sft_step2000_probe.json"
+JOINT_ANALYSIS = REPORTS / "analysis__grasp_sft_joint_probes.json"
 
 STEP_RE = re.compile(r"\[step=(\d+)/\d+")
 LOSS_RE = re.compile(r"train/action_flow_loss=([0-9.eE+-]+|nan|inf)")
@@ -467,6 +468,105 @@ def fig_probe() -> None:
     save(fig, "probe_bands.png")
 
 
+def fig_joint() -> None:
+    """Route-C joint endpoint probes: both heads' reads on the ONE
+    checkpoint (two barh panels, shared x — one measure, identity on
+    the category axis + direct labels; joint-checkpoint rows magenta,
+    base-conversion anchors blue, prior corrupt-table artifact gray)."""
+    if not JOINT_ANALYSIS.exists():
+        return
+    j = json.loads(JOINT_ANALYSIS.read_text())
+
+    def row(key: str) -> tuple[int, int]:
+        arm = j[key]
+        return arm["successes"], arm["n"]
+
+    flow_rows = [
+        ("joint step2000 — unseen 0–99", *row("flow_unseen_0_99"), MAGENTA),
+        (
+            "joint step2000 — trained spawns\n(kept demos)",
+            *row("flow_train_kept"),
+            MAGENTA,
+        ),
+        (
+            "joint step2000 — expert-failed\nspawns (never trained)",
+            *row("flow_train_nonkept"),
+            MAGENTA,
+        ),
+        ("corrupt-table stage-C step2000\n(the floor to beat)", 28, 100, GRAY),
+        ("released base (init)\nPRIMARY ANCHOR", 9, 100, BLUE),
+    ]
+    token_rows = [
+        (
+            "joint step2000 — token head\n(grammar-greedy, unseen 0–99)",
+            *row("token_unseen_0_99"),
+            MAGENTA,
+        ),
+        (
+            "corrected-stats base conversion\n(B §3 default-run anchor)",
+            *row("token_base_unseen_0_99"),
+            BLUE,
+        ),
+    ]
+
+    fig, axes = plt.subplots(
+        2,
+        1,
+        figsize=(9.0, 5.2),
+        facecolor=PAGE,
+        sharex=True,
+        gridspec_kw={"height_ratios": [len(flow_rows), len(token_rows) + 0.6]},
+    )
+    panels = (
+        ("FLOW head (euler-10) — A §5: >31 table-fix positive", flow_rows, None),
+        (
+            "TOKEN head (λ=1.0 insulated CE rider) — B §3 vs the R2 bar",
+            token_rows,
+            20.0,
+        ),
+    )
+    for ax, (title, rows, bar) in zip(axes, panels, strict=True):
+        ax.set_facecolor(PAGE)
+        style_axis(ax)
+        y = np.arange(len(rows))[::-1]
+        for yi, (_label, s, n, color) in zip(y, rows, strict=True):
+            rate = s / n * 100
+            ax.barh(yi, rate, height=0.62, color=color, zorder=3)
+            ax.text(
+                rate + 1.2,
+                yi,
+                f"{s}/{n}  ({rate:.0f}%)",
+                va="center",
+                color=TEXT,
+                fontsize=9,
+            )
+        if bar is not None:
+            ax.axvline(bar, color=GOLD, lw=1.4, ls="--", zorder=4)
+            ax.set_ylim(-0.5, len(rows) - 0.5 + 0.7)
+            ax.text(
+                bar + 0.6,
+                len(rows) - 0.5 + 0.32,
+                "R2 activation bar ≥20/100",
+                color=GOLD,
+                fontsize=8.5,
+                va="center",
+            )
+        ax.set_yticks(y)
+        ax.set_yticklabels([r[0] for r in rows], fontsize=9)
+        ax.set_title(title, fontsize=10.5, loc="left", color=TEXT, pad=8)
+    axes[-1].set_xlim(0, 56)
+    axes[-1].set_xlabel("success rate (%), sim100 grasp-and-place", fontsize=10)
+    fig.suptitle(
+        "Route C joint endpoint — one checkpoint, both decision surfaces",
+        fontsize=12,
+        color=TEXT,
+        x=0.01,
+        ha="left",
+    )
+    fig.tight_layout(rect=(0, 0, 1, 0.96))
+    save(fig, "joint_probe_bands.png")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument(
@@ -483,6 +583,7 @@ def main() -> None:
     fig_stagec()
     fig_staged()
     fig_probe()
+    fig_joint()
 
 
 if __name__ == "__main__":
