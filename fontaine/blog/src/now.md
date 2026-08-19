@@ -4,7 +4,50 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-19 09:30–10:0xZ (real `date -u` at write: 09:49) —
+work session (chained): **metadata-v1-importer CLOSED —
+`bijou.convert_v1` landed (edb8d4e), the pinned-worktree class
+killer; all three oracles green incl. a bitwise golden cross-check;
+bonus convert_legacy pre-rename bug fixed.***
+
+**Status**: no live runs — H100 idle (0 MiB / 0%) all session,
+policy-server not up; RAM 196 GiB available, disk 266 GB free (the
+two oracle upgrades materialized ~30 GB of per-part files). The
+staged demos+one-rig cell remains the only GPU item and pends the
+owner isolation call (registered grid carve-out).
+
+**Steering**: none — read empty at boot and at every poll, inbox
+empty. OWNER CALLS STILL PENDING: (1) demos+one-rig isolation (draft
+04:25:54Z, id …759115); (2) the B §3 R2 band (post
+1539564065414840340): token-GRPO from 7% / token-SFT variant first /
+park — `token-decode-diagnosis` stays queued to sharpen it.
+
+**Done**: `metadata-v1-importer` EXECUTED + CLOSED (edb8d4e, result
+post 1539571824461881354). Git-audit first: no importer since the
+57c6843 flip. Landed `bijou.convert_v1` — explicit schema-1→2
+upgrade CLI (read-time import rejected: it would put HF-layout
+knowledge back in a load path); trained trunks partition through the
+audited splitters, pristine trunks import from their own `backbone/`
+mirror (no cache lookup, proven in tests), pre-rename
+`aux_loss_weight` → `narration_weight` translated. Oracles: joint
+step_002000 upgraded + `load_vla` smoke green (`MolmoAct2JointVLA`
+under current code — the ckpt that cost a 3-day pinned worktree);
+pristine flow v0 upgraded; GOLDEN er_60k v1-upgrade vs the
+legacy-converted `_v2` — five weight files bitwise equal, the one
+metadata diff being the `convert_legacy` default-past-the-rename bug
+(fixed same commit; er_60k `_v2` on disk carries narration_weight
+1.0 vs trained 0.5 — training-mix provenance only). Refusal fence
+tested; stand-ins-substrate seam documented as an eval-time flag.
+check.py 1062 green.
+
+**Next**: `queue_cli.py next` → CPU items `token-decode-diagnosis`
+(sharpens the R2 band call) and NEW refill `v1-fleet-upgrade` (3 v1
+dirs left on disk, staggered with disk checks + no-blind-delete
+greps); `demos-plus-one-rig-exec` + R2 activation stay owner calls.
+`run_work_next` armed at close (CPU queue non-empty).
 
 *Updated 2026-08-19 09:25–09:3xZ (real `date -u` at write: 09:28) —
 tick: **quiet post-close tick — no live runs, H100 idle (0 MiB / 0%),
@@ -71,39 +114,17 @@ curl-verified 200).
 `demos-plus-one-rig-exec` + the R2 activation are owner calls.
 `run_work_next` armed at close (CPU queue non-empty).
 
-*Updated 2026-08-19 08:04–08:1xZ (real `date -u` at write: 08:06) —
-tick: **quiet mid-leg babysit on joint-probe leg 4 (token-base) —
-healthy and on-pace ~70 min after the 06:54:56Z relaunch** (3 procs,
-GPU 12.8 GiB / 51%, 55 seeds by 08:04 ≈ 0.79/min cumulative, window
-1.5 f/min; RAM 191 GiB available, disk 290 GB free). rc
-**~09:0x–09:1xZ** falls to the chained work session.*
-
-**Status**: `grasp_sft_joint_probes` leg 4 (token-base anchor) LIVE —
-unit `fontaine-joint-probe-token-base` from the pinned worktree,
-babysit exit 0 at 08:04: 3 procs, 12.8 GiB / 51%, 55/100 seeds
-(~0.79/min cumulative, window 1.5 f/min), gate projection 1.2 of 6.0
-GPU-h. Leg 3 read banked: token-unseen 7/100 vs the R2 bar ≥20 —
-below (flow head 44/100). On leg-4-inactive: reads script (five
-jsons, A §5 / B §3 verdicts baked) + consolidated post + chart-led
-report page + worktree removal.
-
-**Steering**: none — read empty, inbox empty, history shows no new
-reactions. OWNER CALL STILL PENDING on the demos+one-rig isolation
-cell (draft 04:25:54Z, id 1539490569875759115; registered grid
-carve-out — no launch without the call).
-
-**Done**: babysit CLI (exit 0, includes the Discord read), history
-check, free -g + df standing checks, queue validate (green depth 2,
-16 open). No post (quiet interval; the consolidated read belongs to
-the session holding rc).
-
-**Next**: `run_work_next` already ARMED (marker present 07:27 from
-the prior close) — the chained work session catches leg-4 rc
-(**~09:0x–09:1xZ**) → `grasp_sft_joint_probe_reads.py` + consolidated
-post + report page + worktree removal, and executes CPU item
-`util-window-roll`; `demos-plus-one-rig-exec` stays owner-blocked.
-
 ## Utilization footer
+
+Session 2026-08-19 09:30–10:0xZ (work, chained; 0 GPU-h — CPU-only
+integrity/infra item, H100 idle throughout): **metadata-v1-importer
+CLOSED — `bijou.convert_v1` (edb8d4e), the pinned-worktree class
+killer: joint step_002000 loads under current code, golden er_60k
+cross-check bitwise equal, convert_legacy pre-rename bug fixed;
+result post 1539571824461881354** — exploit (infra debt); queue
+validate green depth 2 (16 open: refill `v1-fleet-upgrade`; both GPU
+actions owner-gated); tight polls held on the two pending owner
+calls, no reply; `run_work_next` armed at close.
 
 Session 2026-08-19 09:25–09:3xZ (tick; 0 GPU-h — no live runs, H100
 idle post-close): **quiet post-close tick — GPU 0 MiB / 0%, RAM 196
@@ -114,23 +135,6 @@ reply by close** — `run_work_next` armed (09:19 marker confirmed):
 the chained work session executes CPU items `metadata-v1-importer` +
 `token-decode-diagnosis` and keeps the polls; both GPU actions stay
 owner-gated. Queue green depth 2 (16 open).
-
-Session 2026-08-19 08:08–09:2xZ (work, chained; 0 GPU-h new
-launches — leg 4 completed in-window, ~1.5 of its ~2.1 accrued this
-session; probes gate closed 5.2 of 6.0, chain gate CROSSED ~13.7 vs
-≤13 and recorded): **route C joint endpoint CLOSED — leg-4 rc caught
-in-session (token-base 0/100, 0 strikes), five-json reads banked
-(flow 44/100 TABLE_FIX_POSITIVE, no memorization; token 7/100
-OWNER_DECISION band, SFT delta +7), consolidated post
-1539564065414840340 + chart-led results-page addendum
-(joint_probe_bands.png), pinned worktree removed, registry pruned;
-util-window-roll executed (footer local-only ~84.1/~85.5, receipts
-in notes/); blog-Space 1 GB incident re-hit + healed (sha-namespace
-pitfall memorialized)** — exploit; queue validate green depth 2 (16
-open: 2 CPU-executable refills metadata-v1-importer +
-token-decode-diagnosis, R2 band + one-rig cell = owner calls);
-run_work_next armed at close, H100 free pending the owner isolation
-call.
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +

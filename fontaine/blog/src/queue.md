@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-19T09:18:26Z
+**Updated:** 2026-08-19T09:48:09Z
 
-**Depth call:** post route-C close 09:1xZ 08-19: 2 queued CPU-executable (metadata-v1-importer, token-decode-diagnosis); demos-plus-one-rig-exec owner-gated (registered grid carve-out), grpo-r2-post-sft owner-band; H100 free pending the owner isolation call
+**Depth call:** post metadata-v1-importer close 09:4xZ 08-19: 2 queued CPU-executable (token-decode-diagnosis, v1-fleet-upgrade refill); demos-plus-one-rig-exec owner-gated (registered grid carve-out), grpo-r2-post-sft owner-band; H100 free pending the owner isolation call
 
-**16 open** (Live 0 · Queued 2 · Blocked 14 · Done 248)
+**16 open** (Live 0 · Queued 2 · Blocked 14 · Done 249)
 
 ## 🔴 Live (0)
 
@@ -18,6 +18,20 @@
 
 *ready — waiting on a window or a boundary*
 
+**`v1-fleet-upgrade`** · `cpu`
+
+Upgrade the remaining on-disk schema-1 checkpoints via bijou.convert_v1 (integrity/infra sweep, follows metadata-v1-importer edb8d4e): still v1 on disk
+
+**boundary:** Queued 09:48Z 08-19 work session (charter section 4 refill at the metadata-v1-importer close).
+
+<details><summary>full record</summary>
+
+Upgrade the remaining on-disk schema-1 checkpoints via bijou.convert_v1 (integrity/infra sweep, follows metadata-v1-importer edb8d4e): still v1 on disk — converted/molmoact2_base_corrected_stats_v0_vla_jointsurface (the leg-4 derived surface), converted/molmoact2_grasp_sft_stagec_ar_step2000_corrected_v1 + _vla (stage-C AR pair), converted/er_60k_step_060000_vla (v1 original; its _v2 sibling carries the narration_weight 1.0 drift — decide regenerate-vs-annotate, inference unaffected). Per-dir: upgrade, validate, then RETIRE the v1 original only after a grep proves nothing mounts it (rsync-box memory class: no blind deletes). Disk note: trained-trunk upgrades materialize ~9-18 GB each; 266 GB free at queue time — stagger and delete v1 originals as each upgrade verifies.
+
+</details>
+
+---
+
 **`token-decode-diagnosis`** · `cpu`
 
 Token-head decode diagnosis (CPU, banked artifacts only — feeds the owner's R2 band call): the joint ckpt reads 7/100 grammar-greedy while its flow sibling reads 44/100 ON THE SAME TRUNK (which the CE stream alone trained
@@ -27,20 +41,6 @@ Token-head decode diagnosis (CPU, banked artifacts only — feeds the owner's R2
 <details><summary>full record</summary>
 
 Token-head decode diagnosis (CPU, banked artifacts only — feeds the owner's R2 band call): the joint ckpt reads 7/100 grammar-greedy while its flow sibling reads 44/100 ON THE SAME TRUNK (which the CE stream alone trained — flow was insulated), and the base-token anchor reads 0/100. Dissect the banked token_unseen/token_base episode JSONs + videos vs flow_unseen: per-replan predicted-chunk agreement flow-vs-token on shared seeds, magnitude/bin saturation in greedy decode (the 6.8% zero-fallback class from the 08-13 ar100 read is prior art), where the 7 successes' decodes differ from the 93 failures, near-miss geometry. Output: a short analysis json + one chart + in-channel brief with a recommendation for the R2 band (activate / token-SFT variant first / park).
-
-</details>
-
----
-
-**`metadata-v1-importer`** · `cpu`
-
-Checkpoint-metadata v1-&gt;v2 importer (integrity/infra debt, the pinned-worktree class killer): the 08-16 schema-v2 flip (57c6843) REFUSES v1-metadata checkpoints with no importer
-
-**boundary:** Queued 09:2xZ 08-19 work session (charter section 4 refill at the route-C close; the schema seam cost this chain a 3-day pinned worktree).
-
-<details><summary>full record</summary>
-
-Checkpoint-metadata v1-&gt;v2 importer (integrity/infra debt, the pinned-worktree class killer): the 08-16 schema-v2 flip (57c6843) REFUSES v1-metadata checkpoints with no importer — the joint step_002000 probes needed a worktree pinned at 6d01d14 for three days (plus stand-ins-substrate comparability pinning). Land a first-class read-time v1-&gt;v2 metadata importer (or explicit upgrade CLI) in the bijou checkpoint loader so v1 ckpts load under current code; oracles: joint step_002000 + one flow-family v1 ckpt round-trip green, refusal preserved for genuinely-unknown schemas. GIT-AUDIT FIRST per memory (audit-queue-items-against-git): confirm no importer landed since 08-16 before writing one. NOTE the stand-ins substrate seam is SEPARATE (a flag choice, not schema) — document the eval-comparability flag in the importer's docstring.
 
 </details>
 
@@ -246,9 +246,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (248)
+## ✅ Done (249)
 
 *closed — the full record stays in each fold*
+
+**`metadata-v1-importer`** · `cpu`
+
+Checkpoint-metadata v1-&gt;v2 importer (integrity/infra debt, the pinned-worktree class killer): the 08-16 schema-v2 flip (57c6843) REFUSES v1-metadata checkpoints with no importer
+
+**boundary:** Queued 09:2xZ 08-19 work session (charter section 4 refill at the route-C close; the schema seam cost this chain a 3-day pinned worktree). ||| EXECUTED 09:3x-10:0xZ 08-19 work session (edb8d4e): explicit upgrade CLI bijou.convert_v1 landed (git-audit confirmed no importer since 57c6843; read-time import rejected — it would put HF-layout knowledge back in a load path). Oracles green: joint step_002000 upgraded + load_vla smoke (MolmoAct2JointVLA under current code — class killer confirmed), pristine molmoact2_base_corrected_stats_v0 upgraded from its own mirror, GOLDEN er_60k v1-upgrade vs legacy-converted _v2 all five weight files BITWISE EQUAL. Bonus: convert_legacy pre-rename aux_loss_weight fallback bug fixed (the _v2's narration_weight 1.0 vs trained 0.5). Refusal fence tested; stand-ins-substrate seam documented in the docstring. check.py 1062.
+
+<details><summary>full record</summary>
+
+Checkpoint-metadata v1-&gt;v2 importer (integrity/infra debt, the pinned-worktree class killer): the 08-16 schema-v2 flip (57c6843) REFUSES v1-metadata checkpoints with no importer — the joint step_002000 probes needed a worktree pinned at 6d01d14 for three days (plus stand-ins-substrate comparability pinning). Land a first-class read-time v1-&gt;v2 metadata importer (or explicit upgrade CLI) in the bijou checkpoint loader so v1 ckpts load under current code; oracles: joint step_002000 + one flow-family v1 ckpt round-trip green, refusal preserved for genuinely-unknown schemas. GIT-AUDIT FIRST per memory (audit-queue-items-against-git): confirm no importer landed since 08-16 before writing one. NOTE the stand-ins substrate seam is SEPARATE (a flag choice, not schema) — document the eval-comparability flag in the importer's docstring.
+
+</details>
+
+---
 
 **`util-window-roll`** · `cpu`
 
