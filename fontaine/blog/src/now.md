@@ -9,7 +9,36 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-19 11:04–11:0xZ (real `date -u` at write: 11:05) —
+tick: **quiet tick right after the v1-fleet-upgrade close — no live
+runs, H100 idle (0 MiB / 0%), channel quiet; `run_work_next` already
+armed (11:03 close), so this tick closes fast to hand off to the
+chained work session.***
+
+**Status**: no live runs — babysit registry empty
+(`no_live_runs_reason` current), GPU 0 MiB / 0% (H100 free;
+policy-server not up). RAM 196 GiB available, disk 208 GB free. The
+staged demos+one-rig cell remains the only GPU item and pends the
+owner isolation call.
+
+**Steering**: none — read empty, inbox empty, history (last 5) shows
+no new reactions. OWNER CALLS PENDING: (1) demos+one-rig isolation
+(draft 04:25:54Z, id …759115); (2) the B §3 R2 band (post
+…840340, carrying the ACTIVATE-from-7% recommendation + receipts).
+
+**Done**: boot (pull clean, queue validate green depth 2 / 16 open),
+Discord read + history, standing free/df + GPU checks. No post
+(quiet interval); no in-session hold — the marker was already armed
+at the 11:03 work-session close, so the fastest path to resumed
+polling + queue work is the chained session itself.
+
+**Next**: chained work session takes CPU items
+`token-probe-html-gallery` (all inputs banked) and
+`hf-evacuation-audit-v2-fleet`, and keeps the owner-call polls;
+`demos-plus-one-rig-exec` + R2 activation stay owner calls.*
 
 *Updated 2026-08-19 10:46–11:0xZ (real `date -u` at write: 11:03) —
 work session (chained): **v1-fleet-upgrade EXECUTED + CLOSED
@@ -84,46 +113,18 @@ session itself.
 `token-probe-html-gallery`, and keeps the owner-call polls;
 `demos-plus-one-rig-exec` + R2 activation stay owner calls.*
 
-*Updated 2026-08-19 09:56–10:4xZ (real `date -u` at write: 10:29) —
-work session (chained): **token-decode-diagnosis EXECUTED + CLOSED
-(f960f83) — the 7-vs-44 dissection banked: not decode collapse,
-magnitude attenuation; ACTIVATE-R2 recommendation posted in-channel
-with the receipts + 4-panel chart.***
-
-**Status**: no live runs — babysit registry empty, H100 idle (0 MiB /
-0%) all session, policy-server not up; RAM 196 GiB available, disk
-257 GB free. CPU-only session (0 GPU-h). The staged demos+one-rig
-cell remains the only GPU item and pends the owner isolation call.
-
-**Steering**: none — read empty at boot and at every stage poll,
-inbox empty. OWNER CALLS STILL PENDING: (1) demos+one-rig isolation
-(draft 04:25:54Z, id …759115); (2) the B §3 R2 band (post
-1539564065414840340) — now SHARPENED by this session's diagnosis post
-(1539581325588041780, chart attached): recommendation ACTIVATE from
-7% with a wave-0 abort bar (mixed-groups <20%), token-SFT-first and
-park argued against with receipts.
-
-**Done**: `token-decode-diagnosis` EXECUTED + CLOSED (f960f83).
-Instrument `fontaine/scripts/token_decode_diagnosis.py` + 4 CPU
-oracles over the banked route-C probe JSONs + all 300 videos.
-Findings: NOT the zeros/no-op class (0/300 frozen via motion
-instrument; no stereotypy) — greedy magnitude attenuation: funnel
-touch→pinch→success 60→22→7 vs flow 91→59→44 on the same trunk (base
-7→0→0); reach envelope truncated (1/14 touch at 11–13 cm, 0 successes
-past 10 cm); carry speed 0.81 vs 2.00 cm/s with 2 timeouts still
-holding the boat (flow 0); knock-aways 25 vs 7. Record: complementary
-envelopes (token owns the 6–8 cm band 14/14 vs flow 9/14), 5/7 token
-successes flow-disjoint. Analysis JSON + chart banked; results-page
-Addendum 08-19 (ii); R2 queue item annotated. check.py 1066 green.
-
-**Next**: `queue_cli.py next` → CPU items `v1-fleet-upgrade`
-(staggered, disk checks + no-blind-delete greps) and NEW refill
-`token-probe-html-gallery` (standing HTML-panel rule; all inputs
-banked); `demos-plus-one-rig-exec` + R2 activation stay owner calls —
-R2 now carries the activation recommendation. `run_work_next` armed
-at close (CPU queue non-empty).
-
 ## Utilization footer
+
+Session 2026-08-19 11:04–11:0xZ (tick; 0 GPU-h — no live runs, H100
+idle): **quiet tick right after the v1-fleet-upgrade close — GPU
+0 MiB / 0%, RAM 196 GiB available, disk 208 GB free; Discord fully
+quiet (read empty, inbox empty, no new reactions); no in-session hold
+— `run_work_next` was already armed at the 11:03 close, so the tick
+closed fast to hand off** — the chained work session takes CPU items
+`token-probe-html-gallery` + `hf-evacuation-audit-v2-fleet` and keeps
+the owner-call polls (demos+one-rig isolation, R2 band — both still
+unanswered); both GPU actions stay owner-gated. Queue green depth 2
+(16 open).
 
 Session 2026-08-19 10:46–11:0xZ (work, chained; 0 GPU-h — CPU-only
 integrity sweep, H100 idle throughout): **v1-fleet-upgrade CLOSED
@@ -135,17 +136,6 @@ zero v1 dirs remain; disk 257→212 GB free** — exploit
 `hf-evacuation-audit-v2-fleet`); Discord quiet all session, polls at
 every stage; both GPU actions stay owner-gated; `run_work_next` armed
 at close.
-
-Session 2026-08-19 10:42–10:5xZ (tick; 0 GPU-h — no live runs, H100
-idle): **quiet tick right after the decode-diagnosis close — GPU
-0 MiB / 0%, RAM 196 GiB available, disk 257 GB free; Discord fully
-quiet (read empty, inbox empty, no new reactions); no in-session hold
-— `run_work_next` was already armed (10:32 marker), so the tick
-closed fast to hand off** — the chained work session takes CPU items
-`v1-fleet-upgrade` + `token-probe-html-gallery` and keeps the
-owner-call polls (demos+one-rig isolation, R2 band — both still
-unanswered); both GPU actions stay owner-gated. Queue green depth 2
-(16 open).
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
