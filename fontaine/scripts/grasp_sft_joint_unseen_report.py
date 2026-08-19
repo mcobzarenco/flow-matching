@@ -52,6 +52,15 @@ numbers + the committed 4-panel chart). --diagnosis-json follows the
 --ladder-b64 behavior split: the preset default (reports/ is
 gitignored, the json is regenerable) is skipped quietly when absent,
 an explicit flag is loud.
+
+The flowtrain preset builds the flow_train leg's page (seeds
+1000-1099, the stage-B collection band) with the memorization split
+as the headline: kept vs collector-rejected arms read live from the
+banked stage-B collect curve's kept_seeds (the split IS the page, so
+a missing collect json fails loudly), Wilson-CI rate chart against
+the unseen sibling's 44/100, and gallery picks drawn from both split
+arms deterministically (fastest success + nearest miss per arm,
+median kept success).
 """
 
 from __future__ import annotations
@@ -61,6 +70,7 @@ import base64
 import html
 import io
 import json
+import math
 import shutil
 from pathlib import Path
 
@@ -280,6 +290,45 @@ PRESETS: dict[str, dict] = {
             Path("outputs/sim/grasp_sft/joint_probes/token_base.json"),
         ),
     },
+    # Flow head on the TRAINING band (leg 2, seeds 1000-1099 — the
+    # stage-B collection block the 313-demo corpus was drawn from).
+    # Headline = the memorization split: the kept arm (a demo from the
+    # seed's scene entered the SFT corpus) vs the collector-rejected
+    # arm, membership read live from the stage-B collect curve's
+    # kept_seeds. The split is the page, so the collect json is a loud
+    # requirement, not a quiet default.
+    "flowtrain": {
+        "leg_json": Path("outputs/sim/grasp_sft/joint_probes/flow_train.json"),
+        "video_dir": Path("outputs/sim/grasp_sft/joint_probes/flow_train"),
+        "out_html": Path(
+            "reports/eval__grasp_sft_joint_step2000__flow_train100.html",
+        ),
+        "gallery_dir": Path("reports/joint_train_gallery"),
+        "seed_start": 1000,
+        "strip_xlabel": "training seed (1000–1099, stage-B collection band)",
+        "bar_xlabel": "successes per 100 seeds",
+        "anchor_rows": [
+            ("base (no SFT), unseen", BASE_ANCHOR, ANCHOR),
+            ("same checkpoint, unseen 100", PROBE_ANCHOR, "#f593bd"),
+        ],
+        "subject_label": "joint step2000, train seeds",
+        "anchors_tile_label": "anchors: base / unseen sibling",
+        "title": "joint step2000 — flow head, train 100",
+        "h1": "Grasp-SFT route C — joint step 2000, flow head on training seeds",
+        "meta_html": (
+            "Checkpoint <code>fontaine_grasp_sft_joint_corrected/step_002000</code>"
+            " (the unseen-leg page's checkpoint, flow head served on the"
+            " training band) · euler-10, execute-horizon 30, seeds 1000–1099"
+            " — the stage-B collection band the 313-demo SFT corpus was drawn"
+            " from (64 kept / 36 collector-rejected among these 100 scenes) ·"
+            " leg 2 of the probe chain, finished 09:47Z 08-16, ~1.4 GPU-h"
+            " (registered A §4: unseen 0–99, then train band 1000–1099) ·"
+            ' headline: <b style="color:{success}">42/100 ≈ the unseen'
+            " sibling's 44/100 — no memorization signature</b>; kept 29/64"
+            " vs rejected 13/36, CIs overlap (split section below)"
+        ),
+        "split_json": Path("reports/curve__grasp_sft_stageb_collect.json"),
+    },
 }
 
 
@@ -301,7 +350,11 @@ def style_ax(ax: Axes) -> None:
     ax.grid(color=GRID, linewidth=0.5, alpha=0.5)
 
 
-def outcome_strip(eps: list[dict]) -> str:
+def outcome_strip(eps: list[dict], xlabel: str = "unseen seed (0–99)") -> str:
+    # Seed positions are plotted verbatim, so the axis window follows the
+    # leg's band (0-99 unseen, 1000-1099 train) — lo = 0 reproduces the
+    # original page byte-for-byte.
+    lo = min(e["seed"] for e in eps)
     fig, ax = plt.subplots(figsize=(10, 3.2), facecolor=PAGE)
     for e in sorted(eps, key=lambda e: e["seed"]):
         ok = e.get("success_tick") is not None
@@ -316,19 +369,29 @@ def outcome_strip(eps: list[dict]) -> str:
         )
         ax.plot([e["seed"]], [final], "o", color=color, markersize=2.6)
     ax.axhline(3.0, color=ANCHOR, linewidth=0.8, linestyle="--")
-    ax.text(100.5, 3.0, "success radius 3 cm", color=META, fontsize=8, va="center")
-    ax.set_xlabel("unseen seed (0–99)")
+    ax.text(
+        lo + 100.5,
+        3.0,
+        "success radius 3 cm",
+        color=META,
+        fontsize=8,
+        va="center",
+    )
+    ax.set_xlabel(xlabel)
     ax.set_ylabel("boat → disk center (cm)")
     ax.set_title(
         "Per-seed outcome: spawn distance → final distance "
         "(magenta = success, blue = miss)",
     )
     style_ax(ax)
-    ax.set_xlim(-1.5, 113)
+    ax.set_xlim(lo - 1.5, lo + 113)
     return fig_to_b64(fig)
 
 
-def success_bar(rows: list[tuple[str, int, str]]) -> str:
+def success_bar(
+    rows: list[tuple[str, int, str]],
+    xlabel: str = "successes on unseen seeds 0–99",
+) -> str:
     fig, ax = plt.subplots(figsize=(6.4, 2.6), facecolor=PAGE)
     for i, (label, val, color) in enumerate(rows):
         ax.barh(i, val, color=color, height=0.55)
@@ -336,7 +399,7 @@ def success_bar(rows: list[tuple[str, int, str]]) -> str:
         ax.text(-1.5, i, label, color=TEXT, fontsize=9, va="center", ha="right")
     ax.set_yticks([])
     ax.set_xlim(0, max(60, int(max(v for _, v, _ in rows) * 1.2)))
-    ax.set_xlabel("successes on unseen seeds 0–99")
+    ax.set_xlabel(xlabel)
     ax.set_title("Against the frozen anchors")
     style_ax(ax)
     ax.grid(axis="y", visible=False)
@@ -486,6 +549,112 @@ def estimator_seam_line(payload: dict) -> str:
         " The native row stays the headline (a served rig wears recorded"
         " tables); the truth-fit row reads the ladder like for"
         " like.</p>\n"
+    )
+
+
+def wilson_ci(k: int, n: int, z: float = 1.96) -> tuple[float, float]:
+    p = k / n
+    denom = 1 + z * z / n
+    center = (p + z * z / (2 * n)) / denom
+    half = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / denom
+    return center - half, center + half
+
+
+def split_rate_bar(rows: list[tuple[str, int, int, str]]) -> str:
+    """Horizontal success-RATE bars (the arms' denominators differ, so
+    counts don't compare) with Wilson-CI whiskers; every bar carries its
+    own count label, so identity never rides on color alone."""
+    fig, ax = plt.subplots(figsize=(6.4, 2.6), facecolor=PAGE)
+    for i, (label, k, n, color) in enumerate(rows):
+        rate = 100 * k / n
+        lo, hi = (100 * v for v in wilson_ci(k, n))
+        ax.barh(i, rate, color=color, height=0.55)
+        ax.plot([lo, hi], [i, i], color=META, linewidth=1.2)
+        ax.plot([lo, lo], [i - 0.12, i + 0.12], color=META, linewidth=1.2)
+        ax.plot([hi, hi], [i - 0.12, i + 0.12], color=META, linewidth=1.2)
+        ax.text(
+            hi + 1.5,
+            i,
+            f"{k}/{n} = {rate:.0f}%",
+            color=TEXT,
+            fontsize=10,
+            va="center",
+        )
+        ax.text(-2, i, label, color=TEXT, fontsize=9, va="center", ha="right")
+    ax.invert_yaxis()
+    ax.set_yticks([])
+    ax.set_xlim(0, 100)
+    ax.set_xlabel("success rate, % (whiskers: Wilson CI95)")
+    ax.set_title("Memorization split — rates, not counts")
+    style_ax(ax)
+    ax.grid(axis="y", visible=False)
+    fig.subplots_adjust(left=0.30)
+    return fig_to_b64(fig)
+
+
+def memorization_section(eps: list[dict], kept_seeds: set[int]) -> str:
+    """The flowtrain page's headline: split the training-band episodes
+    by stage-B corpus membership and read kept vs collector-rejected vs
+    the unseen sibling. Every number is computed live from the banked
+    leg json + kept_seeds — nothing is retyped."""
+    kept = [e for e in eps if e["seed"] in kept_seeds]
+    rej = [e for e in eps if e["seed"] not in kept_seeds]
+    assert kept and rej, "memorization split needs both arms non-empty"
+
+    def stats(arm: list[dict]) -> tuple[int, int, float]:
+        succ = sum(1 for e in arm if e.get("success_tick") is not None)
+        prog = [e["initial_cm"] - min(e["min_cm"], e["final_cm"]) for e in arm]
+        return succ, len(arm), sum(prog) / len(prog)
+
+    ks, kn, kprog = stats(kept)
+    rs, rn, rprog = stats(rej)
+    klo, khi = wilson_ci(ks, kn)
+    rlo, rhi = wilson_ci(rs, rn)
+    gap_pp = 100 * (ks / kn - rs / rn)
+    tiles = [
+        (
+            f"{ks}/{kn}",
+            f"kept arm ({100 * ks / kn:.0f}%, CI {100 * klo:.0f}–{100 * khi:.0f}%)",
+        ),
+        (
+            f"{rs}/{rn}",
+            f"rejected arm ({100 * rs / rn:.0f}%, CI {100 * rlo:.0f}–{100 * rhi:.0f}%)",
+        ),
+        (f"{gap_pp:+.0f} pp", "kept − rejected rate gap (CIs overlap)"),
+        (
+            f"{PROBE_ANCHOR}/100",
+            "unseen sibling — the anchor the kept arm must beat to claim memorization",
+        ),
+        (f"{kprog:.2f} vs {rprog:.2f} cm", "mean progress, kept vs rejected"),
+    ]
+    tiles_html = "".join(
+        f'<div class="tile"><div class="big">{v}</div><div class="lab">{html.escape(k)}</div></div>'
+        for v, k in tiles
+    )
+    chart = split_rate_bar(
+        [
+            ("kept (demo in corpus)", ks, kn, SUCCESS),
+            ("collector-rejected", rs, rn, FAIL),
+            ("unseen sibling (anchor)", PROBE_ANCHOR, 100, ANCHOR),
+        ],
+    )
+    return (
+        "<h2>Memorization split: kept vs collector-rejected scenes</h2>\n"
+        '<p class="meta">Membership from the banked stage-B collect'
+        " curve's <code>kept_seeds</code>: a <b>kept</b> training seed"
+        " contributed a demo to the 313-demo SFT corpus; a"
+        " <b>rejected</b> seed's scene was attempted but the scripted"
+        " collector failed there, so the model never saw it (and those"
+        " scenes skew harder — the rejection reason confounds the arms'"
+        f" gap). The decisive read is kept vs unseen: <b>{ks}/{kn}"
+        f" ({100 * ks / kn:.0f}%) on scenes the model trained on vs"
+        f" {PROBE_ANCHOR}/100 on scenes it never saw</b> — no"
+        " memorization signature; the checkpoint generalizes rather than"
+        " replays. The kept−rejected gap"
+        f" ({gap_pp:+.0f} pp) sits well inside the overlapping Wilson"
+        " CIs.</p>\n"
+        f'<div class="tiles">{tiles_html}</div>\n'
+        f'<img src="data:image/png;base64,{chart}">\n'
     )
 
 
@@ -672,15 +841,53 @@ def main() -> int:
 
     data = json.loads(leg_json.read_text())
     eps = data["episodes"]
-    assert sorted(e["seed"] for e in eps) == list(range(100)), "seeds must be 0-99"
+    seed_start = preset.get("seed_start", 0)
+    assert sorted(e["seed"] for e in eps) == list(
+        range(seed_start, seed_start + 100),
+    ), f"seeds must be {seed_start}-{seed_start + 99}"
     succ = [e for e in eps if e.get("success_tick") is not None]
     strikes = sum(e.get("reset_strikes", 0) for e in eps)
     moved = [e for e in eps if e["initial_cm"] - min(e["min_cm"], e["final_cm"]) > 0.5]
     prog = [e["initial_cm"] - min(e["min_cm"], e["final_cm"]) for e in eps]
     mean_prog = sum(prog) / len(prog)
 
+    # Memorization split (flowtrain): the collect json is the page's
+    # headline input, so it is asserted present — never skipped quietly.
+    kept_seeds: set[int] = set()
+    if "split_json" in preset:
+        split_json = preset["split_json"]
+        assert split_json.exists(), (
+            f"{split_json} is required for the memorization split"
+            " (regenerate from the stage-B collect run's banked curve)"
+        )
+        kept_seeds = set(json.loads(split_json.read_text())["kept_seeds"])
+
     picks: list[tuple[str, dict]] = []
-    if "gallery_picks" in preset:
+    if kept_seeds:
+        # Split-arm gallery: fastest success + nearest miss per arm,
+        # plus the kept arm's median success — deterministic from the
+        # banked json, both arms represented.
+        for arm_label, arm in (
+            ("kept", [e for e in eps if e["seed"] in kept_seeds]),
+            ("rejected", [e for e in eps if e["seed"] not in kept_seeds]),
+        ):
+            arm_succ = sorted(
+                (e for e in arm if e.get("success_tick") is not None),
+                key=lambda e: e["success_tick"],
+            )
+            arm_miss = sorted(
+                (e for e in arm if e.get("success_tick") is None),
+                key=lambda e: e["final_cm"],
+            )
+            if arm_succ:
+                picks.append((f"fastest success ({arm_label} arm)", arm_succ[0]))
+            if arm_label == "kept" and len(arm_succ) >= 3:
+                picks.append(
+                    ("median success (kept arm)", arm_succ[len(arm_succ) // 2]),
+                )
+            if arm_miss:
+                picks.append((f"nearest miss ({arm_label} arm)", arm_miss[0]))
+    elif "gallery_picks" in preset:
         # Pinned diagnostic picks (seed or the far-spawn-no-touch
         # sentinel) — the token page shows the decode-diagnosis clips,
         # not the fastest successes.
@@ -796,6 +1003,10 @@ def main() -> int:
             preset["diagnosis_chart"],
         )
 
+    split_html = ""
+    if kept_seeds:
+        split_html = memorization_section(eps, kept_seeds)
+
     second_html = ""
     if "second_leg" in preset:
         second_label, second_json = preset["second_leg"]
@@ -837,9 +1048,9 @@ def main() -> int:
 <p class="meta">{meta_html}</p>
 {ladder_html}{seam_html}<div class="tiles">{tiles_html}</div>
 <h2>Against the anchors</h2>
-<img src="data:image/png;base64,{success_bar(bar_rows)}">
-{paired_html}{diagnosis_html}<h2>Per-seed outcomes</h2>
-<img src="data:image/png;base64,{outcome_strip(eps)}">
+<img src="data:image/png;base64,{success_bar(bar_rows, preset.get("bar_xlabel", "successes on unseen seeds 0–99"))}">
+{split_html}{paired_html}{diagnosis_html}<h2>Per-seed outcomes</h2>
+<img src="data:image/png;base64,{outcome_strip(eps, preset.get("strip_xlabel", "unseen seed (0–99)"))}">
 <h2>Clips</h2>
 {gallery_html}
 <h2>Per-seed table</h2>

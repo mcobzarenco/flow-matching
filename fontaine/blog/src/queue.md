@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-19T12:00:53Z
+**Updated:** 2026-08-19T12:35:04Z
 
 **Depth call:** post token-probe-html-gallery close 12:0xZ 08-19: 2 queued CPU-executable (flow-train-memorization-panel refill, disk-retirement-sweep-banked-sources); demos-plus-one-rig-exec owner-gated, grpo-r2-post-sft owner-band (activation recommendation posted with receipts); H100 free pending the owner isolation call
 
-**16 open** (Live 0 · Queued 2 · Blocked 14 · Done 253)
+**16 open** (Live 0 · Queued 2 · Blocked 14 · Done 254)
 
 ## 🔴 Live (0)
 
@@ -32,15 +32,15 @@ Disk-retirement sweep of locally-redundant banked sources (extends the hf-evacua
 
 ---
 
-**`flow-train-memorization-panel`** · `cpu`
+**`grpo-r2-activation-amendment-draft`** · `cpu`
 
-Flow-train memorization-read HTML panel (CPU, standing rule html-reports-for-important-checkpoints; completes the route-C joint step2000 probe-family reporting after the flow_unseen + token pages): build the same-class page for t…
+GRPO R2 activation amendment DRAFT (CPU; makes the pending owner R2-band call immediately actionable): freeze the R2-from-7% amendment as a blog draft - init checkpoint fontaine_grasp_sft_joint_corrected/step_002000 token head (7…
 
-**boundary:** Queued 12:0xZ 08-19 work session (charter section 4 refill at the token-probe-html-gallery close; depth-2 restore). All inputs banked on disk - no GPU.
+**boundary:** Queued 12:3xZ 08-19 work session (charter section 4 refill at the flow-train-memorization-panel close; depth-2 restore).
 
 <details><summary>full record</summary>
 
-Flow-train memorization-read HTML panel (CPU, standing rule html-reports-for-important-checkpoints; completes the route-C joint step2000 probe-family reporting after the flow_unseen + token pages): build the same-class page for the flow_train leg (seeds 1000-1099, 42/100) from the banked outputs/sim/grasp_sft/joint_probes/flow_train.json + videos via a grasp_sft_joint_unseen_report.py preset, rendering the memorization split as the headline (kept 29/64 vs non-kept 13/36 = no memorization, from analysis__grasp_sft_joint_probes.json) with unseen-100 44/100 as the anchor; gallery picks from both split arms; upload to fontaine-reports, link from reports.md route-C section, short in-channel pointer. Note: outcome-strip x-axis assumes seeds 0-99 - the preset needs the 1000-1099 range handled.
+GRPO R2 activation amendment DRAFT (CPU; makes the pending owner R2-band call immediately actionable): freeze the R2-from-7% amendment as a blog draft - init checkpoint fontaine_grasp_sft_joint_corrected/step_002000 token head (7/100 greedy, B section 3 OWNER_DECISION band), decode T=1.0 sampled draws (R2 samples; the decode diagnosis shows greedy magnitude attenuation, not calibration - the exact failure sampling addresses), reward/steps/batch from the R1 recipe class, frozen gates + anchors (token 7, flow sibling 44, token_base 0), GPU-h budget + kill rules. POSTING and launch pend the owner band reply (registered owner call, 11:19Z 08-19 summary ...522815); drafting is unconditional CPU work so the reply activates same-session.
 
 </details>
 
@@ -246,7 +246,7 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (253)
+## ✅ Done (254)
 
 *closed — the full record stays in each fold*
 
@@ -259,6 +259,20 @@ HF evacuation audit for the schema-2 checkpoint fleet (standing rule upload-valu
 <details><summary>full record</summary>
 
 HF evacuation audit for the schema-2 checkpoint fleet (standing rule upload-valuable-checkpoints; follows v1-fleet-upgrade retiring all local v1 originals): for each local _v2 dir (er_60k_step_060000_vla_v2, molmoact2_base_corrected_stats_v0_vla_v2 + _jointsurface_v2, molmoact2_grasp_sft_stagec_ar_step2000_corrected_v1_v2 + _vla_v2, finetune/fontaine_grasp_sft_joint_corrected/step_002000_v2) verify fontaine-checkpoints holds a recovery path: either the _v2 itself or a v1/legacy source (convert_v1/convert_legacy are deterministic frozen readers, so a banked source + committed converter counts). Upload weights-only gaps same-session; record the mapping in a short table on the blog. CPU+network only, no GPU. Note: the two legacy bijou_config dirs in converted/ (base_corrected_stats_v0, grasp_sft_stagec_ar_step2000, 2.2G each) are the stage-C expert sources - include them in the audit before any retirement decision.
+
+</details>
+
+---
+
+**`flow-train-memorization-panel`** · `cpu`
+
+Flow-train memorization-read HTML panel (CPU, standing rule html-reports-for-important-checkpoints; completes the route-C joint step2000 probe-family reporting after the flow_unseen + token pages): build the same-class page for t…
+
+**boundary:** Queued 12:0xZ 08-19 work session (charter section 4 refill at the token-probe-html-gallery close; depth-2 restore). All inputs banked on disk - no GPU. ||| EXECUTED + CLOSED 12:1x-12:3xZ 08-19 work session: 'flowtrain' preset added to grasp_sft_joint_unseen_report.py (seed_start generalizes the 0-99 strip/assert to the 1000-1099 band; memorization split read LIVE from curve__grasp_sft_stageb_collect.json kept_seeds - loud requirement, reproduces kept 29/64 vs rejected 13/36 exactly; Wilson-CI rate chart kept 45% [34-57] vs rejected 36% [23-52] vs unseen anchor 44%; split-arm gallery: fastest success + nearest miss per arm + kept median = seeds 1027/1017/1008/1092/1073). Headline: 42/100 ~ unseen 44/100, no memorization signature; rejected-arm difficulty confound stated on-page. Regression: token page byte-identical, flow page value-identical (known whitespace-only drift). Uploaded page + joint_train_gallery/ to fontaine-reports - 6/6 URLs curl 200, clip byte-exact via LFS redirect. reports.md route-C entry added. check.py 1066 green. 0 GPU-h.
+
+<details><summary>full record</summary>
+
+Flow-train memorization-read HTML panel (CPU, standing rule html-reports-for-important-checkpoints; completes the route-C joint step2000 probe-family reporting after the flow_unseen + token pages): build the same-class page for the flow_train leg (seeds 1000-1099, 42/100) from the banked outputs/sim/grasp_sft/joint_probes/flow_train.json + videos via a grasp_sft_joint_unseen_report.py preset, rendering the memorization split as the headline (kept 29/64 vs non-kept 13/36 = no memorization, from analysis__grasp_sft_joint_probes.json) with unseen-100 44/100 as the anchor; gallery picks from both split arms; upload to fontaine-reports, link from reports.md route-C section, short in-channel pointer. Note: outcome-strip x-axis assumes seeds 0-99 - the preset needs the 1000-1099 range handled.
 
 </details>
 

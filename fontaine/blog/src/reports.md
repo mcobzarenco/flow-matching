@@ -893,6 +893,17 @@ the baseline the visual-matching lever must move.
   5-clip diagnostic gallery (flow-overlap successes 35/96,
   timeout-holding carries 29/41, far-spawn no-touch 72); consolidated
   verdicts JSON `analysis__grasp_sft_joint_probes.json`
+- [flow-head train-100 memorization report](https://mcobzarenco-fontaine-reports.static.hf.space/eval__grasp_sft_joint_step2000__flow_train100.html)
+  — leg 2 (seeds 1000–1099, the stage-B collection band), rendered
+  12:2xZ 08-19 from the banked leg json + collect curve: **42/100 ≈
+  the unseen sibling's 44/100 — no memorization signature**; the
+  headline memorization split reads kept 29/64 (45%) vs
+  collector-rejected 13/36 (36%) with overlapping Wilson CIs
+  (rejected scenes skew harder — the collector failed there), so the
+  checkpoint generalizes rather than replays; Wilson-CI rate chart,
+  5-clip gallery from both split arms (fastest success + nearest
+  miss per arm, kept median), full per-seed table — completes the
+  probe-family reporting (unseen / token / train)
 - [standard 256-sample eval report](https://mcobzarenco-fontaine-reports.static.hf.space/eval__grasp_sft_joint_step2000_train256.html)
   ([json](https://mcobzarenco-fontaine-reports.static.hf.space/eval__grasp_sft_joint_step2000_train256.json))
   — owner request 09:06Z 08-16, stage-C train256 protocol reproduced
