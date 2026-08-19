@@ -225,9 +225,10 @@ def convert(
     if (source / "metadata.json").exists():
         raise SystemExit(
             f"{source} is a VLA-format directory, not a legacy checkpoint — "
-            "schema-1 artifacts re-convert from their ORIGINAL sources "
-            "(this converter on the legacy directory, or "
-            "bijou.convert_molmoact2 on the HF release)",
+            "schema-1 artifacts upgrade via bijou.convert_v1 (or "
+            "re-convert from their ORIGINAL sources: this converter on "
+            "the legacy directory, bijou.convert_molmoact2 on the HF "
+            "release)",
         )
     config_path = source / "bijou_config.json"
     if not config_path.exists():
@@ -326,7 +327,15 @@ def convert(
         case VLAFamily.GEMMA_AR | VLAFamily.MOLMO2_AR:
             objective = {
                 "kind": "ar",
-                "narration_weight": float(raw_args.get("narration_weight", 1.0)),
+                # Pre-rename runs recorded the same knob as
+                # aux_loss_weight (32149df); defaulting past it would
+                # silently rewrite the trained mix to 1.0.
+                "narration_weight": float(
+                    raw_args.get(
+                        "narration_weight",
+                        raw_args.get("aux_loss_weight", 1.0),
+                    ),
+                ),
             }
         case VLAFamily.MOLMOACT2_AR:
             objective = {"kind": "ar"}

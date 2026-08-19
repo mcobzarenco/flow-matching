@@ -122,10 +122,10 @@ def test_metadata_round_trip() -> None:
     assert VLAMetadata.from_json_dict(meta.to_json_dict()) == meta
 
 
-def test_metadata_refuses_schema_1_with_reconvert_pointer() -> None:
+def test_metadata_refuses_schema_1_with_upgrade_pointer() -> None:
     payload = metadata().to_json_dict()
     payload["schema_version"] = 1
-    with pytest.raises(SystemExit, match="re-convert"):
+    with pytest.raises(SystemExit, match="convert_v1"):
         VLAMetadata.from_json_dict(payload)
 
 

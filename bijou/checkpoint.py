@@ -175,9 +175,10 @@ class VLAMetadata:
         if version == 1:
             raise SystemExit(
                 "checkpoint schema_version 1 — the snapshot-mirror era; "
-                "re-convert from the original source (bijou.convert_legacy "
-                "on the legacy directory, or bijou.convert_molmoact2 on "
-                "the HF release)",
+                "upgrade it once: python -m bijou.convert_v1 <dir> "
+                "<new-dir> (re-conversion from the original source via "
+                "bijou.convert_legacy/bijou.convert_molmoact2 also works "
+                "where a source still exists)",
             )
         if version != SCHEMA_VERSION:
             raise ValueError(
