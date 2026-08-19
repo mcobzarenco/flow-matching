@@ -7,7 +7,37 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-19 10:42–10:5xZ (real `date -u` at write: 10:44) —
+tick: **quiet tick right after the decode-diagnosis close — no live
+runs, H100 idle (0 MiB / 0%), channel quiet; `run_work_next` already
+armed (10:32 marker), so this tick closes fast to hand off to the
+chained work session.***
+
+**Status**: no live runs — babysit registry empty
+(`no_live_runs_reason` current), GPU 0 MiB / 0% (H100 free;
+policy-server not up). RAM 196 GiB available, disk 257 GB free. The
+staged demos+one-rig cell remains the only GPU item and pends the
+owner isolation call.
+
+**Steering**: none — read empty, inbox empty, history (last 5) shows
+no new reactions. OWNER CALLS PENDING: (1) demos+one-rig isolation
+(draft 04:25:54Z, id …759115); (2) the B §3 R2 band (post
+…840340) — now carrying the ACTIVATE-from-7% recommendation +
+receipts (diagnosis post 1539581325588041780).
+
+**Done**: boot (pull clean, queue validate green depth 2 / 16 open),
+Discord read + history, standing free/df + GPU checks. No post
+(quiet interval); no in-session hold — the marker was already armed,
+so the fastest path to resumed polling + queue work is the chained
+session itself.
+
+**Next**: chained work session takes CPU items `v1-fleet-upgrade`
+(staggered, disk checks + no-blind-delete greps) and refill
+`token-probe-html-gallery`, and keeps the owner-call polls;
+`demos-plus-one-rig-exec` + R2 activation stay owner calls.*
 
 *Updated 2026-08-19 09:56–10:4xZ (real `date -u` at write: 10:29) —
 work session (chained): **token-decode-diagnosis EXECUTED + CLOSED
@@ -75,49 +105,18 @@ the chained work session executes CPU items `token-decode-diagnosis`
 disk checks + no-blind-delete greps) and keeps the tight polls;
 `demos-plus-one-rig-exec` + R2 activation stay owner-gated.
 
-*Updated 2026-08-19 09:30–10:0xZ (real `date -u` at write: 09:49) —
-work session (chained): **metadata-v1-importer CLOSED —
-`bijou.convert_v1` landed (edb8d4e), the pinned-worktree class
-killer; all three oracles green incl. a bitwise golden cross-check;
-bonus convert_legacy pre-rename bug fixed.***
-
-**Status**: no live runs — H100 idle (0 MiB / 0%) all session,
-policy-server not up; RAM 196 GiB available, disk 266 GB free (the
-two oracle upgrades materialized ~30 GB of per-part files). The
-staged demos+one-rig cell remains the only GPU item and pends the
-owner isolation call (registered grid carve-out).
-
-**Steering**: none — read empty at boot and at every poll, inbox
-empty. OWNER CALLS STILL PENDING: (1) demos+one-rig isolation (draft
-04:25:54Z, id …759115); (2) the B §3 R2 band (post
-1539564065414840340): token-GRPO from 7% / token-SFT variant first /
-park — `token-decode-diagnosis` stays queued to sharpen it.
-
-**Done**: `metadata-v1-importer` EXECUTED + CLOSED (edb8d4e, result
-post 1539571824461881354). Git-audit first: no importer since the
-57c6843 flip. Landed `bijou.convert_v1` — explicit schema-1→2
-upgrade CLI (read-time import rejected: it would put HF-layout
-knowledge back in a load path); trained trunks partition through the
-audited splitters, pristine trunks import from their own `backbone/`
-mirror (no cache lookup, proven in tests), pre-rename
-`aux_loss_weight` → `narration_weight` translated. Oracles: joint
-step_002000 upgraded + `load_vla` smoke green (`MolmoAct2JointVLA`
-under current code — the ckpt that cost a 3-day pinned worktree);
-pristine flow v0 upgraded; GOLDEN er_60k v1-upgrade vs the
-legacy-converted `_v2` — five weight files bitwise equal, the one
-metadata diff being the `convert_legacy` default-past-the-rename bug
-(fixed same commit; er_60k `_v2` on disk carries narration_weight
-1.0 vs trained 0.5 — training-mix provenance only). Refusal fence
-tested; stand-ins-substrate seam documented as an eval-time flag.
-check.py 1062 green.
-
-**Next**: `queue_cli.py next` → CPU items `token-decode-diagnosis`
-(sharpens the R2 band call) and NEW refill `v1-fleet-upgrade` (3 v1
-dirs left on disk, staggered with disk checks + no-blind-delete
-greps); `demos-plus-one-rig-exec` + R2 activation stay owner calls.
-`run_work_next` armed at close (CPU queue non-empty).
-
 ## Utilization footer
+
+Session 2026-08-19 10:42–10:5xZ (tick; 0 GPU-h — no live runs, H100
+idle): **quiet tick right after the decode-diagnosis close — GPU
+0 MiB / 0%, RAM 196 GiB available, disk 257 GB free; Discord fully
+quiet (read empty, inbox empty, no new reactions); no in-session hold
+— `run_work_next` was already armed (10:32 marker), so the tick
+closed fast to hand off** — the chained work session takes CPU items
+`v1-fleet-upgrade` + `token-probe-html-gallery` and keeps the
+owner-call polls (demos+one-rig isolation, R2 band — both still
+unanswered); both GPU actions stay owner-gated. Queue green depth 2
+(16 open).
 
 Session 2026-08-19 09:56–10:4xZ (work, chained; 0 GPU-h — CPU-only
 analysis over banked artifacts, H100 idle throughout):
@@ -129,16 +128,6 @@ ACTIVATE-R2-from-7% recommendation posted with chart
 open: refill `token-probe-html-gallery`); Discord quiet all session,
 polls at every stage; both GPU actions stay owner-gated;
 `run_work_next` armed at close.
-
-Session 2026-08-19 09:53–10:0xZ (tick; 0 GPU-h — no live runs, H100
-idle): **quiet tick straight after the convert_v1 close — GPU 0 MiB /
-0%, RAM 196 GiB available, disk 260 GB free; Discord fully quiet
-(read empty, inbox empty, no new reactions); ~3-min monitor polls
-held on the two pending owner calls (demos+one-rig isolation, R2
-band) — no reply by close** — `run_work_next` armed (09:49 marker
-confirmed): the chained work session executes CPU items
-`token-decode-diagnosis` + `v1-fleet-upgrade` and keeps the polls;
-both GPU actions stay owner-gated. Queue green depth 2 (16 open).
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
