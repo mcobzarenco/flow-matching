@@ -2,6 +2,33 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-19 21:19–21:2xZ (tick) — **onerig healthy at step
+650, loss through 0.56 and rate holding under band; fully quiet
+tick, fast close. Drift read is next tick's duty (~22:4xZ).***
+
+**Status**: `grasp_sft_v2_joint_1gpu_pdnorm_onerig` step 650/3000 at
+the 21:20Z poll, loss 0.5602 (falling, −0.081 over the interval),
+14.851 s/step cumulative / 3.9 steps/min over the last window; 62.21
+GiB vs the 71 gate, babysit exit 0, no gate crossings. ~9.7 h to
+endpoint → ETA ~07:0xZ 08-20. Step-1000 lands ~22:4x–22:5xZ → the
+drift read is the NEXT tick's duty (READ not kill, Δ ≤ +0.30 raw vs
+the 8.04@500 probe).
+
+**Steering**: none — read + inbox empty, history clean (the 👍 on the
+20:35Z post was recorded two ticks ago, nothing new).
+
+**Done**: babysit poll (healthy, exit 0); queue validate green (depth
+2, 15 open); disk 171G free, flat — on the priced trajectory. No
+work-session chain: both queued items GPU-gated post-onerig, no CPU
+items, depth at threshold.
+
+**Next**: step-1000 drift read ~22:4xZ (tick), onerig endpoint
+~07:0xZ 08-20 → `onerig-endpoint-close`, then the R2 parity read +
+relaunch in the freed window (A5 gate, no GO ask); at the R2 endpoint
+the boundary is `./launch_grpo_r2.sh boundary
+outputs/sim/grpo_r2/loop/step_0010.pt`. Watch item standing: confirm
+step_000500/optimizer.pt pruned after the step-1500 save (~00:4xZ).*
+
 *Updated 2026-08-19 20:58–21:0xZ (tick) — **onerig healthy at step
 570, rate back under band (14.66 s/step cumulative); fully quiet
 tick, fast close.***
@@ -64,55 +91,17 @@ in the freed window (A5 gate, no GO ask); at the R2 endpoint the
 boundary is `./launch_grpo_r2.sh boundary
 outputs/sim/grpo_r2/loop/step_0010.pt`.*
 
-*Updated 2026-08-19 20:0x–20:3xZ (work session, chained on the 19:54
-tick) — **R2 boundary-legs launcher EXECUTED + CLOSED (982cecd): the R2
-endpoint is now one command end-to-end — `./launch_grpo_r2.sh boundary
-<overlay.pt>` materializes the servable endpoint dir, fires the three
-A3.4 legs sequentially as one detached unit, and chains the banked
-verdict instrument. The endpoint read needs zero new code.***
-
-**Status**: `grasp_sft_v2_joint_1gpu_pdnorm_onerig` step 440/3000 at
-the 20:24Z poll, loss 0.6515 (falling, −0.06 over the interval), ~15.7
-s/step effective over the last 90 steps (eval pauses included; a hair
-above the 15.1–15.4 band), 62.21 GiB vs the 71 gate, babysit exit 0.
-ETA drifting toward ~07:4x–08:0xZ 08-20 (vs ~07:0x–07:1x registered —
-watch at the drift read; still noise-level, no re-registration).
-Step-1000 drift read ~22:4x–23:0xZ tonight (tick duty, READ not kill,
-Δ ≤ +0.30 raw).
-
-**Steering**: none — read + inbox empty at boot and both babysit polls
-(20:00, 20:24).
-
-**Done**: `grpo-r2-boundary-legs-launcher` EXECUTED + CLOSED (982cecd,
-check.py 1099 green): (1) `boundary` subcommand — three legs (greedy
-token sim100 / sampled T=1.0 sim100 / flow unseen100 euler-10, seeds
-0–99, anchors' exact driver + substrate pins) sequential in ONE
-detached unit chaining `grpo_r2_boundary_verdict`; refuses while unit
-`grpo-r2` is alive, without a PASS preflight verdict, and on the
-pinned base dir. (2) The missing seam found by the git audit:
-the loop banks trainable-only `step_NNNN.pt` overlays but the anchor
-serving path loads self-contained VLA dirs — new
-`grpo_r2_materialize_endpoint.py` applies the text-surface overlay
-onto the base's backbone_text via `write_checkpoint` (atomic,
-validated, hard-linked untouched parts; 6 oracles on the tiny VLA
-fixture). (3) parse-check extended: the legs' exact argv through the
-driver's own parser + the verdict's provenance guards on synthesized
-configs — launcher and verdict cannot drift apart. (4) Registered-pin
-correction (git-audited, recorded in the launcher + queue): NO
-`--stats-repo-id` on the boundary legs — the spelled
-so101_pick_place_v2 row exists only on the retired step_002000 dir;
-on the v2 base the explicit pin would be REFUSED at load, and the
-default lookup is the lane's registered serving convention (the
-preflight PASS wore `<merged-table>`).
-
-**Next**: `queue_cli.py next` → `grpo-r2-parity-read-and-relaunch`
-(gpu-local, post-onerig window). Boundaries: onerig step-1000 drift
-read ~22:4xZ 08-19 (tick), onerig endpoint ~07:4xZ 08-20 →
-`onerig-endpoint-close`, then the R2 parity read + relaunch in the
-freed window (A5 gate, no GO ask); at the R2 endpoint, the boundary is
-`./launch_grpo_r2.sh boundary outputs/sim/grpo_r2/loop/step_0010.pt`.*
-
 ## Utilization footer
+
+Session 2026-08-19 21:19–21:2xZ (tick; `onerig` riding, ~3.0 GPU-h
+elapsed of ~13 expected / gate 17): **babysit exit 0 — step 650/3000,
+loss 0.5602 falling (−0.081 interval), 14.851 s/step cumulative /
+3.9 steps/min window, 62.21 GiB, no gate crossings, ETA ~07:0xZ
+08-20; step-1000 drift read is next tick's duty (~22:4xZ); Discord
+fully quiet (read + inbox empty, no new reactions); no chain (both
+queued items GPU-gated post-onerig, no CPU items)** — queue green
+depth 2 (15 open). Disk 171G free (94%), flat — on the priced
+trajectory.
 
 Session 2026-08-19 20:58–21:0xZ (tick; `onerig` riding, ~2.6 GPU-h
 elapsed of ~13 expected / gate 17): **babysit exit 0 — step 570/3000,
@@ -123,17 +112,6 @@ crossings, ETA back to ~06:5x–07:0xZ 08-20; Discord fully quiet (read
 GPU-gated post-onerig, no CPU items)** — queue green depth 2 (15
 open). Disk 171G free (94%), flat since the save — on the priced
 trajectory.
-
-Session 2026-08-19 20:38–20:4xZ (tick; `onerig` riding, ~2.3 GPU-h
-elapsed of ~13 expected / gate 17): **babysit exit 0 — step 500/3000
-save boundary landed, probe eval_chunk_mae 12.85→8.04, rate back in
-band (~14.6 s/step interval), 65.1 GiB; owner 👍 on the 20:35Z
-boundary-launcher post recorded (history check); disk trajectory
-priced after the 45G save drop — `--prune-superseded-optim` live in
-the argv keeps 2 full saves, worst-case transient ~47G free at step
-3000, endpoint reachable; no chain (both queued items GPU-gated
-post-onerig, no CPU items)** — queue green depth 2 (15 open). Disk
-171G free (94%).
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
