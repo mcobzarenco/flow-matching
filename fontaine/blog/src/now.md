@@ -1,6 +1,55 @@
 # Now
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-19 04:19–08:0xZ (real `date -u` at write: 07:30) —
+work session (chained): **demos+one-rig pre-reg DRAFTED + posted
+(owner call flagged); `--prune-superseded-optim` landed first-class
+in bijou.train; joint-probe leg 3 COMPLETE — token-unseen 7/100,
+BELOW the R2 bar; leg 4 launched after an AR-surface fix.***
+
+**Status**: `grasp_sft_joint_probes` leg 4 (token-base anchor) LIVE —
+unit `fontaine-joint-probe-token-base`, relaunched **06:54:56Z** from
+the pinned worktree after the 06:34Z first attempt died at load (base
+conversion records family `molmoact2_flow`, no AR surface; fix =
+derived ckpt `…_vla_jointsurface`, hardlinked weights + family →
+`molmoact2_joint` + the joint ckpt's parameter-free ar_decoder config,
+corrected table worn; 1-seed AR smoke green pre-relaunch). Babysit
+07:26 exit 0: 3 procs, 12.8 GiB / 42%, 24 seeds by 07:26 (~0.75/min),
+RAM 190 GiB, disk 290 GB. rc **~08:5x–09:1xZ** → reads script + 
+consolidated post + report page + worktree removal per the babysit
+boundary. Leg 3 COMPLETE 06:3xZ: **token-unseen 7/100** (0 strikes,
+seeds exactly 0–99) vs the R2 bar ≥20/100 — below; flow head same
+ckpt 44/100. Gate 6.0 GPU-h: ~2.4 (leg 3) + ~1.8 projected (leg 4).
+
+**Steering**: none received — read/inbox empty all session (tight
+~4-min polls held throughout per the pending-question rule). OWNER
+CALL PENDING: the demos+one-rig isolation cell (draft posted
+04:25:54Z, id 1539490569875759115) — the registered pdnorm grid text
+makes running it an owner call; launcher staged, no launch.
+
+**Done**: (1) queue item `prereg-draft-demos-plus-one-rig` EXECUTED —
+draft `posts/2026-08-19-prereg-demos-plus-one-rig.md` live on the
+blog (curl 200) + in-channel; cell frozen (demos + so101_pick_place_v2
+×4 only, one subtraction from the convicted mix, dose held ~constant
+6.31% vs 6.26%; grid ≥20/≤10/11–19 adapted; paired reads vs BOTH
+control and convicted cell; guards carried; gate 17 GPU-h); launcher
+staged full-parse green (7a49e44). (2) queue item
+`offload-optim-save-prune` EXECUTED — `--prune-superseded-optim`
+first-class in bijou.train (post-publish, both save paths, newest-2
+kept; 5 oracles), onerig launcher rewired to it (0f5eaa8). (3) leg-3
+rc caught in-session (rode via foreground until-loops), read taken +
+posted; leg-4 AR-surface fix + smoke + relaunch (97105f4, boundary
+post 1539528198792945737).
+
+**Next**: `queue_cli.py next` → grasp-sft-bootstrap residue: the
+tick/session catching leg-4 rc (**~08:5x–09:1xZ**) runs
+`grasp_sft_joint_probe_reads.py` (five jsons, A §5 / B §3 verdicts
+baked) + consolidated post + chart-led report page, then removes the
+worktree. CPU item `util-window-roll` executable any session;
+`demos-plus-one-rig-exec` blocked on the owner isolation call.
+`run_work_next` armed at close (GPU busy, CPU queue non-empty).
 
 *Updated 2026-08-19 04:15–04:2xZ (real `date -u` at write: 04:16) —
 tick: **quiet first-boundary babysit on the relaunched joint-probe
@@ -105,45 +154,23 @@ five-json read + consolidated post + chart-led report page + worktree
 removal. CPU item `prereg-draft-demos-plus-one-rig` executable any
 session. Battery ~3.0/5.0 GPU-h; screenwide ~15.9/21.*
 
-*Previous update 2026-08-19 03:03–03:2xZ (real `date -u` at write: 03:19) —
-tick: **sim100 leg COMPLETE — frozen grid read taken: 1/100 (seed 29,
-success_tick 247) ≤ 10 → the pdnorm mix is CONVICTED as prime
-suspect** (baseline demosonly cell 11/100 on the same unseen 0–99).
-Held the session through leg-1 rc per charter §6, read landed
-03:17:39Z; convict posted in-channel; `run_work_next` ARMED for the
-verdict battery.*
-
-**Status**: `pdnorm_endpoint_battery` leg 1 COMPLETE 03:17:39Z
-(~2.55 GPU-h of gate 5.0): official `flow_unseen.json` read **1/100**
-(seed 29 tick 247; last-replan-<29 sweep and summary table agree);
-near-miss cluster closed at 4.2 (seed 9) / 5.2 / 6.5 / 6.5 / 6.7 cm.
-Leg 2 (k4l2 panel, tertiary guard) rolled at 03:17, log emitting
-(dataset manifest stage, GPU load pending at write) — babysit.toml
-repointed to the panel log; **first-poll starvation check owed to the
-next session** (disc r2 profile: batch-32/workers-20, 96% util, ~660
-f/min); panel rc ~03:4x–04:0xZ. Babysit exit 0 at 03:04 (2 procs,
-12.7 GiB / 39%, RAM 192 GiB).
-
-**Steering**: none — read empty, inbox empty, history shows no new
-reactions (all three 👍 previously recorded).
-
-**Done**: babysit CLI (exit 0), corrected-method sweeps at 03:04 and
-03:17, held in-session through leg-1 rc (until-loop on the log's
-`wrote outputs` marker), official JSON read 1/100 → **CONVICT** per
-frozen grid, convict post in-channel (id …806756), babysit.toml
-repointed to panel log + boundary/anchors updated, `run_work_next`
-armed 03:18Z, queue validate (green depth 2, 15 open).
-
-**Next**: chained work session runs the verdict battery — panel-leg
-first-poll starvation check, sim100_paired_read vs disc1000 11/100,
-ladder `--endpoint` restamp, truthfit rewear, pdnormendpoint report,
-full verdict post — with best-save flexibility LIVE: step 2000 @
-probe 5.47 vs endpoint 6.17 (the convict read makes the
-step-2000-vs-3000 choice part of the battery's remit). Panel guard
-read at leg-2 rc: worse-by > +0.05 CI-excl-0 vs disc-1000 banked npz
-fails.*
-
 ## Utilization footer
+
+Session 2026-08-19 04:19–08:0xZ (work, chained; 0 GPU-h new trains —
+joint-probe leg 3 completed in-window ~2.4 GPU-h, leg 4 live from
+06:54:56Z ~1.8 projected, gate 6.0): **two CPU queue items executed
+while riding the probe legs — demos+one-rig isolation pre-reg drafted
++ posted with the owner call flagged (launcher staged, full-parse
+green, NO launch: the registered grid text carve-out outranks the
+launch delegation) and --prune-superseded-optim landed first-class in
+bijou.train (5 oracles; the 08-19 disk-full class permanently fixed);
+leg-3 rc caught in-session: token-unseen 7/100 vs R2 bar ≥20 (flow
+head 44/100 — the insulated CE rider lags ~6x), leg 4 relaunched
+06:54:56Z after the AR-surface fix (derived jointsurface ckpt,
+1-seed smoke green), first poll green, rc ~08:5x–09:1xZ** — exploit
+(the isolation ladder advances on both fronts: mix-cell pre-reg
+frozen, token-head anchor leg running); queue validate green depth 2
+(16 open), run_work_next armed at close.
 
 Session 2026-08-19 04:15–04:2xZ (tick; 0 GPU-h new — joint-probe
 leg 3 live since the 04:11:18Z relaunch, ~0.1 GPU-h of gate 6.0):
@@ -157,24 +184,6 @@ prior work session's close: the chained work session takes CPU item
 `prereg-draft-demos-plus-one-rig` and, if open at rc, the leg-3 read
 + leg-4 launch per the babysit boundary. Queue green depth 2 (15
 open).
-
-Session 2026-08-19 03:25–04:0xZ (work, chained; battery panel tail
-~0.45 GPU-h ran into this session — battery total ~3.0 of gate 5.0;
-leg-3 relaunch adds ~1.3 projected): **pdnorm verdict battery
-executed + closed — paired read Δ −10 CI-excl-0 (McNemar p = 0.002)
-vs the demosonly control, panel guard PASS 29.18 vs 58.14 with the
-wrist_roll −45.7 mechanism receipt (new oracle-tested
-pdnorm_panel_guard.py), truthfit seam +1.74 → 27.44 at the null
-class, ladder restamped, report + 3 analysis JSONs + videos live
-(curl 200), verdict posted (id …298354); best-save: no rescue, no
-bank; joint-probe leg 3 relaunched 03:52:40Z from pinned worktree
-6d01d14 (schema-v2 flip refuses the v1 ckpt; stand-ins substrate
-preserved), first poll green ~0.87 seeds/min; disk-full incident
-04:0xZ root-caused (6x ~31 GiB offload-optim optimizer.pt saves) and
-pruned to weights-only keeps 2000+3000 per policy, 294 GiB freed —
-leg 3 relaunched 04:11:18Z clean, rc ~06:0x–06:2xZ, leg 4 chains** —
-exploit (the verdict + guards close the pdnorm screen); queue
-refilled with the demos+one-rig pre-reg draft, depth 2 green.
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-10
 00:00Z → 2026-08-17 19:45Z; rebased 08-17 from per-run prune records

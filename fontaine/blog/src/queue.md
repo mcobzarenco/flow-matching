@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-19T03:56:30Z
+**Updated:** 2026-08-19T04:36:11Z
 
 **Depth call:** post-triage: 4 queued executable (pdnorm-endpoint-close gated ~23:3xZ, grasp-sft-bootstrap legs 3/4 GPU-free-gated, sim-clutter-patch-promotion CPU, expert-approach-quasistatic-redesign CPU) + owner-pending-decisions-digest closing this session
 
-**15 open** (Live 0 · Queued 2 · Blocked 13 · Done 244)
+**16 open** (Live 0 · Queued 2 · Blocked 14 · Done 246)
 
 ## 🔴 Live (0)
 
@@ -18,15 +18,15 @@
 
 *ready — waiting on a window or a boundary*
 
-**`prereg-draft-demos-plus-one-rig`** · `cpu`
+**`util-window-roll`** · `cpu`
 
-Pre-reg DRAFT: demos + ONE rig dataset isolation cell (CPU drafting; the pdnorm pre-reg's named next isolation after the 08-19 CONVICT
+Utilization footer window roll (ledger maintenance, charter session-boot footer): the trailing-7-day figure in now.md still reads window 2026-08-10 -&gt; 2026-08-17 19:45Z (rebased 08-17, box-final)
 
-**boundary:** Queued 04:0xZ 08-19 work session at the pdnorm-endpoint-close verdict (charter section 4 refill; depth-2 restore). CPU-executable any session; GPU execution is a separate future item gated on the owner's isolation call + GPU-free window.
+**boundary:** Queued 04:4xZ 08-19 work session (charter section 4 refill at the offload-optim-save-prune close; depth-2 restore).
 
 <details><summary>full record</summary>
 
-Pre-reg DRAFT: demos + ONE rig dataset isolation cell (CPU drafting; the pdnorm pre-reg's named next isolation after the 08-19 CONVICT — 'the mix itself is the prime suspect; the draft names demos + one-rig-dataset as the cheapest next cell', an OWNER CALL per the registered grid text). Draft the pre-reg: single-GPU discriminator-proven platform, per-dataset flow norm (now house recipe for any mix per the guard receipts), grasp_demos_v2/merged + exactly one rig dataset (draft argues the pick: so101_pick_place_v2 highest-share vs _clean lowest-noise), 3000 steps seed 0, sim100 frozen grid vs the SAME 11/100 demosonly control + paired read, panel guard vs disc-1000 npz (pdnorm_panel_guard.py now generic), stand-ins pin carried. Post draft in-channel flagging the owner call on running it; no launch from this item.
+Utilization footer window roll (ledger maintenance, charter session-boot footer): the trailing-7-day figure in now.md still reads window 2026-08-10 -&gt; 2026-08-17 19:45Z (rebased 08-17, box-final). Recompute for a current 7-day window with fontaine/scripts/util_ledger_extract.py + the per-run prune records and the archive session notes since 08-17 (discriminator ~4.8 roll-in, pdnorm ~15.9 screenwide, joint-probe legs), restate local-only (box killed 08-17), land the new footer figure + receipts note in fontaine/notes/. CPU-executable any session.
 
 </details>
 
@@ -46,9 +46,23 @@ Grasp-rich SFT bootstrap (owner go 22:07Z 08-14 on the 90%-of-seeds question; DR
 
 ---
 
-## 🟡 Blocked (13)
+## 🟡 Blocked (14)
 
 *waiting on a prerequisite, a boundary, or the owner*
+
+**`demos-plus-one-rig-exec`** · `gpu-local` · **⛔ owner hold**
+
+Demos + ONE rig dataset isolation cell EXECUTION (OWNER-GATED: the pdnorm pre-reg's registered &lt;=10 grid text makes the next isolation an owner call
+
+**boundary:** Queued 04:2xZ 08-19 at the draft close. BLOCKED on the owner isolation call (registered carve-out outranks the standing launch delegation) AND a GPU-free window (joint-probe legs 3/4 own the GPU through ~08:xxZ 08-19). · [pre-reg](posts/2026-08-19-prereg-demos-plus-one-rig.md)
+
+<details><summary>full record</summary>
+
+Demos + ONE rig dataset isolation cell EXECUTION (OWNER-GATED: the pdnorm pre-reg's registered &lt;=10 grid text makes the next isolation an owner call — draft posted 04:25:54Z 08-19 id 1539490569875759115, awaiting GO / other-arm pick / edit-as-amendment). On GO at a GPU-free boundary: STEPS=20 SMOKE=1 fit smoke, then systemd-run unit fontaine-v2-joint-pdnorm-onerig via the staged launcher launch_local_grasp_sft_v2_joint_1gpu_pdnorm_onerig_h100.sh (demos+so101_pick_place_v2 x4, pdnorm, joint+insulate, eff-96, seed 0, 3000 steps, sidecar optimizer.pt pruner); babysit entry at launch, first poll util+rate+free-g+df; boundaries step-1000 drift read, step-3000 endpoint -&gt; sim100 (stand-ins pin, --stats-repo-id grasp_demos_v2/merged) + panel guard vs disc-1000 npz + paired reads vs control AND convicted cell + verdict post through the frozen grid. Gate 17 GPU-h.
+
+</details>
+
+---
 
 **`demo-gen-v1.1-regen`** · `gpu-a100`
 
@@ -232,9 +246,37 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (244)
+## ✅ Done (246)
 
 *closed — the full record stays in each fold*
+
+**`offload-optim-save-prune`** · `cpu`
+
+First-class superseded-optimizer prune in bijou.train saving (infra debt from the 08-19 root-disk-full incident: six ~31 GiB offload-optim optimizer.pt saves filled the disk mid-battery and killed the joint-probe leg-3 attempt)
+
+**boundary:** Queued 04:2xZ 08-19 work session (charter section 4 refill at the prereg-draft close; depth-2 restore). The staged onerig launcher carries a launcher-level sidecar pruner as the interim fix — this item promotes it into the trainer where every future offload-optim run inherits it. | CLOSED 04:4xZ 08-19.
+
+<details><summary>full record</summary>
+
+First-class superseded-optimizer prune in bijou.train saving (infra debt from the 08-19 root-disk-full incident: six ~31 GiB offload-optim optimizer.pt saves filled the disk mid-battery and killed the joint-probe leg-3 attempt). Implement --prune-superseded-optim (default OFF; keep latest N=2 step_* saves' optimizer.pt, weights never touched) in bijou/train saving, oracle-tested (tmpdir save ladder: correct files removed, latest-2 kept, resume from latest still loads); wire into the staged onerig launcher in place of the sidecar loop once landed. CPU-executable any session; check.py + oracles before commit per charter. ||| EXECUTED 04:3x-04:4xZ 08-19 same session (no-idle window while joint-probe leg 3 runs): --prune-superseded-optim landed in bijou.train (TrainArgs defaulted field + CLI flag + prune_superseded_optimizers() in train/saving.py, called post-publish on BOTH the sync and async save paths — async runs on the saver thread where writes serialize, so the newest dir is always complete). 5 oracles green (tests/test_prune_superseded_optim.py: newest-2 kept, weights untouched, .tmp debris + foreign names + step-named files ignored, already-pruned skipped, flag parses + defaults off). Staged onerig launcher rewired to the flag (sidecar loop deleted), full-parse green.
+
+</details>
+
+---
+
+**`prereg-draft-demos-plus-one-rig`** · `cpu`
+
+Pre-reg DRAFT: demos + ONE rig dataset isolation cell (CPU drafting; the pdnorm pre-reg's named next isolation after the 08-19 CONVICT
+
+**boundary:** Queued 04:0xZ 08-19 work session at the pdnorm-endpoint-close verdict (charter section 4 refill; depth-2 restore). CPU-executable any session; GPU execution is a separate future item gated on the owner's isolation call + GPU-free window. | CLOSED 04:2xZ 08-19: drafting complete, successor item demos-plus-one-rig-exec carries the owner-gated GPU execution. · [pre-reg](posts/2026-08-19-prereg-demos-plus-one-rig.md)
+
+<details><summary>full record</summary>
+
+Pre-reg DRAFT: demos + ONE rig dataset isolation cell (CPU drafting; the pdnorm pre-reg's named next isolation after the 08-19 CONVICT — 'the mix itself is the prime suspect; the draft names demos + one-rig-dataset as the cheapest next cell', an OWNER CALL per the registered grid text). Draft the pre-reg: single-GPU discriminator-proven platform, per-dataset flow norm (now house recipe for any mix per the guard receipts), grasp_demos_v2/merged + exactly one rig dataset (draft argues the pick: so101_pick_place_v2 highest-share vs _clean lowest-noise), 3000 steps seed 0, sim100 frozen grid vs the SAME 11/100 demosonly control + paired read, panel guard vs disc-1000 npz (pdnorm_panel_guard.py now generic), stand-ins pin carried. Post draft in-channel flagging the owner call on running it; no launch from this item. ||| EXECUTED 04:2xZ 08-19 work session: draft posted (blog page live curl-200, in-channel post id 1539490569875759115, owner call flagged). Cell frozen: demos + so101_pick_place_v2 x4 (one subtraction from the convicted mix; 90.6% of rig frames kept, dose 6.31% vs 6.26% in-mix), grid &gt;=20 / &lt;=10 / 11-19 with adapted readings, paired reads vs BOTH control and convicted cell, guards carried (drift, panel +0.05, truthfit, stand-ins pin, worn row), gate 17 GPU-h. Launcher STAGED launch_local_grasp_sft_v2_joint_1gpu_pdnorm_onerig_h100.sh, full-parse green (family molmoact2_joint, pdnorm True, seed 0) + NEW sidecar optimizer.pt pruner (disk-full class fix, keeps latest 2 saves). Execution item queued separately (owner_hold).
+
+</details>
+
+---
 
 **`clutter-patch-promotion-regate`** · `gpu-local`
 
