@@ -1,10 +1,54 @@
 # Now
 
-
-
-
-
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-19 20:0x–20:3xZ (work session, chained on the 19:54
+tick) — **R2 boundary-legs launcher EXECUTED + CLOSED (982cecd): the R2
+endpoint is now one command end-to-end — `./launch_grpo_r2.sh boundary
+<overlay.pt>` materializes the servable endpoint dir, fires the three
+A3.4 legs sequentially as one detached unit, and chains the banked
+verdict instrument. The endpoint read needs zero new code.***
+
+**Status**: `grasp_sft_v2_joint_1gpu_pdnorm_onerig` step 440/3000 at
+the 20:24Z poll, loss 0.6515 (falling, −0.06 over the interval), ~15.7
+s/step effective over the last 90 steps (eval pauses included; a hair
+above the 15.1–15.4 band), 62.21 GiB vs the 71 gate, babysit exit 0.
+ETA drifting toward ~07:4x–08:0xZ 08-20 (vs ~07:0x–07:1x registered —
+watch at the drift read; still noise-level, no re-registration).
+Step-1000 drift read ~22:4x–23:0xZ tonight (tick duty, READ not kill,
+Δ ≤ +0.30 raw).
+
+**Steering**: none — read + inbox empty at boot and both babysit polls
+(20:00, 20:24).
+
+**Done**: `grpo-r2-boundary-legs-launcher` EXECUTED + CLOSED (982cecd,
+check.py 1099 green): (1) `boundary` subcommand — three legs (greedy
+token sim100 / sampled T=1.0 sim100 / flow unseen100 euler-10, seeds
+0–99, anchors' exact driver + substrate pins) sequential in ONE
+detached unit chaining `grpo_r2_boundary_verdict`; refuses while unit
+`grpo-r2` is alive, without a PASS preflight verdict, and on the
+pinned base dir. (2) The missing seam found by the git audit:
+the loop banks trainable-only `step_NNNN.pt` overlays but the anchor
+serving path loads self-contained VLA dirs — new
+`grpo_r2_materialize_endpoint.py` applies the text-surface overlay
+onto the base's backbone_text via `write_checkpoint` (atomic,
+validated, hard-linked untouched parts; 6 oracles on the tiny VLA
+fixture). (3) parse-check extended: the legs' exact argv through the
+driver's own parser + the verdict's provenance guards on synthesized
+configs — launcher and verdict cannot drift apart. (4) Registered-pin
+correction (git-audited, recorded in the launcher + queue): NO
+`--stats-repo-id` on the boundary legs — the spelled
+so101_pick_place_v2 row exists only on the retired step_002000 dir;
+on the v2 base the explicit pin would be REFUSED at load, and the
+default lookup is the lane's registered serving convention (the
+preflight PASS wore `<merged-table>`).
+
+**Next**: `queue_cli.py next` → `grpo-r2-parity-read-and-relaunch`
+(gpu-local, post-onerig window). Boundaries: onerig step-1000 drift
+read ~22:4xZ 08-19 (tick), onerig endpoint ~07:4xZ 08-20 →
+`onerig-endpoint-close`, then the R2 parity read + relaunch in the
+freed window (A5 gate, no GO ask); at the R2 endpoint, the boundary is
+`./launch_grpo_r2.sh boundary outputs/sim/grpo_r2/loop/step_0010.pt`.*
 
 *Updated 2026-08-19 19:54–19:5xZ (tick) — **onerig healthy at step
 330; fully quiet tick, fast close to the chained work session.***
@@ -85,30 +129,18 @@ onerig step-1000 drift read ~22:3xZ 08-19 (tick), onerig endpoint
 ~07:0xZ 08-20 → `onerig-endpoint-close`, then the R2 parity read +
 relaunch in the freed window (A5 gate, no GO ask).*
 
-*Updated 2026-08-19 19:04Z (tick) — **onerig healthy at first
-post-warmup read; work session chained for the R2 parity fix.***
-
-**Status**: `grasp_sft_v2_joint_1gpu_pdnorm_onerig` step 130/3000,
-15.127 s/step — warmup pace fully resolved into the smoke/mixed-cell
-band (15.1–15.4); loss 1.0273, 62.19 GiB vs the 71 gate, 84% util, 5
-procs. ~12.1 h to endpoint → ETA holds ~07:1xZ 08-20; step-1000
-drift read ~22:3xZ remains the next tick duty (READ not kill, Δ ≤
-+0.30 raw).
-
-**Steering**: none — read + inbox empty, history clean (no
-reactions).
-
-**Done**: babysit poll (healthy, no gate crossings); queue validate
-OK (depth 2, 16 open); `run_work_next` touched 19:04:42Z — GPU busy
-+ CPU item queued (`grpo-r2-serving-parity-fix`, the R2 launch
-gate).
-
-**Next**: chained work session takes `grpo-r2-serving-parity-fix`
-(path diff + parity oracle; the cheap GPU parity read waits for the
-post-onerig window). Tick duties: 22:3xZ drift read, endpoint
-~07:0xZ 08-20.*
-
 ## Utilization footer
+
+Session 2026-08-19 20:0x–20:3xZ (work, chained; `onerig` riding ~2.5
+GPU-h elapsed of ~13 expected / gate 17, CPU item in the GPU-busy
+window): **`grpo-r2-boundary-legs-launcher` EXECUTED (982cecd, check.py
+1099 green) — boundary subcommand (3 legs, one detached unit, chained
+verdict, triple refusal ladder) + the endpoint materializer the item
+implied but git audit showed missing + parse-check oracle wired to the
+verdict's own guards + stats-pin drift corrected against the live
+metadata** — exploit (registered lane instrument); queue green depth 2
+(15 open). Onerig healthy both polls (step 440, loss falling, 62.2
+GiB). Disk 216 GB free.
 
 Session 2026-08-19 19:54–19:5xZ (tick; `onerig` riding, ~1.5 GPU-h
 elapsed of ~13 expected / gate 17): **babysit exit 0 — step 330/3000,
@@ -117,16 +149,6 @@ washing out of the average), 62.2 GiB / 99% util, no gate crossings;
 Discord fully quiet (read + inbox empty, no reactions);
 `run_work_next` already armed at the 19:53 work close — fast close to
 hand off** — queue green depth 3 (16 open). Disk 216 GB free (93%).
-
-Session 2026-08-19 17:5x–18:4xZ (work, same session cont.; ~0.33
-GPU-h banked — killed R2 relaunch — + `onerig` live from 18:22:47Z,
-~13 expected / gate 17): **R2 relaunch step-0 eval read 0/20 ALL
-scenes frozen under verified standins (P≈2e-8) → loop serving stack
-convicted on v2 checkpoints (R1-B/released interacted through it) →
-KILLED 18:06:48Z, lane parked on `grpo-r2-serving-parity-fix` (launch
-gate); demos+one-rig fired on the banked GO (smoke green, preamble
-verified, 66 GiB / 83–100%)** — exploit (registered lane + integrity);
-queue green depth 2 (16 open). Disk 214 GB free (93%).
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +

@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-19T19:41:56Z
+**Updated:** 2026-08-19T20:30:59Z
 
 **Depth call:** post grpo-r2-serving-parity-fix close 19:5xZ 08-19: 3 queued - grpo-r2-boundary-legs-launcher (CPU, unblocked by the fix), grpo-r2-parity-read-and-relaunch (gpu-local, gated on the onerig window), onerig-endpoint-close (gpu-local, gated on step 3000 ~07:0xZ 08-20)
 
-**16 open** (Live 0 · Queued 3 · Blocked 13 · Done 260)
+**15 open** (Live 0 · Queued 2 · Blocked 13 · Done 261)
 
 ## 🔴 Live (0)
 
@@ -14,23 +14,9 @@
 
 *(empty)*
 
-## 🟢 Queued (3)
+## 🟢 Queued (2)
 
 *ready — waiting on a window or a boundary*
-
-**`grpo-r2-boundary-legs-launcher`** · `cpu`
-
-GRPO R2 boundary-legs launcher (CPU; makes the R2 endpoint one command end-to-end): a `boundary` subcommand on launch_grpo_r2.sh that takes the endpoint checkpoint dir and fires the three A3.4 legs sequentially as ONE detached un…
-
-**boundary:** Queued 16:3xZ 08-19 work session (charter section 4 refill at the grpo-r2-boundary-reads-instrument close; depth-2 restore). Wanted before the R2 boundary (~0x:xxZ 08-20) so the endpoint session is fire-and-read; executable any CPU window while R2 rides. || BLOCKED 18:3xZ 08-19: R2 lane PARKED — run killed 18:06:48Z, the loop's serving stack (MolmoAct2DiscreteStack + official shim) is inert on v2 corrected-table checkpoints while every anchor serves via BijouPolicy. This item resumes only after grpo-r2-serving-parity-fix lands and an R2 relaunch is re-registered. | UNBLOCKED 19:5xZ 08-19: the serving-parity fix landed (A5); this item is CPU-stageable any window again. · [pre-reg](posts/2026-08-15-prereg-grpo-r2-post-sft.md)
-
-<details><summary>full record</summary>
-
-GRPO R2 boundary-legs launcher (CPU; makes the R2 endpoint one command end-to-end): a `boundary` subcommand on launch_grpo_r2.sh that takes the endpoint checkpoint dir and fires the three A3.4 legs sequentially as ONE detached unit — (1) greedy token sim100 (--serve-head ar, no temperature), (2) sampled T=1.0 sim100, (3) flow unseen100 euler-10 — each with the anchors' exact driver + substrate pins (standins, stats_repo_id so101_pick_place_v2, seeds 0-99), ~3.9 GPU-h total per A3.5, chaining into python -m fontaine.scripts.grpo_r2_boundary_verdict (guards already refuse wrong-leg jsons; the launcher's job is to never produce one). Refuses to fire while the grpo-r2 unit is still alive. Parse-check oracle-tested like the kit's, check.py green. NO GPU in this item — it stages; the boundary session fires it.
-
-</details>
-
----
 
 **`onerig-endpoint-close`** · `gpu-local`
 
@@ -54,7 +40,7 @@ GRPO R2 serving-parity GPU read + relaunch (A5 launch gate; next free GPU window
 
 <details><summary>full record</summary>
 
-GRPO R2 serving-parity GPU read + relaunch (A5 launch gate; next free GPU window - onerig owns the H100 to ~07:0xZ 08-20, endpoint close has priority): (1) ./launch_grpo_r2.sh parity (~0.7 GPU-h detached unit: seeds 200-219 greedy standins through BOTH serving paths - loop stack --joint-frame rig vs BijouPolicy --serve-head ar - chaining grpo_r2_parity_verdict.py; registered rule PASS iff |dSuccesses|&lt;=2 AND |dInteractedFrac|&lt;=0.30, the convicted mode reads 0.00 vs ~0.59); (2) on PASS: ./launch_grpo_r2.sh launch fires the A3.4/A4/A5 frozen argv mechanically (preflight PASS stands, gates re-arm fresh, no GO ask per the standing rule) + babysit entry + announce; (3) on FAIL: park the lane, bank the two jsons, postmortem post - no override exists. Budget: lane spent ~4.0 + parity 0.7 + relaunch ~14.9 = ~19.6 vs the A4 gate &lt;=20 (zero slack: any further abort ends the lane at the gate).
+GRPO R2 serving-parity GPU read + relaunch (A5 launch gate; next free GPU window - onerig owns the H100 to ~07:0xZ 08-20, endpoint close has priority): (1) ./launch_grpo_r2.sh parity (~0.7 GPU-h detached unit: seeds 200-219 greedy standins through BOTH serving paths - loop stack --joint-frame rig vs BijouPolicy --serve-head ar - chaining grpo_r2_parity_verdict.py; registered rule PASS iff |dSuccesses|&lt;=2 AND |dInteractedFrac|&lt;=0.30, the convicted mode reads 0.00 vs ~0.59); (2) on PASS: ./launch_grpo_r2.sh launch fires the A3.4/A4/A5 frozen argv mechanically (preflight PASS stands, gates re-arm fresh, no GO ask per the standing rule) + babysit entry + announce; (3) on FAIL: park the lane, bank the two jsons, postmortem post - no override exists. Budget: lane spent ~4.0 + parity 0.7 + relaunch ~14.9 = ~19.6 vs the A4 gate &lt;=20 (zero slack: any further abort ends the lane at the gate). | NOTE 20:3xZ 08-19: the R2 endpoint boundary is now one command — ./launch_grpo_r2.sh boundary outputs/sim/grpo_r2/loop/step_0010.pt (materializes the servable endpoint dir, fires the 3 legs + chained verdict as unit grpo-r2-boundary; refuses while grpo-r2 is alive).
 
 </details>
 
@@ -246,7 +232,7 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (260)
+## ✅ Done (261)
 
 *closed — the full record stays in each fold*
 
@@ -3869,6 +3855,20 @@ Rebase the now.md utilization footer's trailing-7-day GPU-hours figure: the base
 <details><summary>full record</summary>
 
 Rebase the now.md utilization footer's trailing-7-day GPU-hours figure: the baseline is dated 2026-08-06 23:3xZ (11 days stale) and the 'since then' narrative accretes per-run fragments instead of a number. Recompute the true trailing-7-day window (08-10 onward) from the dated session notes in the now archive pages + babysit registry prune records (box runs end at the 08-17 box kill), split experiments/total as before, rewrite the footer baseline to the fresh as-of stamp, and prune the accreted narrative to the standard 2-note form.
+
+</details>
+
+---
+
+**`grpo-r2-boundary-legs-launcher`** · `cpu`
+
+GRPO R2 boundary-legs launcher (CPU; makes the R2 endpoint one command end-to-end): a `boundary` subcommand on launch_grpo_r2.sh that takes the endpoint checkpoint dir and fires the three A3.4 legs sequentially as ONE detached un…
+
+**boundary:** Queued 16:3xZ 08-19 work session (charter section 4 refill at the grpo-r2-boundary-reads-instrument close; depth-2 restore). Wanted before the R2 boundary (~0x:xxZ 08-20) so the endpoint session is fire-and-read; executable any CPU window while R2 rides. || BLOCKED 18:3xZ 08-19: R2 lane PARKED — run killed 18:06:48Z, the loop's serving stack (MolmoAct2DiscreteStack + official shim) is inert on v2 corrected-table checkpoints while every anchor serves via BijouPolicy. This item resumes only after grpo-r2-serving-parity-fix lands and an R2 relaunch is re-registered. | UNBLOCKED 19:5xZ 08-19: the serving-parity fix landed (A5); this item is CPU-stageable any window again. · [pre-reg](posts/2026-08-15-prereg-grpo-r2-post-sft.md)
+
+<details><summary>full record</summary>
+
+GRPO R2 boundary-legs launcher (CPU; makes the R2 endpoint one command end-to-end): a `boundary` subcommand on launch_grpo_r2.sh that takes the endpoint checkpoint dir and fires the three A3.4 legs sequentially as ONE detached unit — (1) greedy token sim100 (--serve-head ar, no temperature), (2) sampled T=1.0 sim100, (3) flow unseen100 euler-10 — each with the anchors' exact driver + substrate pins (standins, stats_repo_id so101_pick_place_v2, seeds 0-99), ~3.9 GPU-h total per A3.5, chaining into python -m fontaine.scripts.grpo_r2_boundary_verdict (guards already refuse wrong-leg jsons; the launcher's job is to never produce one). Refuses to fire while the grpo-r2 unit is still alive. Parse-check oracle-tested like the kit's, check.py green. NO GPU in this item — it stages; the boundary session fires it. | EXECUTED 20:3xZ 08-19 (982cecd, check.py 1099 green): boundary subcommand + parse-check oracle (legs' exact argv through the driver's parser + the verdict's own provenance guards) + grpo_r2_materialize_endpoint.py (the loop banks trainable-only .pt overlays; file-level apply onto the base backbone_text via write_checkpoint, 6 oracles on the tiny VLA fixture) — the endpoint read now needs zero new code. PIN CORRECTION (git-audited): NO --stats-repo-id on the boundary legs — the spelled so101_pick_place_v2 row exists only on the RETIRED step_002000 dir; the v2 base's per-dataset table carries only the demos row (explicit pin = refused at load); default lookup = the lane's registered serving convention (preflight PASS wore &lt;merged-table&gt;).
 
 </details>
 
