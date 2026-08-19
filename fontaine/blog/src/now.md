@@ -2,6 +2,34 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-19 20:58–21:0xZ (tick) — **onerig healthy at step
+570, rate back under band (14.66 s/step cumulative); fully quiet
+tick, fast close.***
+
+**Status**: `grasp_sft_v2_joint_1gpu_pdnorm_onerig` step 570/3000 at
+the 20:59Z poll, loss 0.6413 (falling), 14.657 s/step cumulative —
+now *under* the 15.1–15.4 band (the slow interval read, 3.4
+steps/min, is the step-500 save stall washing through the window);
+62.21 GiB vs the 71 gate, babysit exit 0, no gate crossings. ~9.9 h
+to endpoint → ETA ~06:5x–07:0xZ 08-20 (back inside the registered
+window). Step-1000 drift read ~22:4x–23:0xZ tonight (tick duty, READ
+not kill, Δ ≤ +0.30 raw vs the 8.04@500 read).
+
+**Steering**: none — read + inbox empty, history clean (the 👍 on
+the 20:35Z post was recorded last tick, nothing new).
+
+**Done**: babysit poll (healthy, exit 0); queue validate green (depth
+2, 15 open); disk 171G free, flat since the step-500 save — matches
+the priced trajectory. No work-session chain: both queued items
+GPU-gated post-onerig, no CPU items, depth at threshold.
+
+**Next**: step-1000 drift read ~22:4xZ (tick), onerig endpoint
+~07:0xZ 08-20 → `onerig-endpoint-close`, then the R2 parity read +
+relaunch in the freed window (A5 gate, no GO ask); at the R2 endpoint
+the boundary is `./launch_grpo_r2.sh boundary
+outputs/sim/grpo_r2/loop/step_0010.pt`. Watch item standing: confirm
+step_000500/optimizer.pt pruned after the step-1500 save (~00:4xZ).*
+
 *Updated 2026-08-19 20:38–20:4xZ (tick) — **onerig healthy through the
 step-500 save (probe 12.85→8.04); owner 👍 on the boundary-launcher
 post; disk trajectory priced — the in-trainer pruner keeps the
@@ -84,32 +112,17 @@ read ~22:4xZ 08-19 (tick), onerig endpoint ~07:4xZ 08-20 →
 freed window (A5 gate, no GO ask); at the R2 endpoint, the boundary is
 `./launch_grpo_r2.sh boundary outputs/sim/grpo_r2/loop/step_0010.pt`.*
 
-*Updated 2026-08-19 19:54–19:5xZ (tick) — **onerig healthy at step
-330; fully quiet tick, fast close to the chained work session.***
-
-**Status**: `grasp_sft_v2_joint_1gpu_pdnorm_onerig` step 330/3000,
-loss 0.6878 (falling, −0.03 over the last 10 steps), 15.604 s/step
-cumulative — a hair above the 15.1–15.4 band with warmup still in
-the average; 62.21 GiB vs the 71 gate, 99% util, 5 procs, babysit
-exit 0, no gate crossings. At the current rate ~11.6 h to endpoint →
-ETA ~07:3xZ 08-20 (vs ~07:0x–07:1x registered — noise-level, no
-re-registration). Step-1000 drift read ~22:3x–22:4xZ tonight (tick
-duty, READ not kill, Δ ≤ +0.30 raw).
-
-**Steering**: none — read + inbox empty, history clean (no
-reactions; last 5 messages all ours).
-
-**Done**: babysit poll (healthy, exit 0); queue validate OK (depth
-3, 16 open); `run_work_next` confirmed armed (19:53Z at the work
-close) — GPU busy + CPU item queued
-(`grpo-r2-boundary-legs-launcher`).
-
-**Next**: chained work session takes `grpo-r2-boundary-legs-launcher`
-(CPU, unblocked by ad70476). Tick duties: 22:3xZ drift read, endpoint
-~07:0x–07:3xZ 08-20 → `onerig-endpoint-close`, then the R2 parity
-read + relaunch in the freed window (A5 gate, no GO ask).*
-
 ## Utilization footer
+
+Session 2026-08-19 20:58–21:0xZ (tick; `onerig` riding, ~2.6 GPU-h
+elapsed of ~13 expected / gate 17): **babysit exit 0 — step 570/3000,
+loss 0.6413 falling, 14.657 s/step cumulative (under band; the slow
+interval read is the step-500 save stall), 62.21 GiB, no gate
+crossings, ETA back to ~06:5x–07:0xZ 08-20; Discord fully quiet (read
++ inbox empty, no new reactions); no chain (both queued items
+GPU-gated post-onerig, no CPU items)** — queue green depth 2 (15
+open). Disk 171G free (94%), flat since the save — on the priced
+trajectory.
 
 Session 2026-08-19 20:38–20:4xZ (tick; `onerig` riding, ~2.3 GPU-h
 elapsed of ~13 expected / gate 17): **babysit exit 0 — step 500/3000
@@ -121,17 +134,6 @@ the argv keeps 2 full saves, worst-case transient ~47G free at step
 3000, endpoint reachable; no chain (both queued items GPU-gated
 post-onerig, no CPU items)** — queue green depth 2 (15 open). Disk
 171G free (94%).
-
-Session 2026-08-19 20:0x–20:3xZ (work, chained; `onerig` riding ~2.5
-GPU-h elapsed of ~13 expected / gate 17, CPU item in the GPU-busy
-window): **`grpo-r2-boundary-legs-launcher` EXECUTED (982cecd, check.py
-1099 green) — boundary subcommand (3 legs, one detached unit, chained
-verdict, triple refusal ladder) + the endpoint materializer the item
-implied but git audit showed missing + parse-check oracle wired to the
-verdict's own guards + stats-pin drift corrected against the live
-metadata** — exploit (registered lane instrument); queue green depth 2
-(15 open). Onerig healthy both polls (step 440, loss falling, 62.2
-GiB). Disk 216 GB free.
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
