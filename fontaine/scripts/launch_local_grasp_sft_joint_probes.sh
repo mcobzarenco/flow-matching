@@ -32,8 +32,8 @@ export PATH=/home/ubuntu/.local/bin:/usr/local/bin:/usr/bin:/bin
 cd /home/ubuntu/flow-matching
 
 MODE="${1:?usage: launch_local_grasp_sft_joint_probes.sh smoke|flow-unseen|flow-train|token-unseen|token-base}"
-CKPT=~/checkpoints/finetune/fontaine_grasp_sft_joint_corrected/step_002000
-BASE=~/checkpoints/converted/molmoact2_base_corrected_stats_v0_vla
+CKPT=~/checkpoints/finetune/fontaine_grasp_sft_joint_corrected/step_002000_v2
+BASE=~/checkpoints/converted/molmoact2_base_corrected_stats_v0_vla_v2
 OUT=outputs/sim/grasp_sft/joint_probes
 
 mem=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits -i 0)

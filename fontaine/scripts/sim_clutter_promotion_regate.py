@@ -59,7 +59,7 @@ def parse_args() -> argparse.Namespace:
         default=Path(
             # the VLA-format conversion of er_60k step_060000 (the raw
             # train dir is legacy-format; same weights)
-            "~/checkpoints/converted/er_60k_step_060000_vla",
+            "~/checkpoints/converted/er_60k_step_060000_vla_v2",
         ).expanduser(),
     )
     parser.add_argument(
