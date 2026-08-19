@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-19T13:47:40Z",
+ "updated_utc": "2026-08-19T13:57:25Z",
  "depth_reason": "post grpo-r2-activation-amendment-draft close 12:5xZ 08-19: 2 queued CPU-executable (grpo-r2-launch-kit refill, disk-retirement-sweep-banked-sources); demos-plus-one-rig-exec owner-gated, grpo-r2-post-sft owner-band (A3 amendment now frozen, ACTIVATE executes mechanically); H100 free pending the owner isolation call",
  "items": [
   {
@@ -2343,11 +2343,11 @@
   {
    "id": "demos-plus-one-rig-exec",
    "class": "gpu-local",
-   "status": "blocked",
-   "owner_hold": true,
+   "status": "queued",
+   "owner_hold": false,
    "prereg": "fontaine/blog/src/posts/2026-08-19-prereg-demos-plus-one-rig.md",
    "title": "Demos + ONE rig dataset isolation cell EXECUTION (OWNER-GATED: the pdnorm pre-reg's registered <=10 grid text makes the next isolation an owner call \u2014 draft posted 04:25:54Z 08-19 id 1539490569875759115, awaiting GO / other-arm pick / edit-as-amendment). On GO at a GPU-free boundary: STEPS=20 SMOKE=1 fit smoke, then systemd-run unit fontaine-v2-joint-pdnorm-onerig via the staged launcher launch_local_grasp_sft_v2_joint_1gpu_pdnorm_onerig_h100.sh (demos+so101_pick_place_v2 x4, pdnorm, joint+insulate, eff-96, seed 0, 3000 steps, sidecar optimizer.pt pruner); babysit entry at launch, first poll util+rate+free-g+df; boundaries step-1000 drift read, step-3000 endpoint -> sim100 (stand-ins pin, --stats-repo-id grasp_demos_v2/merged) + panel guard vs disc-1000 npz + paired reads vs control AND convicted cell + verdict post through the frozen grid. Gate 17 GPU-h.",
-   "boundary": "Queued 04:2xZ 08-19 at the draft close. BLOCKED on the owner isolation call (registered carve-out outranks the standing launch delegation) AND a GPU-free window (joint-probe legs 3/4 own the GPU through ~08:xxZ 08-19)."
+   "boundary": "Queued 04:2xZ 08-19 at the draft close. BLOCKED on the owner isolation call (registered carve-out outranks the standing launch delegation) AND a GPU-free window (joint-probe legs 3/4 own the GPU through ~08:xxZ 08-19). || UNBLOCKED 13:4xZ 08-19: owner agree-with-recs reply 13:25:15Z closes the isolation call as GO (rec adopted verbatim, pdnorm carve-out satisfied). Remaining gate is purely the GPU window: the R2 lane owns the H100 first (A3 activated same reply; preflight live 13:54Z, launch fires on PASS, ~14 GPU-h gate 15) \u2014 this cell fires at the next free GPU boundary (R2 preflight-ABORT, an R2 in-loop abort, or the R2 endpoint), sequencing announced in-channel 13:49Z."
   },
   {
    "id": "offload-optim-save-prune",
@@ -2458,5 +2458,5 @@
    "boundary": "Queued 13:3xZ 08-19 work session (charter section 4 refill at the grpo-r2-launch-kit close; depth-2 restore alongside disk-retirement-sweep-banked-sources). Executable any CPU window; wanted before the R2 endpoint regardless of which A3.7 reply lands (HOLD-BAND's iterate-once arm reuses leg-1's paired instrument against its own anchor)."
   }
  ],
- "updated": "2026-08-19T13:47:40Z"
+ "updated": "2026-08-19T13:57:25Z"
 }

@@ -218,16 +218,20 @@ this amendment binds the two:
    anchor (R1-B ~0.98 GPU-h/step) remains the estimate; it was
    measured on this same discrete stack.
 
-## §9 Amendment A3 (DRAFT, 2026-08-19 12:5xZ) — activation from 7%: the band amendment
+## §9 Amendment A3 (ACTIVE, 2026-08-19 13:2xZ) — activation from 7%: the band amendment
 
-*Status: **DRAFT — frozen, not active.** The A2 bar read out in the
-5–19 owner-decision band (token unseen **7/100** greedy, B §3), so
-activation is a registered owner call (11:19Z 08-19 summary post
-…522815, rec **AMEND + ACTIVATE**). This amendment freezes exactly
-what "ACTIVATE" would run, so the reply executes mechanically
-same-session. `HOLD-BAND` routes to the token-SFT iterate-once arm
-per the registered band; `PARK` parks the lane. Nothing below
-launches before that reply.*
+*Status: **ACTIVE — owner-activated 13:25:15Z 08-19** ("Re: my calls,
+I agree with all your recommendations", message …407784, replying to
+the 11:19Z summary …522815 rec **AMEND + ACTIVATE**). §6-style
+finalization satisfied at activation: HEAD re-pin **570e53e** (the
+commit carrying the A3.8 launch kit — flags, verdict instrument,
+staged launcher — and this page's A3 text, frozen 12:5xZ before the
+reply); objection window satisfied by the frozen page + the
+in-channel summary + the owner reply. Execution per A3.8: preflight
+leg 0 fires at activation (H100 idle, policy-server down, verified),
+the A3.4 run fires on a PASS verdict. Drafted as an owner call under
+the pre-delegation register; superseding activations fall under the
+2026-08-18 no-GO-asks delegation.*
 
 **Plain words.** The robot's token-based control passed only 7 of 100
 test scenarios — below the 20 we said reinforcement learning needs.

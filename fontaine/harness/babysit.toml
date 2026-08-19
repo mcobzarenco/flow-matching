@@ -8,7 +8,30 @@
 # anchors/kill rules in the new vocabulary; old runs' jsonls keep their
 # historical keys (read-time mapping: fontaine/scripts/loss_keys.py).
 
-no_live_runs_reason = "declared 09:1xZ 08-19 work session: route C joint endpoint probes CLOSED (leg 4 done 09:01:18Z, reads banked, worktree removed — see the grasp_sft_joint_probes prune below). Local H100 FREE. Next GPU leg: demos-plus-one-rig-exec pends the OWNER isolation call (registered pdnorm-grid carve-out, draft 04:25:54Z 08-19); no other GPU item queued. Owner policy-server check applies before any local launch."
+# (no_live_runs_reason cleared 13:54Z 08-19 — grpo-r2-preflight launched at the owner A3 activation 13:25:15Z; prior: "declared 09:1xZ 08-19 work session: route C joint endpoint probes CLOSED (leg 4 done 09:01:18Z, reads banked, worktree removed — see the grasp_sft_joint_probes prune below). Local H100 FREE. Next GPU leg: demos-plus-one-rig-exec pends the OWNER isolation call (registered pdnorm-grid carve-out, draft 04:25:54Z 08-19); no other GPU item queued. Owner policy-server check applies before any local launch.")
+
+[[run]]
+name = "grpo_r2_preflight"
+kind = "progress-log"
+host = "local"
+pgrep = "sim.rollout_sim"
+pgrep_min = 1                     # single-process eval; unit grpo-r2-preflight
+gpu_indices = [0]
+gpu_mem_min_mib = 8000
+log = "/home/ubuntu/eval__grpo_r2_preflight_sampled_t1.log"
+progress_re = "seed [0-9]+ replan [0-9]+"
+started_utc = "2026-08-19T13:54:39Z"
+gpu_hours_per_wall_hour = 1.0
+boundary = "A3.3 preflight leg 0 (~1.3 GPU-h, ~78 min by the greedy-7 leg's pace): sampled T=1.0 sim100 on step_002000_v2, then grpo_r2_preflight_verdict.py chains INSIDE the unit — verdict json at outputs/sim/grpo_r2/preflight/preflight_verdict.json. PASS (>=7) => fire launch_grpo_r2.sh launch same-session; BAND (3-6) => Fontaine decides + announces; ABORT (<=2) => lane routes to token-SFT iterate-once, run never starts."
+anchors = [
+    "policy line verified at first poll: bijou@2000_v2_t1_arhead (T=1.0 sampled, AR head, standins substrate = the greedy leg's pin)",
+    "greedy anchor 7/100 (success seeds 34,35,63,68,71,91,96); A3.2 premise says sampled should sit AT-OR-ABOVE",
+    "the sampled count on PASS = recorded training-decode competence floor (A3.3); predicted mixed-group fraction rides the verdict json",
+    "first poll 13:55Z: unit active, 13.2 GiB / 45% util, seed 0 rolling ~280 ms/replan",
+]
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 2.0                       # ~1.3 GPU-h expected (greedy-7 leg pace) + margin
 
 # (no_live_runs_reason cleared 14:25Z 08-16 — demo_gen_v1 launched on the A100 box; prior: HOME-GPU-only declaration of 10:2xZ 08-16.)
 
