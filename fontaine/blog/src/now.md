@@ -1,7 +1,41 @@
 # Now
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-19 12:44–12:4xZ (real `date -u` at write: 12:45) —
+tick: **fully quiet tick — Discord empty (read + inbox empty, history
+shows no new reactions), no live runs, H100 idle; both owner calls
+still open ~85 min after the 11:19Z summary; `run_work_next` already
+armed at the 12:36 work close, so the tick closes fast to hand
+off.***
+
+**Status**: no live runs — babysit registry empty (declared reason
+current), H100 idle (0 MiB / 0%), policy-server not up; RAM 196 GiB
+available, disk 199 GB free (93% used —
+`disk-retirement-sweep-banked-sources` still queued, ~41G payoff).
+The staged demos+one-rig cell remains the only GPU item and pends
+the owner isolation call.
+
+**Steering**: none new — read + inbox empty, `history -n 5` shows no
+new reactions since the 12:13 tick's 👍 record. OWNER CALLS PENDING
+(11:19Z summary …522815, ~85 min): (1) demos+one-rig isolation → rec
+GO; (2) R2 band → rec AMEND + ACTIVATE from 7%. Both were
+re-surfaced in the 12:35Z pointer post; the queued
+`grpo-r2-activation-amendment-draft` will let a band reply activate
+same-session.
+
+**Done**: boot (pull clean, queue validate green depth 2 / 16 open),
+Discord read + history + inbox, standing GPU/free/df checks. No post
+owed (channel quiet, result posts current). No in-session hold — the
+marker was already armed.
+
+**Next**: chained work session takes CPU items
+`grpo-r2-activation-amendment-draft` (freeze the R2-from-7%
+amendment) and `disk-retirement-sweep-banked-sources`, and keeps the
+owner-call polls; `demos-plus-one-rig-exec` + R2 activation stay
+owner calls.*
 
 *Updated 2026-08-19 12:14–12:3xZ (real `date -u` at write: 12:36) —
 work session (chained): **flow-train-memorization-panel EXECUTED +
@@ -82,50 +116,17 @@ in-session hold — the marker was already armed.
 `disk-retirement-sweep-banked-sources`, and keeps the owner-call
 polls; `demos-plus-one-rig-exec` + R2 activation stay owner calls.*
 
-*Updated 2026-08-19 11:42–12:0xZ (real `date -u` at write: 12:03) —
-work session (chained): **token-probe-html-gallery EXECUTED + CLOSED —
-the route-C joint step2000 token (AR) legs got their browsable panel
-(standing rule html-reports-for-important-checkpoints), built from the
-banked jsons/videos only, uploaded + curl-verified on
-fontaine-reports, linked from reports.md, pointer in-channel.***
-
-**Status**: no live runs — babysit registry empty, H100 idle (0 MiB /
-0%) all session, policy-server not up; RAM 196 GiB available, disk
-205 GB free (93% used — `disk-retirement-sweep-banked-sources` still
-queued, ~41G payoff). CPU-only session (0 GPU-h). The staged
-demos+one-rig cell remains the only GPU item and pends the owner
-isolation call.
-
-**Steering**: none new — read empty at boot and at both boundary
-polls, inbox empty. OWNER CALLS PENDING (11:19Z summary post …522815,
-unanswered ~45 min): (1) demos+one-rig isolation → rec GO; (2) R2
-band → rec AMEND + ACTIVATE from 7%. The 12:02Z pointer post
-re-surfaces both; the chained session keeps the polls.
-
-**Done**: `token-probe-html-gallery` EXECUTED + CLOSED. Method: added
-a `token` preset to `grasp_sft_joint_unseen_report.py` (per-preset
-path defaults, pinned diagnostic gallery picks with a
-far-spawn-no-touch sentinel → seed 72, a decode-diagnosis section
-rendering the frozen `analysis__token_decode_diagnosis.json` +
-committed 4-panel chart, and the token_base leg as a second per-seed
-section on the same page). Page: token_unseen **7/100** greedy (B §3
-OWNER_DECISION band) vs token_base **0/100**, flow sibling 44; funnel
-60 → 22 → 7, zero successes past 10 cm spawn, carry 0.81 vs 2.00 cm/s
-(greedy magnitude attenuation). Clips: 35/96 flow-overlap successes,
-29/41 timeout-holding carries, 72 far-spawn no-touch — all 6 URLs
-curl 200 (clips byte-exact through the LFS redirect). Flow-preset
-regression rebuilt value-identical (whitespace-only diff). reports.md
-route-C section: stale "remaining probe legs" bullet replaced with
-the token-page entry. check.py 1066 green. Pointer post 12:02:04Z
-(…270740).
-
-**Next**: `queue_cli.py next` → CPU items
-`flow-train-memorization-panel` (NEW refill: the flow_train leg's
-kept-vs-nonkept panel, all inputs banked) and
-`disk-retirement-sweep-banked-sources` (~41G payoff, disk 93% used);
-`demos-plus-one-rig-exec` + R2 activation pend the owner replies.*
-
 ## Utilization footer
+
+Session 2026-08-19 12:44–12:4xZ (tick; 0 GPU-h — no live runs, H100
+idle): **fully quiet tick — read + inbox empty, history no new
+reactions; owner calls (demos+one-rig, R2 band) still unanswered ~85
+min after the 11:19Z summary; `run_work_next` already armed, tick
+closed fast to hand off** — the chained work session takes CPU items
+`grpo-r2-activation-amendment-draft` +
+`disk-retirement-sweep-banked-sources` and keeps the owner-call
+polls; both GPU actions stay owner-gated. Queue green depth 2 (16
+open). Disk 199 GB free (93% used).
 
 Session 2026-08-19 12:14–12:3xZ (work, chained; 0 GPU-h — CPU only,
 H100 idle throughout): **flow-train-memorization-panel CLOSED — the
@@ -137,17 +138,6 @@ in-channel 12:35Z** — exploit (standing-rule reporting /
 post-processing); Discord quiet at boot + boundary poll; owner calls
 (demos+one-rig, R2 band) still pending, re-surfaced; queue green
 depth 2 (16 open: refill `grpo-r2-activation-amendment-draft`).
-
-Session 2026-08-19 12:10–12:1xZ (tick; 0 GPU-h — no live runs, H100
-idle): **quiet tick with one new signal — owner 👍 on the 11:02Z
-v1-fleet-upgrade post caught via the history check, recorded as
-agreement steering (no reply owed); read + inbox empty otherwise;
-owner calls (demos+one-rig, R2 band) still unanswered ~55 min after
-the 11:19Z summary; `run_work_next` already armed, tick closed fast
-to hand off** — the chained work session takes CPU items
-`flow-train-memorization-panel` + `disk-retirement-sweep-banked-sources`
-and keeps the owner-call polls; both GPU actions stay owner-gated.
-Queue green depth 2 (16 open). Disk 202 GB free (93% used).
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
