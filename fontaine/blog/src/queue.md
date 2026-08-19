@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-19T11:18:10Z
+**Updated:** 2026-08-19T12:00:53Z
 
-**Depth call:** post v1-fleet-upgrade close 10:5xZ 08-19: 2 queued CPU-executable (token-probe-html-gallery, hf-evacuation-audit-v2-fleet refill); demos-plus-one-rig-exec owner-gated, grpo-r2-post-sft owner-band (activation recommendation posted with receipts); H100 free pending the owner isolation call
+**Depth call:** post token-probe-html-gallery close 12:0xZ 08-19: 2 queued CPU-executable (flow-train-memorization-panel refill, disk-retirement-sweep-banked-sources); demos-plus-one-rig-exec owner-gated, grpo-r2-post-sft owner-band (activation recommendation posted with receipts); H100 free pending the owner isolation call
 
-**16 open** (Live 0 · Queued 2 · Blocked 14 · Done 252)
+**16 open** (Live 0 · Queued 2 · Blocked 14 · Done 253)
 
 ## 🔴 Live (0)
 
@@ -32,15 +32,15 @@ Disk-retirement sweep of locally-redundant banked sources (extends the hf-evacua
 
 ---
 
-**`token-probe-html-gallery`** · `cpu`
+**`flow-train-memorization-panel`** · `cpu`
 
-Token probe legs HTML panel (CPU, standing rule html-reports-for-important-checkpoints): the joint checkpoint's flow leg got its browsable panel 08-16 (eval__grasp_sft_joint_step2000__flow_unseen100.html) but the token legs never…
+Flow-train memorization-read HTML panel (CPU, standing rule html-reports-for-important-checkpoints; completes the route-C joint step2000 probe-family reporting after the flow_unseen + token pages): build the same-class page for t…
 
-**boundary:** Queued 10:2xZ 08-19 work session (charter section 4 refill at the token-decode-diagnosis close; depth-2 restore). All inputs banked on disk — no GPU.
+**boundary:** Queued 12:0xZ 08-19 work session (charter section 4 refill at the token-probe-html-gallery close; depth-2 restore). All inputs banked on disk - no GPU.
 
 <details><summary>full record</summary>
 
-Token probe legs HTML panel (CPU, standing rule html-reports-for-important-checkpoints): the joint checkpoint's flow leg got its browsable panel 08-16 (eval__grasp_sft_joint_step2000__flow_unseen100.html) but the token legs never did. Build the same-class report for token_unseen (7/100) + token_base (0/100) from the banked episode JSONs/videos via grasp_sft_joint_unseen_report.py (or its token generalization), embedding the decode-diagnosis funnel/envelope numbers; upload to fontaine-reports Space, link from reports.md, short in-channel pointer. Success/near-miss video picks: seeds 35/96 (flow-overlap successes), 29/41 (timeout-holding carries), one far-spawn no-touch.
+Flow-train memorization-read HTML panel (CPU, standing rule html-reports-for-important-checkpoints; completes the route-C joint step2000 probe-family reporting after the flow_unseen + token pages): build the same-class page for the flow_train leg (seeds 1000-1099, 42/100) from the banked outputs/sim/grasp_sft/joint_probes/flow_train.json + videos via a grasp_sft_joint_unseen_report.py preset, rendering the memorization split as the headline (kept 29/64 vs non-kept 13/36 = no memorization, from analysis__grasp_sft_joint_probes.json) with unseen-100 44/100 as the anchor; gallery picks from both split arms; upload to fontaine-reports, link from reports.md route-C section, short in-channel pointer. Note: outcome-strip x-axis assumes seeds 0-99 - the preset needs the 1000-1099 range handled.
 
 </details>
 
@@ -246,7 +246,7 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (252)
+## ✅ Done (253)
 
 *closed — the full record stays in each fold*
 
@@ -259,6 +259,20 @@ HF evacuation audit for the schema-2 checkpoint fleet (standing rule upload-valu
 <details><summary>full record</summary>
 
 HF evacuation audit for the schema-2 checkpoint fleet (standing rule upload-valuable-checkpoints; follows v1-fleet-upgrade retiring all local v1 originals): for each local _v2 dir (er_60k_step_060000_vla_v2, molmoact2_base_corrected_stats_v0_vla_v2 + _jointsurface_v2, molmoact2_grasp_sft_stagec_ar_step2000_corrected_v1_v2 + _vla_v2, finetune/fontaine_grasp_sft_joint_corrected/step_002000_v2) verify fontaine-checkpoints holds a recovery path: either the _v2 itself or a v1/legacy source (convert_v1/convert_legacy are deterministic frozen readers, so a banked source + committed converter counts). Upload weights-only gaps same-session; record the mapping in a short table on the blog. CPU+network only, no GPU. Note: the two legacy bijou_config dirs in converted/ (base_corrected_stats_v0, grasp_sft_stagec_ar_step2000, 2.2G each) are the stage-C expert sources - include them in the audit before any retirement decision.
+
+</details>
+
+---
+
+**`token-probe-html-gallery`** · `cpu`
+
+Token probe legs HTML panel (CPU, standing rule html-reports-for-important-checkpoints): the joint checkpoint's flow leg got its browsable panel 08-16 (eval__grasp_sft_joint_step2000__flow_unseen100.html) but the token legs never…
+
+**boundary:** Queued 10:2xZ 08-19 work session (charter section 4 refill at the token-decode-diagnosis close; depth-2 restore). All inputs banked on disk — no GPU. ||| EXECUTED + CLOSED 11:4x-12:0xZ 08-19 work session: token-head page built via a 'token' preset generalization of grasp_sft_joint_unseen_report.py (per-preset path defaults, pinned diagnostic gallery picks incl. a far-spawn-no-touch sentinel -&gt; seed 72, decode-diagnosis section rendering the frozen analysis json + committed 4-panel chart, token_base leg as a second per-seed section on the same page). Flow-preset regression: rebuilt page value-identical to the published one (whitespace-only diff). Uploaded eval__grasp_sft_joint_step2000__token_unseen100.html + joint_token_gallery/ (5 clips: 35/96 flow-overlap successes, 29/41 timeout-holding carries, 72 far-spawn no-touch) to fontaine-reports - curl 200 all 6 URLs, clips byte-exact through the LFS redirect. reports.md route-C section: stale 'remaining probe legs land ~12:3xZ 08-16' bullet replaced with the token-page entry. check.py 1066 green.
+
+<details><summary>full record</summary>
+
+Token probe legs HTML panel (CPU, standing rule html-reports-for-important-checkpoints): the joint checkpoint's flow leg got its browsable panel 08-16 (eval__grasp_sft_joint_step2000__flow_unseen100.html) but the token legs never did. Build the same-class report for token_unseen (7/100) + token_base (0/100) from the banked episode JSONs/videos via grasp_sft_joint_unseen_report.py (or its token generalization), embedding the decode-diagnosis funnel/envelope numbers; upload to fontaine-reports Space, link from reports.md, short in-channel pointer. Success/near-miss video picks: seeds 35/96 (flow-overlap successes), 29/41 (timeout-holding carries), one far-spawn no-touch.
 
 </details>
 

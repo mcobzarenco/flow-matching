@@ -884,10 +884,15 @@ the baseline the visual-matching lever must move.
   **TABLE_FIX_POSITIVE** (44 > 28+3, overlap band moot); anchor bar,
   per-seed spawn→final strip, 4-clip gallery, full table; rendered
   08:5xZ 08-16 from the banked leg json
-- Remaining probe legs (flow-train memorization read, token-unseen vs
-  R2 bar ≥20, token-base anchor) land ~12:3xZ 08-16; consolidated
-  verdicts JSON `analysis__grasp_sft_joint_probes.json` + report to
-  follow
+- [token-head unseen-100 eval report](https://mcobzarenco-fontaine-reports.static.hf.space/eval__grasp_sft_joint_step2000__token_unseen100.html)
+  — the token (AR) legs' page, rendered 11:5xZ 08-19 from the banked
+  leg jsons: **7/100** (greedy, B §3 OWNER_DECISION band) vs token
+  base **0/100** and the flow sibling's 44; embeds the frozen decode
+  diagnosis (funnel 60 → 22 → 7, zero successes past 10 cm spawn,
+  carry speed 0.81 vs 2.00 cm/s — greedy magnitude attenuation) +
+  5-clip diagnostic gallery (flow-overlap successes 35/96,
+  timeout-holding carries 29/41, far-spawn no-touch 72); consolidated
+  verdicts JSON `analysis__grasp_sft_joint_probes.json`
 - [standard 256-sample eval report](https://mcobzarenco-fontaine-reports.static.hf.space/eval__grasp_sft_joint_step2000_train256.html)
   ([json](https://mcobzarenco-fontaine-reports.static.hf.space/eval__grasp_sft_joint_step2000_train256.json))
   — owner request 09:06Z 08-16, stage-C train256 protocol reproduced

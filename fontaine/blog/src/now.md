@@ -12,7 +12,51 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-19 11:42–12:0xZ (real `date -u` at write: 12:03) —
+work session (chained): **token-probe-html-gallery EXECUTED + CLOSED —
+the route-C joint step2000 token (AR) legs got their browsable panel
+(standing rule html-reports-for-important-checkpoints), built from the
+banked jsons/videos only, uploaded + curl-verified on
+fontaine-reports, linked from reports.md, pointer in-channel.***
+
+**Status**: no live runs — babysit registry empty, H100 idle (0 MiB /
+0%) all session, policy-server not up; RAM 196 GiB available, disk
+205 GB free (93% used — `disk-retirement-sweep-banked-sources` still
+queued, ~41G payoff). CPU-only session (0 GPU-h). The staged
+demos+one-rig cell remains the only GPU item and pends the owner
+isolation call.
+
+**Steering**: none new — read empty at boot and at both boundary
+polls, inbox empty. OWNER CALLS PENDING (11:19Z summary post …522815,
+unanswered ~45 min): (1) demos+one-rig isolation → rec GO; (2) R2
+band → rec AMEND + ACTIVATE from 7%. The 12:02Z pointer post
+re-surfaces both; the chained session keeps the polls.
+
+**Done**: `token-probe-html-gallery` EXECUTED + CLOSED. Method: added
+a `token` preset to `grasp_sft_joint_unseen_report.py` (per-preset
+path defaults, pinned diagnostic gallery picks with a
+far-spawn-no-touch sentinel → seed 72, a decode-diagnosis section
+rendering the frozen `analysis__token_decode_diagnosis.json` +
+committed 4-panel chart, and the token_base leg as a second per-seed
+section on the same page). Page: token_unseen **7/100** greedy (B §3
+OWNER_DECISION band) vs token_base **0/100**, flow sibling 44; funnel
+60 → 22 → 7, zero successes past 10 cm spawn, carry 0.81 vs 2.00 cm/s
+(greedy magnitude attenuation). Clips: 35/96 flow-overlap successes,
+29/41 timeout-holding carries, 72 far-spawn no-touch — all 6 URLs
+curl 200 (clips byte-exact through the LFS redirect). Flow-preset
+regression rebuilt value-identical (whitespace-only diff). reports.md
+route-C section: stale "remaining probe legs" bullet replaced with
+the token-page entry. check.py 1066 green. Pointer post 12:02:04Z
+(…270740).
+
+**Next**: `queue_cli.py next` → CPU items
+`flow-train-memorization-panel` (NEW refill: the flow_train leg's
+kept-vs-nonkept panel, all inputs banked) and
+`disk-retirement-sweep-banked-sources` (~41G payoff, disk 93% used);
+`demos-plus-one-rig-exec` + R2 activation pend the owner replies.*
 
 *Updated 2026-08-19 11:40–11:4xZ (real `date -u` at write: 11:41) —
 tick: **quiet tick right after the hf-evacuation-audit close — no
@@ -86,35 +130,19 @@ sha-audit + the two legacy dirs, ~41G payoff, disk 93% used);
 `demos-plus-one-rig-exec` + R2 activation pend the owner replies to
 …522815.*
 
-*Updated 2026-08-19 11:04–11:0xZ (real `date -u` at write: 11:05) —
-tick: **quiet tick right after the v1-fleet-upgrade close — no live
-runs, H100 idle (0 MiB / 0%), channel quiet; `run_work_next` already
-armed (11:03 close), so this tick closes fast to hand off to the
-chained work session.***
-
-**Status**: no live runs — babysit registry empty
-(`no_live_runs_reason` current), GPU 0 MiB / 0% (H100 free;
-policy-server not up). RAM 196 GiB available, disk 208 GB free. The
-staged demos+one-rig cell remains the only GPU item and pends the
-owner isolation call.
-
-**Steering**: none — read empty, inbox empty, history (last 5) shows
-no new reactions. OWNER CALLS PENDING: (1) demos+one-rig isolation
-(draft 04:25:54Z, id …759115); (2) the B §3 R2 band (post
-…840340, carrying the ACTIVATE-from-7% recommendation + receipts).
-
-**Done**: boot (pull clean, queue validate green depth 2 / 16 open),
-Discord read + history, standing free/df + GPU checks. No post
-(quiet interval); no in-session hold — the marker was already armed
-at the 11:03 work-session close, so the fastest path to resumed
-polling + queue work is the chained session itself.
-
-**Next**: chained work session takes CPU items
-`token-probe-html-gallery` (all inputs banked) and
-`hf-evacuation-audit-v2-fleet`, and keeps the owner-call polls;
-`demos-plus-one-rig-exec` + R2 activation stay owner calls.*
-
 ## Utilization footer
+
+Session 2026-08-19 11:42–12:0xZ (work, chained; 0 GPU-h — CPU only,
+H100 idle throughout): **token-probe-html-gallery CLOSED — the token
+(AR) probe legs' browsable panel built via a `token` preset
+generalization of the unseen-report script (decode-diagnosis section,
+pinned diagnostic clips, token_base as a second leg), uploaded to
+fontaine-reports (6/6 URLs curl 200), reports.md linked, pointer
+in-channel 12:02Z** — exploit (standing-rule reporting /
+post-processing); Discord quiet at boot + both boundary polls; owner
+calls (demos+one-rig, R2 band) still pending, re-surfaced in the
+pointer post; queue green depth 2 (16 open: refill
+`flow-train-memorization-panel`).
 
 Session 2026-08-19 11:40–11:4xZ (tick; 0 GPU-h — no live runs, H100
 idle): **quiet tick right after the hf-evacuation-audit close — GPU
@@ -127,17 +155,6 @@ session takes CPU items `token-probe-html-gallery` +
 (demos+one-rig isolation, R2 band — both still unanswered ~22 min
 after the 11:19Z summary post); both GPU actions stay owner-gated.
 Queue green depth 2 (16 open).
-
-Session 2026-08-19 11:07–11:2xZ (work, chained; 0 GPU-h — CPU +
-network only, H100 idle throughout): **hf-evacuation-audit-v2-fleet
-CLOSED — schema-2 fleet fully recoverable off-box, zero weight gaps,
-zero uploads: er_60k + joint_corrected sources bitwise on HF, base +
-stage-C experts proven byte-derivable by live converter re-runs,
-delta bitwise-verified; the two 2.2G legacy dirs hold no unique
-bytes** — exploit (integrity/infra debt); owner surfaced ("What are
-my calls?") — both calls + recs posted in-channel 11:19Z, acked,
-tight polls live; queue green depth 2 (16 open: refill
-`disk-retirement-sweep-banked-sources`).
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +

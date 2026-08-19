@@ -41,6 +41,17 @@ pdnormendpoint preset defaults to the cross-check script's output
 path and skips quietly when it is absent (the json exists only once
 the ON-GO endpoint npz does); an explicit flag is loud on a missing
 file.
+
+The token preset builds the token (AR) head page of the same probe
+family: subject leg token_unseen, the token_base leg rendered as a
+second per-seed section on the same page, gallery picks pinned to the
+decode-diagnosis diagnostics (not the fastest-success default), and a
+"Decode diagnosis" section rendering the frozen
+token_decode_diagnosis.py output (funnel / envelope / carry-speed
+numbers + the committed 4-panel chart). --diagnosis-json follows the
+--ladder-b64 behavior split: the preset default (reports/ is
+gitignored, the json is regenerable) is skipped quietly when absent,
+an explicit flag is loud.
 """
 
 from __future__ import annotations
@@ -73,6 +84,19 @@ CORRUPT_ANCHOR = 28
 PROBE_ANCHOR = 44  # route-C joint step2000, flow-unseen (banked 08-16)
 V1_ENDPOINT_ANCHOR = 5  # v1 run-2 step3000, flow-unseen (banked 08-17)
 DISC1000_ANCHOR = 11  # disc step1000 demosonly baseline (banked 04:19Z 08-18)
+TOKEN_BASE_ANCHOR = 0  # base (no SFT), token head (leg 4, banked 09:01Z 08-19)
+
+# Sentinel gallery pick: the farthest spawn whose jaws never made
+# contact (grip is contact-coded in rollout_sim, so no-touch reads
+# directly off the trace) — the reach-envelope failure clip.
+FAR_SPAWN_NO_TOUCH = "far_spawn_no_touch"
+
+DEFAULT_LEG_JSON = Path("outputs/sim/grasp_sft/joint_probes/flow_unseen.json")
+DEFAULT_VIDEO_DIR = Path("outputs/sim/grasp_sft/joint_probes/flow_unseen")
+DEFAULT_OUT_HTML = Path(
+    "reports/eval__grasp_sft_joint_step2000__flow_unseen100.html",
+)
+DEFAULT_GALLERY_DIR = Path("reports/joint_unseen_gallery")
 
 # Page variants: step2000 (the original probe report, byte-identical
 # output) and v1endpoint (grasp_sft_v1_joint step 3000 on the 5,000-demo
@@ -202,6 +226,58 @@ PRESETS: dict[str, dict] = {
         "ladder_b64": Path("reports/pdnorm_panel_ladder.b64"),
         "truthfit_json": Path(
             "reports/analysis__pdnorm_endpoint_truthfit_wear.json",
+        ),
+    },
+    # Token (AR) head page of the same route-C probe family: subject =
+    # token_unseen (leg 3, re-run finished 06:17Z 08-19 after the 08-16
+    # owner pause at seed 24), second leg = token_base (leg 4, finished
+    # 09:01:18Z 08-19). Gallery picks pinned to the decode-diagnosis
+    # diagnostics; the diagnosis json + committed 4-panel chart render
+    # as their own section.
+    "token": {
+        "leg_json": Path("outputs/sim/grasp_sft/joint_probes/token_unseen.json"),
+        "video_dir": Path("outputs/sim/grasp_sft/joint_probes/token_unseen"),
+        "out_html": Path(
+            "reports/eval__grasp_sft_joint_step2000__token_unseen100.html",
+        ),
+        "gallery_dir": Path("reports/joint_token_gallery"),
+        "anchor_rows": [
+            ("base (no SFT), token head", TOKEN_BASE_ANCHOR, ANCHOR),
+            ("same checkpoint, flow head", PROBE_ANCHOR, "#f593bd"),
+        ],
+        "subject_label": "joint step2000, token head",
+        "anchors_tile_label": "anchors: token base / flow sibling",
+        "title": "joint step2000 — token head, unseen 100",
+        "h1": "Grasp-SFT route C — joint step 2000, token (AR) head on unseen seeds",
+        "meta_html": (
+            "Checkpoint <code>fontaine_grasp_sft_joint_corrected/step_002000</code>"
+            " (the flow-leg page's checkpoint, served through the token head:"
+            " grammar-constrained greedy decode, no temperature) ·"
+            " execute-horizon 30, seeds 0–99, 30 s episodes · leg 3 re-run"
+            " finished 06:17Z 08-19 (first attempt owner-paused at seed 24 on"
+            " 08-16), leg 4 token-base finished 09:01:18Z 08-19, ~2.2–2.4"
+            " GPU-h each · verdict surface B §3: <b>7/100 — OWNER_DECISION"
+            " band (5–19)</b>; SFT delta over the token base +7 (0 → 7), real"
+            " but ~5× below the flow sibling's +35 (9 → 44) · decode"
+            ' diagnosis (08-19, CPU): <b style="color:{success}">greedy'
+            " magnitude attenuation, not calibration</b> — recommendation"
+            " posted: activate R2 from the 7% checkpoint (R2 samples at"
+            " T=1.0)"
+        ),
+        "gallery_picks": [
+            ("flow-overlap success", 35),
+            ("flow-overlap success", 96),
+            ("timeout-holding carry (clock runs out, boat in hand)", 29),
+            ("timeout-holding carry (clock runs out, boat in hand)", 41),
+            ("far-spawn no-touch", FAR_SPAWN_NO_TOUCH),
+        ],
+        "diagnosis_json": Path("reports/analysis__token_decode_diagnosis.json"),
+        "diagnosis_chart": Path(
+            "fontaine/blog/src/img/grasp_sft/token_decode_diagnosis.png",
+        ),
+        "second_leg": (
+            "Token base (no SFT) — leg 4 anchor",
+            Path("outputs/sim/grasp_sft/joint_probes/token_base.json"),
         ),
     },
 }
@@ -413,28 +489,143 @@ def estimator_seam_line(payload: dict) -> str:
     )
 
 
+def touched(e: dict) -> bool:
+    """token_decode_diagnosis.py's contact predicate: grip is
+    contact-coded in rollout_sim, so any grip > 0 means the jaws made
+    contact with the benchy."""
+    return any(g > 0 for g in e.get("grip", []))
+
+
+def leg_table(eps: list[dict]) -> str:
+    rows_html = ""
+    for e in sorted(eps, key=lambda e: e["seed"]):
+        ok = e.get("success_tick") is not None
+        rows_html += (
+            f"<tr{' class=ok' if ok else ''}><td>{e['seed']}</td>"
+            f"<td>{e['initial_cm']:.1f}</td><td>{e['min_cm']:.1f}</td>"
+            f"<td>{e['final_cm']:.1f}</td>"
+            f"<td>{e['initial_cm'] - min(e['min_cm'], e['final_cm']):.1f}</td>"
+            f"<td>{'✓ @ ' + str(e['success_tick']) if ok else '—'}</td></tr>\n"
+        )
+    return (
+        "<table><tr><th>seed</th><th>spawn cm</th><th>min cm</th>"
+        "<th>final cm</th><th>progress cm</th><th>success</th></tr>\n"
+        f"{rows_html}</table>\n"
+    )
+
+
+def diagnosis_section(diag: dict, chart_png: Path) -> str:
+    """Render the frozen token_decode_diagnosis.py output as a section:
+    funnel / envelope / carry-speed tiles, the committed 4-panel chart,
+    and the taxonomy + verdict paragraph. Every number is read from the
+    json — nothing on the page is retyped."""
+    fu, tu, tb = (
+        diag["funnel"][a] for a in ("flow_unseen", "token_unseen", "token_base")
+    )
+    far = {
+        a: sum(b["success"] for b in diag["reach_envelope"][a] if b["bin"][0] >= 10.0)
+        for a in ("flow_unseen", "token_unseen")
+    }
+    cs = diag["carry_speed"]
+    tax = diag["pinch_fail_taxonomy"]["token_unseen"]
+    tax_fu = diag["pinch_fail_taxonomy"]["flow_unseen"]
+    ov = diag["success_overlap_token_vs_flow"]
+    ratio = diag["headline"]["carry_speed_ratio_token_over_flow"]
+
+    def seeds(xs: list[int]) -> str:
+        return ", ".join(str(s) for s in xs)
+
+    tiles = [
+        (
+            f"{tu['touch']} → {tu['pinch']} → {tu['success']}",
+            (
+                "token funnel: touch → pinch → success"
+                f" (flow {fu['touch']} → {fu['pinch']} → {fu['success']};"
+                f" base {tb['touch']} → {tb['pinch']} → {tb['success']})"
+            ),
+        ),
+        (
+            f"{far['token_unseen']} vs {far['flow_unseen']}",
+            "successes past 10 cm spawn, token vs flow",
+        ),
+        (
+            (
+                f"{cs['token_unseen']['median_cm_per_s']:.2f} vs"
+                f" {cs['flow_unseen']['median_cm_per_s']:.2f}"
+            ),
+            f"median carry speed cm/s, token vs flow (ratio {ratio})",
+        ),
+        (
+            f"{tu['knock_aways_gt1cm']} vs {fu['knock_aways_gt1cm']}",
+            "knock-aways >1 cm, token vs flow",
+        ),
+        (
+            f"{len(ov['overlap_seeds'])} + {len(ov['token_only'])}",
+            (
+                f"successes shared with flow ({seeds(ov['overlap_seeds'])})"
+                f" + token-only ({seeds(ov['token_only'])})"
+            ),
+        ),
+    ]
+    tiles_html = "".join(
+        f'<div class="tile"><div class="big">{v}</div><div class="lab">{html.escape(k)}</div></div>'
+        for v, k in tiles
+    )
+    chart_b64 = base64.b64encode(chart_png.read_bytes()).decode()
+    tc, fc = tax["classes"], tax_fu["classes"]
+    return (
+        "<h2>Decode diagnosis: greedy magnitude attenuation</h2>\n"
+        '<p class="meta">Frozen <code>token_decode_diagnosis.py</code> read'
+        " (08-19, CPU-only, computed from the banked probe episodes +"
+        " videos). SFT bought <i>reach</i> (touch"
+        f" {tb['touch']} → {tu['touch']}) but greedy decode under-commands"
+        " amplitude everywhere past contact: touch collapses with spawn"
+        " distance, grasped carries move at"
+        f" {ratio:.0%} of flow's speed, and {tax['n']} pinch-failures split"
+        f" {tc['wrong_way']} wrong-way / {tc['stalled_carry']} stalled-carry /"
+        f" {tc['timeout_holding']} timeout-holding (flow, n={tax_fu['n']}:"
+        f" {fc['wrong_way']}/{fc['stalled_carry']}/{fc['timeout_holding']})."
+        " Zero frozen episodes in any arm (motion instrument over all 300"
+        " videos) — the 08-13 no-op-chunk class is retired; this is the"
+        " ar-draws mean-collapse shape in closed loop.</p>\n"
+        f'<div class="tiles">{tiles_html}</div>\n'
+        f'<img src="data:image/png;base64,{chart_b64}"'
+        ' alt="token decode diagnosis: funnel, reach envelope, carry speed,'
+        ' carry traces">\n'
+    )
+
+
+def second_leg_section(label: str, eps: list[dict]) -> str:
+    """Render a second probe leg on the same page: headline meta line,
+    outcome strip, and the per-seed table collapsed behind a details
+    element (an all-fail anchor leg earns the record, not the scroll)."""
+    succ = sum(1 for e in eps if e.get("success_tick") is not None)
+    contact = sum(1 for e in eps if touched(e))
+    moved = sum(
+        1 for e in eps if e["initial_cm"] - min(e["min_cm"], e["final_cm"]) > 0.5
+    )
+    strikes = sum(e.get("reset_strikes", 0) for e in eps)
+    return (
+        f"<h2>{html.escape(label)}</h2>\n"
+        f'<p class="meta"><b>{succ}/100</b> successes · {contact}/100 made'
+        f" contact · {moved}/100 moved the boat &gt;0.5 cm · {strikes} reset"
+        " strikes — the no-SFT token head barely reaches the boat; the +7"
+        " delta above is real signal.</p>\n"
+        f'<img src="data:image/png;base64,{outcome_strip(eps)}">\n'
+        "<details><summary>per-seed table (token base)</summary>\n"
+        f"{leg_table(eps)}</details>\n"
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--leg-json",
-        type=Path,
-        default=Path("outputs/sim/grasp_sft/joint_probes/flow_unseen.json"),
-    )
-    parser.add_argument(
-        "--video-dir",
-        type=Path,
-        default=Path("outputs/sim/grasp_sft/joint_probes/flow_unseen"),
-    )
-    parser.add_argument(
-        "--out-html",
-        type=Path,
-        default=Path("reports/eval__grasp_sft_joint_step2000__flow_unseen100.html"),
-    )
-    parser.add_argument(
-        "--gallery-dir",
-        type=Path,
-        default=Path("reports/joint_unseen_gallery"),
-    )
+    # Path defaults are per-preset (resolved after parse); an explicit
+    # flag always wins. Presets without their own paths keep the
+    # original flow-leg defaults byte-for-byte.
+    parser.add_argument("--leg-json", type=Path, default=None)
+    parser.add_argument("--video-dir", type=Path, default=None)
+    parser.add_argument("--out-html", type=Path, default=None)
+    parser.add_argument("--gallery-dir", type=Path, default=None)
     parser.add_argument(
         "--preset",
         choices=sorted(PRESETS),
@@ -463,10 +654,23 @@ def main() -> int:
         " estimator-seam line under the ladder figure; defaults to the"
         " preset's path, skipped quietly when that default is absent",
     )
+    parser.add_argument(
+        "--diagnosis-json",
+        type=Path,
+        default=None,
+        help="frozen token_decode_diagnosis.py output to render as a"
+        " decode-diagnosis section; defaults to the preset's path, skipped"
+        " quietly when that default is absent",
+    )
     args = parser.parse_args()
     preset = PRESETS[args.preset]
 
-    data = json.loads(args.leg_json.read_text())
+    leg_json = args.leg_json or preset.get("leg_json", DEFAULT_LEG_JSON)
+    video_dir = args.video_dir or preset.get("video_dir", DEFAULT_VIDEO_DIR)
+    out_html = args.out_html or preset.get("out_html", DEFAULT_OUT_HTML)
+    gallery_dir = args.gallery_dir or preset.get("gallery_dir", DEFAULT_GALLERY_DIR)
+
+    data = json.loads(leg_json.read_text())
     eps = data["episodes"]
     assert sorted(e["seed"] for e in eps) == list(range(100)), "seeds must be 0-99"
     succ = [e for e in eps if e.get("success_tick") is not None]
@@ -475,37 +679,51 @@ def main() -> int:
     prog = [e["initial_cm"] - min(e["min_cm"], e["final_cm"]) for e in eps]
     mean_prog = sum(prog) / len(prog)
 
-    # Deterministic gallery: best 3 successes by success_tick (fastest),
-    # plus the median success and the nearest miss by final_cm.
-    by_tick = sorted(succ, key=lambda e: e["success_tick"])
     picks: list[tuple[str, dict]] = []
-    if by_tick:
-        picks.append(("fastest success", by_tick[0]))
-    if len(by_tick) >= 2:
-        picks.append(("2nd fastest success", by_tick[1]))
-    if len(by_tick) >= 3:
-        picks.append(("median success", by_tick[len(by_tick) // 2]))
-    misses = sorted(
-        (e for e in eps if e.get("success_tick") is None),
-        key=lambda e: e["final_cm"],
-    )
-    # Low-success legs: show the near-miss tail instead of a success
-    # gallery (nearest misses are the diagnostic clips there).
-    for i, miss in enumerate(misses[: max(1, 4 - len(picks))]):
-        picks.append(("nearest miss" if i == 0 else f"miss #{i + 1}", miss))
+    if "gallery_picks" in preset:
+        # Pinned diagnostic picks (seed or the far-spawn-no-touch
+        # sentinel) — the token page shows the decode-diagnosis clips,
+        # not the fastest successes.
+        by_seed = {e["seed"]: e for e in eps}
+        for label, sel in preset["gallery_picks"]:
+            if sel == FAR_SPAWN_NO_TOUCH:
+                no_touch = [e for e in eps if not touched(e)]
+                pick = max(no_touch, key=lambda e: e["initial_cm"])
+            else:
+                pick = by_seed[sel]
+            picks.append((label, pick))
+    else:
+        # Deterministic gallery: best 3 successes by success_tick
+        # (fastest), plus the median success and the nearest miss by
+        # final_cm.
+        by_tick = sorted(succ, key=lambda e: e["success_tick"])
+        if by_tick:
+            picks.append(("fastest success", by_tick[0]))
+        if len(by_tick) >= 2:
+            picks.append(("2nd fastest success", by_tick[1]))
+        if len(by_tick) >= 3:
+            picks.append(("median success", by_tick[len(by_tick) // 2]))
+        misses = sorted(
+            (e for e in eps if e.get("success_tick") is None),
+            key=lambda e: e["final_cm"],
+        )
+        # Low-success legs: show the near-miss tail instead of a success
+        # gallery (nearest misses are the diagnostic clips there).
+        for i, miss in enumerate(misses[: max(1, 4 - len(picks))]):
+            picks.append(("nearest miss" if i == 0 else f"miss #{i + 1}", miss))
 
-    args.gallery_dir.mkdir(parents=True, exist_ok=True)
+    gallery_dir.mkdir(parents=True, exist_ok=True)
     gallery_html = ""
     copied = 0
     for label, e in picks:
         name = f"rollout_seed{e['seed']:03d}.mp4"
-        src = args.video_dir / name
+        src = video_dir / name
         if not src.exists():
             continue
         copied += 1
-        shutil.copy2(src, args.gallery_dir / name)
+        shutil.copy2(src, gallery_dir / name)
         gallery_html += (
-            f'<figure><video src="{args.gallery_dir.name}/{name}" controls '
+            f'<figure><video src="{gallery_dir.name}/{name}" controls '
             f'muted loop width="320"></video>'
             f"<figcaption>{html.escape(label)} — seed {e['seed']}, "
             f"final {e['final_cm']:.1f} cm"
@@ -522,17 +740,6 @@ def main() -> int:
             " box <code>outputs/</code> wipe of 2026-08-17 before they were"
             " synced off; per-seed numbers on this page are reconstructed"
             " from the surviving shard logs (0.1 cm print precision).</p>\n"
-        )
-
-    rows_html = ""
-    for e in sorted(eps, key=lambda e: e["seed"]):
-        ok = e.get("success_tick") is not None
-        rows_html += (
-            f"<tr{' class=ok' if ok else ''}><td>{e['seed']}</td>"
-            f"<td>{e['initial_cm']:.1f}</td><td>{e['min_cm']:.1f}</td>"
-            f"<td>{e['final_cm']:.1f}</td>"
-            f"<td>{e['initial_cm'] - min(e['min_cm'], e['final_cm']):.1f}</td>"
-            f"<td>{'✓ @ ' + str(e['success_tick']) if ok else '—'}</td></tr>\n"
         )
 
     tiles = [
@@ -575,6 +782,29 @@ def main() -> int:
     ):
         seam_html = estimator_seam_line(json.loads(truthfit_json.read_text()))
 
+    # Decode-diagnosis section (token preset): same quiet/loud split —
+    # the preset default (reports/ is gitignored, the json regenerable
+    # by token_decode_diagnosis.py) skips quietly, an explicit flag is
+    # loud on a missing file.
+    diagnosis_html = ""
+    diagnosis_json = args.diagnosis_json or preset.get("diagnosis_json")
+    if diagnosis_json is not None and (
+        args.diagnosis_json is not None or diagnosis_json.exists()
+    ):
+        diagnosis_html = diagnosis_section(
+            json.loads(diagnosis_json.read_text()),
+            preset["diagnosis_chart"],
+        )
+
+    second_html = ""
+    if "second_leg" in preset:
+        second_label, second_json = preset["second_leg"]
+        second_eps = json.loads(second_json.read_text())["episodes"]
+        assert sorted(e["seed"] for e in second_eps) == list(range(100)), (
+            f"{second_json}: seeds must be 0-99"
+        )
+        second_html = second_leg_section(second_label, second_eps)
+
     meta_html = preset["meta_html"].format(success=SUCCESS)
     bar_rows = [
         *preset["anchor_rows"],
@@ -608,20 +838,18 @@ def main() -> int:
 {ladder_html}{seam_html}<div class="tiles">{tiles_html}</div>
 <h2>Against the anchors</h2>
 <img src="data:image/png;base64,{success_bar(bar_rows)}">
-{paired_html}<h2>Per-seed outcomes</h2>
+{paired_html}{diagnosis_html}<h2>Per-seed outcomes</h2>
 <img src="data:image/png;base64,{outcome_strip(eps)}">
 <h2>Clips</h2>
 {gallery_html}
 <h2>Per-seed table</h2>
-<table><tr><th>seed</th><th>spawn cm</th><th>min cm</th><th>final cm</th>
-<th>progress cm</th><th>success</th></tr>
-{rows_html}</table>
-<p class="meta">Regenerate: <code>fontaine/scripts/grasp_sft_joint_unseen_report.py</code>
- from the banked <code>flow_unseen.json</code> only.</p>
+{leg_table(eps)}{second_html}<p class="meta">Regenerate:
+ <code>fontaine/scripts/grasp_sft_joint_unseen_report.py</code>
+ from the banked <code>{leg_json.name}</code> only.</p>
 </body></html>"""
-    args.out_html.write_text(page)
-    print(f"wrote {args.out_html} ({args.out_html.stat().st_size / 1024:.0f} KiB)")
-    print(f"gallery: {args.gallery_dir} ({copied} of {len(picks)} picks copied)")
+    out_html.write_text(page)
+    print(f"wrote {out_html} ({out_html.stat().st_size / 1024:.0f} KiB)")
+    print(f"gallery: {gallery_dir} ({copied} of {len(picks)} picks copied)")
     return 0
 
 
