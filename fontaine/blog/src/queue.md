@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-19T10:57:35Z
+**Updated:** 2026-08-19T11:18:10Z
 
 **Depth call:** post v1-fleet-upgrade close 10:5xZ 08-19: 2 queued CPU-executable (token-probe-html-gallery, hf-evacuation-audit-v2-fleet refill); demos-plus-one-rig-exec owner-gated, grpo-r2-post-sft owner-band (activation recommendation posted with receipts); H100 free pending the owner isolation call
 
-**16 open** (Live 0 · Queued 2 · Blocked 14 · Done 251)
+**16 open** (Live 0 · Queued 2 · Blocked 14 · Done 252)
 
 ## 🔴 Live (0)
 
@@ -18,15 +18,15 @@
 
 *ready — waiting on a window or a boundary*
 
-**`hf-evacuation-audit-v2-fleet`** · `cpu`
+**`disk-retirement-sweep-banked-sources`** · `cpu`
 
-HF evacuation audit for the schema-2 checkpoint fleet (standing rule upload-valuable-checkpoints; follows v1-fleet-upgrade retiring all local v1 originals): for each local _v2 dir (er_60k_step_060000_vla_v2, molmoact2_base_correc…
+Disk-retirement sweep of locally-redundant banked sources (extends the hf-evacuation-audit method, 08-19 post): (a) ~/checkpoints/er_60k trainer dir (37G)
 
-**boundary:** Queued 10:57Z 08-19 work session (charter section 4 refill at the v1-fleet-upgrade close; depth-2 restore).
+**boundary:** Queued 11:2xZ 08-19 work session (charter section 4 refill at the hf-evacuation-audit close; depth-2 restore).
 
 <details><summary>full record</summary>
 
-HF evacuation audit for the schema-2 checkpoint fleet (standing rule upload-valuable-checkpoints; follows v1-fleet-upgrade retiring all local v1 originals): for each local _v2 dir (er_60k_step_060000_vla_v2, molmoact2_base_corrected_stats_v0_vla_v2 + _jointsurface_v2, molmoact2_grasp_sft_stagec_ar_step2000_corrected_v1_v2 + _vla_v2, finetune/fontaine_grasp_sft_joint_corrected/step_002000_v2) verify fontaine-checkpoints holds a recovery path: either the _v2 itself or a v1/legacy source (convert_v1/convert_legacy are deterministic frozen readers, so a banked source + committed converter counts). Upload weights-only gaps same-session; record the mapping in a short table on the blog. CPU+network only, no GPU. Note: the two legacy bijou_config dirs in converted/ (base_corrected_stats_v0, grasp_sft_stagec_ar_step2000, 2.2G each) are the stage-C expert sources - include them in the audit before any retirement decision.
+Disk-retirement sweep of locally-redundant banked sources (extends the hf-evacuation-audit method, 08-19 post): (a) ~/checkpoints/er_60k trainer dir (37G) — sha256-audit every local step dir vs fontaine-checkpoints fontaine_molmo2_er_60k_ddp4/* LFS hashes (step_060000 already verified bitwise), retire only bitwise-banked steps; (b) the two proven-derivable legacy expert-source dirs converted/molmoact2_base_corrected_stats_v0 + converted/molmoact2_grasp_sft_stagec_ar_step2000 (2.2G each, zero unique bytes per the audit). Staggered rm with df checks + no-blind-delete greps (incl. policy-server checkout) per the v1-fleet-upgrade pattern. CPU-only. Disk is 93% used — ~41G payoff.
 
 </details>
 
@@ -246,9 +246,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (251)
+## ✅ Done (252)
 
 *closed — the full record stays in each fold*
+
+**`hf-evacuation-audit-v2-fleet`** · `cpu`
+
+HF evacuation audit for the schema-2 checkpoint fleet (standing rule upload-valuable-checkpoints; follows v1-fleet-upgrade retiring all local v1 originals): for each local _v2 dir (er_60k_step_060000_vla_v2, molmoact2_base_correc…
+
+**boundary:** Queued 10:57Z 08-19 work session (charter section 4 refill at the v1-fleet-upgrade close; depth-2 restore). ||| EXECUTED + CLOSED 11:1xZ 08-19 work session: zero gaps, zero uploads needed. All six _v2 recovery paths verified — er_60k trainer source + joint_corrected v1 bitwise on HF (sha256 vs LFS); base + stage-C experts proven byte-derivable by live convert_molmoact2 re-runs (4517d649…, d840174d… both bitwise equal); stage-C delta staging == HF (98f32f4d…); narration_weight 0.5 survives recovery via the committed aux_loss_weight fallback. The two legacy bijou_config dirs hold no unique bytes — safe to retire. Mapping table: posts/2026-08-19-hf-evacuation-audit-v2-fleet.md.
+
+<details><summary>full record</summary>
+
+HF evacuation audit for the schema-2 checkpoint fleet (standing rule upload-valuable-checkpoints; follows v1-fleet-upgrade retiring all local v1 originals): for each local _v2 dir (er_60k_step_060000_vla_v2, molmoact2_base_corrected_stats_v0_vla_v2 + _jointsurface_v2, molmoact2_grasp_sft_stagec_ar_step2000_corrected_v1_v2 + _vla_v2, finetune/fontaine_grasp_sft_joint_corrected/step_002000_v2) verify fontaine-checkpoints holds a recovery path: either the _v2 itself or a v1/legacy source (convert_v1/convert_legacy are deterministic frozen readers, so a banked source + committed converter counts). Upload weights-only gaps same-session; record the mapping in a short table on the blog. CPU+network only, no GPU. Note: the two legacy bijou_config dirs in converted/ (base_corrected_stats_v0, grasp_sft_stagec_ar_step2000, 2.2G each) are the stage-C expert sources - include them in the audit before any retirement decision.
+
+</details>
+
+---
 
 **`v1-fleet-upgrade`** · `cpu`
 
