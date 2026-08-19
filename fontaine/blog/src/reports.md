@@ -1053,6 +1053,39 @@ HTML-reports rule.
 - Weights: [`grasp_sft_v2_demosonly_1gpu_disc`](https://huggingface.co/mcobzarenco/fontaine-checkpoints/tree/main/grasp_sft_v2_demosonly_1gpu_disc)
   (steps 500 + 1000, weights-only, banked 00:5xZ 08-18)
 
+## Grasp-SFT v2 pdnorm mixed rerun `grasp_sft_v2_joint_1gpu_pdnorm` @3000 ([pre-reg](posts/2026-08-18-prereg-grasp-sft-v2-joint-pdnorm.md), verdict 08-19)
+
+The mixed-corpus rerun with per-dataset flow normalization — the
+isolation grid's fourth cell. Frozen-grid verdict **CONVICT**:
+**1/100** unseen grasps (seed 29 only) ≤ 10 ⇒ with the table fixed
+and the machinery convicted separately, **the sim/real mix itself is
+the prime suspect** at the flow head. Battery closed 04:0xZ 08-19,
+~15.9 of the 21 GPU-h screen gate.
+
+- [endpoint flow-head unseen-100 report](https://mcobzarenco-fontaine-reports.static.hf.space/eval__grasp_sft_v2_joint_1gpu_pdnorm__step_003000__flow_unseen100.html)
+  ([json](https://mcobzarenco-fontaine-reports.static.hf.space/eval__grasp_sft_v2_joint_1gpu_pdnorm__step_003000__flow_unseen100.json))
+  — 1/100 vs anchors base 9 / probe 44 / disc-1000 11; near-miss
+  cluster 4.2–6.7 cm; paired-read + ladder + estimator-seam sections
+  embedded (`pdnormendpoint` preset)
+- [paired per-seed read vs disc-1000](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim100_paired_pdnorm3000_vs_disc1000.json)
+  — Δ **−10** successes CI95 [−16, −5], discordant 0-vs-10 (McNemar
+  exact p = 0.002), paired progress **−3.49 cm** [−4.68, −2.35]: the
+  mixed cell is significantly WORSE than its own demosonly control
+- [k4l2 panel report](https://mcobzarenco-fontaine-reports.static.hf.space/eval__grasp_sft_v2_joint_1gpu_pdnorm__step_003000__panel_v2_k4l2_euler10_draws1_stable.html)
+  ([json](https://mcobzarenco-fontaine-reports.static.hf.space/eval__grasp_sft_v2_joint_1gpu_pdnorm__step_003000__panel_v2_k4l2_euler10_draws1_stable.json))
+  — endpoint row 29.18 (native wear)
+- [registered panel guard](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__pdnorm_panel_guard_vs_disc1000.json)
+  — **PASS** (29.18 vs 58.14, Δ −28.96 CI-excl-0); mechanism
+  receipts per-motor: wrist_roll **−45.7** (71.2 → 25.5), wrist_flex
+  −6.1 (`pdnorm_panel_guard.py`, planted-delta oracle suite)
+- [estimator-seam cross-check](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__pdnorm_endpoint_truthfit_wear.json)
+  — native 29.18 → truth-fit **27.44** (seam +1.74); like-for-like
+  ladder 27.44 ≈ disc-1000 27.40 ≈ released 27.14, all at/above the
+  25.15 midpoint null — no community signal created or destroyed
+- Best-save note: step-2000 (probe 5.47 vs endpoint 6.17) kept on
+  disk only; no rescue sim100 (couldn't flip the frozen verdict, gate
+  headroom short) and no bank (not load-bearing per policy)
+
 ## Cross-family analyses
 
 - [flow-vs-AR paired per-step read](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__flow_vs_ar_paired_k4l2.json)

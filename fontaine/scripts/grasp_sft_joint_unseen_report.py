@@ -189,7 +189,9 @@ PRESETS: dict[str, dict] = {
             " panel anchors, wear-corrected class: 27.40 re-worn"
             " disc-1000 / 25.89 released pre-SFT (measured 08-18, at"
             " the null) / 25.15 repo-midpoint null / 8.37 state-copy"
-            " (real bar) · verdict: <b>FILL-AT-ENDPOINT</b>"
+            " (real bar) · verdict: <b>1/100 &le; 10 — CONVICT: the mix"
+            " is the prime suspect</b> (read taken 03:17:39Z 08-19;"
+            " panel endpoint 29.18 native / 27.44 truth-fit)"
         ),
         "paired_band_note": (
             " The demosonly baseline's 11/100 sits inside the pdnorm"

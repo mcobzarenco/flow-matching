@@ -969,28 +969,28 @@
 # the boundary text inside the commented entry below has the full
 # state (legs 1-2 done, eval256 done).
 
-# [[run]]
-# name = "grasp_sft_joint_probes"
-# kind = "progress-log"
-# host = "local"
-# pgrep = "rollout_sim"
-# pgrep_min = 1
-# gpu_indices = [0]
-# gpu_mem_min_mib = 4000
-# log = "/home/ubuntu/eval__grasp_sft_joint_token_unseen.log"
-# progress_re = "seed [0-9]+ replan [0-9]+"
-# started_utc = "2026-08-16T09:47:45Z"
-# gpu_hours_per_wall_hour = 1.0
-# boundary = "route C joint endpoint probes (amendment SS4, posts/2026-08-16-amendment-grasp-sft-route-c-joint.md): smoke DONE 07:0xZ; leg 1 flow-unseen DONE 08:21Z — 44/100 unseen, A SS5 verdict TABLE_FIX_POSITIVE baked (vs base 9 / corrupt-28; posted 1538462820751114270); leg 2 flow-train DONE 09:47Z — 42/100 train seeds, NO memorization signature (vs 44 unseen; posted 1538484526651547658); (3) token-unseen LIVE since 09:47:45Z unit fontaine-joint-probe-token-unseen (B SS3 read vs R2 bar >=20/100), then (4) token-base, each ~1.3 GPU-h, one leg at a time detached via run_detached.sh (unit names fontaine-joint-probe-<leg>; log/started_utc fields here updated per launch). Owner-ask eval256 DONE 09:1xZ (unit fontaine-joint-eval256-r2, --chunk-size 30 matched): joint chunk MAE 3.24 vs corrupt-table stage-C 12.56, state-copy anchors bitwise 9.3562/9.8678; report on fontaine-reports (curl 200), posted 1538476581104779335, reports.md entry landed. When the active LEG unit goes inactive: launch the next leg; after ALL legs, reads via grasp_sft_joint_probe_reads.py (all five jsons, kept-split automatic, A SS5 / B SS3 verdicts baked); boundary post owns the final verdicts. Owner reply pending on the loss_aux->loss_ce_actions rename proposal (08:53Z) — do not land until answered"
-# anchors = [
-#     "flow legs anchor: base 9/100 unseen, corrupt-table 28/100 (the retired stage-C AE read); A SS5 verdict surface baked in reads script",
-#     "token legs anchor: R2 bar >=20/100 unseen (grammar-greedy); token-base leg is the B SS3 default-run anchor on molmoact2_base_corrected_stats_v0_vla",
-#     "gates: reset strikes == 0 everywhere; seeds exactly 0-99 (unseen) / 1000-1099 (train); reads script refuses otherwise",
-#     "chain budget: train 5.7 + probes <=5.3 vs gate <=13 total (amendment); per-leg ~1.3 GPU-h class",
-# ]
-# [[run.gates]]
-# kind = "gpu_hours_max"
-# value = 6.0
+[[run]]
+name = "grasp_sft_joint_probes"
+kind = "progress-log"
+host = "local"
+pgrep = "rollout_sim"
+pgrep_min = 1
+gpu_indices = [0]
+gpu_mem_min_mib = 4000
+log = "/home/ubuntu/eval__grasp_sft_joint_token_unseen.log"
+progress_re = "seed [0-9]+ replan [0-9]+"
+started_utc = "2026-08-19T04:11:18Z"
+gpu_hours_per_wall_hour = 1.0
+boundary = "route C joint endpoint probes RESUMED 03:52Z, RELAUNCHED 04:11:18Z 08-19 (first attempt killed by the 04:0xZ root-disk-full incident: pdnorm/disc optimizer.pt saves ~310 GB pruned to weights-only keeps 2000+3000, 294 GB freed; partial outputs cleared, fresh deterministic run) (amendment SS4, posts/2026-08-16-amendment-grasp-sft-route-c-joint.md; owner GPU-pause of 10:13Z 08-16 stale per 08-18 delegation triage): leg 3 token-unseen LIVE unit fontaine-joint-probe-token-unseen (B SS3 read vs R2 bar >=20/100), rc ~06:1xZ at the 08-16-measured ~0.73 seeds/min. SCHEMA SEAM: the joint step_002000 ckpt is metadata schema v1 and the 08-16 v2 flip (57c6843) REFUSES it with no v1->v2 importer — legs 3/4 run from the PINNED WORKTREE /home/ubuntu/flow-matching-legacy-eval (6d01d14, the leg-1/2-era code; gitignored assets symlinked from main) via its run_joint_probe_leg.sh — which ALSO preserves the pre-promotion stand-ins clutter substrate legs 1/2 measured (the current 'patched' default would break comparability). On leg-3-inactive: launch leg 4 `cd /home/ubuntu/flow-matching-legacy-eval && /home/ubuntu/flow-matching/fontaine/scripts/run_detached.sh fontaine-joint-probe-token-base ./run_joint_probe_leg.sh token-base` and repoint log/started_utc here. After ALL legs: grasp_sft_joint_probe_reads.py (CURRENT repo code; all five jsons, kept-split automatic, A SS5 / B SS3 verdicts baked) + consolidated boundary post + chart-led report page; then REMOVE the worktree (git worktree remove --force flow-matching-legacy-eval). Leg 1 flow-unseen 44/100 (posted 1538462820751114270); leg 2 flow-train 42/100 no-memorization (posted 1538484526651547658); eval256 owner-ask DONE (3.24 vs 12.56, posted 1538476581104779335). Owner reply STILL pending on the loss_aux->loss_ce_actions rename proposal (08:53Z 08-16) — do not land until answered"
+anchors = [
+    "flow legs anchor: base 9/100 unseen, corrupt-table 28/100 (the retired stage-C AE read); A SS5 verdict surface baked in reads script",
+    "token legs anchor: R2 bar >=20/100 unseen (grammar-greedy); token-base leg is the B SS3 default-run anchor on molmoact2_base_corrected_stats_v0_vla",
+    "gates: reset strikes == 0 everywhere; seeds exactly 0-99 (unseen) / 1000-1099 (train); reads script refuses otherwise",
+    "chain budget: train 5.7 + probes <=5.3 vs gate <=13 total (amendment); per-leg ~1.3 GPU-h class; ~0.5 already spent on the killed 08-16 leg-3 attempt",
+]
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 6.0
 
 # grasp_sft_v1_joint entry PRUNED 02:0xZ 08-17 work session — run 2
 # COMPLETE 01:07:43Z at 3000/3000 (~31 GPU-h wall*8 vs the 40 gate,
@@ -1185,27 +1185,26 @@
 # and deadlocked the battery's procs-gone wait — killed, battery
 # started clean; class note: never put a run's pgrep pattern in a
 # babysitting shell's own command line.
-[[run]]
-name = "pdnorm_endpoint_battery"
-kind = "progress-log"
-host = "local"
-pgrep = "launch_pdnorm_endpoint_battery"
-pgrep_min = 1
-gpu_indices = [0]
-gpu_mem_min_mib = 5000
-log = "/home/ubuntu/eval__grasp_sft_v2_joint_1gpu_pdnorm__step_003000__panel_v2_k4l2_euler10_draws1_stable.log"  # leg 2 (panel), rolled 03:17:39Z; leg-1 sim100 COMPLETE 1/100 (seed 29 tick 247) -> CONVICT per frozen grid
-progress_re = "frames|batch|seed [0-9]+ replan"
-started_utc = "2026-08-19T00:44:37Z"
-gpu_hours_per_wall_hour = 1.0
-boundary = "leg 1 sim100 COMPLETE 03:17:39Z: 1/100 (seed 29 tick 247) = CONVICT (<=10) per frozen grid; leg 2 panel ~0.5 GPU-h (disc r2 measured) -> ~03:4x-04:0xZ; first-poll starvation check owed (disc r2 profile: batch-32/workers-20, 96% util, ~660 f/min); then CPU verdict battery (run_work_next armed 03:2xZ): sim100_paired_read vs disc1000 11/100, ladder --endpoint restamp, truthfit rewear, pdnormendpoint report, verdict post"
-anchors = [
-    "frozen grid READ TAKEN 03:17-03:2xZ: leg-1 1/100 <=10 -> CONVICTS the mix (mix = prime suspect); baseline demosonly cell 11/100; probe@3000 6.17 vs best-save 2000@5.47 — flexibility live for the verdict battery",
-    "panel guard (tertiary): endpoint vs disc-1000 banked npz on shared frames, worse-by > +0.05 CI-excl-0 fails; interpretation anchors 27.40 re-worn disc / 27.14 released re-worn / 25.15 midpoint null / 8.37 state-copy",
-    "screenwide GPU-h gate 21: train ~12.9 + baseline legs + these ~2.5",
-]
-[[run.gates]]
-kind = "gpu_hours_max"
-value = 5.0
+# pdnorm_endpoint_battery entry PRUNED 04:0xZ 08-19 work session —
+# battery COMPLETE: leg 1 sim100 1/100 (seed 29 tick 247) -> CONVICT
+# per frozen grid (verdict post 03:18Z); leg 2 panel COMPLETE 03:44:44Z
+# (panel rate healthy ~1120 f/min vs 660 reference, spiky-burst util —
+# no starvation; ~3.0/5.0 GPU-h battery total). CPU verdict battery all
+# banked on fontaine-reports (curl 200): paired read Δ-10 CI[-16,-5]
+# McNemar p=.002 vs disc1000 11/100; panel guard PASS 29.18 vs 58.14
+# (wrist_roll -45.7, wrist_flex -6.1 = mechanism receipt); truthfit
+# rewear 29.18 native -> 27.44 truth-fit (seam +1.74; ladder 27.44 ~
+# 27.40 disc / 27.14 released, all at/above 25.15 null); ladder
+# restamped; pdnormendpoint HTML report live. BEST-SAVE CALL: NO
+# step-2000 rescue sim100 (gate headroom ~2.0 < ~2.5 needed; read
+# cannot flip the frozen step-3000 verdict — demosonly control with
+# better probe reads 11; a +0.7 probe retrace bridges nothing toward
+# >=20); step_2000 stays on disk as best-probe save, rescue = fresh
+# pre-reg. Checkpoint NOT banked (not load-bearing: no grasping mixed
+# ckpt). Next isolation named by pre-reg: demos + ONE rig dataset cell
+# (owner call). Liveness-regex class note kept: with grep -oE the
+# progress_re must CAPTURE the counter digits — bare 'frames'
+# alternation parsed no ints (03:26Z false alarm).
 
 # disc1000_k4l2_panel entry PRUNED 05:1xZ 08-18 work session —
 # COMPLETE 04:57Z rc 0 (r2, ~0.5/3 GPU-h; attempt 1 killed 4.7 min in

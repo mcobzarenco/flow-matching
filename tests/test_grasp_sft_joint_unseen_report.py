@@ -194,9 +194,10 @@ def test_main_pdnormendpoint_preset_anchors_bands_and_paired_section(
     # Released pre-SFT row joined the ladder once measured (08:22Z
     # 08-18, record-only): 25.89 at the null.
     assert "25.89 released pre-SFT" in html
-    # Checkpoint/meta fields stay placeholders until the endpoint session
-    # stamps them.
-    assert "FILL-AT-ENDPOINT" in html
+    # The endpoint session (04:0xZ 08-19) stamped the verdict into the
+    # meta line: CONVICT through the frozen grid, panel rows carried.
+    assert "FILL-AT-ENDPOINT" not in html
+    assert "CONVICT" in html
     # --paired-json composes: section present, band note carried over,
     # placed between the anchors chart and the per-seed strip.
     assert "Paired read: pdnorm_endpoint vs disc1000_demosonly" in html

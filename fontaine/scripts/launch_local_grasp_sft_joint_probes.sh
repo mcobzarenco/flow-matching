@@ -73,11 +73,16 @@ case "$MODE" in
         2>&1 | tee /home/ubuntu/eval__grasp_sft_joint_flow_train.log
     ;;
   token-unseen)
+    # --clutter-appearance standins: this amendment's legs 1/2 (flow
+    # 44/100 + 42/100, 08-16) ran pre-promotion; the 08-18 'patched'
+    # default would change the substrate mid-registration. Same pin
+    # rationale as pdnorm Amendment 1.
     MUJOCO_GL=egl uv run python -m sim.rollout_sim \
         --checkpoint "$CKPT" \
         --serve-head ar \
         --seed 0 --num-seeds 100 --episode-seconds 30 --execute-horizon 30 \
         --flow-decoder-dtype bfloat16 \
+        --clutter-appearance standins \
         --out-dir "$OUT/token_unseen" --out-json "$OUT/token_unseen.json" \
         2>&1 | tee /home/ubuntu/eval__grasp_sft_joint_token_unseen.log
     ;;
@@ -87,6 +92,7 @@ case "$MODE" in
         --serve-head ar \
         --seed 0 --num-seeds 100 --episode-seconds 30 --execute-horizon 30 \
         --flow-decoder-dtype bfloat16 \
+        --clutter-appearance standins \
         --out-dir "$OUT/token_base" --out-json "$OUT/token_base.json" \
         2>&1 | tee /home/ubuntu/eval__grasp_sft_joint_token_base.log
     ;;
