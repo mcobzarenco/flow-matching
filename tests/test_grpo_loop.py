@@ -1110,3 +1110,51 @@ def test_parse_args_knockaway_baseline_normalization() -> None:
         parse_args([*base, "--knockaway-baseline", "wave1"])
     with pytest.raises(SystemExit):
         parse_args([*base, "--knockaway-baseline", "0.0"])
+
+
+def test_parse_args_clutter_appearance() -> None:
+    """--clutter-appearance (R2 wave-0 postmortem): default stays the
+    production 'patched' (zero behavior change for other runs), the
+    substrate-pinned run passes 'standins', a typo dies at parse time."""
+    base = ["--checkpoint", "ckpt", "--total-steps", "1"]
+    assert parse_args(base).clutter_appearance == "patched"
+    assert (
+        parse_args([*base, "--clutter-appearance", "standins"]).clutter_appearance
+        == "standins"
+    )
+    with pytest.raises(SystemExit):
+        parse_args([*base, "--clutter-appearance", "patchd"])
+
+
+def test_wave_fns_forward_clutter_appearance(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Both sim-wave closures (training wave AND in-loop eval) forward
+    the config substrate into run_units — the wave-0 postmortem's exact
+    failure seam (the loop silently rode WorkerConfig's 'patched'
+    default while the anchors were standins)."""
+    from sim import grpo_loop
+
+    captured: list[str] = []
+
+    def fake_run_units(*args: Any, **kwargs: Any) -> list[Any]:
+        captured.append(kwargs["clutter_appearance"])
+        return []
+
+    monkeypatch.setattr(grpo_loop, "run_units", fake_run_units)
+    config = loop_config(tmp_path, clutter_appearance="standins")
+    wave_fn, eval_fn = grpo_loop.make_sim_wave_fns(
+        None,
+        None,
+        config,
+        workers=1,
+        replans=1,
+        horizon=1,
+        post_backend="none",
+        checkpoint="ckpt",
+        commit="deadbee",
+    )
+    wave_fn(0, [2000])
+    eval_fn([200])
+    assert captured == ["standins", "standins"]

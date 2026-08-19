@@ -406,3 +406,61 @@ green; the A3.4 argv is spelled exactly once):
   and `--knockaway-baseline wave0` re-bases the violence wire at
   wave 0's measured rate (the capture wave itself exempt), retiring
   the R0-era 10/120 pin for this run per A3.4.
+
+### A4 Wave-0 substrate postmortem + relaunch (2026-08-19 17:4xZ, decided + announced per the standing no-GO-ask rule)
+
+**What happened.** The 16:10:02Z launch aborted itself at wave 0
+(17:19:34Z, ~1.2 GPU-h): `mixed_groups_frac 0.0000 < 0.20`
+(the A3.3 in-loop gate). The telemetry was not "unlucky scenes" —
+64/64 training episodes (seeds 2000–2007 × 8 draws, T=1.0) showed
+**zero successes, zero knock-aways, zero setbacks, ungrasped
+displacement ~0.0015**, and the journal's per-replan `benchy->disk`
+distances were bit-frozen from replan 0 to 29 on every seed. The
+step-0 in-loop eval read 0/20 on the same run. The boat was never
+touched, anywhere.
+
+**Diagnosis (convicted, two independent legs).** (1) *Code:* the
+08-18 clutter-patch promotion made `patched` the production default
+on the parallel driver's `WorkerConfig`; `sim.grpo_loop` builds
+`WorkerConfig` without setting it, so the training waves AND the
+in-loop eval rendered **patched** clutter — while the A3.1 anchors
+(greedy 7/100, flow 44/100), the A3.2 decode diagnosis, and the
+preflight PASS (8/100) all ran the registered **standins** substrate,
+and the policy's demo corpus is stand-ins-era. The promotion sweep
+pinned the eval drivers; the loop's embedded rollout path was missed.
+(2) *Measurement:* the probe driver on the SAME seeds 2000–2007,
+same checkpoint, same T=1.0, **standins** — 6/8 episodes interact
+(progress up to 5.9 cm, min distance 3.9 cm, knock-aways present;
+0/8 successes is unremarkable at p≈0.08, P=0.51). Substrate
+convicted; the 2000+ seed band exonerated
+(`outputs/sim/grpo_r2/wave0_diag/seeds2000_standins_t1.json`; the
+aborted wave banked at `outputs/sim/grpo_r2/loop_wave0abort_patched/`).
+
+**Reading.** The wave-0 gate read an instrument artifact (substrate
+mismatch), not the registered calibration question (does success
+variance appear in groups at the measured base rate?). The A3.3
+calibration claim is therefore still UNREAD — the gate stays armed
+at 0.20 on the relaunch. The gate itself performed exactly as
+registered: it stopped a doomed 10-step run after ~1.2 GPU-h.
+
+**Fix (mechanical, oracle-tested).** `--clutter-appearance
+{patched,standins}` exposed on `sim.grpo_loop` (default `patched` —
+zero behavior change for any other run), threaded through BOTH the
+training-wave and in-loop-eval `run_units` seams, recorded in
+`meta.json` + the per-wave rows meta; the launcher pins
+`--clutter-appearance standins` in the frozen argv and parse-check
+asserts it. Oracles: parse-time typo refusal + a seam test that both
+wave closures forward the substrate.
+
+**Relaunch (same A3.4 run, registered conditions restored).** The
+preflight PASS stands — it was measured ON standins, which is what
+the loop now renders; no re-run needed. Same frozen argv otherwise;
+all gates re-arm fresh (wave-0 mixed 0.20, knockaway wave-0
+self-capture, kl_stop 0.06, tripwire belt).
+
+**Budget re-price (supersedes A3.5's ≤ 15).** Spent so far:
+preflight 2.25 (ran ~1.7× the greedy leg's pace) + aborted wave ~1.2
++ diagnosis probe ~0.24 ≈ **3.7 GPU-h**. Expected remaining: 10
+steps ~10 + boundary legs re-priced at measured paces (greedy ~1.3,
+sampled ~2.25, flow ~1.3) ≈ ~14.9. **Total expected ~18.5, gate
+≤ 20.** Kill rules unchanged.

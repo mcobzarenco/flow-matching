@@ -47,6 +47,13 @@ ARGS=(
     --train-seed-base 2000
     --knockaway-baseline wave0
     --wave0-mixed-abort 0.20
+    # Wave-0 postmortem 08-19 (A4): the loop inherited the 08-18
+    # promotion's 'patched' production default while every R2 anchor +
+    # the preflight ran standins — the stand-ins-era policy is inert on
+    # patched (64/64 wave-0 episodes zero interaction; probe driver on
+    # the SAME seeds under standins interacts 6/8). Pin the registered
+    # substrate on the waves + in-loop eval.
+    --clutter-appearance standins
     --eval-every 5 --save-every 5
 )
 
@@ -100,6 +107,7 @@ assert args.wave0_mixed_abort == 0.20, args.wave0_mixed_abort
 assert args.kl_stop == 0.06 and args.kl_beta == 1.0 and args.lr == 1e-6
 assert args.surface == "b" and args.train_reward == "v2"
 assert args.advantage_clip == 2.0 and args.total_steps == 10
+assert args.clutter_appearance == "standins", args.clutter_appearance
 print("parse-check GREEN:", vars(args))
 PY
     echo

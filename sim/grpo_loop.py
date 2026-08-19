@@ -787,6 +787,14 @@ class GRPOLoopConfig:
     # step-1 read 0.0215 at the anchor itself); the line must sit
     # above the floor.
     kl_stop: float | None = None
+    # Clutter substrate for BOTH the training waves and the in-loop
+    # eval (R2 wave-0 postmortem 08-19: the loop inherited the 08-18
+    # promotion's 'patched' production default while the run's anchors
+    # and preflight were pinned to 'standins' — a stand-ins-era policy
+    # is fully inert on patched, and the wave-0 gate read the substrate
+    # mismatch, not the group shape). A run whose anchors pin a
+    # substrate must pass it here.
+    clutter_appearance: str = "patched"
 
 
 @dataclass(slots=True)
@@ -1140,6 +1148,7 @@ def run_units(
     temperature: float | None,
     run_seed: int,
     writer: TrainingRowWriter | None,
+    clutter_appearance: str = "patched",
 ) -> list[EpisodeResult]:
     """One worker-wave over (seed, draw) units — the parallel driver's
     lockstep machinery verbatim (spawned sim workers, batched
@@ -1202,6 +1211,7 @@ def run_units(
             hold=False,
             out_dir=None,
             post_backend=post_backend,
+            clutter_appearance=clutter_appearance,
         )
         process = context.Process(
             target=_worker_main,
@@ -1251,6 +1261,7 @@ def make_sim_wave_fns(
                 "state_units": "model (official shim applied)",
                 "norm_tag": MOLMOACT2_NORM_TAG,
                 "stats_repo_id": STATS_REPO_ID,
+                "clutter_appearance": config.clutter_appearance,
                 "commit": commit,
                 "step": step,
                 "rng_key": (
@@ -1271,6 +1282,7 @@ def make_sim_wave_fns(
             temperature=config.temperature,
             run_seed=config.run_seed,
             writer=writer,
+            clutter_appearance=config.clutter_appearance,
         )
         return episodes, rows_dir
 
@@ -1287,6 +1299,7 @@ def make_sim_wave_fns(
             temperature=None,
             run_seed=config.run_seed,
             writer=None,
+            clutter_appearance=config.clutter_appearance,
         )
 
     return wave, held_out
@@ -1360,6 +1373,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "carrying BOTH successes and failures) is below this bar "
         "(A3.3 calibration gate; None = record-only, every prior "
         "run's setting)",
+    )
+    parser.add_argument(
+        "--clutter-appearance",
+        choices=("patched", "standins"),
+        default="patched",
+        help="clutter substrate for training waves AND the in-loop eval "
+        "(R2 wave-0 postmortem: must match the run's anchor substrate; "
+        "'patched' is the 08-18 production default, 'standins' the "
+        "pre-promotion look the stand-ins-era policies were measured on)",
     )
     parser.add_argument("--microbatch-rows", type=int, default=1)
     parser.add_argument("--eval-every", type=int, default=5)
@@ -1471,6 +1493,7 @@ def main(argv: list[str] | None = None) -> int:
         kl_stop=args.kl_stop,
         knockaway_baseline=knockaway_baseline,
         wave0_mixed_abort=args.wave0_mixed_abort,
+        clutter_appearance=args.clutter_appearance,
     )
     config.out_dir.mkdir(parents=True, exist_ok=True)
     (config.out_dir / "meta.json").write_text(
