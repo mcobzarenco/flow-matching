@@ -3,6 +3,42 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-19 23:26–23:3xZ (tick) — **onerig healthy at step
+1130, loss 0.4926 new low; owner 👍 on the drift-PASS post recorded;
+fully quiet otherwise.***
+
+**Status**: `grasp_sft_v2_joint_1gpu_pdnorm_onerig` step 1130/3000 at
+the 23:26Z poll, loss 0.4926 (−0.0104 vs 1050, new low, falling);
+probe curve unchanged since the drift PASS (5.83@1000, next probe
+lands at 1250). Window 3.8 steps/min (~15.8 s/step) and trainer-line
+15.909 s/step agree on a clean interval (no save/probe in it) — a
+touch above the 15.2–15.4 smoke band but within the tick-to-tick
+bounce; ~8.3 h to endpoint → ETA ~07:4xZ 08-20 (drifted ~15 min later
+vs last tick's read). 62.21/71 GiB, babysit exit 0, no gate
+crossings.
+
+**Steering**: **NEW — owner 👍×1 on the 23:07Z drift-PASS post** (id
+…404337; wasn't there when posted last tick): agreement with the
+step-1000 drift verdict, recorded per the reaction-as-steering rule,
+no reply owed (a result-post ack). Read + inbox otherwise empty.
+
+**Done**: babysit poll (healthy, exit 0). Disk 129G free — flat vs
+last tick, as projected (the step-1500 save hasn't landed; at the
+current rate it lands ~00:5x–01:0xZ, later than the earlier ~00:2xZ
+estimate). RAM available 48G, flat fourth tick running. Queue
+validate green (depth 2, 15 open). No work-session chain: both
+queued items GPU-gated post-onerig, no CPU items, depth at
+threshold.
+
+**Next**: step-1500 save ~00:5x–01:0xZ → confirm
+step_000500/optimizer.pt pruned (standing watch item) + disk re-read
+against the pruner projection; onerig endpoint ~07:4xZ 08-20 →
+`onerig-endpoint-close` (frozen-grid sim100 ≥20 / ≤10 / 11–19 bands,
+anchors demosonly 11 and both convicted cells 1), then the R2 parity
+read + relaunch in the freed window (A5 gate, no GO ask); at the R2
+endpoint the boundary is `./launch_grpo_r2.sh boundary
+outputs/sim/grpo_r2/loop/step_0010.pt`.*
+
 *Updated 2026-08-19 23:04–23:1xZ (tick) — **step-1000 drift guard
 PASS: probe 5.83@1000, Δ −2.21 vs the ≤ +0.30 band, still improving;
 owner 👍 on the boundary-launcher post recorded; disk drop explained
@@ -76,41 +112,19 @@ is `./launch_grpo_r2.sh boundary
 outputs/sim/grpo_r2/loop/step_0010.pt`. Watch item standing: confirm
 step_000500/optimizer.pt pruned after the step-1500 save (~00:2xZ).*
 
-*Updated 2026-08-19 22:01–22:1xZ (tick) — **onerig healthy at step
-810; probe 6.73@750 — still improving ahead of the step-1000 drift
-read; RAM baseline confirmed flat; fully quiet tick.***
-
-**Status**: `grasp_sft_v2_joint_1gpu_pdnorm_onerig` step 810/3000 at
-the 22:02Z poll, loss 0.5647 (−0.015 vs 740, falling), probe
-eval_chunk_mae 12.85@250 → 8.04@500 → **6.73@750** — still improving
-one probe ahead of the drift read; window 3.3 steps/min (~18.1
-s/step — the step-750 probe eval sits in this interval, same wash as
-the step-500 save), trainer-line 15.825 s/step; 62.21 GiB vs the 71
-gate, babysit exit 0, no gate crossings. Wall-clock cumulative ~16.2
-s/step → ETA ~07:4x–08:0xZ 08-20 (13.5 h total worst case, inside
-the 17 GPU-h gate). Step-1000 lands ~22:5xZ at this rate → the drift
-read is the NEXT tick's duty (READ not kill, Δ ≤ +0.30 raw vs the
-8.04@500 probe; the 6.73@750 read makes a breach unlikely).
-
-**Steering**: none — read + inbox empty, history clean.
-
-**Done**: babysit poll (healthy, exit 0). RAM re-read vs the banked
-baseline: available 48G flat vs last tick, trainer RSS 145.77M KB —
-the SAME number as the 145.9G banked read (that stamp was decimal GB
-≈ 139 GiB), i.e. flat, no leak. Queue validate green (depth 2, 15
-open); disk 171G free, flat. No work-session chain: both queued
-items GPU-gated post-onerig, no CPU items, depth at threshold.
-
-**Next**: step-1000 drift read next tick (~22:2x–22:4xZ tick window;
-step 1000 lands ~22:5xZ, so it may slip one more tick) + rate
-re-read; onerig endpoint ~07:4x–08:0xZ 08-20 →
-`onerig-endpoint-close`, then the R2 parity read + relaunch in the
-freed window (A5 gate, no GO ask); at the R2 endpoint the boundary
-is `./launch_grpo_r2.sh boundary
-outputs/sim/grpo_r2/loop/step_0010.pt`. Watch item standing: confirm
-step_000500/optimizer.pt pruned after the step-1500 save (~00:5xZ).*
-
 ## Utilization footer
+
+Session 2026-08-19 23:26–23:3xZ (tick; `onerig` riding, ~5.1 GPU-h
+elapsed of ~13 expected / gate 17): **babysit exit 0 — step
+1130/3000, loss 0.4926 new low (−0.0104 interval); window 3.8
+steps/min (~15.8 s/step) and trainer-line 15.909 agree on a clean
+interval — slightly above the 15.2–15.4 smoke band, within bounce,
+ETA ~07:4xZ 08-20; 62.21 GiB, no gate crossings; NEW owner 👍 on the
+23:07Z drift-PASS post recorded (result-post ack, no reply owed);
+disk 129G free flat (step-1500 save lands ~00:5x–01:0xZ, later than
+the ~00:2xZ estimate — watch item moves with it); RAM flat
+(available 48G); no chain (both queued items GPU-gated post-onerig,
+no CPU items)** — queue green depth 2 (15 open).
 
 Session 2026-08-19 23:04–23:1xZ (tick; `onerig` riding, ~4.7 GPU-h
 elapsed of ~13 expected / gate 17): **babysit exit 0 — step
@@ -125,18 +139,6 @@ at ~57G free at the step-3000 save — no risk; NEW owner 👍 on the
 tick); RAM flat (available 48G); no chain (both queued items
 GPU-gated post-onerig, no CPU items)** — queue green depth 2 (15
 open).
-
-Session 2026-08-19 22:22–22:3xZ (tick; `onerig` riding, ~4.0 GPU-h
-elapsed of ~13 expected / gate 17): **babysit exit 0 — step 900/3000,
-loss 0.5558 falling (−0.009 interval), window 4.2 steps/min (~14.3
-s/step) with trainer-line 15.422 s/step cumulative — the rate reads
-agree again (last tick's disagreement was probe-eval wash), 62.21
-GiB, no gate crossings, ETA ~07:2x–07:3xZ 08-20; step 1000 lands
-~22:48Z after this close → drift read slips to next tick (6.73@750
-makes a ≤+0.30 breach unlikely); RAM re-read flat (available 49G vs
-48G); Discord fully quiet (read + inbox empty, no new reactions); no
-chain (both queued items GPU-gated post-onerig, no CPU items)** —
-queue green depth 2 (15 open). Disk 171G free (94%), flat.
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
