@@ -94,13 +94,13 @@ from bijou.train_grpo import GRPOConfig
 from . import OUTPUT_DIR
 from .rollout_sim import STATS_REPO_ID, TASK, EpisodeResult, resolve_replans
 from .rollout_sim_parallel import (
+    JOINT_FRAME_CHOICES,
     MOLMOACT2_NORM_TAG,
-    MOLMOACT2_OFFICIAL_OFFSETS_DEG,
-    MOLMOACT2_OFFICIAL_SIGNS,
     TrainingRowWriter,
     WorkerConfig,
     _worker_main,
     molmoact2_discrete_chunks,
+    resolve_joint_frame,
     serve,
 )
 
@@ -1245,6 +1245,7 @@ def make_sim_wave_fns(
     post_backend: str,
     checkpoint: str,
     commit: str,
+    joint_frame: str = "v30-to-v21",
 ) -> tuple[WaveFn, EvalFn]:
     """(training wave, held-out eval wave) over :func:`run_units`."""
 
@@ -1258,7 +1259,8 @@ def make_sim_wave_fns(
                 "decode": "molmoact2_grammar_masked",
                 "temperature": config.temperature,
                 "task": config.task,
-                "state_units": "model (official shim applied)",
+                "state_units": f"model ({joint_frame} joint frame applied)",
+                "joint_frame": joint_frame,
                 "norm_tag": MOLMOACT2_NORM_TAG,
                 "stats_repo_id": STATS_REPO_ID,
                 "clutter_appearance": config.clutter_appearance,
@@ -1315,6 +1317,21 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--fast-tokenizer",
         default="allenai/MolmoAct2-FAST-Tokenizer",
+    )
+    parser.add_argument(
+        "--joint-frame",
+        choices=JOINT_FRAME_CHOICES,
+        default="auto",
+        help="calibration frame map around the rollout/eval predict seam "
+        "(state in, chunks back out). 'rig' = identity (v3.0-frame "
+        "tables: bijou-trained checkpoints, corrected-table recomputes, "
+        "conversion-remapped releases). 'v30-to-v21' = the official "
+        "lerobot PR#777 shim (unremapped v2.1-table releases only — the "
+        "port-era convention this loop once hardcoded). 'auto' "
+        "fingerprints the checkpoint's state table "
+        "(docs/so101-joint-conventions.md §4) and refuses an "
+        "unclassifiable one; explicit modes are refused on a classified "
+        "mismatch (the R2 wave-0 kill class)",
     )
     parser.add_argument("--out-dir", type=Path, default=OUTPUT_DIR / "grpo_loop")
     parser.add_argument("--total-steps", type=int, required=True)
@@ -1421,7 +1438,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     import torch as _torch  # noqa: F401 — parity with the driver's parent-only import
 
-    from bijou.eval.molmo_norm import AffineMap
+    from bijou.checkpoint import read_metadata
     from bijou.grpo_replay import MolmoAct2DiscreteStack
 
     args = parse_args(argv)
@@ -1441,6 +1458,19 @@ def main(argv: list[str] | None = None) -> int:
     # checkpoints stay format-compatible (the named trainable tensors
     # live on the SAME Molmo2Model structure) — but per decision 11,
     # post-migration runs START FRESH; .pt resume is salvage-only.
+    # The joint-frame map resolves BEFORE the (slow) weight mount: a
+    # convention mismatch dies here, not a wave later (the R2 wave-0
+    # kill: the port-era v30-to-v21 shim served unconditionally, inert
+    # on every v3.0-frame bijou table).
+    joint_frame, shim = resolve_joint_frame(
+        args.joint_frame,
+        read_metadata(Path(args.checkpoint)).stats,
+    )
+    print(
+        f"joint frame: {joint_frame} — shim signs {shim.scale.tolist()} "
+        f"offsets {shim.offset.tolist()}",
+        flush=True,
+    )
     predictor = MolmoAct2DiscreteStack.load(
         args.checkpoint,
         device=device,
@@ -1451,10 +1481,6 @@ def main(argv: list[str] | None = None) -> int:
     # trainable surface — runs fp32 for BOTH rollout and replay; vision
     # stays frozen bf16.
     predictor.trunk.text.float()
-    shim = AffineMap(
-        scale=torch.tensor(MOLMOACT2_OFFICIAL_SIGNS),
-        offset=torch.tensor(MOLMOACT2_OFFICIAL_OFFSETS_DEG),
-    )
     tag_horizon = int(predictor.metadata.get("action_horizon") or 0)
     horizon = min(args.execute_horizon, tag_horizon or args.execute_horizon)
     replans = resolve_replans(None, args.episode_seconds, horizon)
@@ -1507,6 +1533,7 @@ def main(argv: list[str] | None = None) -> int:
                 "workers": args.workers,
                 "replans": replans,
                 "horizon": horizon,
+                "joint_frame": joint_frame,
                 "commit": commit,
             },
             indent=1,
@@ -1543,6 +1570,7 @@ def main(argv: list[str] | None = None) -> int:
         post_backend=args.post_backend,
         checkpoint=str(args.checkpoint),
         commit=commit,
+        joint_frame=joint_frame,
     )
     result = run_grpo_loop(
         predictor,

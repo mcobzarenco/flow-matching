@@ -6,8 +6,9 @@
 #
 # Usage:
 #   ./launch_grpo_r2.sh parse-check   # CPU: full-parse the frozen argv + emit the babysit entry template (no GPU, no load)
+#   ./launch_grpo_r2.sh parity        # GPU ~0.7 h (A5 LAUNCH GATE): seeds 200-219 greedy through BOTH serving paths (loop stack --joint-frame rig vs BijouPolicy --serve-head ar) -> parity verdict json (detached unit)
 #   ./launch_grpo_r2.sh preflight     # GPU ~1.3 h: leg-0 sampled T=1.0 sim100 on the pinned base -> F-premise verdict json (detached unit)
-#   ./launch_grpo_r2.sh launch        # GPU ~10 h: the A3.4 run — REFUSES unless the preflight verdict is PASS (BAND needs FORCE_BAND=1 after a decision post)
+#   ./launch_grpo_r2.sh launch        # GPU ~10 h: the A3.4 run — REFUSES unless the preflight verdict is PASS (BAND needs FORCE_BAND=1 after a decision post) AND the A5 parity verdict is PASS
 #
 # Frozen pins (A3.4), spelled once in the ARGS array below:
 #   base step_002000_v2 (schema-2 joint, corrected-table stats);
@@ -31,6 +32,9 @@ CKPT="$HOME/checkpoints/finetune/fontaine_grasp_sft_joint_corrected/step_002000_
 OUT=outputs/sim/grpo_r2
 PREFLIGHT_JSON="$OUT/preflight/sampled_t1_sim100.json"
 VERDICT_JSON="$OUT/preflight/preflight_verdict.json"
+PARITY_DISCRETE_JSON="$OUT/parity/discrete_leg.json"
+PARITY_ANCHOR_JSON="$OUT/parity/anchor_leg.json"
+PARITY_VERDICT_JSON="$OUT/parity/parity_verdict.json"
 HEARTBEAT="$OUT/loop/train.jsonl"
 
 # The A3.4 frozen argv — ONE spelling, parsed by parse-check and fired
@@ -54,6 +58,11 @@ ARGS=(
     # the SAME seeds under standins interacts 6/8). Pin the registered
     # substrate on the waves + in-loop eval.
     --clutter-appearance standins
+    # A5 (serving-parity fix 08-19): the v2 base is a bijou-trained
+    # v3.0-frame table — the loop's port-era v30-to-v21 shim was the
+    # relaunch kill's root cause. 'rig' = identity frame; the loader
+    # fingerprints the table and refuses a mismatch either way.
+    --joint-frame rig
     --eval-every 5 --save-every 5
 )
 
@@ -108,10 +117,49 @@ assert args.kl_stop == 0.06 and args.kl_beta == 1.0 and args.lr == 1e-6
 assert args.surface == "b" and args.train_reward == "v2"
 assert args.advantage_clip == 2.0 and args.total_steps == 10
 assert args.clutter_appearance == "standins", args.clutter_appearance
+assert args.joint_frame == "rig", args.joint_frame
 print("parse-check GREEN:", vars(args))
 PY
     echo
     emit_babysit_entry
+    ;;
+
+  parity)
+    mem=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits -i 0)
+    if [ "$mem" -gt 1024 ]; then echo "GPU 0 busy (${mem} MiB) — abort (owner policy-server rule: check compute-apps, never kill it)"; exit 1; fi
+    if [ ! -d "$CKPT" ]; then echo "FATAL: pinned base $CKPT missing" >&2; exit 2; fi
+    mkdir -p "$OUT/parity"
+    # A5 launch gate: the in-loop eval band (seeds 200-219), greedy,
+    # through BOTH serving paths on the SAME substrate pin. Leg 1 =
+    # the loop's stack (rollout_sim_parallel --molmoact2-discrete,
+    # grammar-masked, --joint-frame rig — exactly what waves + in-loop
+    # eval serve). Leg 2 = the anchor path (BijouPolicy --serve-head
+    # ar, the preflight/anchor convention). Verdict rule lives in
+    # grpo_r2_parity_verdict.py; the launch mode refuses without PASS.
+    MUJOCO_GL=egl fontaine/scripts/run_detached.sh grpo-r2-parity \
+        bash -c "cd $PWD && MUJOCO_GL=egl uv run python -m sim.rollout_sim_parallel \
+            --molmoact2-discrete '$CKPT' \
+            --molmoact2-grammar-masked --joint-frame rig \
+            --seed 200 --num-seeds 20 --workers 4 \
+            --episode-seconds 30 --execute-horizon 30 \
+            --clutter-appearance standins \
+            --out-dir '$OUT/parity/discrete_episodes' \
+            --out-json '$PARITY_DISCRETE_JSON' \
+            2>&1 | tee '$HOME/eval__grpo_r2_parity_discrete.log' \
+        && MUJOCO_GL=egl uv run python -m sim.rollout_sim \
+            --checkpoint '$CKPT' \
+            --serve-head ar \
+            --seed 200 --num-seeds 20 --episode-seconds 30 --execute-horizon 30 \
+            --flow-decoder-dtype bfloat16 \
+            --clutter-appearance standins \
+            --out-dir '$OUT/parity/anchor_episodes' \
+            --out-json '$PARITY_ANCHOR_JSON' \
+            2>&1 | tee '$HOME/eval__grpo_r2_parity_anchor.log' \
+        && uv run python fontaine/scripts/grpo_r2_parity_verdict.py \
+            --discrete-json '$PARITY_DISCRETE_JSON' \
+            --anchor-json '$PARITY_ANCHOR_JSON' \
+            --out '$PARITY_VERDICT_JSON'"
+    echo "parity read launched; verdict lands at $PARITY_VERDICT_JSON"
     ;;
 
   preflight)
@@ -139,6 +187,15 @@ PY
     ;;
 
   launch)
+    if [ ! -f "$PARITY_VERDICT_JSON" ]; then
+        echo "REFUSED: no serving-parity verdict at $PARITY_VERDICT_JSON — run 'parity' first (A5: the loop stack must agree with the anchor path before any R2 fire)" >&2
+        exit 1
+    fi
+    PARITY=$(uv run python -c "import json; print(json.load(open('$PARITY_VERDICT_JSON'))['verdict'])")
+    if [ "$PARITY" != "PASS" ]; then
+        echo "REFUSED: serving-parity verdict '$PARITY' (A5) — the loop path still diverges from the anchor path; no override exists" >&2
+        exit 1
+    fi
     if [ ! -f "$VERDICT_JSON" ]; then
         echo "REFUSED: no preflight verdict at $VERDICT_JSON — run 'preflight' first (A3.3 leg 0 gates the launch)" >&2
         exit 1

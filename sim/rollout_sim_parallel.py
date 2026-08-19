@@ -247,9 +247,9 @@ def parse_args() -> argparse.Namespace:
         "serve the first-class MolmoAct2DiscreteStack (the AR read of a "
         "BIJOU molmoact2-family checkpoint — converted release/rigtable "
         "or an ar/joint descendant; retirement phase 4 re-point) — "
-        "grammar-masked, batch-1 per request, the official SO-101 shim "
-        "pinned (state in through it, chunks back through its inverse; "
-        "the exact map the flow-pathway convmap eval validated). Rows "
+        "grammar-masked, batch-1 per request, state in / chunks back "
+        "through the --joint-frame map (identity for v3.0-frame tables; "
+        "the official SO-101 shim for unremapped v2.1 releases). Rows "
         "never pool with contract reads",
     )
     parser.add_argument(
@@ -274,6 +274,20 @@ def parse_args() -> argparse.Namespace:
         "the masked argmax (the RL rollout draw, keyed per (seed, "
         "replan, draw) via stable_sample_rng) — requires "
         "--molmoact2-grammar-masked",
+    )
+    parser.add_argument(
+        "--joint-frame",
+        choices=JOINT_FRAME_CHOICES,
+        default="auto",
+        help="calibration frame map around the --molmoact2-discrete "
+        "predict seam (state in, chunks back out). 'rig' = identity "
+        "(v3.0-frame tables: bijou-trained checkpoints, corrected-table "
+        "recomputes, conversion-remapped releases). 'v30-to-v21' = the "
+        "official lerobot PR#777 shim (unremapped v2.1-table releases "
+        "only — the port-era convention). 'auto' fingerprints the "
+        "checkpoint's state table (docs/so101-joint-conventions.md §4) "
+        "and refuses an unclassifiable one; explicit modes are refused "
+        "on a classified mismatch (the R2 wave-0 kill class)",
     )
     parser.add_argument(
         "--wrist-transform",
@@ -332,6 +346,12 @@ def parse_args() -> argparse.Namespace:
         parser.error(
             "--stats-repo-id picks a bijou policy's worn row — only "
             "meaningful with --checkpoint",
+        )
+    if args.joint_frame != "auto" and args.molmoact2_discrete is None:
+        parser.error(
+            "--joint-frame maps the --molmoact2-discrete predict seam — "
+            "the BijouPolicy path normalizes under the worn stats row "
+            "with no frame map to pick",
         )
     if args.stats_repo_id is not None and args.convmap_seam_stats is not None:
         parser.error(
@@ -421,10 +441,110 @@ def parse_args() -> argparse.Namespace:
 # (posts/2026-08-12-prereg-release-eval20-convmap.md amendment 3, the
 # 9/100 run): the official LeRobot->MolmoAct2 snippet map exactly —
 # shoulder_lift mirrored, lift/elbow offset +90 deg. State goes IN
-# through it, chunks come BACK through its inverse.
+# through it, chunks come BACK through its inverse. These literals are
+# JointFrameTransform.lerobot_v30_to_v21()'s, spelled locally so sim
+# workers never import the policy stack (test-pinned equal).
 MOLMOACT2_OFFICIAL_SIGNS = (1.0, -1.0, 1.0, 1.0, 1.0, 1.0)
 MOLMOACT2_OFFICIAL_OFFSETS_DEG = (0.0, 90.0, 90.0, 0.0, 0.0, 0.0)
 MOLMOACT2_NORM_TAG = "so100_so101_molmoact2"
+
+# --joint-frame for the discrete (AR) serving seam. The shim above is
+# CORRECT only for a checkpoint whose recorded q01/q99 table is in the
+# pre-PR#777 ("v2.1") calibration frame — the unremapped official
+# MolmoAct2 releases the port-era predictor served. Every bijou-format
+# table today is v3.0-frame (bijou-trained on rig/sim data, the
+# corrected-table recomputes, and conversion-remapped releases alike),
+# and serving one through the shim is the R2 wave-0 kill's root cause:
+# lift/elbow state bins clamp at the table edge and the inverted chunk
+# map drives the arm out of range (docs/so101-joint-conventions.md §6:
+# a missing OR extra remap each half-breaks the arm, and nothing
+# downstream catches it — so this seam refuses mismatches at load).
+JOINT_FRAME_CHOICES = ("auto", "rig", "v30-to-v21")
+
+
+def classify_state_frame(
+    state_q01: Sequence[float] | None,
+    state_q99: Sequence[float] | None,
+) -> str | None:
+    """SO-101 calibration fingerprint of a STATE quantile table in
+    degrees (docs/so101-joint-conventions.md §4): ``'v21'`` = the
+    pre-PR#777 frame official releases trained under; ``'v30'`` = the
+    rig/sim frame (bijou-trained tables, and conversion-remapped ones
+    — their flipped shoulder_lift lands as a DESCENDING pair); None =
+    unclassifiable (the doc's rule: ask, don't guess). Keys on
+    shoulder_lift — the sign axis is the expensive one — with
+    elbow_flex corroborating the v2.1 read."""
+    if state_q01 is None or state_q99 is None or len(state_q01) < 3:
+        return None
+    lift_q01, lift_q99 = float(state_q01[1]), float(state_q99[1])
+    if lift_q01 > lift_q99:
+        # Only the conversion-time flip remap writes descending pairs.
+        return "v30"
+    if lift_q01 >= 30.0:
+        # v2.1 lift sits entirely above +30 (fingerprint 45→186);
+        # demand the elbow corroborate (35→174) before claiming it.
+        elbow_q01, elbow_q99 = float(state_q01[2]), float(state_q99[2])
+        return "v21" if elbow_q01 >= 25.0 and elbow_q99 >= 130.0 else None
+    if lift_q01 <= -30.0:
+        # v3.0 lift reaches far negative (rig range ≈ −103..+29).
+        return "v30"
+    return None
+
+
+def resolve_joint_frame(mode: str, stats: Any) -> tuple[str, Any]:
+    """(resolved ``'rig'`` | ``'v30-to-v21'``, the AffineMap the
+    discrete predict seam applies) for a checkpoint's recorded stats
+    table. ``'auto'`` classifies the state table and refuses an
+    unclassifiable one; an EXPLICIT mode that contradicts a classified
+    table is refused too — a convention mismatch on this seam is never
+    a judgment call (module comment above). Parent-side only."""
+    import torch
+
+    from bijou.eval.molmo_norm import AffineMap
+    from bijou.rollout_safety import JointFrameTransform
+
+    if mode not in JOINT_FRAME_CHOICES:
+        raise SystemExit(
+            f"--joint-frame must be one of {JOINT_FRAME_CHOICES}, got {mode!r}",
+        )
+    fingerprint = classify_state_frame(stats.state_q01, stats.state_q99)
+    implied = {"v21": "v30-to-v21", "v30": "rig"}.get(fingerprint or "")
+    if mode == "auto":
+        if implied is None:
+            raise SystemExit(
+                "--joint-frame auto: the checkpoint's state table matches "
+                "no SO-101 calibration fingerprint "
+                f"(shoulder_lift q01/q99 = {stats.state_q01[1]}/"
+                f"{stats.state_q99[1]}, elbow_flex = {stats.state_q01[2]}/"
+                f"{stats.state_q99[2]}) — classify it against "
+                "docs/so101-joint-conventions.md §4 and pass --joint-frame "
+                "rig or v30-to-v21 explicitly (the doc's rule: ask, don't "
+                "guess)",
+            )
+        resolved = implied
+    else:
+        if implied is not None and implied != mode:
+            raise SystemExit(
+                f"--joint-frame {mode} contradicts the checkpoint's state "
+                f"table, which fingerprints as the "
+                f"{'v2.1' if fingerprint == 'v21' else 'v3.0'} frame "
+                f"(shoulder_lift q01/q99 = {stats.state_q01[1]}/"
+                f"{stats.state_q99[1]}; docs/so101-joint-conventions.md "
+                "§4) — a missing remap clamps lift/elbow state bins at the "
+                "table edge and a double remap half-breaks the arm (§6), "
+                "so this seam refuses the mismatch instead of serving it",
+            )
+        resolved = mode
+    frame = (
+        JointFrameTransform.lerobot_v30_to_v21()
+        if resolved == "v30-to-v21"
+        else JointFrameTransform.identity(len(stats.state_q01))
+    )
+    shim = AffineMap(
+        scale=torch.tensor(frame.signs, dtype=torch.float32),
+        offset=torch.tensor(frame.offsets, dtype=torch.float32),
+    )
+    return resolved, shim
 
 
 def molmoact2_discrete_chunks(
@@ -726,6 +846,9 @@ def main() -> int:
 
     predictor = None
     discrete_shim = None
+    # Resolved --joint-frame for the out-json record; stays None off
+    # the discrete arm.
+    joint_frame: str | None = None
     # Resolved worn-row identity for the out-json record; stays None on
     # arms that wear no bijou stats row (hold, molmoact2 shim).
     worn_row: str | None = None
@@ -734,7 +857,7 @@ def main() -> int:
         horizon = args.execute_horizon
         print(f"policy: hold (settled reset state, horizon {horizon})")
     elif args.molmoact2_discrete is not None:
-        from bijou.eval.molmo_norm import AffineMap
+        from bijou.checkpoint import read_metadata
         from bijou.grpo_replay import MolmoAct2DiscreteStack
 
         policy = None
@@ -743,24 +866,24 @@ def main() -> int:
         # (converted release / rigtable / ar-joint descendants). The
         # port predictor (HF-layout dirs, their norm tags) retired
         # with bijou/molmoact2.
+        joint_frame, discrete_shim = resolve_joint_frame(
+            args.joint_frame,
+            read_metadata(Path(args.molmoact2_discrete)).stats,
+        )
         predictor = MolmoAct2DiscreteStack.load(
             args.molmoact2_discrete,
             device=device,
             dtype=torch.bfloat16,
             fast_tokenizer=args.molmoact2_fast_tokenizer,
         )
-        discrete_shim = AffineMap(
-            scale=torch.tensor(MOLMOACT2_OFFICIAL_SIGNS),
-            offset=torch.tensor(MOLMOACT2_OFFICIAL_OFFSETS_DEG),
-        )
         tag_horizon = int(predictor.metadata.get("action_horizon") or 0)
         horizon = min(args.execute_horizon, tag_horizon or args.execute_horizon)
         print(
             f"policy: molmoact2-discrete {args.molmoact2_discrete} "
             f"({'grammar-masked' if args.molmoact2_grammar_masked else 'reference greedy'}, "
-            f"horizon {horizon}, official shim signs "
-            f"{MOLMOACT2_OFFICIAL_SIGNS} offsets "
-            f"{MOLMOACT2_OFFICIAL_OFFSETS_DEG})",
+            f"horizon {horizon}, joint frame {joint_frame} — shim signs "
+            f"{discrete_shim.scale.tolist()} offsets "
+            f"{discrete_shim.offset.tolist()})",
         )
     else:
         policy = BijouPolicy(
@@ -793,10 +916,11 @@ def main() -> int:
                 "decode": "molmoact2_grammar_masked",
                 "temperature": args.molmoact2_temperature,
                 "task": TASK,
-                # The stored state is MODEL units — the official shim
-                # applied, exactly what predict_action_discrete consumed
-                # (the replay collator feeds it back verbatim).
-                "state_units": "model (official shim applied)",
+                # The stored state is MODEL units — the resolved joint
+                # frame applied, exactly what predict_action_discrete
+                # consumed (the replay collator feeds it back verbatim).
+                "state_units": f"model ({joint_frame} joint frame applied)",
+                "joint_frame": joint_frame,
                 "norm_tag": MOLMOACT2_NORM_TAG,
                 "stats_repo_id": STATS_REPO_ID,
                 "commit": commit,
@@ -1116,20 +1240,21 @@ def main() -> int:
                     }
                 ),
                 # Off-contract provenance, discrete (AR) pathway: the
-                # first-class predictor + pinned official shim. Rows
-                # under a non-None record never pool with contract
+                # first-class predictor + the resolved joint-frame map.
+                # Rows under a non-None record never pool with contract
                 # reads OR with the flow-pathway convmap rows (different
                 # serving stacks).
                 "molmoact2_discrete": (
                     None
-                    if predictor is None
+                    if predictor is None or discrete_shim is None
                     else {
                         "checkpoint": str(args.molmoact2_discrete),
                         "fast_tokenizer": str(args.molmoact2_fast_tokenizer),
                         "norm_tag": MOLMOACT2_NORM_TAG,
                         "grammar_masked": args.molmoact2_grammar_masked,
-                        "shim_signs": list(MOLMOACT2_OFFICIAL_SIGNS),
-                        "shim_offsets_deg": list(MOLMOACT2_OFFICIAL_OFFSETS_DEG),
+                        "joint_frame": joint_frame,
+                        "shim_signs": discrete_shim.scale.tolist(),
+                        "shim_offsets_deg": discrete_shim.offset.tolist(),
                         "zero_fallbacks": sum(discrete_fallbacks),
                         "predicts": len(discrete_fallbacks),
                     }
