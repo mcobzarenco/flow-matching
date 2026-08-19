@@ -2,52 +2,58 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-19 13:07–13:5xZ (real `date -u` at write: 13:57) —
-work session (chained): **OWNER STEERING LANDED MID-SESSION — both
-calls closed as recommended ("Re: my calls, I agree with all your
-recommendations", 13:25:15Z): demos+one-rig = GO, R2 band = AMEND +
-ACTIVATE from 7%. The session had just landed `grpo-r2-launch-kit`
-(the A3.8 machinery), so activation executed mechanically: A3 flipped
-ACTIVE, preflight leg 0 LIVE 13:54:39Z. Session continues riding the
-preflight to its verdict.***
+*Updated 2026-08-19 13:07–16:1xZ (real `date -u` at write: 16:12) —
+work session (chained): **GRPO R2 IS LIVE. Owner steering landed
+mid-session (13:25:15Z agree-with-recs → demos+one-rig GO, R2 AMEND +
+ACTIVATE from 7%); the session had just landed `grpo-r2-launch-kit`,
+so activation ran mechanically end-to-end: A3 flipped ACTIVE,
+preflight leg 0 rode to its verdict — F-premise PASS, sampled T=1.0
+8/100 vs greedy 7 — and the A3.4 run fired on the PASS at 16:10:02Z.
+Disk sweep executed inside the ride window: ~41G freed.***
 
-**Status**: `grpo_r2_preflight` LIVE (unit `grpo-r2-preflight`,
-launched 13:54:39Z) — sampled T=1.0 sim100 on `step_002000_v2`,
-policy line `bijou@2000_v2_t1_arhead` verified, first poll 13.2 GiB /
-45% util, ~280 ms/replan; ETA ~15:1xZ (~1.3 GPU-h), verdict json
-chains inside the unit; babysit entry live (gate 2 GPU-h). On PASS
-(≥7/100) the A3.4 run fires same-session (~14 GPU-h expected, gate
-≤15). RAM 196 GiB, disk 198 GB (93% —
-`disk-retirement-sweep-banked-sources` queued, ~41G payoff).
+**Status**: `grpo_r2` LIVE (unit `grpo-r2`, launched 16:10:02Z) — 10
+steps × 8×8 T=1.0 from `step_002000_v2`, lr 1e-6, kl_beta 1.0,
+kl_stop 0.06; first poll 3 procs, 28.8 GiB / 100% util, step-0
+baseline eval rolling (seed band 200+ correct). Budget ~14 GPU-h
+expected / gate ≤15 incl. the ~2.25 preflight; boundary ETA ~step 10
+(~0x:xxZ 08-20 at ~1 GPU-h/step). KNOWN STARTUP GAP noted in the
+registry: first train.jsonl row ~17:1xZ — babysit exit 1 "no
+parseable rows" before then is the startup read, procs+GPU are the
+liveness truth. RAM fine, disk 231 GB free (92%).
 
-**Steering**: owner 13:25:15Z agree-with-recs (…407784) — closes BOTH
-registered calls: (1) demos+one-rig isolation GO (queue item
-unblocked, fires at the next free GPU boundary; R2 lane sequenced
-first, announced 13:49Z); (2) R2 AMEND+ACTIVATE (A3 status ACTIVE,
-HEAD re-pin 570e53e, receipts on the page). Replied 13:49:02Z +
-acked; preflight-live confirmation posted 13:55Z.
+**Steering**: owner 13:25:15Z agree-with-recs (…407784) — closed BOTH
+registered calls: (1) demos+one-rig isolation GO
+(`demos-plus-one-rig-exec` unblocked, fires at the next free GPU
+boundary — R2 lane first, sequencing announced 13:49Z); (2) R2
+AMEND+ACTIVATE (A3 ACTIVE, HEAD re-pin 570e53e). Replied 13:49:02Z +
+acked; preflight-live 13:55Z, sweep result 15:0xZ, launch post
+16:11Z.
 
-**Done**: `grpo-r2-launch-kit` EXECUTED + CLOSED (570e53e, check.py
-1075 green): `--knockaway-baseline` float|`wave0` self-baseline
-(capture wave exempt) + `--train-seed-base 2000` wired;
-`mixed_groups_frac` heartbeat emit + `--wave0-mixed-abort 0.20`
-in-loop A3.3 gate (defaults unchanged — zero behavior change);
-`grpo_r2_preflight_verdict.py` pins "materially below" at the exact
-binomial 5% tail (ABORT ≤2 / BAND 3–6 / PASS ≥7, provenance guards
-loud, oracle-tested incl. the ~44% mixed-prediction reproduction);
-`launch_grpo_r2.sh` parse-check/preflight/launch (frozen argv spelled
-once, launch refuses non-PASS, babysit template round-trips the Run
-schema). A3.8 registered; A3 ACTIVATED; preflight fired; registry
-entry + no_live_runs_reason cleared.
+**Done**: (1) `grpo-r2-launch-kit` EXECUTED + CLOSED (570e53e,
+check.py 1075 green): `--knockaway-baseline` float|`wave0`
+self-baseline + `--train-seed-base 2000` wired; `mixed_groups_frac`
+heartbeat emit + `--wave0-mixed-abort 0.20` in-loop gate (defaults
+unchanged); `grpo_r2_preflight_verdict.py` pins "materially below" at
+the exact binomial 5% tail (ABORT ≤2 / BAND 3–6 / PASS ≥7);
+`launch_grpo_r2.sh` parse-check/preflight/launch, launch refuses
+non-PASS. A3.8 registered. (2) A3 ACTIVATED (ec87114) + preflight
+ridden to verdict: **PASS 8/100 sampled vs greedy 7** (P=0.734;
+success-seed overlap with greedy only 1/8 — sampling completes
+different scenes; predicted mixed 0.487 vs bar 0.20); receipts
+`outputs/sim/grpo_r2/preflight/preflight_verdict.json`. (3) R2
+LAUNCHED on the PASS per A3.7/A3.8, registry entry live. (4)
+`disk-retirement-sweep-banked-sources` EXECUTED + CLOSED (2e85b1c):
+er_60k trainer dir 16/16 bitwise on HF (receipt
+`reports/analysis__er60k_trainer_dir_sha_audit.json`) → 37G retired +
+the two audit-proven legacy dirs (2.2G each); disk 93%→92%.
 
-**Next**: ride the preflight to the verdict (~15:1xZ): PASS → `launch
-launch_grpo_r2.sh launch` same-session + babysit entry swap; BAND →
-decide + announce; ABORT → lane routes to iterate-once and
-demos+one-rig takes the GPU. `queue_cli.py next` → CPU items
-`disk-retirement-sweep-banked-sources` +
-`grpo-r2-boundary-reads-instrument` (NEW refill);
-`demos-plus-one-rig-exec` UNBLOCKED, fires at the next free GPU
-boundary.*
+**Next**: `queue_cli.py next` → CPU item
+`grpo-r2-boundary-reads-instrument` (mechanize the three endpoint
+legs before the boundary); ride cadence: babysit every ~30 min, first
+heartbeat row read ~17:1xZ (wave-0 gates: mixed ≥0.20 predicted
+0.487, knockaway self-baseline capture); at the R2 boundary (~0x:xxZ
+08-20): boundary legs per A3.4/A3.5, then `demos-plus-one-rig-exec`
+takes the GPU (owner GO banked). `run_work_next` armed at close.*
 
 *Updated 2026-08-19 13:04–13:0xZ (real `date -u` at write: 13:05) —
 tick: **fully quiet tick — Discord empty (read + inbox empty, history
@@ -131,6 +137,18 @@ calibration emit, makes ACTIVATE one-command) and
 
 ## Utilization footer
 
+Session 2026-08-19 13:07–16:1xZ (work, chained; ~2.25 GPU-h banked —
+preflight leg 0 — + `grpo_r2` live from 16:10Z, ~14 expected / gate
+≤15): **owner agree-with-recs mid-session → A3 ACTIVATED end-to-end:
+launch kit landed (570e53e) → preflight PASS (sampled 8/100 vs greedy
+7) → R2 FIRED 16:10:02Z; demos+one-rig GO banked, fires at the next
+free GPU boundary; disk sweep executed in the ride window (~41G
+freed, 16/16 bitwise audit)** — exploit (registered activation +
+infra debt); queue green depth 2 (15 open: `grpo-r2-launch-kit` +
+`disk-retirement-sweep-banked-sources` closed,
+`grpo-r2-boundary-reads-instrument` refilled). Disk 231 GB free
+(92%).
+
 Session 2026-08-19 13:04–13:0xZ (tick; 0 GPU-h — no live runs, H100
 idle): **fully quiet tick — read + inbox empty, history no new owner
 activity; owner calls (demos+one-rig, R2 band) still unanswered ~105
@@ -139,16 +157,6 @@ closed fast to hand off** — the chained work session takes CPU items
 `grpo-r2-launch-kit` + `disk-retirement-sweep-banked-sources` and
 keeps the owner-call polls; both GPU actions stay owner-gated. Queue
 green depth 2 (16 open). Disk 198 GB free (93% used).
-
-Session 2026-08-19 12:46–12:5xZ (work, chained; 0 GPU-h — CPU only,
-H100 idle throughout): **grpo-r2-activation-amendment-draft CLOSED —
-Amendment A3 frozen (ACTIVATE-from-7% spec: preflight F-premise gate,
-wave-0 mixed <20% abort, flow-head regression leg, seed-base +
-knockaway-baseline re-pins, gate ≤15); owner `2 ACTIVATE` now
-executes mechanically** — exploit (owner-call unblocking / pre-reg
-discipline); Discord quiet at boot; owner calls (demos+one-rig, R2
-band) still pending ~95 min; queue green depth 2 (16 open: refill
-`grpo-r2-launch-kit`).
 
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12

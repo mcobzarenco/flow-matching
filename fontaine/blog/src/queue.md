@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-19T12:55:13Z
+**Updated:** 2026-08-19T14:59:16Z
 
 **Depth call:** post grpo-r2-activation-amendment-draft close 12:5xZ 08-19: 2 queued CPU-executable (grpo-r2-launch-kit refill, disk-retirement-sweep-banked-sources); demos-plus-one-rig-exec owner-gated, grpo-r2-post-sft owner-band (A3 amendment now frozen, ACTIVATE executes mechanically); H100 free pending the owner isolation call
 
-**16 open** (Live 0 · Queued 2 · Blocked 14 · Done 255)
+**15 open** (Live 0 · Queued 2 · Blocked 13 · Done 257)
 
 ## 🔴 Live (0)
 
@@ -18,43 +18,25 @@
 
 *ready — waiting on a window or a boundary*
 
-**`disk-retirement-sweep-banked-sources`** · `cpu`
+**`grpo-r2-boundary-reads-instrument`** · `cpu`
 
-Disk-retirement sweep of locally-redundant banked sources (extends the hf-evacuation-audit method, 08-19 post): (a) ~/checkpoints/er_60k trainer dir (37G)
+GRPO R2 boundary-reads instrument (CPU, oracle-gated; the endpoint's three registered legs mechanized before any launch so the boundary session is reads-not-code): (1) PRIMARY paired per-seed exact test, boundary greedy sim100 vs…
 
-**boundary:** Queued 11:2xZ 08-19 work session (charter section 4 refill at the hf-evacuation-audit close; depth-2 restore).
+**boundary:** Queued 13:3xZ 08-19 work session (charter section 4 refill at the grpo-r2-launch-kit close; depth-2 restore alongside disk-retirement-sweep-banked-sources). Executable any CPU window; wanted before the R2 endpoint regardless of which A3.7 reply lands (HOLD-BAND's iterate-once arm reuses leg-1's paired instrument against its own anchor). · [pre-reg](posts/2026-08-15-prereg-grpo-r2-post-sft.md)
 
 <details><summary>full record</summary>
 
-Disk-retirement sweep of locally-redundant banked sources (extends the hf-evacuation-audit method, 08-19 post): (a) ~/checkpoints/er_60k trainer dir (37G) — sha256-audit every local step dir vs fontaine-checkpoints fontaine_molmo2_er_60k_ddp4/* LFS hashes (step_060000 already verified bitwise), retire only bitwise-banked steps; (b) the two proven-derivable legacy expert-source dirs converted/molmoact2_base_corrected_stats_v0 + converted/molmoact2_grasp_sft_stagec_ar_step2000 (2.2G each, zero unique bytes per the audit). Staggered rm with df checks + no-blind-delete greps (incl. policy-server checkout) per the v1-fleet-upgrade pattern. CPU-only. Disk is 93% used — ~41G payoff.
+GRPO R2 boundary-reads instrument (CPU, oracle-gated; the endpoint's three registered legs mechanized before any launch so the boundary session is reads-not-code): (1) PRIMARY paired per-seed exact test, boundary greedy sim100 vs the frozen 7/100 anchor (A3.4; exact McNemar-style discordant-pair binomial, seeds 0-99 paired by construction) with the 5-19 style band surfaces baked; (2) record-only sampled T=1.0 sim100 vs the preflight leg-0 floor (decode-gap movement priced); (3) flow-head F-regression leg read vs the 44/100 anchor (material-regression surface stated, judge owns the call); consumes the rollout_sim out-jsons + preflight_verdict.json, emits a machine-readable boundary verdict + chart-ready facts (house dark-mode chart at report time). Oracle tests on synthetic jsons pin every band edge; check.py green. NO GPU.
 
 </details>
 
 ---
 
-**`grpo-r2-launch-kit`** · `cpu`
-
-GRPO R2 launch kit (CPU, oracle-gated, zero behavior change; makes A3 ACTIVATE one-command): (1) expose --knockaway-baseline on sim/grpo_loop.py (config field exists, flag does not; A3.4 re-pin needs it) + wire --train-seed-base…
-
-**boundary:** Queued 12:5xZ 08-19 work session (charter section 4 refill at the grpo-r2-activation-amendment-draft close; depth-2 restore alongside disk-retirement-sweep-banked-sources). · [pre-reg](posts/2026-08-15-prereg-grpo-r2-post-sft.md)
-
-<details><summary>full record</summary>
-
-GRPO R2 launch kit (CPU, oracle-gated, zero behavior change; makes A3 ACTIVATE one-command): (1) expose --knockaway-baseline on sim/grpo_loop.py (config field exists, flag does not; A3.4 re-pin needs it) + wire --train-seed-base 2000 into the staged command; (2) preflight leg-0 runner: single-draw sampled T=1.0 sim100 on the pinned step_002000_v2 base through the probe driver, with the F-premise abort read (sampled vs greedy 7) emitted as a machine-readable verdict; (3) launcher script staged + full-parse green (detached systemd-run unit, babysit.toml entry template, out-dir + heartbeat paths pinned); (4) wave-0 mixed-fraction calibration read mechanized (abort &lt;20% per A3.3 - check whether min_group_std/dead-group accounting already surfaces it or a small emit is needed). CPU oracles per landing, check.py green; NO launch, NO GPU - execution of the kit stays unconditional CPU work, firing it pends the owner ACTIVATE.
-
-</details>
-
----
-
-## 🟡 Blocked (14)
-
-*waiting on a prerequisite, a boundary, or the owner*
-
-**`demos-plus-one-rig-exec`** · `gpu-local` · **⛔ owner hold**
+**`demos-plus-one-rig-exec`** · `gpu-local`
 
 Demos + ONE rig dataset isolation cell EXECUTION (OWNER-GATED: the pdnorm pre-reg's registered &lt;=10 grid text makes the next isolation an owner call
 
-**boundary:** Queued 04:2xZ 08-19 at the draft close. BLOCKED on the owner isolation call (registered carve-out outranks the standing launch delegation) AND a GPU-free window (joint-probe legs 3/4 own the GPU through ~08:xxZ 08-19). · [pre-reg](posts/2026-08-19-prereg-demos-plus-one-rig.md)
+**boundary:** Queued 04:2xZ 08-19 at the draft close. BLOCKED on the owner isolation call (registered carve-out outranks the standing launch delegation) AND a GPU-free window (joint-probe legs 3/4 own the GPU through ~08:xxZ 08-19). || UNBLOCKED 13:4xZ 08-19: owner agree-with-recs reply 13:25:15Z closes the isolation call as GO (rec adopted verbatim, pdnorm carve-out satisfied). Remaining gate is purely the GPU window: the R2 lane owns the H100 first (A3 activated same reply; preflight live 13:54Z, launch fires on PASS, ~14 GPU-h gate 15) — this cell fires at the next free GPU boundary (R2 preflight-ABORT, an R2 in-loop abort, or the R2 endpoint), sequencing announced in-channel 13:49Z. · [pre-reg](posts/2026-08-19-prereg-demos-plus-one-rig.md)
 
 <details><summary>full record</summary>
 
@@ -63,6 +45,10 @@ Demos + ONE rig dataset isolation cell EXECUTION (OWNER-GATED: the pdnorm pre-re
 </details>
 
 ---
+
+## 🟡 Blocked (13)
+
+*waiting on a prerequisite, a boundary, or the owner*
 
 **`demo-gen-v1.1-regen`** · `gpu-a100`
 
@@ -246,9 +232,37 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (255)
+## ✅ Done (257)
 
 *closed — the full record stays in each fold*
+
+**`disk-retirement-sweep-banked-sources`** · `cpu`
+
+Disk-retirement sweep of locally-redundant banked sources (extends the hf-evacuation-audit method, 08-19 post): (a) ~/checkpoints/er_60k trainer dir (37G)
+
+**boundary:** Queued 11:2xZ 08-19 work session (charter section 4 refill at the hf-evacuation-audit close; depth-2 restore). ||| EXECUTED + CLOSED 14:5xZ 08-19 work session (inside the grpo-r2-preflight ride window, CPU/IO only): (a) er_60k trainer dir sha-audited 16/16 BITWISE vs fontaine-checkpoints fontaine_molmo2_er_60k_ddp4 (12 safetensors via LFS sha256, 4 bijou_config.json via direct byte-compare; receipt reports/analysis__er60k_trainer_dir_sha_audit.json) -&gt; all four step dirs retired, 37G freed (df 194-&gt;231 GB, 93-&gt;92%); (b) the two audit-proven legacy expert-source dirs (molmoact2_base_corrected_stats_v0 + molmoact2_grasp_sft_stagec_ar_step2000, 2.2G each) retired after no-blind-delete greps (queue/now/babysit + policy-server checkout: historical narrative only; live iterate-once arm targets the _vla_v2 fleet, which is intact 3/3). Staggered rm with df checks per the v1-fleet-upgrade pattern. ~41.4G total payoff.
+
+<details><summary>full record</summary>
+
+Disk-retirement sweep of locally-redundant banked sources (extends the hf-evacuation-audit method, 08-19 post): (a) ~/checkpoints/er_60k trainer dir (37G) — sha256-audit every local step dir vs fontaine-checkpoints fontaine_molmo2_er_60k_ddp4/* LFS hashes (step_060000 already verified bitwise), retire only bitwise-banked steps; (b) the two proven-derivable legacy expert-source dirs converted/molmoact2_base_corrected_stats_v0 + converted/molmoact2_grasp_sft_stagec_ar_step2000 (2.2G each, zero unique bytes per the audit). Staggered rm with df checks + no-blind-delete greps (incl. policy-server checkout) per the v1-fleet-upgrade pattern. CPU-only. Disk is 93% used — ~41G payoff.
+
+</details>
+
+---
+
+**`grpo-r2-launch-kit`** · `cpu`
+
+GRPO R2 launch kit (CPU, oracle-gated, zero behavior change; makes A3 ACTIVATE one-command): (1) expose --knockaway-baseline on sim/grpo_loop.py (config field exists, flag does not; A3.4 re-pin needs it) + wire --train-seed-base…
+
+**boundary:** Queued 12:5xZ 08-19 work session (charter section 4 refill at the grpo-r2-activation-amendment-draft close; depth-2 restore alongside disk-retirement-sweep-banked-sources). ||| EXECUTED + CLOSED 13:3xZ 08-19 work session: all four cells landed, check.py 1075 green. (1) --knockaway-baseline exposed on sim/grpo_loop.py accepting float | 'wave0' (wave0 = self-baseline at wave 0's measured rate per A3.4, capture wave exempt, parse-time typo refusal) + --train-seed-base 2000 wired into the frozen argv; (2) preflight leg-0 runner: launch_grpo_r2.sh preflight detaches the sampled T=1.0 sim100 (same driver + standins substrate as the greedy 7 leg) chaining into grpo_r2_preflight_verdict.py — 'materially below' PINNED at the exact one-sided binomial 5% tail under Bin(100,0.07): ABORT &lt;=2, BAND 3-6 (launcher refuses without recorded override), PASS &gt;=7 (count = training-decode floor); provenance guards loud; (3) launcher staged, full-parse green (parse-check mode asserts every A3.4 re-pin; launch mode refuses non-PASS verdicts, fires via run_detached.sh; babysit entry template round-trip-verified against the babysit Run schema, gates gpu_hours_max 15 / vram_max_gib 75); (4) wave-0 mixed read NEEDED a new emit (groups_kept is the reward-std z-filter, NOT success contrast): mixed_groups_frac heartbeat key + --wave0-mixed-abort 0.20 in-loop gate (default None = record-only, zero behavior change for other runs). A3.8 registered on the prereg page. ACTIVATE is now: preflight -&gt; (verdict PASS) -&gt; launch. · [pre-reg](posts/2026-08-15-prereg-grpo-r2-post-sft.md)
+
+<details><summary>full record</summary>
+
+GRPO R2 launch kit (CPU, oracle-gated, zero behavior change; makes A3 ACTIVATE one-command): (1) expose --knockaway-baseline on sim/grpo_loop.py (config field exists, flag does not; A3.4 re-pin needs it) + wire --train-seed-base 2000 into the staged command; (2) preflight leg-0 runner: single-draw sampled T=1.0 sim100 on the pinned step_002000_v2 base through the probe driver, with the F-premise abort read (sampled vs greedy 7) emitted as a machine-readable verdict; (3) launcher script staged + full-parse green (detached systemd-run unit, babysit.toml entry template, out-dir + heartbeat paths pinned); (4) wave-0 mixed-fraction calibration read mechanized (abort &lt;20% per A3.3 - check whether min_group_std/dead-group accounting already surfaces it or a small emit is needed). CPU oracles per landing, check.py green; NO launch, NO GPU - execution of the kit stays unconditional CPU work, firing it pends the owner ACTIVATE.
+
+</details>
+
+---
 
 **`grpo-r2-activation-amendment-draft`** · `cpu`
 

@@ -10,28 +10,48 @@
 
 # (no_live_runs_reason cleared 13:54Z 08-19 — grpo-r2-preflight launched at the owner A3 activation 13:25:15Z; prior: "declared 09:1xZ 08-19 work session: route C joint endpoint probes CLOSED (leg 4 done 09:01:18Z, reads banked, worktree removed — see the grasp_sft_joint_probes prune below). Local H100 FREE. Next GPU leg: demos-plus-one-rig-exec pends the OWNER isolation call (registered pdnorm-grid carve-out, draft 04:25:54Z 08-19); no other GPU item queued. Owner policy-server check applies before any local launch.")
 
+# grpo_r2_preflight entry PRUNED 16:1xZ 08-19 — COMPLETE ~16:09Z rc 0
+# (~2.25 GPU-h wall 13:54:39Z->16:09, sampled pace ran ~1.7x the greedy
+# leg's). VERDICT: **PASS — sampled T=1.0 8/100 vs greedy anchor 7**
+# (F-premise holds first-contact; P(X<=8|Bin(100,0.07)) = 0.734, nowhere
+# near the 0.05 abort tail). Training-decode floor 0.08 recorded;
+# predicted mixed-groups fraction 0.4868 (A3.3 wave-0 abort bar 0.20).
+# Success seeds 11,12,37,62,65,66,67,68 — only seed 68 overlaps the
+# greedy set (stochastic relief finds different scenes). Receipts:
+# outputs/sim/grpo_r2/preflight/preflight_verdict.json (+ episodes/).
+# grpo_r2 LAUNCHED on the PASS 16:10:02Z (entry below).
+
 [[run]]
-name = "grpo_r2_preflight"
-kind = "progress-log"
+name = "grpo_r2"
+kind = "train-jsonl"
 host = "local"
-pgrep = "sim.rollout_sim"
-pgrep_min = 1                     # single-process eval; unit grpo-r2-preflight
+pgrep = "sim.grpo_loop"
+pgrep_min = 1                     # parent loop (waves spawn 8 transient workers); unit grpo-r2
 gpu_indices = [0]
 gpu_mem_min_mib = 8000
-log = "/home/ubuntu/eval__grpo_r2_preflight_sampled_t1.log"
-progress_re = "seed [0-9]+ replan [0-9]+"
-started_utc = "2026-08-19T13:54:39Z"
+jsonl = "/home/ubuntu/flow-matching/outputs/sim/grpo_r2/loop/train.jsonl"
+total_steps = 10
+probe_key = "eval_successes"
+vram_key = "vram_gib"
+started_utc = "2026-08-19T16:10:02Z"
 gpu_hours_per_wall_hour = 1.0
-boundary = "A3.3 preflight leg 0 (~1.3 GPU-h, ~78 min by the greedy-7 leg's pace): sampled T=1.0 sim100 on step_002000_v2, then grpo_r2_preflight_verdict.py chains INSIDE the unit — verdict json at outputs/sim/grpo_r2/preflight/preflight_verdict.json. PASS (>=7) => fire launch_grpo_r2.sh launch same-session; BAND (3-6) => Fontaine decides + announces; ABORT (<=2) => lane routes to token-SFT iterate-once, run never starts."
+boundary = "step 10 endpoint: greedy sim100 vs 7 (PRIMARY, paired exact) + sampled T=1.0 sim100 vs the preflight floor 8/100 (record-only) + flow unseen100 euler-10 vs 44 (F-regression leg); pace anchor ~0.98 GPU-h/step, budget ~14 expected / gate <=15 GPU-h incl. the ~2.25 preflight (A3.5). Boundary instrument queued: grpo-r2-boundary-reads-instrument."
 anchors = [
-    "policy line verified at first poll: bijou@2000_v2_t1_arhead (T=1.0 sampled, AR head, standins substrate = the greedy leg's pin)",
-    "greedy anchor 7/100 (success seeds 34,35,63,68,71,91,96); A3.2 premise says sampled should sit AT-OR-ABOVE",
-    "the sampled count on PASS = recorded training-decode competence floor (A3.3); predicted mixed-group fraction rides the verdict json",
-    "first poll 13:55Z: unit active, 13.2 GiB / 45% util, seed 0 rolling ~280 ms/replan",
+    "STARTUP GAP (expected, NOT a crash): train.jsonl's first row lands only after the step-0 eval (20 seeds) + wave-0 rollout + train pass — ~17:1xZ at R1-class pace; babysit exit 1 'no parseable rows' before then is the known train-jsonl startup read (launch 16:10, procs+GPU are the liveness truth in this window). Judged at launch first poll: 3 procs, 28.8 GiB / 100%, eval seeds 200-207 rolling",
+    "token greedy 7/100 (A3.1 frozen anchor; success seeds 34,35,63,68,71,91,96)",
+    "flow sibling 44/100 same trunk (A3.4 regression leg at boundary — option B moves the flow read too)",
+    "preflight sampled T=1.0 = 8/100 PASS (P=0.734) — the recorded training-decode floor; verdict json outputs/sim/grpo_r2/preflight/preflight_verdict.json",
+    "wave-0 mixed_groups_frac: predicted 0.4868 at the measured p=0.08; IN-LOOP abort <0.20 (A3.3 --wave0-mixed-abort; read the first train.jsonl row at first poll)",
+    "wave-0 knockaway_frac = violence-wire baseline (--knockaway-baseline wave0 self-capture; greedy read measured 25/100 — the R0-era 10/120 pin retired for this run)",
+    "kl_stop 0.06 in-loop (single reading, no streak); anchor_k3_pre ~e-07-scale early per R1-B",
+    "train-seed-base 2000 (stage-B 1000-1099 collision re-pin) — train rows must never show seeds < 2000",
 ]
 [[run.gates]]
 kind = "gpu_hours_max"
-value = 2.0                       # ~1.3 GPU-h expected (greedy-7 leg pace) + margin
+value = 15.0                      # A3.5 budget gate (~14 expected incl. boundary legs)
+[[run.gates]]
+kind = "vram_max_gib"
+value = 75.0                      # R1-B envelope on the 80G H100
 
 # (no_live_runs_reason cleared 14:25Z 08-16 — demo_gen_v1 launched on the A100 box; prior: HOME-GPU-only declaration of 10:2xZ 08-16.)
 
