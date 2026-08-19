@@ -5,7 +5,35 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-19 09:53–10:0xZ (real `date -u` at write: 09:55) —
+tick: **quiet tick straight after the convert_v1 close — no live
+runs, H100 idle (0 MiB / 0%), channel quiet; ~3-min in-session polls
+held on the two pending owner calls, no reply.***
+
+**Status**: no live runs — babysit registry empty, GPU 0 MiB / 0%
+(H100 free; policy-server not up). RAM 196 GiB available, disk 260 GB
+free. The staged demos+one-rig cell remains the only GPU item and
+pends the owner isolation call (registered grid carve-out).
+
+**Steering**: none — read empty, inbox empty, history (last 5) shows
+no new reactions. OWNER CALLS PENDING: (1) demos+one-rig isolation
+(draft 04:25:54Z, id …759115); (2) the B §3 R2 band (post
+1539564065414840340, 09:17:56Z): token-GRPO from 7% / token-focused
+SFT variant first / park. ~3-min monitor polls held in-session — no
+reply by close.
+
+**Done**: boot (pull clean, queue validate green depth 2 / 16 open),
+Discord read + history, standing free/df + GPU checks, monitor-based
+~3-min polls. No post (quiet interval).
+
+**Next**: `run_work_next` armed (09:49 marker confirmed present) —
+the chained work session executes CPU items `token-decode-diagnosis`
+(sharpens the R2 band call) and `v1-fleet-upgrade` (staggered, with
+disk checks + no-blind-delete greps) and keeps the tight polls;
+`demos-plus-one-rig-exec` + R2 activation stay owner-gated.
 
 *Updated 2026-08-19 09:30–10:0xZ (real `date -u` at write: 09:49) —
 work session (chained): **metadata-v1-importer CLOSED —
@@ -76,45 +104,17 @@ the chained work session executes CPU items `metadata-v1-importer`
 and `token-decode-diagnosis` and keeps tight polls on the two owner
 calls; `demos-plus-one-rig-exec` + R2 activation stay owner-gated.
 
-*Updated 2026-08-19 08:08–09:2xZ (real `date -u` at write: 09:19) —
-work session (chained): **route C joint endpoint CLOSED — leg 4 rc
-caught in-session, all five reads banked, both registered verdicts
-in; util footer rolled; chain gate crossing recorded.***
-
-**Status**: no live runs — leg 4 (token-base) COMPLETE 09:01:18Z
-clean (~2.1 GPU-h, 0 strikes), registry entry pruned, pinned worktree
-`flow-matching-legacy-eval` REMOVED. H100 FREE; the staged
-demos+one-rig cell remains the only GPU item and pends the owner
-isolation call (registered grid carve-out).
-
-**Steering**: none — read/inbox empty all session. OWNER CALLS
-PENDING: (1) demos+one-rig isolation (draft 04:25:54Z, id
-…759115); (2) NEW — the B §3 R2 band (post 1539564065414840340):
-activate token-GRPO from 7% / token-focused SFT variant first / park.
-
-**Done**: (1) leg-4 rc + `grasp_sft_joint_probe_reads.py` — flow
-unseen 44/100 **A §5 TABLE_FIX_POSITIVE**, train kept 29/64 vs
-non-kept 13/36 (no memorization), token unseen 7/100 **B §3
-OWNER_DECISION band**, token-base anchor 0/100 (SFT delta +7; the CE
-stream owned every trunk update yet greedy decode reads 7 vs the flow
-expert's 44 — decode-pathway suspect). **Chain gate CROSSED ~13.7 vs
-≤13** (token legs ~2.2–2.4 vs ~1.3/leg class + ~0.7 killed-attempt
-burn) — recorded in the consolidated post + the chart-led Addendum
-08-19 on the chain results page (`joint_probe_bands.png`);
-`grasp-sft-bootstrap` queue item CLOSED. (2) `util-window-roll`
-EXECUTED — footer window 08-12→08-19 08:45Z local-only ~84.1/~85.5
-(receipts `fontaine/notes/util-window-roll-2026-08-19.md`) (8731feb).
-(3) Blog-Space 1 GB incident re-hit and healed (orphan sweep deleted
-live blobs — sha-namespace pitfall now in the push memory; all assets
-curl-verified 200).
-
-**Next**: `queue_cli.py next` → CPU items `metadata-v1-importer`
-(the pinned-worktree class killer) and `token-decode-diagnosis`
-(sharpens the R2 band call) — both executable any session;
-`demos-plus-one-rig-exec` + the R2 activation are owner calls.
-`run_work_next` armed at close (CPU queue non-empty).
-
 ## Utilization footer
+
+Session 2026-08-19 09:53–10:0xZ (tick; 0 GPU-h — no live runs, H100
+idle): **quiet tick straight after the convert_v1 close — GPU 0 MiB /
+0%, RAM 196 GiB available, disk 260 GB free; Discord fully quiet
+(read empty, inbox empty, no new reactions); ~3-min monitor polls
+held on the two pending owner calls (demos+one-rig isolation, R2
+band) — no reply by close** — `run_work_next` armed (09:49 marker
+confirmed): the chained work session executes CPU items
+`token-decode-diagnosis` + `v1-fleet-upgrade` and keeps the polls;
+both GPU actions stay owner-gated. Queue green depth 2 (16 open).
 
 Session 2026-08-19 09:30–10:0xZ (work, chained; 0 GPU-h — CPU-only
 integrity/infra item, H100 idle throughout): **metadata-v1-importer
@@ -125,16 +125,6 @@ result post 1539571824461881354** — exploit (infra debt); queue
 validate green depth 2 (16 open: refill `v1-fleet-upgrade`; both GPU
 actions owner-gated); tight polls held on the two pending owner
 calls, no reply; `run_work_next` armed at close.
-
-Session 2026-08-19 09:25–09:3xZ (tick; 0 GPU-h — no live runs, H100
-idle post-close): **quiet post-close tick — GPU 0 MiB / 0%, RAM 196
-GiB available, disk 287 GB free; Discord fully quiet (read empty,
-inbox empty, no new reactions); tight ~3-min in-session polls held on
-the two pending owner calls (demos+one-rig isolation, R2 band) — no
-reply by close** — `run_work_next` armed (09:19 marker confirmed):
-the chained work session executes CPU items `metadata-v1-importer` +
-`token-decode-diagnosis` and keeps the polls; both GPU actions stay
-owner-gated. Queue green depth 2 (16 open).
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
