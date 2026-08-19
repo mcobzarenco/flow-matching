@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-19T12:55:13Z",
+ "updated_utc": "2026-08-19T13:47:40Z",
  "depth_reason": "post grpo-r2-activation-amendment-draft close 12:5xZ 08-19: 2 queued CPU-executable (grpo-r2-launch-kit refill, disk-retirement-sweep-banked-sources); demos-plus-one-rig-exec owner-gated, grpo-r2-post-sft owner-band (A3 amendment now frozen, ACTIVATE executes mechanically); H100 free pending the owner isolation call",
  "items": [
   {
@@ -2433,11 +2433,11 @@
   {
    "id": "grpo-r2-launch-kit",
    "class": "cpu",
-   "status": "queued",
+   "status": "done",
    "owner_hold": false,
    "prereg": "fontaine/blog/src/posts/2026-08-15-prereg-grpo-r2-post-sft.md",
    "title": "GRPO R2 launch kit (CPU, oracle-gated, zero behavior change; makes A3 ACTIVATE one-command): (1) expose --knockaway-baseline on sim/grpo_loop.py (config field exists, flag does not; A3.4 re-pin needs it) + wire --train-seed-base 2000 into the staged command; (2) preflight leg-0 runner: single-draw sampled T=1.0 sim100 on the pinned step_002000_v2 base through the probe driver, with the F-premise abort read (sampled vs greedy 7) emitted as a machine-readable verdict; (3) launcher script staged + full-parse green (detached systemd-run unit, babysit.toml entry template, out-dir + heartbeat paths pinned); (4) wave-0 mixed-fraction calibration read mechanized (abort <20% per A3.3 - check whether min_group_std/dead-group accounting already surfaces it or a small emit is needed). CPU oracles per landing, check.py green; NO launch, NO GPU - execution of the kit stays unconditional CPU work, firing it pends the owner ACTIVATE.",
-   "boundary": "Queued 12:5xZ 08-19 work session (charter section 4 refill at the grpo-r2-activation-amendment-draft close; depth-2 restore alongside disk-retirement-sweep-banked-sources)."
+   "boundary": "Queued 12:5xZ 08-19 work session (charter section 4 refill at the grpo-r2-activation-amendment-draft close; depth-2 restore alongside disk-retirement-sweep-banked-sources). ||| EXECUTED + CLOSED 13:3xZ 08-19 work session: all four cells landed, check.py 1075 green. (1) --knockaway-baseline exposed on sim/grpo_loop.py accepting float | 'wave0' (wave0 = self-baseline at wave 0's measured rate per A3.4, capture wave exempt, parse-time typo refusal) + --train-seed-base 2000 wired into the frozen argv; (2) preflight leg-0 runner: launch_grpo_r2.sh preflight detaches the sampled T=1.0 sim100 (same driver + standins substrate as the greedy 7 leg) chaining into grpo_r2_preflight_verdict.py \u2014 'materially below' PINNED at the exact one-sided binomial 5% tail under Bin(100,0.07): ABORT <=2, BAND 3-6 (launcher refuses without recorded override), PASS >=7 (count = training-decode floor); provenance guards loud; (3) launcher staged, full-parse green (parse-check mode asserts every A3.4 re-pin; launch mode refuses non-PASS verdicts, fires via run_detached.sh; babysit entry template round-trip-verified against the babysit Run schema, gates gpu_hours_max 15 / vram_max_gib 75); (4) wave-0 mixed read NEEDED a new emit (groups_kept is the reward-std z-filter, NOT success contrast): mixed_groups_frac heartbeat key + --wave0-mixed-abort 0.20 in-loop gate (default None = record-only, zero behavior change for other runs). A3.8 registered on the prereg page. ACTIVATE is now: preflight -> (verdict PASS) -> launch."
   },
   {
    "id": "disk-retirement-sweep-banked-sources",
@@ -2447,7 +2447,16 @@
    "prereg": null,
    "title": "Disk-retirement sweep of locally-redundant banked sources (extends the hf-evacuation-audit method, 08-19 post): (a) ~/checkpoints/er_60k trainer dir (37G) \u2014 sha256-audit every local step dir vs fontaine-checkpoints fontaine_molmo2_er_60k_ddp4/* LFS hashes (step_060000 already verified bitwise), retire only bitwise-banked steps; (b) the two proven-derivable legacy expert-source dirs converted/molmoact2_base_corrected_stats_v0 + converted/molmoact2_grasp_sft_stagec_ar_step2000 (2.2G each, zero unique bytes per the audit). Staggered rm with df checks + no-blind-delete greps (incl. policy-server checkout) per the v1-fleet-upgrade pattern. CPU-only. Disk is 93% used \u2014 ~41G payoff.",
    "boundary": "Queued 11:2xZ 08-19 work session (charter section 4 refill at the hf-evacuation-audit close; depth-2 restore)."
+  },
+  {
+   "id": "grpo-r2-boundary-reads-instrument",
+   "class": "cpu",
+   "status": "queued",
+   "owner_hold": false,
+   "prereg": "fontaine/blog/src/posts/2026-08-15-prereg-grpo-r2-post-sft.md",
+   "title": "GRPO R2 boundary-reads instrument (CPU, oracle-gated; the endpoint's three registered legs mechanized before any launch so the boundary session is reads-not-code): (1) PRIMARY paired per-seed exact test, boundary greedy sim100 vs the frozen 7/100 anchor (A3.4; exact McNemar-style discordant-pair binomial, seeds 0-99 paired by construction) with the 5-19 style band surfaces baked; (2) record-only sampled T=1.0 sim100 vs the preflight leg-0 floor (decode-gap movement priced); (3) flow-head F-regression leg read vs the 44/100 anchor (material-regression surface stated, judge owns the call); consumes the rollout_sim out-jsons + preflight_verdict.json, emits a machine-readable boundary verdict + chart-ready facts (house dark-mode chart at report time). Oracle tests on synthetic jsons pin every band edge; check.py green. NO GPU.",
+   "boundary": "Queued 13:3xZ 08-19 work session (charter section 4 refill at the grpo-r2-launch-kit close; depth-2 restore alongside disk-retirement-sweep-banked-sources). Executable any CPU window; wanted before the R2 endpoint regardless of which A3.7 reply lands (HOLD-BAND's iterate-once arm reuses leg-1's paired instrument against its own anchor)."
   }
  ],
- "updated": "2026-08-19T12:55:13Z"
+ "updated": "2026-08-19T13:47:40Z"
 }

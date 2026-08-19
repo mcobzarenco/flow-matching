@@ -368,3 +368,37 @@ frozen page + the in-channel summary), launcher staged, launch at
 the next free boundary (H100 idle at draft time). `2 HOLD-BAND` →
 token-SFT iterate-once arm per the registered band, this page holds.
 `2 PARK` → the lane parks with the read banked.
+
+### A3.8 Launch kit (LANDED 13:xxZ 08-19 — code staged, still not active)
+
+Everything above is now one command per stage
+(`fontaine/scripts/launch_grpo_r2.sh`, oracle-tested, full-parse
+green; the A3.4 argv is spelled exactly once):
+
+- **`parse-check`** (CPU): the frozen argv through
+  `sim.grpo_loop.parse_args` with every A3.4 re-pin asserted, plus
+  the babysit registry entry template (round-trip-verified against
+  the babysit schema, A3.5 gates as `gpu_hours_max 15` /
+  `vram_max_gib 75`).
+- **`preflight`** (leg 0, ~1.3 GPU-h, detached unit): the sampled
+  T=1.0 sim100 through the SAME probe driver and substrate pin as
+  the greedy 7 leg (`--serve-head ar --ar-temperature 1.0`,
+  `--clutter-appearance standins`), chaining into a machine-readable
+  F-premise verdict (`grpo_r2_preflight_verdict.py`, provenance
+  guards loud). **"Materially below" is now pinned**: exact
+  one-sided binomial tail under Bin(100, 7/100) at the house 5%
+  level — **ABORT at ≤ 2/100** (P(X≤2) ≈ 0.026), **PASS at ≥ 7**
+  (the count becomes the recorded training-decode floor), **BAND at
+  3–6** (below the anchor, not materially — a decision post owns it;
+  the launcher refuses BAND without an explicit recorded override,
+  and refuses ABORT unconditionally).
+- **`launch`**: refuses without a PASS verdict, then fires the A3.4
+  argv via `run_detached.sh`. The two in-loop gates are now
+  first-class loop flags (oracle-tested, defaults unchanged — zero
+  behavior change for every other run): `--wave0-mixed-abort 0.20`
+  stops the run at wave 0 below the A3.3 mixed-fraction bar
+  (`mixed_groups_frac` is a new heartbeat key — success/failure
+  contrast per group, distinct from the z-filter's `groups_kept`),
+  and `--knockaway-baseline wave0` re-bases the violence wire at
+  wave 0's measured rate (the capture wave itself exempt), retiring
+  the R0-era 10/120 pin for this run per A3.4.

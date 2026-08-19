@@ -230,6 +230,22 @@ def group_advantages(
     return advantages, facts
 
 
+def mixed_group_fraction(episodes: list[EpisodeResult]) -> float:
+    """Fraction of seed-groups mixing successes AND failures — the §3
+    success-variance calibration read (the ±10 contrast the group
+    advantage is claimed to be carried by). Distinct from the z-filter's
+    ``groups_kept``: centimeter-scale progress noise alone clears
+    ``min_group_std`` without any success contrast."""
+    outcomes: dict[int, list[bool]] = {}
+    for episode in episodes:
+        outcomes.setdefault(episode.seed, []).append(
+            episode.success_tick is not None,
+        )
+    return float(
+        np.mean([any(flags) and not all(flags) for flags in outcomes.values()]),
+    )
+
+
 def build_optimizer(
     named: list[tuple[str, nn.Parameter]],
     *,
@@ -665,6 +681,12 @@ def eval_facts(
 class TripwireState:
     collapse_streak: int = 0
     violence_streak: int = 0
+    # Wave-0 self-baseline for the violence wire (R2 A3.4 re-pin):
+    # captured from the FIRST wave's measured knockaway_frac when the
+    # config pins ``knockaway_baseline=None`` (``--knockaway-baseline
+    # wave0``). The capturing wave itself is exempt — it IS the
+    # baseline.
+    knockaway_baseline: float | None = None
 
 
 def update_tripwires(
@@ -694,14 +716,20 @@ def update_tripwires(
             f"spread collapse: median group std < {config.min_group_std} "
             f"for {state.collapse_streak} consecutive steps",
         )
-    if knockaway_frac > 2.0 * config.knockaway_baseline:
+    baseline = config.knockaway_baseline
+    if baseline is None:
+        if state.knockaway_baseline is None:
+            state.knockaway_baseline = knockaway_frac
+            return fired
+        baseline = state.knockaway_baseline
+    if knockaway_frac > 2.0 * baseline:
         state.violence_streak += 1
     else:
         state.violence_streak = 0
     if state.violence_streak >= config.tripwire_streak:
         fired.append(
             f"violence explosion: knock-away rate > 2x the "
-            f"{config.knockaway_baseline:.3f} baseline for "
+            f"{baseline:.3f} baseline for "
             f"{state.violence_streak} consecutive steps",
         )
     return fired
@@ -724,8 +752,16 @@ class GRPOLoopConfig:
     eval_seed_base: int = 200
     eval_seed_count: int = 20
     min_group_std: float = 0.05
-    knockaway_baseline: float = 10.0 / 120.0
+    # None = wave-0 self-baseline (R2 A3.4: the 10/120 default is an
+    # R0-A-era er60k measurement; a competence-class change re-bases
+    # the violence wire at the first wave's measured rate instead).
+    knockaway_baseline: float | None = 10.0 / 120.0
     tripwire_streak: int = 3
+    # R2 A3.3 wave-0 calibration bar: fraction of seed-groups mixing
+    # successes and failures at the FIRST wave below this line stops
+    # the run before GPU-hours burn (None = record-only, every prior
+    # run's setting; the group shape is the amendment path, not lr).
+    wave0_mixed_abort: float | None = None
     lr: float = 5e-6
     microbatch_rows: int = 1
     grad_clip: float = 1.0
@@ -939,6 +975,7 @@ def run_grpo_loop(
         shoved = [e.ungrasped_displacement_cm for e in episodes]
         has_grip = not any(np.isnan(v) for v in earned + shoved)
         rewards = [train_reward_fn(e) for e in episodes]
+        mixed_frac = mixed_group_fraction(episodes)
         advantages_map, groups = group_advantages(
             episodes,
             min_std=config.min_group_std,
@@ -1007,6 +1044,7 @@ def run_grpo_loop(
             "median_group_std": round(groups.median_std, 4),
             "groups_kept": groups.kept,
             "groups_total": groups.total,
+            "mixed_groups_frac": round(mixed_frac, 4),
             "knockaway_frac": round(knockaway_frac, 4),
             "setback_frac": None if setback_frac is None else round(setback_frac, 4),
             "earned_progress_mean": round(float(np.mean(earned)), 4)
@@ -1040,6 +1078,19 @@ def run_grpo_loop(
             knockaway_frac=knockaway_frac,
             config=config,
         )
+        if (
+            config.wave0_mixed_abort is not None
+            and step == 0
+            and mixed_frac < config.wave0_mixed_abort
+        ):
+            # The §3/A3.3 calibration FAIL: at wave 0 the groups do not
+            # carry success variance at the measured base rate — stop
+            # before GPU-hours burn; the group shape (seeds × draws) is
+            # the amendment path, not lr.
+            fired.append(
+                f"wave-0 calibration abort: mixed-group fraction "
+                f"{mixed_frac:.4f} < the {config.wave0_mixed_abort} bar",
+            )
         if (
             config.kl_stop is not None
             and kl_anchor is not None
@@ -1293,6 +1344,23 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=None,
         help="anchor_kl tripwire line (None = record-only, R0's setting)",
     )
+    parser.add_argument(
+        "--knockaway-baseline",
+        default=None,
+        help="violence-wire baseline knockaway_frac: a float, or "
+        "'wave0' to re-base at wave 0's measured rate (R2 A3.4 — the "
+        "config default 10/120 is an R0-A-era er60k pin); omitted = "
+        "the config default",
+    )
+    parser.add_argument(
+        "--wave0-mixed-abort",
+        type=float,
+        default=None,
+        help="stop after wave 0 when the mixed-group fraction (groups "
+        "carrying BOTH successes and failures) is below this bar "
+        "(A3.3 calibration gate; None = record-only, every prior "
+        "run's setting)",
+    )
     parser.add_argument("--microbatch-rows", type=int, default=1)
     parser.add_argument("--eval-every", type=int, default=5)
     parser.add_argument("--save-every", type=int, default=5)
@@ -1307,7 +1375,25 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=None,
         help="step_NNNN.pt from a prior run of the SAME config",
     )
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+    # Normalize --knockaway-baseline at parse time (fail before any
+    # checkpoint load): a float re-pins the violence wire, the literal
+    # 'wave0' re-bases it at wave 0's measured rate (A3.4), anything
+    # else is loud — a typo must not silently ride the R0-era default.
+    if args.knockaway_baseline is not None and args.knockaway_baseline != "wave0":
+        try:
+            args.knockaway_baseline = float(args.knockaway_baseline)
+        except ValueError:
+            parser.error(
+                f"--knockaway-baseline must be a float or 'wave0', "
+                f"got {args.knockaway_baseline!r}",
+            )
+        if not args.knockaway_baseline > 0:
+            parser.error(
+                f"--knockaway-baseline must be > 0 (the wire fires at "
+                f"2x it), got {args.knockaway_baseline}",
+            )
+    return args
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -1351,6 +1437,18 @@ def main(argv: list[str] | None = None) -> int:
     horizon = min(args.execute_horizon, tag_horizon or args.execute_horizon)
     replans = resolve_replans(None, args.episode_seconds, horizon)
 
+    # parse_args normalized --knockaway-baseline to a float or 'wave0'
+    # ('wave0' -> config None = self-baseline; omitted keeps the config
+    # default, read from the field so it stays spelled once).
+    if args.knockaway_baseline is None:
+        knockaway_baseline = GRPOLoopConfig.__dataclass_fields__[
+            "knockaway_baseline"
+        ].default
+    elif args.knockaway_baseline == "wave0":
+        knockaway_baseline = None
+    else:
+        knockaway_baseline = args.knockaway_baseline
+
     config = GRPOLoopConfig(
         out_dir=args.out_dir,
         total_steps=args.total_steps,
@@ -1371,6 +1469,8 @@ def main(argv: list[str] | None = None) -> int:
         kl_beta=args.kl_beta,
         advantage_clip=args.advantage_clip,
         kl_stop=args.kl_stop,
+        knockaway_baseline=knockaway_baseline,
+        wave0_mixed_abort=args.wave0_mixed_abort,
     )
     config.out_dir.mkdir(parents=True, exist_ok=True)
     (config.out_dir / "meta.json").write_text(

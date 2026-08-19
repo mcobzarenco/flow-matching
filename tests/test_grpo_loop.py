@@ -64,8 +64,10 @@ from sim.grpo_loop import (
     group_advantages,
     grpo_train_step,
     load_checkpoint,
+    mixed_group_fraction,
     option_a_row_span,
     paired_bootstrap_ci,
+    parse_args,
     run_grpo_loop,
     save_checkpoint,
     update_tripwires,
@@ -345,6 +347,72 @@ def test_update_tripwires_streaks() -> None:
         assert wires(state, knockaway_frac=0.5) == []
     fired = wires(state, knockaway_frac=0.5)
     assert fired and "violence" in fired[0]
+
+
+def test_update_tripwires_wave0_self_baseline() -> None:
+    """A3.4's ``--knockaway-baseline wave0``: config ``None`` captures
+    the FIRST wave's measured rate as the violence-wire baseline (that
+    wave itself exempt), and the 2x line runs against the capture, not
+    the R0-era 10/120 default."""
+    config = GRPOLoopConfig(
+        out_dir=Path("unused"),
+        total_steps=1,
+        knockaway_baseline=None,
+    )
+
+    def wires(state: TripwireState, frac: float) -> list[str]:
+        return update_tripwires(
+            state,
+            strikes=0,
+            loss_finite=True,
+            median_group_std=0.5,
+            knockaway_frac=frac,
+            config=config,
+        )
+
+    state = TripwireState()
+    # Capture wave: 0.25 (>> 2x the retired 10/120 default) must NOT
+    # start a streak — it IS the baseline.
+    assert wires(state, 0.25) == []
+    assert state.knockaway_baseline == 0.25
+    # 0.3 < 2x 0.25: quiet against the capture (would have streaked
+    # against the old default 0.167).
+    for _ in range(3):
+        assert wires(state, 0.3) == []
+    # > 2x the capture streaks and fires with the captured value named.
+    for _ in range(2):
+        assert wires(state, 0.6) == []
+    fired = wires(state, 0.6)
+    assert fired and "violence" in fired[0] and "0.250" in fired[0]
+    # Other wires still fire ON the capture wave (early return keeps
+    # only the violence check exempt).
+    fresh = TripwireState()
+    fired = update_tripwires(
+        fresh,
+        strikes=1,
+        loss_finite=True,
+        median_group_std=0.5,
+        knockaway_frac=0.1,
+        config=config,
+    )
+    assert fired and "strike" in fired[0]
+    assert fresh.knockaway_baseline == 0.1
+
+
+def test_mixed_group_fraction() -> None:
+    """The A3.3 calibration read: a group is mixed only when it carries
+    BOTH outcomes — all-success and all-failure groups are equally
+    uninformative for the ±10 contrast."""
+    mixed = [episode(1, 0), episode(1, 1, progress=1.0, success=True)]
+    all_fail = [episode(2, 0), episode(2, 1, progress=1.0)]
+    all_win = [
+        episode(3, 0, success=True),
+        episode(3, 1, progress=1.0, success=True),
+    ]
+    assert mixed_group_fraction(mixed) == 1.0
+    assert mixed_group_fraction(all_fail) == 0.0
+    assert mixed_group_fraction(all_win) == 0.0
+    assert mixed_group_fraction(mixed + all_fail + all_win) == pytest.approx(1 / 3)
 
 
 def test_grpo_objective_kl_penalty_math() -> None:
@@ -961,3 +1029,84 @@ def test_loop_violence_tripwire(
     assert result.steps_done == 2
     step_rows = [r for r in heartbeat_rows(config) if "knockaway_frac" in r]
     assert all(r["knockaway_frac"] == 1.0 for r in step_rows)
+
+
+def make_success_mix_wave(tmp_path: Path, *, mixed: bool) -> WaveFn:
+    """Waves whose groups carry (or lack) the success/failure contrast
+    at ZERO reward spread — the z-filter drops every group, so no
+    training rows are needed and the wave-0 calibration read is
+    isolated from the gradient path. Equal rewards by construction:
+    failure at 11 cm progress == success at 1 cm + the +10 bonus."""
+
+    def wave(step: int, seeds: list[int]) -> tuple[list[EpisodeResult], Path]:
+        root = tmp_path / "rows" / f"step_{step:04d}"
+        root.mkdir(parents=True, exist_ok=True)
+        episodes: list[EpisodeResult] = []
+        for seed in seeds:
+            episodes.append(
+                episode(seed, 0, progress=11.0 if mixed else 1.0),
+            )
+            episodes.append(
+                episode(seed, 1, progress=1.0, success=mixed),
+            )
+        return episodes, root
+
+    return wave
+
+
+def test_loop_wave0_mixed_abort(
+    subject: MolmoAct2DiscreteStack,
+    tmp_path: Path,
+) -> None:
+    """The A3.3 wave-0 calibration gate: mixed-group fraction below the
+    bar at wave 0 stops the run; at-or-above it never fires again (the
+    gate is wave-0-only), and the fraction lands in the heartbeat."""
+    named = apply_option_b_freeze(subject)
+    config = loop_config(tmp_path, total_steps=2, wave0_mixed_abort=0.2)
+    result = run_grpo_loop(
+        subject,
+        config,
+        wave_fn=make_success_mix_wave(tmp_path, mixed=False),
+        eval_fn=eval_wave,
+        parameters=named,
+    )
+    assert result.stopped_reason is not None
+    assert "wave-0 calibration abort" in result.stopped_reason
+    assert result.steps_done == 0
+    rows = heartbeat_rows(config)
+    step_rows = [r for r in rows if "mixed_groups_frac" in r]
+    assert step_rows and step_rows[0]["mixed_groups_frac"] == 0.0
+    assert rows[-1]["tripwire"] == [result.stopped_reason]
+
+    config = loop_config(
+        tmp_path,
+        out_dir=tmp_path / "loop-pass",
+        total_steps=2,
+        wave0_mixed_abort=0.2,
+    )
+    result = run_grpo_loop(
+        subject,
+        config,
+        wave_fn=make_success_mix_wave(tmp_path, mixed=True),
+        eval_fn=eval_wave,
+        parameters=named,
+    )
+    assert result.stopped_reason is None and result.steps_done == 2
+    step_rows = [r for r in heartbeat_rows(config) if "mixed_groups_frac" in r]
+    assert [r["mixed_groups_frac"] for r in step_rows] == [1.0, 1.0]
+
+
+def test_parse_args_knockaway_baseline_normalization() -> None:
+    """--knockaway-baseline dies at parse time on a typo (before any
+    checkpoint load) and normalizes to float | 'wave0' | None."""
+    base = ["--checkpoint", "ckpt", "--total-steps", "1"]
+    assert parse_args(base).knockaway_baseline is None
+    assert parse_args([*base, "--knockaway-baseline", "wave0"]).knockaway_baseline == (
+        "wave0"
+    )
+    parsed = parse_args([*base, "--knockaway-baseline", "0.25"])
+    assert parsed.knockaway_baseline == 0.25
+    with pytest.raises(SystemExit):
+        parse_args([*base, "--knockaway-baseline", "wave1"])
+    with pytest.raises(SystemExit):
+        parse_args([*base, "--knockaway-baseline", "0.0"])
