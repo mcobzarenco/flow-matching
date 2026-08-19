@@ -1161,43 +1161,51 @@
 # the next GPU leg is the pdnorm run, owner-gated on the 01:54Z GO
 # ask; CPU queue head is pdnorm-panel-ladder-chart.")
 
-# LIVE — grasp-SFT v2 mixed rerun, per-dataset flow norm (LOCAL H100,
-# unit fontaine-v2-joint-pdnorm, launched 11:02:21Z 08-18; pre-reg
-# 2026-08-18-prereg-grasp-sft-v2-joint-pdnorm.md POSTED pre-launch).
-# Mixed-v2 recipe, single recipe delta --per-dataset-flow-norm, on the
-# discriminator's proven 1-GPU platform (eff-96 = micro-12 x 8 chunks,
-# act-ckpt + offload-optim, seed 0, 3000 steps). Fit smoke 10:52Z
-# green: 62.18 GiB alloc peak (disc measured 62.26), 15.29 s/step,
-# ckpt metadata records q01q99_per_dataset + per_dataset_flow_norm
-# true. Post-merge jsonl vocabulary (loss_action_flow etc.).
+# grasp_sft_v2_joint_1gpu_pdnorm entry PRUNED 00:4xZ 08-19 work
+# session — TRAIN COMPLETE 3000/3000 (~12.9/15 GPU-h, loss 0.355,
+# vram peak 62.21/71, no gate crossings). Final probe eval_chunk_mae
+# 6.1716@3000 (train-probe 6.01): the 2250-2750 elevation did NOT
+# retrace to the 1750-2000 plateau (5.45/5.47) — best-probe save
+# stays step_002000 @ 5.47, best-save flexibility (live since the
+# 2500 confirm) applies at the endpoint choice. Full probe curve:
+# 6.11/5.72/5.62/5.45/5.47/6.59/6.83/6.32/6.17. Endpoint battery
+# below owns the verdict.
+
+# LIVE — pdnorm endpoint battery (LOCAL H100, unit
+# fontaine-pdnorm-endpoint-battery, armed 23:53:21Z 08-18, legs
+# started 00:44:37Z 08-19 after the endpoint; queue
+# pdnorm-endpoint-close; pre-reg
+# 2026-08-18-prereg-grasp-sft-v2-joint-pdnorm.md). Leg 1 sim100 flow
+# on step_003000 (unseen 0-99, euler-10, bf16, --stats-repo-id
+# grasp_demos_v2/merged worn-row rule, --clutter-appearance standins
+# per Amendment 1) -> leg 2 k4l2 panel_v2 (protocol pinned from
+# eval_disc1000_k4l2_panel.sh, npz dump), chained in one unit.
+# NOTE 50-min arm-wait incident 00:4xZ: the session's own
+# foreground wait-loop command line matched the run pgrep pattern
+# and deadlocked the battery's procs-gone wait — killed, battery
+# started clean; class note: never put a run's pgrep pattern in a
+# babysitting shell's own command line.
 [[run]]
-name = "grasp_sft_v2_joint_1gpu_pdnorm"
-kind = "train-jsonl"
+name = "pdnorm_endpoint_battery"
+kind = "progress-log"
 host = "local"
-pgrep = "grasp_sft_v2_joint_1gpu_pdnorm"
+pgrep = "launch_pdnorm_endpoint_battery"
 pgrep_min = 1
 gpu_indices = [0]
-gpu_mem_min_mib = 30000
-jsonl = "/home/ubuntu/checkpoints/finetune/grasp_sft_v2_joint_1gpu_pdnorm/train_log.jsonl"
-total_steps = 3000
-probe_key = "eval_chunk_mae"
-vram_key = "vram_alloc_peak_gib"
-started_utc = "2026-08-18T11:02:21Z"
+gpu_mem_min_mib = 5000
+log = "/home/ubuntu/eval__pdnorm_endpoint_sim100.log"  # leg 1; repoint to eval__grasp_sft_v2_joint_1gpu_pdnorm__step_003000__panel_v2_k4l2_euler10_draws1_stable.log at the panel roll
+progress_re = "seed [0-9]+ replan"
+started_utc = "2026-08-19T00:44:37Z"
 gpu_hours_per_wall_hour = 1.0
-boundary = "3000 steps at ~15.1-15.3 s/step ~= 12.6-12.8 h -> endpoint ETA ~23:4x-00:0xZ (18/19 boundary); saves every 500, probes every 250; step-1000 drift-guard read ~15:1x-15:2xZ (PROVISIONAL for the grasp question); at endpoint: sim100 pair + k4l2 panel legs + pdnorm_panel_ladder_chart --endpoint + truthfit rewear + report (pdnormendpoint preset, embeds automatic) + verdict post"
+boundary = "leg 1 sim100 ~2 GPU-h (disc baseline measured ~2.2) -> ~02:4x-03:0xZ; leg 2 panel ~0.5 (disc r2 measured) -> ~03:2x-03:4xZ; then CPU: sim100_paired_read vs disc1000 11/100, ladder --endpoint restamp, truthfit rewear, pdnormendpoint report, verdict post through the frozen grid"
 anchors = [
-    "drift guard (pre-reg secondary, READ not kill): delta eval(1000-500) <= +0.30 raw units; disc anchor FELL -1.67 over that window on this exact platform+instrument; mixed-v2 8x rose +2.33. A failure is NEW info (mix-specific 1-GPU drift): grasp read stands, endpoint choice re-opens to best-grasping save",
-    "primary read at 3000 is sim100 (100 unseen seeds, --stats-repo-id grasp_demos_v2/merged — the worn-row rule): >=20/100 exonerates the mix, <=10 convicts it, 11-19 ambiguous; baseline demosonly cell 11/100; paired read vs its 100 episodes (sim100_paired_read.py) recorded alongside",
-    "screenwide GPU-h gate 21 (pre-reg): train ~13 + sim100 pair ~4 + panel/probes; the gate below binds the train unit",
-    "first-poll standing checks: util/rate (est ~15.3 s/step healthy) + free -g (host-RAM class: mix adds rig-video decode to batch-96 loader buffers)",
-    "eval-dataset-breakdown on: demos-slice curve directly comparable to the disc curve (same holdout split function); rig slices are first-ever per-dataset-normalized rig numbers",
+    "frozen grid on leg-1 successes/100: >=20 exonerates the mix (bank ckpt same-session), <=10 convicts it (mix = prime suspect), 11-19 ambiguous (per-channel MAE + breakdown + videos to the owner); baseline demosonly cell 11/100; probe@3000 6.17 vs best-save 2000@5.47 — flexibility live",
+    "panel guard (tertiary): endpoint vs disc-1000 banked npz on shared frames, worse-by > +0.05 CI-excl-0 fails; interpretation anchors 27.40 re-worn disc / 27.14 released re-worn / 25.15 midpoint null / 8.37 state-copy",
+    "screenwide GPU-h gate 21: train ~12.9 + baseline legs + these ~2.5",
 ]
 [[run.gates]]
-kind = "vram_max_gib"
-value = 71.0
-[[run.gates]]
 kind = "gpu_hours_max"
-value = 15.0
+value = 5.0
 
 # disc1000_k4l2_panel entry PRUNED 05:1xZ 08-18 work session —
 # COMPLETE 04:57Z rc 0 (r2, ~0.5/3 GPU-h; attempt 1 killed 4.7 min in
