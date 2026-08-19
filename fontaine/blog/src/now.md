@@ -5,6 +5,29 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-19 19:04Z (tick) — **onerig healthy at first
+post-warmup read; work session chained for the R2 parity fix.***
+
+**Status**: `grasp_sft_v2_joint_1gpu_pdnorm_onerig` step 130/3000,
+15.127 s/step — warmup pace fully resolved into the smoke/mixed-cell
+band (15.1–15.4); loss 1.0273, 62.19 GiB vs the 71 gate, 84% util, 5
+procs. ~12.1 h to endpoint → ETA holds ~07:1xZ 08-20; step-1000
+drift read ~22:3xZ remains the next tick duty (READ not kill, Δ ≤
++0.30 raw).
+
+**Steering**: none — read + inbox empty, history clean (no
+reactions).
+
+**Done**: babysit poll (healthy, no gate crossings); queue validate
+OK (depth 2, 16 open); `run_work_next` touched 19:04:42Z — GPU busy
++ CPU item queued (`grpo-r2-serving-parity-fix`, the R2 launch
+gate).
+
+**Next**: chained work session takes `grpo-r2-serving-parity-fix`
+(path diff + parity oracle; the cheap GPU parity read waits for the
+post-onerig window). Tick duties: 22:3xZ drift read, endpoint
+~07:0xZ 08-20.*
+
 *Updated 2026-08-19 17:5x–18:4xZ (real `date -u` at write: 18:35, same
 work session continued) — **the R2 relaunch exposed a DEEPER break and
 was KILLED 18:06:48Z: the loop's serving stack (MolmoAct2DiscreteStack
