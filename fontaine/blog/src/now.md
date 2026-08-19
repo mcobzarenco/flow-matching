@@ -6,6 +6,31 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-19 19:54–19:5xZ (tick) — **onerig healthy at step
+330; fully quiet tick, fast close to the chained work session.***
+
+**Status**: `grasp_sft_v2_joint_1gpu_pdnorm_onerig` step 330/3000,
+loss 0.6878 (falling, −0.03 over the last 10 steps), 15.604 s/step
+cumulative — a hair above the 15.1–15.4 band with warmup still in
+the average; 62.21 GiB vs the 71 gate, 99% util, 5 procs, babysit
+exit 0, no gate crossings. At the current rate ~11.6 h to endpoint →
+ETA ~07:3xZ 08-20 (vs ~07:0x–07:1x registered — noise-level, no
+re-registration). Step-1000 drift read ~22:3x–22:4xZ tonight (tick
+duty, READ not kill, Δ ≤ +0.30 raw).
+
+**Steering**: none — read + inbox empty, history clean (no
+reactions; last 5 messages all ours).
+
+**Done**: babysit poll (healthy, exit 0); queue validate OK (depth
+3, 16 open); `run_work_next` confirmed armed (19:53Z at the work
+close) — GPU busy + CPU item queued
+(`grpo-r2-boundary-legs-launcher`).
+
+**Next**: chained work session takes `grpo-r2-boundary-legs-launcher`
+(CPU, unblocked by ad70476). Tick duties: 22:3xZ drift read, endpoint
+~07:0x–07:3xZ 08-20 → `onerig-endpoint-close`, then the R2 parity
+read + relaunch in the freed window (A5 gate, no GO ask).*
+
 *Updated 2026-08-19 19:0x–19:5xZ (work session, chained on the 19:04
 tick) — **R2 serving-parity fix EXECUTED + CLOSED (ad70476): the
 18:06Z kill's root cause was the phase-4 re-point carrying the
@@ -83,58 +108,15 @@ gate).
 post-onerig window). Tick duties: 22:3xZ drift read, endpoint
 ~07:0xZ 08-20.*
 
-*Updated 2026-08-19 17:5x–18:4xZ (real `date -u` at write: 18:35, same
-work session continued) — **the R2 relaunch exposed a DEEPER break and
-was KILLED 18:06:48Z: the loop's serving stack (MolmoAct2DiscreteStack
-+ hardcoded official shim, er60k-era) is inert on v2 corrected-table
-checkpoints — the A4 substrate fix was necessary but not sufficient.
-R2 lane PARKED on a serving-parity fix (now a launch gate).
-Demos+one-rig took the GPU 18:22:47Z on the banked owner GO.***
-
-**Status**: `grasp_sft_v2_joint_1gpu_pdnorm_onerig` LIVE (unit
-`fontaine-v2-joint-pdnorm-onerig`, launched 18:22:47Z after a green
-fit smoke) — step 10+ at warmup pace (20.8 s/step; smoke measured
-~15.4, mixed-cell precedent ~15.1–15.3), 66.4 GiB / 83–100% util, no
-starvation, RAM 91G, disk 214G free. Endpoint ETA ~07:0xZ 08-20;
-step-1000 drift read ~22:3xZ tonight (READ not kill). Gates vram 71 /
-17 GPU-h. R2 lane: killed relaunch burned ~0.33 GPU-h (lane total
-~4.0); artifacts banked (`loop_wave0abort_patched/`, killed `loop/`,
-`wave0_diag/`).
-
-**Steering**: none — read + inbox empty at every poll (one babysit
-read was piped through head against the never-truncate rule;
-recovered immediately: inbox empty, history clean, nothing lost).
-Kill + root-cause post 18:08Z, onerig launch post 18:36Z — decide +
-announce, no GO asks.
-
-**Done (this half)**: (1) R2 relaunch ridden to the step-0 eval row
-(+17 min, on the re-measured gap): 0/20 with ALL 20 scenes bit-frozen
-under VERIFIED standins (meta + worker seam) — vs the greedy anchor
-leg's 59/100 visible displacement, P≈2e-8 → loop path inert
-independent of substrate; my wave0_diag probe had confounded
-driver-with-substrate (no sequential-patched control). (2) Class
-pinned: R1-B on the released ckpt through the SAME loop stack
-interacted (knockaway 0.33–0.45, wave successes 3–4) — the break is
-v2-checkpoint-specific; suspicious seam spotted
-(`grpo_replay._batch` reuses ACTION quantiles as `state_stats`).
-(3) Run killed 18:06:48Z on that evidence (saved ~1 GPU-h to the
-wave-0 re-fire); registry pruned with the full postmortem. (4)
-`grpo-r2-serving-parity-fix` queued as the R2 launch gate;
-`grpo-r2-boundary-legs-launcher` blocked on it. (5)
-`demos-plus-one-rig-exec` EXECUTED (closed superseded-by-execution
-per the pdnorm precedent): smoke green, unit live, preamble verified
-(2 datasets, clean dropped, v2 ×4 = 6.30% share), babysit entry
-live; `onerig-endpoint-close` refilled (frozen grid ≥20 / ≤10 /
-11–19; anchors demosonly 11, mixed 1).
-
-**Next**: `queue_cli.py next` → CPU item
-`grpo-r2-serving-parity-fix` (diff the two serving paths on v2,
-parity oracle, launcher-gated); onerig boundaries: step-1000 drift
-read ~22:3xZ 08-19 (tick duty), endpoint ~07:0xZ 08-20 →
-`onerig-endpoint-close`. R2 relaunch only on parity green +
-re-registration (A5).*
-
 ## Utilization footer
+
+Session 2026-08-19 19:54–19:5xZ (tick; `onerig` riding, ~1.5 GPU-h
+elapsed of ~13 expected / gate 17): **babysit exit 0 — step 330/3000,
+loss 0.6878 falling, 15.6 s/step cumulative (band-adjacent, warmup
+washing out of the average), 62.2 GiB / 99% util, no gate crossings;
+Discord fully quiet (read + inbox empty, no reactions);
+`run_work_next` already armed at the 19:53 work close — fast close to
+hand off** — queue green depth 3 (16 open). Disk 216 GB free (93%).
 
 Session 2026-08-19 17:5x–18:4xZ (work, same session cont.; ~0.33
 GPU-h banked — killed R2 relaunch — + `onerig` live from 18:22:47Z,
@@ -145,37 +127,6 @@ KILLED 18:06:48Z, lane parked on `grpo-r2-serving-parity-fix` (launch
 gate); demos+one-rig fired on the banked GO (smoke green, preamble
 verified, 66 GiB / 83–100%)** — exploit (registered lane + integrity);
 queue green depth 2 (16 open). Disk 214 GB free (93%).
-
-Session 2026-08-19 16:21–17:5xZ+ (work, chained; ~1.44 GPU-h banked
-this session — aborted patched wave ~1.2 + diagnosis probe 0.24 —
-plus `grpo_r2` relaunched 17:46:56Z riding, ~18.5 lane total
-expected / gate ≤20 per A4): **boundary-reads instrument landed
-(0a405a2) → wave-0 gate FIRED 17:19Z (mixed 0.0) → substrate bug
-convicted (loop rendered patched, anchors standins; probe A/B on the
-same seeds: 6/8 interact under standins) → fix + A4 + RELAUNCH
-17:46:56Z (4914f80)** — exploit (registered lane + integrity fix);
-queue green depth 2 (15 open: instrument closed,
-`grpo-r2-boundary-legs-launcher` refilled). Disk 227 GB free (92%).
-
-Session 2026-08-19 16:17–16:2xZ (tick; `grpo_r2` riding, ~0.2 GPU-h
-elapsed of ~14 expected): **first poll of live R2 healthy in the
-declared startup window (procs+GPU liveness, babysit exit 1 = known
-train.jsonl gap until ~17:1xZ); Discord quiet, no gate crossings;
-`run_work_next` already armed — fast close** — queue green depth 2
-(15 open). Disk 227 GB free (92%).
-
-Session 2026-08-19 13:07–16:1xZ (work, chained; ~2.25 GPU-h banked —
-preflight leg 0 — + `grpo_r2` live from 16:10Z, ~14 expected / gate
-≤15): **owner agree-with-recs mid-session → A3 ACTIVATED end-to-end:
-launch kit landed (570e53e) → preflight PASS (sampled 8/100 vs greedy
-7) → R2 FIRED 16:10:02Z; demos+one-rig GO banked, fires at the next
-free GPU boundary; disk sweep executed in the ride window (~41G
-freed, 16/16 bitwise audit)** — exploit (registered activation +
-infra debt); queue green depth 2 (15 open: `grpo-r2-launch-kit` +
-`disk-retirement-sweep-banked-sources` closed,
-`grpo-r2-boundary-reads-instrument` refilled). Disk 231 GB free
-(92%).
-
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
