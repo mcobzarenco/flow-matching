@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-19T12:35:04Z
+**Updated:** 2026-08-19T12:55:13Z
 
-**Depth call:** post token-probe-html-gallery close 12:0xZ 08-19: 2 queued CPU-executable (flow-train-memorization-panel refill, disk-retirement-sweep-banked-sources); demos-plus-one-rig-exec owner-gated, grpo-r2-post-sft owner-band (activation recommendation posted with receipts); H100 free pending the owner isolation call
+**Depth call:** post grpo-r2-activation-amendment-draft close 12:5xZ 08-19: 2 queued CPU-executable (grpo-r2-launch-kit refill, disk-retirement-sweep-banked-sources); demos-plus-one-rig-exec owner-gated, grpo-r2-post-sft owner-band (A3 amendment now frozen, ACTIVATE executes mechanically); H100 free pending the owner isolation call
 
-**16 open** (Live 0 · Queued 2 · Blocked 14 · Done 254)
+**16 open** (Live 0 · Queued 2 · Blocked 14 · Done 255)
 
 ## 🔴 Live (0)
 
@@ -32,15 +32,15 @@ Disk-retirement sweep of locally-redundant banked sources (extends the hf-evacua
 
 ---
 
-**`grpo-r2-activation-amendment-draft`** · `cpu`
+**`grpo-r2-launch-kit`** · `cpu`
 
-GRPO R2 activation amendment DRAFT (CPU; makes the pending owner R2-band call immediately actionable): freeze the R2-from-7% amendment as a blog draft - init checkpoint fontaine_grasp_sft_joint_corrected/step_002000 token head (7…
+GRPO R2 launch kit (CPU, oracle-gated, zero behavior change; makes A3 ACTIVATE one-command): (1) expose --knockaway-baseline on sim/grpo_loop.py (config field exists, flag does not; A3.4 re-pin needs it) + wire --train-seed-base…
 
-**boundary:** Queued 12:3xZ 08-19 work session (charter section 4 refill at the flow-train-memorization-panel close; depth-2 restore).
+**boundary:** Queued 12:5xZ 08-19 work session (charter section 4 refill at the grpo-r2-activation-amendment-draft close; depth-2 restore alongside disk-retirement-sweep-banked-sources). · [pre-reg](posts/2026-08-15-prereg-grpo-r2-post-sft.md)
 
 <details><summary>full record</summary>
 
-GRPO R2 activation amendment DRAFT (CPU; makes the pending owner R2-band call immediately actionable): freeze the R2-from-7% amendment as a blog draft - init checkpoint fontaine_grasp_sft_joint_corrected/step_002000 token head (7/100 greedy, B section 3 OWNER_DECISION band), decode T=1.0 sampled draws (R2 samples; the decode diagnosis shows greedy magnitude attenuation, not calibration - the exact failure sampling addresses), reward/steps/batch from the R1 recipe class, frozen gates + anchors (token 7, flow sibling 44, token_base 0), GPU-h budget + kill rules. POSTING and launch pend the owner band reply (registered owner call, 11:19Z 08-19 summary ...522815); drafting is unconditional CPU work so the reply activates same-session.
+GRPO R2 launch kit (CPU, oracle-gated, zero behavior change; makes A3 ACTIVATE one-command): (1) expose --knockaway-baseline on sim/grpo_loop.py (config field exists, flag does not; A3.4 re-pin needs it) + wire --train-seed-base 2000 into the staged command; (2) preflight leg-0 runner: single-draw sampled T=1.0 sim100 on the pinned step_002000_v2 base through the probe driver, with the F-premise abort read (sampled vs greedy 7) emitted as a machine-readable verdict; (3) launcher script staged + full-parse green (detached systemd-run unit, babysit.toml entry template, out-dir + heartbeat paths pinned); (4) wave-0 mixed-fraction calibration read mechanized (abort &lt;20% per A3.3 - check whether min_group_std/dead-group accounting already surfaces it or a small emit is needed). CPU oracles per landing, check.py green; NO launch, NO GPU - execution of the kit stays unconditional CPU work, firing it pends the owner ACTIVATE.
 
 </details>
 
@@ -246,9 +246,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (254)
+## ✅ Done (255)
 
 *closed — the full record stays in each fold*
+
+**`grpo-r2-activation-amendment-draft`** · `cpu`
+
+GRPO R2 activation amendment DRAFT (CPU; makes the pending owner R2-band call immediately actionable): freeze the R2-from-7% amendment as a blog draft - init checkpoint fontaine_grasp_sft_joint_corrected/step_002000 token head (7…
+
+**boundary:** Queued 12:3xZ 08-19 work session (charter section 4 refill at the flow-train-memorization-panel close; depth-2 restore). ||| EXECUTED + CLOSED 12:5xZ 08-19 work session: Amendment A3 (section 9) frozen on posts/2026-08-15-prereg-grpo-r2-post-sft.md - the full ACTIVATE spec: pinned base checkpoints/finetune/fontaine_grasp_sft_joint_corrected/step_002000_v2 (schema-2, load seam code-verified via MolmoAct2DiscreteStack.load/load_vla, joint family carries the format-6 discrete decoder - no conversion), recipe unchanged from section 2 + A2 (v2/v1 reward split, 8x8 T=1.0, clip-higher [0.8,1.28], lr 1e-6 / 3e-7 fallback, kl_beta 1.0, kl_stop 0.06, option-B surface), TWO new registered gates replacing the &gt;=20 bar (preflight F-premise: sampled T=1.0 sim100 on the base vs greedy 7, materially below -&gt; abort ~1.3 GPU-h in; wave-0 mixed &lt;20% abort, predicted ~44% at p=0.07), NEW flow-head regression boundary leg (shared trunk, option-B text updates move the flow read; vs 44 anchor), two code-audit re-pins (--train-seed-base 2000: loop default 1000 collides with the stage-B band 1000-1099; knockaway wire re-baselines at wave-0 measured rate - config default 10/120 is an R0-era er60k pin, this base's greedy read measured 25/100 knock-aways -&gt; instrument delta: expose --knockaway-baseline), budget re-priced ~14 gate &lt;=15 (supersedes &lt;=12; three boundary/preflight legs enumerated). check.py 1066 green. POSTING + launch still pend the owner band reply per the registered call - the draft is on the blog, in-channel activation post fires on ACTIVATE.
+
+<details><summary>full record</summary>
+
+GRPO R2 activation amendment DRAFT (CPU; makes the pending owner R2-band call immediately actionable): freeze the R2-from-7% amendment as a blog draft - init checkpoint fontaine_grasp_sft_joint_corrected/step_002000 token head (7/100 greedy, B section 3 OWNER_DECISION band), decode T=1.0 sampled draws (R2 samples; the decode diagnosis shows greedy magnitude attenuation, not calibration - the exact failure sampling addresses), reward/steps/batch from the R1 recipe class, frozen gates + anchors (token 7, flow sibling 44, token_base 0), GPU-h budget + kill rules. POSTING and launch pend the owner band reply (registered owner call, 11:19Z 08-19 summary ...522815); drafting is unconditional CPU work so the reply activates same-session.
+
+</details>
+
+---
 
 **`hf-evacuation-audit-v2-fleet`** · `cpu`
 

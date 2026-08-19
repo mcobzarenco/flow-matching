@@ -217,3 +217,154 @@ this amendment binds the two:
    belt, lr proposal + fallback, ≤ 12 gate — all stand. §5's pace
    anchor (R1-B ~0.98 GPU-h/step) remains the estimate; it was
    measured on this same discrete stack.
+
+## §9 Amendment A3 (DRAFT, 2026-08-19 12:5xZ) — activation from 7%: the band amendment
+
+*Status: **DRAFT — frozen, not active.** The A2 bar read out in the
+5–19 owner-decision band (token unseen **7/100** greedy, B §3), so
+activation is a registered owner call (11:19Z 08-19 summary post
+…522815, rec **AMEND + ACTIVATE**). This amendment freezes exactly
+what "ACTIVATE" would run, so the reply executes mechanically
+same-session. `HOLD-BAND` routes to the token-SFT iterate-once arm
+per the registered band; `PARK` parks the lane. Nothing below
+launches before that reply.*
+
+**Plain words.** The robot's token-based control passed only 7 of 100
+test scenarios — below the 20 we said reinforcement learning needs.
+But the autopsy of those failures showed something specific: the
+policy isn't confused, it's *timid*. It reaches the boat, closes the
+gripper, and then moves it at less than half the speed its
+flow-based sibling manages, so time runs out. That timidity is a
+known artifact of always picking the single most likely action
+("greedy" decoding). Reinforcement learning as we run it doesn't use
+greedy decoding — it samples, which is precisely the knob that
+relieves timidity — and its reward directly pays for finishing. So
+we propose to amend the entry bar and run RL from the 7% policy,
+with two cheap pre-checks that abort the run early if this reasoning
+is wrong.
+
+### A3.1 What the band said, what was measured
+
+A2.1's activation bar: unseen sim100 **≥ 20/100 greedy** on the head
+GRPO trains. Measured (route-C joint `step_002000`, token head,
+probe of 08-18/19): **7/100** — band 5–19 → owner decision. Frozen
+anchors for every read below: **token greedy 7/100** (success seeds
+34, 35, 63, 68, 71, 91, 96), **flow sibling 44/100** (same trunk,
+same scenes), **token_base 0/100** (released model, SFT delta +7).
+
+### A3.2 The case for amending (the [decode
+diagnosis](https://mcobzarenco-fontaine-reports.static.hf.space/eval__grasp_sft_joint_step2000__token_unseen100.html),
+frozen in `analysis__token_decode_diagnosis.json`)
+
+1. **Not decode collapse**: 0/300 frozen episodes across all three
+   legs (motion instrument; min mean motion 1.41), no stereotypy.
+   The head produces coherent, scene-directed trajectories.
+2. **Greedy magnitude attenuation**: funnel touch→pinch→success
+   **60→22→7** vs flow **91→59→44** on the same trunk (base 7→0→0);
+   conversion losses at both hops (touch→pinch 0.37 vs 0.65,
+   pinch→success 0.32 vs 0.75); carry speed **0.81 vs 2.00 cm/s**
+   (ratio 0.405), 2 timeouts still holding the boat (flow 0);
+   reach envelope truncated — 1/14 touch at 11–13 cm spawn, **zero
+   successes past 10 cm** (flow: 17 there). The failures are
+   under-magnitude versions of the right behavior.
+3. **Iterate-once re-buys the wrong thing**: CE owned all 2000
+   route-C trunk updates (joint objective, λ=1.0) — the token head
+   is not undertrained by omission. Another token-SFT pass extends
+   reach; it is not a targeted fix for greedy-mean attenuation.
+4. **R2's pressure lands exactly on the failure**: group rollouts
+   sample at **T=1.0** (greedy never appears in training), and the
+   +10 success term pays directly for completing the carry the
+   greedy read leaves unfinished. Context, recorded as a rhyme and
+   not evidence (different trunk, different metric): the #19 dT
+   record measured AR competence monotone in T
+   (6.50/6.57/6.78/7.18 at T=0.5/0.7/1.0/1.3, er60k).
+5. **The §1 arithmetic at p = 0.07**: mixed-group probability
+   1−(1−p)⁸−p⁸ ≈ **44%** of groups carry a ±10 contrast — half the
+   ~83% at the gate minimum, but ~4 in 10 groups informative vs
+   ~34% at R1-B's measured 0.05 base, and the sampled rate should
+   sit *above* the greedy 7% if point 2 is right. The signal is
+   plausibly there; the two gates below make that a measurement
+   instead of a hope.
+
+### A3.3 Registered gates that replace the ≥ 20 bar
+
+- **Preflight leg 0 (F-premise, ~1.3 GPU-h)**: single-draw sampled
+  T=1.0 sim100 (seeds 0–99) on the pinned base, before any
+  training. Read: sampled count vs greedy 7. Materially BELOW →
+  the relief premise is wrong → **abort the run**, route to
+  iterate-once, bank the read. At-or-above → premise holds
+  first-contact; the sampled count becomes the recorded
+  training-decode competence floor.
+- **Wave-0 calibration bar (from §3, re-priced)**: fraction of
+  groups mixed, predicted ≈ 44% at the greedy floor. **Mixed < 20%
+  → abort** before GPU-hours burn; the group shape is the
+  amendment path, not lr.
+
+### A3.4 Frozen run spec (deltas vs §2 + A2 only)
+
+- **Base (pinned)**:
+  `checkpoints/finetune/fontaine_grasp_sft_joint_corrected/step_002000_v2`
+  — schema-2 VLA dir, family joint, corrected-table stats
+  first-class in `metadata.json` (A2.2/A2.3 satisfied);
+  HF-recoverable bitwise per the [08-19 evacuation
+  audit](2026-08-19-hf-evacuation-audit-v2-fleet.md). Load seam
+  verified in code this session: `MolmoAct2DiscreteStack.load` →
+  `read_metadata` + `load_vla`; the joint family carries the
+  format-6 discrete decoder — no conversion step needed.
+- **Recipe unchanged** (§2 + A2.4): composite_reward_v2 trained-on /
+  v1 held-out, 8 seeds × 8 draws T=1.0, advantage clip ±2.0,
+  clip-higher [0.8, 1.28], lr **1e-6** primary / 3e-7 registered
+  fallback, kl_beta 1.0 vs the frozen base anchor, kl_stop 0.06,
+  option-B trainable surface (text stack fp32, vision frozen bf16).
+- **Seeds (re-pinned)**: `--train-seed-base 2000` — the loop default
+  1000 now collides with the stage-B collection band 1000–1099
+  (demo corpus + measured train-probe band). Eval holdout 0–99
+  never trained on; in-loop 20-seed eval band 200–219 stays the
+  loop default, record-only trend.
+- **Knockaway wire (re-pinned)**: the config default baseline
+  10/120 ≈ 0.083 is an R0-A-era er60k measurement; this base's
+  greedy unseen read measured 25/100 knock-aways, so the old 2×
+  line would fire spuriously at wave 0. Re-pin: baseline = the
+  wave-0 measured knockaway_frac, wire at 2× ×3 unchanged.
+  Instrument delta: expose `--knockaway-baseline` (config field
+  exists; flag does not). setback_frac stays record-only.
+- **NEW registered boundary read — flow-head regression leg
+  (~1.3 GPU-h)**: the trunk is shared and option B trains the text
+  stack, so GRPO moves the flow head too. Flow unseen100 (euler-10)
+  at the boundary vs the 44 anchor, record + judge: material
+  regression is F-regression evidence even if the token side
+  improves — the joint checkpoint's other head is not free.
+- **PRIMARY (per §3, comparator re-based)**: boundary greedy sim100
+  vs **7/100**, paired per-seed exact test (greedy stays the
+  serving convention; RL pressure is sampled, the claim lands on
+  the serving read). Record-only sibling: boundary sampled T=1.0
+  sim100 vs preflight leg 0 (prices decode-gap movement).
+
+### A3.5 Budget (re-priced) and kill rules
+
+Pace anchor ~0.98 GPU-h/step (R1-B, same stack class, per-step
+20-seed eval included). **10 steps ≈ ~10 GPU-h + preflight leg 0
+~1.3 + boundary token sim100 ~1.3 + flow regression leg ~1.3 ≈ ~14
+expected, gate ≤ 15** (supersedes §5's ≤ 12, which priced no
+boundary legs). Mid-ladder read at wave 5, ~30-min babysit cadence,
+detached unit + registry entry at launch. Kill rules: preflight
+F-premise abort, wave-0 mixed < 20% abort, the full §2 tripwire
+belt (knockaway wire re-pinned per A3.4), kl_stop 0.06, exit-3
+self-stops armed.
+
+### A3.6 Falsifiers (unchanged + one new)
+
+F-flat, F-instability, F-regression stand as §4 wrote them —
+F-regression now explicitly covers the flow-head leg. NEW
+**F-premise**: preflight sampled materially below greedy 7 — the
+attenuation-relief story is wrong, run aborts unstarted, the read
+banks against the diagnosis.
+
+### A3.7 Activation interface
+
+Owner reply `2 ACTIVATE` → same-session: §6 finalization checklist
+(HEAD re-pin, receipts, objection window noted as satisfied by this
+frozen page + the in-channel summary), launcher staged, launch at
+the next free boundary (H100 idle at draft time). `2 HOLD-BAND` →
+token-SFT iterate-once arm per the registered band, this page holds.
+`2 PARK` → the lane parks with the read banked.
