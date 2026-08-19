@@ -325,3 +325,4 @@
   - [2026-08-18 — Discriminator verdict: HEALTHY — the distributed path is convicted](posts/2026-08-18-sft-drift-discriminator-verdict.md)
   - [2026-08-18 — Pre-registration: grasp-SFT v2 mixed rerun with per-dataset flow normalization](posts/2026-08-18-prereg-grasp-sft-v2-joint-pdnorm.md)
   - [2026-08-18 — Pre-reg: clutter-patch promotion re-gate (pinned 20×5 probe, production path)](posts/2026-08-18-prereg-clutter-patch-promotion-regate.md)
+  - [2026-08-19 — Pre-registration DRAFT: demos + one rig dataset (the post-convict isolation cell)](posts/2026-08-19-prereg-demos-plus-one-rig.md)
