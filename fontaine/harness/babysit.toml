@@ -1193,13 +1193,13 @@ pgrep = "launch_pdnorm_endpoint_battery"
 pgrep_min = 1
 gpu_indices = [0]
 gpu_mem_min_mib = 5000
-log = "/home/ubuntu/eval__pdnorm_endpoint_sim100.log"  # leg 1; repoint to eval__grasp_sft_v2_joint_1gpu_pdnorm__step_003000__panel_v2_k4l2_euler10_draws1_stable.log at the panel roll
-progress_re = "seed [0-9]+ replan"
+log = "/home/ubuntu/eval__grasp_sft_v2_joint_1gpu_pdnorm__step_003000__panel_v2_k4l2_euler10_draws1_stable.log"  # leg 2 (panel), rolled 03:17:39Z; leg-1 sim100 COMPLETE 1/100 (seed 29 tick 247) -> CONVICT per frozen grid
+progress_re = "frames|batch|seed [0-9]+ replan"
 started_utc = "2026-08-19T00:44:37Z"
 gpu_hours_per_wall_hour = 1.0
-boundary = "leg 1 sim100 ~2 GPU-h (disc baseline measured ~2.2) -> ~02:4x-03:0xZ; leg 2 panel ~0.5 (disc r2 measured) -> ~03:2x-03:4xZ; then CPU: sim100_paired_read vs disc1000 11/100, ladder --endpoint restamp, truthfit rewear, pdnormendpoint report, verdict post through the frozen grid"
+boundary = "leg 1 sim100 COMPLETE 03:17:39Z: 1/100 (seed 29 tick 247) = CONVICT (<=10) per frozen grid; leg 2 panel ~0.5 GPU-h (disc r2 measured) -> ~03:4x-04:0xZ; first-poll starvation check owed (disc r2 profile: batch-32/workers-20, 96% util, ~660 f/min); then CPU verdict battery (run_work_next armed 03:2xZ): sim100_paired_read vs disc1000 11/100, ladder --endpoint restamp, truthfit rewear, pdnormendpoint report, verdict post"
 anchors = [
-    "frozen grid on leg-1 successes/100: >=20 exonerates the mix (bank ckpt same-session), <=10 convicts it (mix = prime suspect), 11-19 ambiguous (per-channel MAE + breakdown + videos to the owner); baseline demosonly cell 11/100; probe@3000 6.17 vs best-save 2000@5.47 — flexibility live",
+    "frozen grid READ TAKEN 03:17-03:2xZ: leg-1 1/100 <=10 -> CONVICTS the mix (mix = prime suspect); baseline demosonly cell 11/100; probe@3000 6.17 vs best-save 2000@5.47 — flexibility live for the verdict battery",
     "panel guard (tertiary): endpoint vs disc-1000 banked npz on shared frames, worse-by > +0.05 CI-excl-0 fails; interpretation anchors 27.40 re-worn disc / 27.14 released re-worn / 25.15 midpoint null / 8.37 state-copy",
     "screenwide GPU-h gate 21: train ~12.9 + baseline legs + these ~2.5",
 ]
