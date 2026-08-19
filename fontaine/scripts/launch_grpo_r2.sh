@@ -5,10 +5,16 @@
 # (A3.7); `parse-check` is the CPU-only oracle mode.
 #
 # Usage:
-#   ./launch_grpo_r2.sh parse-check   # CPU: full-parse the frozen argv + emit the babysit entry template (no GPU, no load)
+#   ./launch_grpo_r2.sh parse-check   # CPU: full-parse the frozen argv (loop + boundary legs) + run the boundary verdict's provenance guards on the synthesized configs + emit the babysit entry template (no GPU, no load)
 #   ./launch_grpo_r2.sh parity        # GPU ~0.7 h (A5 LAUNCH GATE): seeds 200-219 greedy through BOTH serving paths (loop stack --joint-frame rig vs BijouPolicy --serve-head ar) -> parity verdict json (detached unit)
 #   ./launch_grpo_r2.sh preflight     # GPU ~1.3 h: leg-0 sampled T=1.0 sim100 on the pinned base -> F-premise verdict json (detached unit)
 #   ./launch_grpo_r2.sh launch        # GPU ~10 h: the A3.4 run — REFUSES unless the preflight verdict is PASS (BAND needs FORCE_BAND=1 after a decision post) AND the A5 parity verdict is PASS
+#   ./launch_grpo_r2.sh boundary <endpoint-dir | step_NNNN.pt>
+#                                     # GPU ~3.9 h (A3.4/A3.5 endpoint): the three boundary legs sequentially as ONE detached
+#                                     # unit — greedy token sim100 + sampled T=1.0 sim100 + flow unseen100 euler-10, seeds 0-99,
+#                                     # anchors' exact driver — chaining grpo_r2_boundary_verdict. A loop overlay .pt is
+#                                     # materialized onto the pinned base first (CPU, grpo_r2_materialize_endpoint).
+#                                     # REFUSES while unit grpo-r2 is alive, without a PASS preflight verdict, or on the base dir.
 #
 # Frozen pins (A3.4), spelled once in the ARGS array below:
 #   base step_002000_v2 (schema-2 joint, corrected-table stats);
@@ -26,7 +32,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 
-MODE="${1:?usage: launch_grpo_r2.sh parse-check|preflight|launch}"
+MODE="${1:?usage: launch_grpo_r2.sh parse-check|parity|preflight|launch|boundary}"
 
 CKPT="$HOME/checkpoints/finetune/fontaine_grasp_sft_joint_corrected/step_002000_v2"
 OUT=outputs/sim/grpo_r2
@@ -36,6 +42,35 @@ PARITY_DISCRETE_JSON="$OUT/parity/discrete_leg.json"
 PARITY_ANCHOR_JSON="$OUT/parity/anchor_leg.json"
 PARITY_VERDICT_JSON="$OUT/parity/parity_verdict.json"
 HEARTBEAT="$OUT/loop/train.jsonl"
+BOUNDARY_DIR="$OUT/boundary"
+BOUNDARY_GREEDY_JSON="$BOUNDARY_DIR/token_greedy_sim100.json"
+BOUNDARY_SAMPLED_JSON="$BOUNDARY_DIR/sampled_t1_sim100.json"
+BOUNDARY_FLOW_JSON="$BOUNDARY_DIR/flow_unseen100.json"
+BOUNDARY_VERDICT_JSON="$BOUNDARY_DIR/boundary_verdict.json"
+
+# The A3.4 boundary legs — the ANCHORS' exact driver + substrate pins
+# (joint_probes/token_unseen.json + flow_unseen.json configs, receipts
+# in-repo): sim.rollout_sim (the BijouPolicy anchor path — the A5
+# parity gate is exactly what licenses serving the endpoint through
+# it), seeds 0-99, 30 s episodes, horizon 30, bf16 decoder, standins
+# substrate (the registration substrate; 'patched' became the driver
+# default 08-18). NO --stats-repo-id: the queue item's spelled pin
+# (so101_pick_place_v2) is a title drift — the anchors wore that row on
+# the RETIRED step_002000 dir; the v2 re-derivation carries the
+# corrected table as its merged row (per-dataset table holds only the
+# demos row), so the explicit pin would be REFUSED at load and the
+# default lookup (v2 row if carried, else merged) IS the lane's
+# registered serving convention (the preflight PASS ran exactly this,
+# worn_row "<merged-table>").
+BOUNDARY_COMMON=(
+    --seed 0 --num-seeds 100
+    --episode-seconds 30 --execute-horizon 30
+    --flow-decoder-dtype bfloat16
+    --clutter-appearance standins
+)
+BOUNDARY_GREEDY=(--serve-head ar)                     # PRIMARY: greedy vs 7/100, paired exact
+BOUNDARY_SAMPLED=(--serve-head ar --ar-temperature 1.0)  # record-only vs the preflight floor
+BOUNDARY_FLOW=(--method euler --sample-steps 10)      # F-regression leg vs 44/100
 
 # The A3.4 frozen argv — ONE spelling, parsed by parse-check and fired
 # by launch. --eval-every 5 / --save-every 5 are the loop defaults,
@@ -121,6 +156,80 @@ assert args.joint_frame == "rig", args.joint_frame
 print("parse-check GREEN:", vars(args))
 PY
     echo
+    echo "=== parse-check: the boundary legs through sim.rollout_sim.parse_args + the verdict's provenance guards ==="
+    # The launcher's contract is to NEVER produce a wrong-leg json: the
+    # exact argv the boundary mode fires is parsed by the driver's own
+    # parser, synthesized into the config dicts the driver records, and
+    # pushed through grpo_r2_boundary_verdict's guard functions — the
+    # legs and the verdict cannot drift apart silently.
+    uv run python - \
+        --checkpoint "$BOUNDARY_DIR/endpoint_stub" "${BOUNDARY_GREEDY[@]}" "${BOUNDARY_COMMON[@]}" --- \
+        --checkpoint "$BOUNDARY_DIR/endpoint_stub" "${BOUNDARY_SAMPLED[@]}" "${BOUNDARY_COMMON[@]}" --- \
+        --checkpoint "$BOUNDARY_DIR/endpoint_stub" "${BOUNDARY_FLOW[@]}" "${BOUNDARY_COMMON[@]}" <<'PY'
+import sys
+
+legs, current = [], []
+for token in sys.argv[1:]:
+    if token == "---":
+        legs.append(current)
+        current = []
+    else:
+        current.append(token)
+legs.append(current)
+greedy_argv, sampled_argv, flow_argv = legs
+
+import sim.rollout_sim as rollout_sim
+from fontaine.scripts.grpo_r2_boundary_verdict import (
+    _guard_checkpoints,
+    _guard_flow,
+    _guard_greedy,
+    _guard_sampled,
+    _guard_seed_window,
+)
+
+def parse(argv):
+    saved, sys.argv = sys.argv, ["rollout_sim.py", *argv]
+    try:
+        return rollout_sim.parse_args()
+    finally:
+        sys.argv = saved
+
+def payload(args):
+    return {
+        "config": {
+            "checkpoint": str(args.checkpoint),
+            "seed": args.seed,
+            "num_seeds": args.num_seeds,
+            "serve_head": args.serve_head,
+            "ar_temperature": args.ar_temperature,
+            "method": args.method,
+            "sample_steps": args.sample_steps,
+        },
+        "episodes": [
+            {"seed": s} for s in range(args.seed, args.seed + args.num_seeds)
+        ],
+    }
+
+parsed = [parse(argv) for argv in (greedy_argv, sampled_argv, flow_argv)]
+for args in parsed:
+    # The anchors' shared substrate pins, asserted leg by leg.
+    assert args.clutter_appearance == "standins", args.clutter_appearance
+    assert args.episode_seconds == 30.0, args.episode_seconds
+    assert args.execute_horizon == 30, args.execute_horizon
+    assert args.flow_decoder_dtype == "bfloat16", args.flow_decoder_dtype
+    assert args.stats_repo_id is None, args.stats_repo_id
+    assert args.wrist_transform == "none", args.wrist_transform
+    assert args.draws == 1 and args.sde_noise_level is None
+greedy, sampled, flow = (payload(args) for args in parsed)
+_guard_greedy(greedy)
+_guard_sampled(sampled)
+_guard_flow(flow)
+for leg_name, leg in (("greedy", greedy), ("sampled", sampled), ("flow", flow)):
+    _guard_seed_window(leg["config"], leg["episodes"], leg_name)
+_guard_checkpoints({"greedy": greedy, "sampled": sampled, "flow": flow})
+print("boundary parse-check GREEN: 3 legs parse + pass the verdict's provenance guards")
+PY
+    echo
     emit_babysit_entry
     ;;
 
@@ -184,6 +293,80 @@ PY
         && uv run python fontaine/scripts/grpo_r2_preflight_verdict.py \
             --json '$PREFLIGHT_JSON' --out '$VERDICT_JSON'"
     echo "preflight launched; verdict lands at $VERDICT_JSON"
+    ;;
+
+  boundary)
+    TARGET="${2:?usage: launch_grpo_r2.sh boundary <endpoint-ckpt-dir | loop step_NNNN.pt overlay>}"
+    # The registered refusal: boundary legs read the ENDPOINT — while
+    # unit grpo-r2 is alive the checkpoint is still moving and the GPU
+    # is owned by the run.
+    if systemctl --user is-active --quiet grpo-r2; then
+        echo "REFUSED: unit grpo-r2 is still active — the boundary reads the endpoint after the run completes (never mid-run)" >&2
+        exit 1
+    fi
+    mem=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits -i 0)
+    if [ "$mem" -gt 1024 ]; then echo "GPU 0 busy (${mem} MiB) — abort (owner policy-server rule: check compute-apps, never kill it)"; exit 1; fi
+    # The verdict chain re-guards this at the end; failing HERE costs
+    # 0 GPU-h instead of the ~3.9 the legs burn first.
+    if [ ! -f "$VERDICT_JSON" ]; then
+        echo "REFUSED: no preflight verdict at $VERDICT_JSON — the boundary verdict prices the sampled leg against the preflight floor; without a PASS there is nothing to read" >&2
+        exit 1
+    fi
+    PREFLIGHT=$(uv run python -c "import json; print(json.load(open('$VERDICT_JSON'))['verdict'])")
+    if [ "$PREFLIGHT" != "PASS" ]; then
+        echo "REFUSED: preflight verdict '$PREFLIGHT' — an A3.4 run only launches on PASS, so a non-PASS here means these legs are reading the wrong lane" >&2
+        exit 1
+    fi
+    # Resolve the endpoint: a loop overlay .pt materializes onto the
+    # pinned base first (CPU, atomic, validated — the loop banks
+    # trainable-only saves; the anchors' serving path loads a
+    # self-contained VLA dir).
+    if [ -f "$TARGET" ]; then
+        ENDPOINT="$BOUNDARY_DIR/endpoint_$(basename "${TARGET%.pt}")"
+        uv run python -m fontaine.scripts.grpo_r2_materialize_endpoint \
+            --base "$CKPT" --overlay "$TARGET" --out "$ENDPOINT"
+    elif [ -d "$TARGET" ]; then
+        if [ ! -f "$TARGET/metadata.json" ]; then
+            echo "FATAL: $TARGET has no metadata.json — not a VLA checkpoint dir" >&2
+            exit 2
+        fi
+        ENDPOINT="$TARGET"
+    else
+        echo "FATAL: $TARGET is neither a checkpoint dir nor a loop overlay .pt" >&2
+        exit 2
+    fi
+    case "$(basename "${ENDPOINT%/}")" in
+      step_002000|step_002000_v2)
+        echo "REFUSED: $ENDPOINT is the pinned BASE — the boundary reads the GRPO endpoint (the verdict refuses base-minted jsons for the same reason)" >&2
+        exit 1;;
+    esac
+    mkdir -p "$BOUNDARY_DIR"
+    # ONE detached unit, legs sequential, verdict chained — the
+    # boundary session launches this and reads $BOUNDARY_VERDICT_JSON.
+    MUJOCO_GL=egl fontaine/scripts/run_detached.sh grpo-r2-boundary \
+        bash -c "cd $PWD && MUJOCO_GL=egl uv run python -m sim.rollout_sim \
+            --checkpoint '$ENDPOINT' ${BOUNDARY_GREEDY[*]} ${BOUNDARY_COMMON[*]} \
+            --out-dir '$BOUNDARY_DIR/token_greedy_episodes' \
+            --out-json '$BOUNDARY_GREEDY_JSON' \
+            2>&1 | tee '$HOME/eval__grpo_r2_boundary_greedy.log' \
+        && MUJOCO_GL=egl uv run python -m sim.rollout_sim \
+            --checkpoint '$ENDPOINT' ${BOUNDARY_SAMPLED[*]} ${BOUNDARY_COMMON[*]} \
+            --out-dir '$BOUNDARY_DIR/sampled_t1_episodes' \
+            --out-json '$BOUNDARY_SAMPLED_JSON' \
+            2>&1 | tee '$HOME/eval__grpo_r2_boundary_sampled.log' \
+        && MUJOCO_GL=egl uv run python -m sim.rollout_sim \
+            --checkpoint '$ENDPOINT' ${BOUNDARY_FLOW[*]} ${BOUNDARY_COMMON[*]} \
+            --out-dir '$BOUNDARY_DIR/flow_unseen_episodes' \
+            --out-json '$BOUNDARY_FLOW_JSON' \
+            2>&1 | tee '$HOME/eval__grpo_r2_boundary_flow.log' \
+        && uv run python -m fontaine.scripts.grpo_r2_boundary_verdict \
+            --greedy-json '$BOUNDARY_GREEDY_JSON' \
+            --sampled-json '$BOUNDARY_SAMPLED_JSON' \
+            --flow-json '$BOUNDARY_FLOW_JSON' \
+            --preflight-json '$VERDICT_JSON' \
+            --out '$BOUNDARY_VERDICT_JSON' \
+            2>&1 | tee '$HOME/eval__grpo_r2_boundary_verdict.log'"
+    echo "boundary legs launched (~3.9 GPU-h, A3.5 pacing); the chained verdict lands at $BOUNDARY_VERDICT_JSON"
     ;;
 
   launch)
