@@ -21,37 +21,50 @@
 # outputs/sim/grpo_r2/preflight/preflight_verdict.json (+ episodes/).
 # grpo_r2 LAUNCHED on the PASS 16:10:02Z (entry below).
 
+# grpo_r2 entry PRUNED 18:3xZ 08-19 work session — run KILLED 18:06:48Z
+# (relaunch of 17:46:56Z, ~0.33 GPU-h). Wave-0 abort root cause went one
+# level deeper than the A4 substrate fix: the loop serves via
+# MolmoAct2DiscreteStack + the hardcoded official SO-101 shim (er60k-era
+# convention) while every R2 anchor/preflight/probe serves via
+# BijouPolicy with the v2 corrected-table normalization. Receipts:
+# relaunch step-0 eval (greedy, standins verified in meta+seam) 0/20
+# with ALL 20 scenes bit-frozen replan 0->29 vs the greedy anchor leg's
+# 59/100 visible displacement (P ~ 2e-8); R1-B on the released ckpt
+# through the SAME loop stack interacted (knockaway 0.33-0.45). R2 lane
+# PARKED on queue item grpo-r2-serving-parity-fix (parity oracle is a
+# LAUNCH GATE for any future R2). Lane spend ~4.0 GPU-h (preflight 2.25
+# + patched wave ~1.2 + probe 0.24 + relaunch 0.33). Artifacts:
+# loop_wave0abort_patched/ (patched wave), loop/ (killed relaunch,
+# eval row only), wave0_diag/ (probe json). Kill post 18:08Z.
+
 [[run]]
-name = "grpo_r2"
+name = "grasp_sft_v2_joint_1gpu_pdnorm_onerig"
 kind = "train-jsonl"
 host = "local"
-pgrep = "sim.grpo_loop"
-pgrep_min = 1                     # parent loop (waves spawn 8 transient workers); unit grpo-r2
+pgrep = "grasp_sft_v2_joint_1gpu_pdnorm_onerig"
+pgrep_min = 1
 gpu_indices = [0]
-gpu_mem_min_mib = 8000
-jsonl = "/home/ubuntu/flow-matching/outputs/sim/grpo_r2/loop/train.jsonl"
-total_steps = 10
-probe_key = "eval_successes"
-vram_key = "vram_gib"
-started_utc = "2026-08-19T17:46:56Z"
+gpu_mem_min_mib = 30000
+jsonl = "/home/ubuntu/checkpoints/finetune/grasp_sft_v2_joint_1gpu_pdnorm_onerig/train_log.jsonl"
+total_steps = 3000
+probe_key = "eval_chunk_mae"
+vram_key = "vram_alloc_peak_gib"
+started_utc = "2026-08-19T18:22:47Z"
 gpu_hours_per_wall_hour = 1.0
-boundary = "step 10 endpoint: greedy sim100 vs 7 (PRIMARY, paired exact) + sampled T=1.0 sim100 vs the preflight floor 8/100 (record-only) + flow unseen100 euler-10 vs 44 (F-regression leg); pace anchor ~0.98 GPU-h/step, budget ~18.5 expected / gate <=20 GPU-h incl. the ~3.7 spent pre-relaunch (A4). Boundary instrument LANDED: python -m fontaine.scripts.grpo_r2_boundary_verdict (0a405a2)."
+boundary = "3000 steps at ~15.2-15.4 s/step (smoke-measured) ~= 12.7-12.8 h -> endpoint ETA ~07:0x-07:1xZ 08-20; saves every 500, probes every 250; step-1000 drift-guard read ~22:3x-22:4xZ 08-19; at endpoint: sim100 (stand-ins pin, --stats-repo-id grasp_demos_v2/merged worn-row rule) + panel guard vs disc-1000 npz + paired reads vs control AND convicted cell + verdict post through the frozen grid (prereg 2026-08-19-prereg-demos-plus-one-rig.md)"
 anchors = [
-    "STARTUP GAP (expected, NOT a crash): step-0 eval row ~+16 min, first WAVE row (mixed_groups_frac carrier) ~+70 min (both MEASURED on the 16:10 patched launch) — from the 17:46:56Z relaunch expect eval row ~18:0xZ, wave-0 gate row ~18:5xZ; babysit exit 1 before then is the known startup read, procs+GPU are the liveness truth. RELAUNCH (A4): 16:10 launch aborted at wave 0 on the substrate bug (loop rendered patched, anchors are standins) — fixed via --clutter-appearance standins in the argv; all gates re-armed fresh",
-    "token greedy 7/100 (A3.1 frozen anchor; success seeds 34,35,63,68,71,91,96)",
-    "flow sibling 44/100 same trunk (A3.4 regression leg at boundary — option B moves the flow read too)",
-    "preflight sampled T=1.0 = 8/100 PASS (P=0.734) — the recorded training-decode floor; verdict json outputs/sim/grpo_r2/preflight/preflight_verdict.json",
-    "wave-0 mixed_groups_frac: predicted 0.4868 at the measured p=0.08; IN-LOOP abort <0.20 (A3.3 --wave0-mixed-abort; read the first train.jsonl row at first poll)",
-    "wave-0 knockaway_frac = violence-wire baseline (--knockaway-baseline wave0 self-capture; greedy read measured 25/100 — the R0-era 10/120 pin retired for this run)",
-    "kl_stop 0.06 in-loop (single reading, no streak); anchor_k3_pre ~e-07-scale early per R1-B",
-    "train-seed-base 2000 (stage-B 1000-1099 collision re-pin) — train rows must never show seeds < 2000",
+    "ONE recipe delta vs the convicted pdnorm mixed cell (1/100): so101_pick_place_clean DROPPED; v2 repeat-4 share 6.30% preamble-verified at launch (dose held vs 6.26/6.31 registered)",
+    "frozen grid at 3000 sim100: >=20/100 mix-exonerated (clean was the poison) / <=10 still-convicted (rig data class, not the specific dataset) / 11-19 ambiguous band per the pre-reg; anchors: demosonly baseline 11/100, convicted mixed cell 1/100, pdnorm-mixed cell 1/100",
+    "drift guard (READ not kill): delta eval(1000-500) <= +0.30 raw units, precedent pdnorm-mixed rose within band",
+    "first-poll standing checks DONE 18:29Z: 66.4 GiB / 83% util, no starvation; RAM 91G available (rig-video loader buffers priced); disk 214G free after smoke-dir cleanup",
+    "fit smoke green 18:22Z (20 steps, /tmp dir removed after)",
 ]
 [[run.gates]]
-kind = "gpu_hours_max"
-value = 20.0                      # A4 re-priced gate (~18.5 expected total; ~3.7 already spent pre-relaunch: preflight 2.25 + aborted patched wave ~1.2 + diagnosis probe ~0.24)
-[[run.gates]]
 kind = "vram_max_gib"
-value = 75.0                      # R1-B envelope on the 80G H100
+value = 71.0
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 17.0                      # queue-item gate (17 GPU-h)
 
 # (no_live_runs_reason cleared 14:25Z 08-16 — demo_gen_v1 launched on the A100 box; prior: HOME-GPU-only declaration of 10:2xZ 08-16.)
 

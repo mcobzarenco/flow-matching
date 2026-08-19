@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-19T16:36:00Z
+**Updated:** 2026-08-19T18:34:00Z
 
 **Depth call:** post grpo-r2-activation-amendment-draft close 12:5xZ 08-19: 2 queued CPU-executable (grpo-r2-launch-kit refill, disk-retirement-sweep-banked-sources); demos-plus-one-rig-exec owner-gated, grpo-r2-post-sft owner-band (A3 amendment now frozen, ACTIVATE executes mechanically); H100 free pending the owner isolation call
 
-**15 open** (Live 0 · Queued 2 · Blocked 13 · Done 258)
+**16 open** (Live 0 · Queued 2 · Blocked 14 · Done 259)
 
 ## 🔴 Live (0)
 
@@ -18,35 +18,35 @@
 
 *ready — waiting on a window or a boundary*
 
-**`demos-plus-one-rig-exec`** · `gpu-local`
+**`onerig-endpoint-close`** · `gpu-local`
 
-Demos + ONE rig dataset isolation cell EXECUTION (OWNER-GATED: the pdnorm pre-reg's registered &lt;=10 grid text makes the next isolation an owner call
+Demos+one-rig endpoint close (gated on unit fontaine-v2-joint-pdnorm-onerig reaching step 3000, ETA ~07:0xZ 08-20): sim100 on the 3000 endpoint (stand-ins pin, --stats-repo-id grasp_demos_v2/merged worn-row rule) + panel guard vs…
 
-**boundary:** Queued 04:2xZ 08-19 at the draft close. BLOCKED on the owner isolation call (registered carve-out outranks the standing launch delegation) AND a GPU-free window (joint-probe legs 3/4 own the GPU through ~08:xxZ 08-19). || UNBLOCKED 13:4xZ 08-19: owner agree-with-recs reply 13:25:15Z closes the isolation call as GO (rec adopted verbatim, pdnorm carve-out satisfied). Remaining gate is purely the GPU window: the R2 lane owns the H100 first (A3 activated same reply; preflight live 13:54Z, launch fires on PASS, ~14 GPU-h gate 15) — this cell fires at the next free GPU boundary (R2 preflight-ABORT, an R2 in-loop abort, or the R2 endpoint), sequencing announced in-channel 13:49Z. · [pre-reg](posts/2026-08-19-prereg-demos-plus-one-rig.md)
+**boundary:** Queued 18:3xZ 08-19 at the onerig launch (demos-plus-one-rig-exec closed superseded-by-execution). Endpoint-gated; babysit registry entry carries the boundary facts. · [pre-reg](posts/2026-08-19-prereg-demos-plus-one-rig.md)
 
 <details><summary>full record</summary>
 
-Demos + ONE rig dataset isolation cell EXECUTION (OWNER-GATED: the pdnorm pre-reg's registered &lt;=10 grid text makes the next isolation an owner call — draft posted 04:25:54Z 08-19 id 1539490569875759115, awaiting GO / other-arm pick / edit-as-amendment). On GO at a GPU-free boundary: STEPS=20 SMOKE=1 fit smoke, then systemd-run unit fontaine-v2-joint-pdnorm-onerig via the staged launcher launch_local_grasp_sft_v2_joint_1gpu_pdnorm_onerig_h100.sh (demos+so101_pick_place_v2 x4, pdnorm, joint+insulate, eff-96, seed 0, 3000 steps, sidecar optimizer.pt pruner); babysit entry at launch, first poll util+rate+free-g+df; boundaries step-1000 drift read, step-3000 endpoint -&gt; sim100 (stand-ins pin, --stats-repo-id grasp_demos_v2/merged) + panel guard vs disc-1000 npz + paired reads vs control AND convicted cell + verdict post through the frozen grid. Gate 17 GPU-h.
+Demos+one-rig endpoint close (gated on unit fontaine-v2-joint-pdnorm-onerig reaching step 3000, ETA ~07:0xZ 08-20): sim100 on the 3000 endpoint (stand-ins pin, --stats-repo-id grasp_demos_v2/merged worn-row rule) + panel guard vs disc-1000 npz + paired reads vs control AND convicted mixed cell (sim100_paired_read.py) + verdict through the FROZEN grid (&gt;=20/100 mix-exonerated / &lt;=10 still-convicted / 11-19 ambiguous; anchors demosonly 11/100, mixed cell 1/100, pdnorm-mixed 1/100) + HTML report (--report, owner standing rule) + verdict post. Step-1000 drift-guard read (~22:3xZ 08-19) is a tick/babysit duty, READ not kill. Screen gate: the 17 GPU-h unit gate binds the train; eval legs ~1.5.
 
 </details>
 
 ---
 
-**`grpo-r2-boundary-legs-launcher`** · `cpu`
+**`grpo-r2-serving-parity-fix`** · `cpu`
 
-GRPO R2 boundary-legs launcher (CPU; makes the R2 endpoint one command end-to-end): a `boundary` subcommand on launch_grpo_r2.sh that takes the endpoint checkpoint dir and fires the three A3.4 legs sequentially as ONE detached un…
+GRPO R2 serving-parity fix (CPU-first; LAUNCH GATE for any future R2): the loop's rollout/replay serving path (MolmoAct2DiscreteStack + hardcoded official SO-101 shim, er60k-era convention) is INERT on the v2 corrected-table chec…
 
-**boundary:** Queued 16:3xZ 08-19 work session (charter section 4 refill at the grpo-r2-boundary-reads-instrument close; depth-2 restore). Wanted before the R2 boundary (~0x:xxZ 08-20) so the endpoint session is fire-and-read; executable any CPU window while R2 rides. · [pre-reg](posts/2026-08-15-prereg-grpo-r2-post-sft.md)
+**boundary:** Queued 18:3xZ 08-19 work session at the R2 kill (post 18:08Z id ...864582). CPU-first executable any window (code diff + oracle); the cheap GPU parity read waits for a GPU-free window (onerig owns the H100 through ~07:0xZ 08-20). R2 relaunch (fresh ~12.6 GPU-h) only on parity green + re-registration. · [pre-reg](posts/2026-08-15-prereg-grpo-r2-post-sft.md)
 
 <details><summary>full record</summary>
 
-GRPO R2 boundary-legs launcher (CPU; makes the R2 endpoint one command end-to-end): a `boundary` subcommand on launch_grpo_r2.sh that takes the endpoint checkpoint dir and fires the three A3.4 legs sequentially as ONE detached unit — (1) greedy token sim100 (--serve-head ar, no temperature), (2) sampled T=1.0 sim100, (3) flow unseen100 euler-10 — each with the anchors' exact driver + substrate pins (standins, stats_repo_id so101_pick_place_v2, seeds 0-99), ~3.9 GPU-h total per A3.5, chaining into python -m fontaine.scripts.grpo_r2_boundary_verdict (guards already refuse wrong-leg jsons; the launcher's job is to never produce one). Refuses to fire while the grpo-r2 unit is still alive. Parse-check oracle-tested like the kit's, check.py green. NO GPU in this item — it stages; the boundary session fires it.
+GRPO R2 serving-parity fix (CPU-first; LAUNCH GATE for any future R2): the loop's rollout/replay serving path (MolmoAct2DiscreteStack + hardcoded official SO-101 shim, er60k-era convention) is INERT on the v2 corrected-table checkpoint while BijouPolicy (every R2 anchor, the preflight PASS, the wave0_diag probe) interacts — receipts: relaunch step-0 eval 0/20 ALL scenes bit-frozen under verified standins (P~2e-8 vs the greedy anchor leg's 59/100 displacement); R1-B on the released ckpt through the same stack interacted (knockaway 0.33-0.45). Work: (1) diff the two serving paths on the v2 checkpoint end-to-end (state normalization in, action denorm out; FIRST look: grpo_replay._batch builds ONE NormStats from ACTION q01/q99 and passes it as BOTH action_stats and state_stats; also the unconditional official shim vs the corrected table); (2) fix so the loop path is convention-identical to BijouPolicy for v2-class checkpoints (or serves THROUGH the same seam), defaults preserving er60k-era behavior for old runs; (3) PARITY ORACLE: fixed synthetic inputs through both paths must produce matching sim-unit actions (tolerance stated), plus a cheap GPU parity read (in-loop eval band vs rollout_sim on the same seeds, counts must be compatible) wired into the R2 launcher as a required preflight leg; (4) A5 amendment on the pre-reg page + relaunch decision announced. check.py green; oracles pin the seam.
 
 </details>
 
 ---
 
-## 🟡 Blocked (13)
+## 🟡 Blocked (14)
 
 *waiting on a prerequisite, a boundary, or the owner*
 
@@ -232,7 +232,21 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (258)
+**`grpo-r2-boundary-legs-launcher`** · `cpu`
+
+GRPO R2 boundary-legs launcher (CPU; makes the R2 endpoint one command end-to-end): a `boundary` subcommand on launch_grpo_r2.sh that takes the endpoint checkpoint dir and fires the three A3.4 legs sequentially as ONE detached un…
+
+**boundary:** Queued 16:3xZ 08-19 work session (charter section 4 refill at the grpo-r2-boundary-reads-instrument close; depth-2 restore). Wanted before the R2 boundary (~0x:xxZ 08-20) so the endpoint session is fire-and-read; executable any CPU window while R2 rides. || BLOCKED 18:3xZ 08-19: R2 lane PARKED — run killed 18:06:48Z, the loop's serving stack (MolmoAct2DiscreteStack + official shim) is inert on v2 corrected-table checkpoints while every anchor serves via BijouPolicy. This item resumes only after grpo-r2-serving-parity-fix lands and an R2 relaunch is re-registered. · [pre-reg](posts/2026-08-15-prereg-grpo-r2-post-sft.md)
+
+<details><summary>full record</summary>
+
+GRPO R2 boundary-legs launcher (CPU; makes the R2 endpoint one command end-to-end): a `boundary` subcommand on launch_grpo_r2.sh that takes the endpoint checkpoint dir and fires the three A3.4 legs sequentially as ONE detached unit — (1) greedy token sim100 (--serve-head ar, no temperature), (2) sampled T=1.0 sim100, (3) flow unseen100 euler-10 — each with the anchors' exact driver + substrate pins (standins, stats_repo_id so101_pick_place_v2, seeds 0-99), ~3.9 GPU-h total per A3.5, chaining into python -m fontaine.scripts.grpo_r2_boundary_verdict (guards already refuse wrong-leg jsons; the launcher's job is to never produce one). Refuses to fire while the grpo-r2 unit is still alive. Parse-check oracle-tested like the kit's, check.py green. NO GPU in this item — it stages; the boundary session fires it.
+
+</details>
+
+---
+
+## ✅ Done (259)
 
 *closed — the full record stays in each fold*
 
@@ -399,6 +413,20 @@ First-class superseded-optimizer prune in bijou.train saving (infra debt from th
 <details><summary>full record</summary>
 
 First-class superseded-optimizer prune in bijou.train saving (infra debt from the 08-19 root-disk-full incident: six ~31 GiB offload-optim optimizer.pt saves filled the disk mid-battery and killed the joint-probe leg-3 attempt). Implement --prune-superseded-optim (default OFF; keep latest N=2 step_* saves' optimizer.pt, weights never touched) in bijou/train saving, oracle-tested (tmpdir save ladder: correct files removed, latest-2 kept, resume from latest still loads); wire into the staged onerig launcher in place of the sidecar loop once landed. CPU-executable any session; check.py + oracles before commit per charter. ||| EXECUTED 04:3x-04:4xZ 08-19 same session (no-idle window while joint-probe leg 3 runs): --prune-superseded-optim landed in bijou.train (TrainArgs defaulted field + CLI flag + prune_superseded_optimizers() in train/saving.py, called post-publish on BOTH the sync and async save paths — async runs on the saver thread where writes serialize, so the newest dir is always complete). 5 oracles green (tests/test_prune_superseded_optim.py: newest-2 kept, weights untouched, .tmp debris + foreign names + step-named files ignored, already-pruned skipped, flag parses + defaults off). Staged onerig launcher rewired to the flag (sidecar loop deleted), full-parse green.
+
+</details>
+
+---
+
+**`demos-plus-one-rig-exec`** · `gpu-local`
+
+Demos + ONE rig dataset isolation cell EXECUTION (OWNER-GATED: the pdnorm pre-reg's registered &lt;=10 grid text makes the next isolation an owner call
+
+**boundary:** Queued 04:2xZ 08-19 at the draft close. BLOCKED on the owner isolation call (registered carve-out outranks the standing launch delegation) AND a GPU-free window (joint-probe legs 3/4 own the GPU through ~08:xxZ 08-19). || UNBLOCKED 13:4xZ 08-19: owner agree-with-recs reply 13:25:15Z closes the isolation call as GO (rec adopted verbatim, pdnorm carve-out satisfied). Remaining gate is purely the GPU window: the R2 lane owns the H100 first (A3 activated same reply; preflight live 13:54Z, launch fires on PASS, ~14 GPU-h gate 15) — this cell fires at the next free GPU boundary (R2 preflight-ABORT, an R2 in-loop abort, or the R2 endpoint), sequencing announced in-channel 13:49Z. ||| EXECUTED 18:2xZ 08-19 work session (superseded-by-execution per the pdnorm precedent): R2 lane freed early (run KILLED 18:06:48Z on the serving-stack conviction — see grpo-r2-serving-parity-fix), so the announced GPU boundary arrived this session. Fit smoke green (20 steps, /tmp cleaned), unit fontaine-v2-joint-pdnorm-onerig launched 18:22:47Z, preamble verified (2 datasets, clean dropped, v2 x4 = 6.30% share), first poll 66.4 GiB / 83-100% util no starvation, RAM 91G. Babysit entry live (vram 71 / 17 GPU-h gates). Endpoint duties -&gt; onerig-endpoint-close. Launch post 18:36Z. · [pre-reg](posts/2026-08-19-prereg-demos-plus-one-rig.md)
+
+<details><summary>full record</summary>
+
+Demos + ONE rig dataset isolation cell EXECUTION (OWNER-GATED: the pdnorm pre-reg's registered &lt;=10 grid text makes the next isolation an owner call — draft posted 04:25:54Z 08-19 id 1539490569875759115, awaiting GO / other-arm pick / edit-as-amendment). On GO at a GPU-free boundary: STEPS=20 SMOKE=1 fit smoke, then systemd-run unit fontaine-v2-joint-pdnorm-onerig via the staged launcher launch_local_grasp_sft_v2_joint_1gpu_pdnorm_onerig_h100.sh (demos+so101_pick_place_v2 x4, pdnorm, joint+insulate, eff-96, seed 0, 3000 steps, sidecar optimizer.pt pruner); babysit entry at launch, first poll util+rate+free-g+df; boundaries step-1000 drift read, step-3000 endpoint -&gt; sim100 (stand-ins pin, --stats-repo-id grasp_demos_v2/merged) + panel guard vs disc-1000 npz + paired reads vs control AND convicted cell + verdict post through the frozen grid. Gate 17 GPU-h.
 
 </details>
 
