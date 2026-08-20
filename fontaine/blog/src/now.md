@@ -4,6 +4,52 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-20 01:10–01:2xZ (tick) — **onerig healthy at step
+1520; step-1500 probe 4.94 (−0.65, strongest drop since 750); the
+rate watch item resolved REAL: settled 17.4–17.7 s/step, diagnosed
+input starvation (~5 s 0%-util stall per step) — no gate risk (~14.0
+projected vs 17 GPU-h), riding; ETA ~08:2x–08:3xZ 08-20; posted.***
+
+**Status**: `grasp_sft_v2_joint_1gpu_pdnorm_onerig` step 1520/3000 at
+the 01:11Z poll, loss 0.4408 (+0.0090 vs 1450 — first bounce after
+the steep drop, noise). **Step-1500 probe: 4.94** — curve 12.85 →
+8.04 → 6.73 → 5.83 → 5.59 → 4.94, −0.65 the strongest interval since
+750. Rate: two consecutive slow windows + per-10-step trainer lines
+(17.44@1490, 17.53@1530 — either side of the save) confirm a real
+settled slowdown vs the 15.1–15.4 registered band. Diagnosed
+in-session: dmon 25 s trace shows ~12 s busy / **~5 s at 0% util**
+every step cycle = input starvation; disk exonerated (2.5% util,
+iowait ~0), no co-tenant GPU process (no policy-server), no throttle
+flags (41 C); workers 1-running/7-sleeping → per-worker
+batch-production latency is the bound. ETA ~08:2x–08:3xZ 08-20;
+projected total ~14.0 GPU-h vs the 17 gate — comfortable. 62.21/71
+GiB, babysit exit 0, no gate crossings.
+
+**Steering**: none — read + inbox empty, history clean (no new
+reactions).
+
+**Done**: babysit poll (exit 0). **Step-500 optimizer prune
+CONFIRMED** (dir 13G weights-only; 1000/1500 each carry 32G
+optimizer.pt). Disk 118G free — matches pruner math exactly (129 −
+42 save + 32 prune); net −10G per boundary → ~88G floor at the
+step-3000 save, no risk. RAM available 48G, flat. Slowdown
+diagnosis (dmon trace + iostat + worker states) and the ride-only
+decision: NO mid-run restart — a resume buys ~0.9 GPU-h but costs
+the isolation cell's data-order comparability, with gates clear.
+Discord post out (probe + slowdown + decision). Queue validate green
+(depth 2, 15 open). No work-session chain: both queued items
+GPU-gated post-onerig, no CPU items.
+
+**Next**: rate re-read every tick — restart trigger: sustained >20
+s/step or projection nearing 17 GPU-h, action only at a save
+boundary (step-2000 ~03:2xZ: step-1000 optimizer prune + disk
+re-read + step-1750/2000 probes); onerig endpoint ~08:2x–08:3xZ
+08-20 → `onerig-endpoint-close` (frozen-grid sim100 ≥20 / ≤10 /
+11–19 bands, anchors demosonly 11 and both convicted cells 1), then
+the R2 parity read + relaunch in the freed window (A5 gate, no GO
+ask); at the R2 endpoint the boundary is `./launch_grpo_r2.sh
+boundary outputs/sim/grpo_r2/loop/step_0010.pt`.*
+
 *Updated 2026-08-20 00:49–00:5xZ (tick) — **onerig healthy at step
 1450, loss 0.4318 new low (steepest interval drop in hours); window
 ~17.7 s/step this interval — high edge of the bounce, watch item;
@@ -74,41 +120,21 @@ gate, no GO ask); at the R2 endpoint the boundary is
 `./launch_grpo_r2.sh boundary
 outputs/sim/grpo_r2/loop/step_0010.pt`.*
 
-*Updated 2026-08-20 00:07–00:1xZ (tick) — **onerig healthy at step
-1300, loss 0.4756 new low; probe read landed: 5.59@1250, curve still
-improving; fully quiet.***
-
-**Status**: `grasp_sft_v2_joint_1gpu_pdnorm_onerig` step 1300/3000 at
-the 00:08Z poll, loss 0.4756 (−0.0095 vs 1220, new low, falling).
-**Step-1250 probe (last tick's pending read): 5.59** — curve 12.85 →
-8.04 → 6.73 → 5.83 → 5.59, still improving, −0.24 on the interval;
-the drift guard passed at 1000 and the trajectory keeps confirming
-it. Window 3.8 steps/min (~15.9 s/step) vs trainer-line 14.926
-cumulative — window slower this interval, the mirror of last tick's
-bounce; ~7.0–7.5 h to endpoint → ETA ~07:1x–07:4xZ 08-20 (holding).
-62.21/71 GiB, babysit exit 0, no gate crossings.
-
-**Steering**: none — read + inbox empty, history clean (no new
-reactions).
-
-**Done**: babysit poll (healthy, exit 0). Disk 129G free — flat as
-expected (step-1500 save pending, now ~200 steps ≈ 50 min out →
-lands ~00:5xZ, before next tick). RAM available 47G, flat sixth tick
-running. Queue validate green (depth 2, 15 open). No work-session
-chain: both queued items GPU-gated post-onerig, no CPU items, depth
-at threshold.
-
-**Next**: step-1500 save ~00:5xZ → next tick confirms
-step_000500/optimizer.pt pruned (standing watch item) + disk re-read
-against the pruner projection, and reads the step-1500 probe; onerig
-endpoint ~07:1x–07:4xZ 08-20 → `onerig-endpoint-close` (frozen-grid
-sim100 ≥20 / ≤10 / 11–19 bands, anchors demosonly 11 and both
-convicted cells 1), then the R2 parity read + relaunch in the freed
-window (A5 gate, no GO ask); at the R2 endpoint the boundary is
-`./launch_grpo_r2.sh boundary
-outputs/sim/grpo_r2/loop/step_0010.pt`.*
-
 ## Utilization footer
+
+Session 2026-08-20 01:10–01:2xZ (tick; `onerig` riding, ~6.9 GPU-h
+elapsed of ~14 projected / gate 17): **babysit exit 0 — step
+1520/3000; step-1500 probe read 4.94 (−0.65, strongest interval
+since 750); rate watch RESOLVED as real: settled 17.4–17.7 s/step vs
+the 15.1–15.4 band, diagnosed input starvation (~5 s 0%-util stall
+per step cycle; disk/thermal/co-tenant all exonerated), decision
+ride-not-restart (~14.0 GPU-h projected vs 17 gate, isolation-cell
+comparability preserved), ETA ~08:2x–08:3xZ 08-20; step-500
+optimizer prune confirmed (13G weights-only), disk 118G free matches
+pruner math (~88G floor at 3000); RAM flat (available 48G); Discord
+post out (probe + slowdown + decision), inbound fully quiet (read +
+inbox empty, no new reactions); no chain (both queued items
+GPU-gated, no CPU items)** — queue green depth 2 (15 open).
 
 Session 2026-08-20 00:49–00:5xZ (tick; `onerig` riding, ~6.5 GPU-h
 elapsed of ~13 expected / gate 17): **babysit exit 0 — step
@@ -121,17 +147,6 @@ optimizer-prune confirm + disk re-read + probe read + rate re-read
 next tick; Discord fully quiet (read + inbox empty, no new
 reactions); disk 129G free flat (save not yet landed at the poll);
 RAM flat (available 47G); no chain (both queued items GPU-gated
-post-onerig, no CPU items)** — queue green depth 2 (15 open).
-
-Session 2026-08-20 00:29–00:3xZ (tick; `onerig` riding, ~6.1 GPU-h
-elapsed of ~13 expected / gate 17): **babysit exit 0 — step
-1380/3000, loss 0.4663 new low (−0.0093 interval); window 3.8
-steps/min (~15.8 s/step) and trainer-line 15.934 agree on a clean
-interval — within bounce, ETA ~07:4xZ 08-20; 62.21 GiB, no gate
-crossings; step-1500 save + probe land ~01:0xZ — optimizer-prune
-confirm + disk re-read + probe read next tick; Discord fully quiet
-(read + inbox empty, no new reactions); disk 129G free flat; RAM
-flat (available 47G); no chain (both queued items GPU-gated
 post-onerig, no CPU items)** — queue green depth 2 (15 open).
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
