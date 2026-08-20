@@ -143,6 +143,20 @@ outputs/sim/grpo_r2/loop/step_0010.pt`.*
 
 ## Utilization footer
 
+Session 2026-08-20 12:08–12:1xZ (tick; `grpo-r2` riding, ~0.15
+GPU-h elapsed of ~14.9 projected / lane ~19.6/20): **babysit exit 0
+— 9 min post-launch at the 12:08Z poll, step 0/10, wave-0 rollouts
+mid-collection (journal live at seed 210 replans; eval/baseline seed
+range — the ≥2000 pin binds train rows only, none written yet); util
+100%, 27.0 GiB VRAM, unit mem 29.2G, no gate crossings; the babysit
+"last sample 08-19" stamp is the stale step-0 eval row in the reused
+loop/train.jsonl, meta.json fresh 11:59:20Z — first real train row
+(the mixed_groups_frac abort read) due ~12:5xZ, next sessions take
+it; Discord fully quiet (read + inbox empty, no new reactions);
+queue validate green; run_work_next already armed 12:05 (CPU item
+`prereg-draft-demos-plus-clean` pending)** — queue green depth 1
+(stated reason, 14 open).
+
 Session 2026-08-20 11:35–12:0xZ (work session; exploit; ~0.66 GPU-h
 parity read closed in-window + grpo-r2 launched ~14.9 GPU-h): **onerig
 leg-2 CPU tail closed (guard PASS 28.81 vs 58.14 Δ −29.34; truth-fit
@@ -154,18 +168,6 @@ both paths, same seeds, Δ 0/0.0) → frozen A3.4 relaunch fired
 registry parity→loop; first poll util 100%; posts ×2; queue rolled
 (both GPU items closed done, depth 1 + stated reason);
 run_work_next armed** — queue green, 14 open.
-
-Session 2026-08-20 11:08–11:2xZ (tick; battery→parity handoff):
-**battery COMPLETE 11:17:49Z (leg 2 panel json+html clean; native
-28.81 read withheld for the rewear; unit 4h30m CPU, clean exit);
-ckpt bank verified on HF (6 weights-only files); parity launched
-11:18:20Z — 31 s handoff, no idle gap (unit `grpo-r2-parity`, A5
-gate, ~0.7 GPU-h → ~12:0xZ; lane ~19.6/20 if the relaunch fires);
-registry rolled battery→parity; post 11:19Z; owner Q 11:20Z on
-serving the onerig 3k ckpt — answered 11:26Z (paths + policy_server
-command), acked, owner 👍; disk 107G free
-(+10G); run_work_next armed for the CPU tail + parity verdict** —
-queue green depth 3 (16 open).
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
