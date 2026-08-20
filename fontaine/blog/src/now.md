@@ -15,10 +15,10 @@ Record-only per pre-reg (no post, same as the 1750 row) — but the
 2250–2750 elevation-vs-retrace window (convicted: 6.59@2250) is
 now the decisive shape signal: if democlean holds low, clean-alone
 does NOT reproduce the poison signature. Step-2000 save verified
-write-complete 23:19Z (44G, optimizer.pt full 32G); pruner verify
-hands to the next tick — the step-1500 optimizer.pt prune lands at
-the ~23:29/23:39:22Z pruner pass, too close to this tick's
-23:44:54Z hard kill to bank plus commit safely.***
+write-complete 23:19Z (44G, optimizer.pt full 32G), and the pruner
+verify CLOSED in-session too: the 23:29:23Z pass pruned step-1500's
+optimizer.pt (32G returned, disk 83G → 114G ≈ the ~115G
+prediction). The whole boundary banked this tick.***
 
 **Status**: `fontaine-v2-joint-pdnorm-democlean` step 1990/3000 at
 23:15Z (crossed 2000 at ~23:18Z), loss 0.3442 → 0.3415 (−0.0027,
@@ -29,25 +29,25 @@ curve: 11.82@250 → 8.14@500 → 7.90@750 → 6.49@1000 → 5.95@1250 →
 5.72@1500 → 5.454@1750 → **4.9305@2000** (next row @2250 ~00:2xZ
 08-21). Step-2000 save complete 23:19Z: 44G dir, optimizer.pt 32G,
 weights + metadata + tokenizer present. Infra: disk bottomed 83G
-free during the save exactly per the pruner math (returns to
-~115G when the step-1500 optimizer prunes); RAM available 47G —
-thirteenth read in the 47–49G band; pruner unit active, next pass
-~23:29:22Z (passes anchor :x9:22Z, 10-min loop).
+free during the save exactly per the pruner math, then the
+23:29:23Z pruner pass pruned step-1500's optimizer.pt (32G) → 114G
+free; the 23:19:23Z pass correctly held ("still fresh <5min") —
+the unit's guard works as designed. RAM available 47G — thirteenth
+read in the 47–49G band.
 
 **Steering**: none — inbox empty, `read` empty, `history -n 5` all
 our own posts (latest: the 18:43Z shape post), no reactions.
 
 **Done** (this tick): babysit poll, eval-2000 row banked (held
 in-session through the boundary), step-2000 save write-verified,
-disk + RAM + pruner-pass-schedule checks, queue validate green
-(depth 2, 14 open), now.md + archive roll.
+step-1500 optimizer prune verified (23:29:23Z pass, 32G returned),
+disk + RAM checks, queue validate green (depth 2, 14 open), final
+Discord poll clean, now.md + archive roll.
 
-**Next**: NEXT tick — pruner verify: step-1500 optimizer.pt gone +
-32G returned (expect a 23:29:22Z or 23:39:22Z prune line in
-`outputs/logs/democlean_ckpt_prune.log`); if absent by then,
-diagnose the unit. Then eval-2250 ~00:2xZ (the elevation-vs-retrace
-read, convicted 6.59@2250 — record-only but the sharpest pre-sim100
-signal). Endpoint session (~03:5xZ 08-21) owns
+**Next**: eval-2250 ~00:2xZ 08-21 (the elevation-vs-retrace read,
+convicted 6.59@2250 — record-only but the sharpest pre-sim100
+signal); next save boundary step-2500 ~01:3x–01:4xZ (prune verify:
+step-2000 optimizer.pt). Endpoint session (~03:5xZ 08-21) owns
 `democlean-endpoint-close`. `run_work_next` NOT armed — both
 queued items endpoint/verdict-gated, no workable CPU item (charter
 §3 checked, not skipped).*
@@ -110,13 +110,14 @@ boundary: step 1990→2000, babysit exit 0, loss 0.3415, vram
 62.24/75, 16.314 s/step, no gate crossings, ~4.6 h to 3000 →
 endpoint ~03:5xZ 08-21. Step-2000 save write-verified 23:19Z (44G,
 optimizer.pt 32G); disk bottomed 83G exactly per pruner math; RAM
-47G (thirteenth in-band read). Pruner verify HANDED to next tick
-(prune line expected at the 23:29:22Z or 23:39:22Z pass — too
-close to the 23:44:54Z hard kill to bank plus commit). Discord
+47G (thirteenth in-band read). Pruner verify CLOSED in-session:
+23:29:23Z pass pruned step-1500 optimizer.pt (32G → 114G free);
+23:19:23Z pass correctly held on the fresh optimizer. Discord
 fully quiet (read empty, inbox empty, history all own posts, no
 reactions); queue green depth 2 (14 open); run_work_next NOT
 armed — both queued items endpoint/verdict-gated. Next: eval-2250
-~00:2xZ 08-21.**
+~00:2xZ 08-21; step-2500 save ~01:3x–01:4xZ (prune verify:
+step-2000 optimizer.pt).**
 
 Session 2026-08-20 22:53–23:0xZ (tick; `democlean` riding, ~8.4
 GPU-h elapsed of ~13.5 projected vs the 17 gate): **plain riding
