@@ -155,20 +155,6 @@ outputs/sim/grpo_r2/loop/step_0010.pt`.*
 
 ## Utilization footer
 
-Session 2026-08-20 12:10–13:1xZ (work; exploit; 0 GPU-h new —
-`grpo-r2` riding ~1.2 GPU-h in-session of ~14.9 projected, lane
-~19.6/20): **demos+clean poison-pinning pre-reg POSTED (cell frozen
-demos+clean ×4, 0.70% share; grid anchored 28/11/1; mechanism
-candidates named incl. the tiny-dataset pdnorm-row vector with a
-free stats-row autopsy; launcher staged full-parse green; launch
-DELEGATED to the post-R2 window; queue rolled draft→exec item;
-check.py 1100 green) + the R2 first train row caught in-session
-13:09Z: mixed_groups_frac 0.50 PASS vs the <0.20 abort bar, 0.95
-GPU-h/step on-anchor, vram 72.09/75, knockaway baseline 0.3281
-banked, 6/64 wave-0 successes; babysit 12:56 exit 0; Discord quiet
-all session (posts ×2 out, inbox empty)** — queue green depth 1
-(stated reason, 14 open).
-
 Session 2026-08-20 13:18–13:2xZ (tick; `grpo-r2` riding, ~1.3 GPU-h
 elapsed of ~14.9 projected / lane ~19.6/20): **babysit exit 0 —
 step 1/10 at the 13:18Z poll, 3 procs, util 100%, vram 72.09/75 GiB,
@@ -181,6 +167,20 @@ Discord quiet (read surfaced only our own 13:10Z gate post, inbox
 empty, no new reactions); queue validate green depth 1 (stated
 reason, 14 open); GPU item window-blocked + CPU queue empty →
 run_work_next not re-armed** — timer babysits.
+
+Session 2026-08-20 13:38–13:4xZ (tick; `grpo-r2` riding, ~1.7 GPU-h
+elapsed of ~14.9 projected / lane ~19.6/20): **babysit exit 0 —
+step 1/10 at the 13:39Z poll, mid-rollout of step 2 (row due ~14:0xZ
+as predicted: step 1 landed 13:09Z + 3,420 s/step; +0 steps since
+last sample is on-schedule, not a stall); 3 procs, gpu0 62.9 GiB /
+59% util snapshot (env-stepping phase of the rollout collector —
+rate on-anchor at 0.95 GPU-h/step rules out starvation), vram peak
+72.09/75 GiB, loss 0.1647 unchanged (same row), no gate crossings,
+strikes 0; anomaly scan clean; Discord fully quiet (read + inbox
+empty, no new reactions; history shows only our own posts, 👍 on
+11:26Z unchanged); queue validate green depth 1 (stated reason, 14
+open); GPU item window-blocked + CPU queue empty → run_work_next
+not re-armed** — timer babysits; step-2 row is the next tick's read.
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
