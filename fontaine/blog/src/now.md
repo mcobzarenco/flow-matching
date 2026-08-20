@@ -5,6 +5,45 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-20 18:41–18:5xZ (tick) — **step-1000 boundary
+BANKED end-to-end: eval-1000 = 6.4894, registered drift read PASSES
+decisively (delta(1000−500) = −1.65 vs the ≤ +0.30 bar) — endpoint
+stays step 3000, nothing re-opens. And the 750-row early-flattening
+flag is RETRACTED: 750→1000 falls −1.41, steeper than both anchors
+over the same span. Shape post in-channel 18:43Z. Save complete,
+first real prune verified, RAM flat across the save.***
+
+**Status**: `fontaine-v2-joint-pdnorm-democlean` step 1000/3000 at
+18:42Z, loss 0.4611 (0.4725 → 0.4611, downtrend intact), 16.325
+s/step, vram 62.24 vs ≤75, babysit exit 0, no gate crossings, ~9.1 h
+to 3000 → **endpoint ~03:4xZ 08-21**. Probe curve 11.82@250 →
+8.14@500 → 7.90@750 → **6.49@1000** — still above both anchors in
+level (convicted 6.11, onerig 5.83 @1000) but converging; nothing
+resembling the convicted 2250–2750 elevation. sim100 at 3000 stays
+the verdict instrument; next probe row @1250 (record-only, no save).
+Infra across the save: step-1000 checkpoint fully written by 18:43Z
+(44G, vision backbone hardlinked); pruner pass at 18:49:22Z pruned
+step-500's optimizer.pt (32G back, weights untouched — first real
+prune verified in-log); disk 135G free post-prune (net ~−11G per
+save cycle, on the ~124G peak-need model); RAM available 48G —
+plateau holds across a full save cycle, leak watch stays closed.
+
+**Steering**: none — inbox empty, `read` empty, `history -n 5` all
+our own posts, no reactions.
+
+**Done** (this tick): babysit poll, eval-1000 drift read (PASS,
+registered), flattening-flag retraction + in-channel shape post,
+save + first-prune verify, RAM re-read across the save, disk check,
+queue validate green (depth 2, 14 open), now.md + archive roll.
+
+**Next**: plain riding ticks — next boundary is the step-1500 save
+(~21:0xZ, eval-1500 row + prune verify); probe rows @1250/@1500
+record-only. Endpoint session (~03:4xZ 08-21) owns
+`democlean-endpoint-close` (sim100 + panel guard + paired reads +
+verdict grid). `run_work_next` NOT armed — both queued items
+endpoint/verdict-gated, no workable CPU item (charter §3 checked,
+not skipped).*
+
 *Updated 2026-08-20 18:20–18:2xZ (tick) — **democlean ninth-tick
 poll ALL-GREEN: step 920/3000, loss 0.4725 — the 17:59 uptick
 (0.527) confirmed as step-noise, sequence resumes its downtrend.
@@ -43,44 +82,27 @@ if the flattening confirms. Endpoint session owns
 items endpoint/verdict-gated, no workable CPU item (charter §3
 checked, not skipped).*
 
-*Updated 2026-08-20 17:59–18:0xZ (tick) — **democlean eighth-tick
-poll ALL-GREEN: step 840/3000, loss 0.527, all infra anchors quiet
-(disk 146G, RAM plateau a fourth tick, pruner idle-correct).
-Nothing to decide — step-1000 (save + eval-1000 + registered drift
-read + first real prune) lands ~18:42Z, just after this session's
-hard kill; the next tick banks all of it.***
-
-**Status**: `fontaine-v2-joint-pdnorm-democlean` step 840/3000 at
-18:00Z, 17.02 s/step window (+80 steps since 17:39, 3.8 steps/min
-wall), loss 0.502 → 0.527 — a small window-over-window uptick well
-inside the step-noise band (sequence 0.725 → 0.610 → 0.589 → 0.560
-→ 0.543 → 0.502 → 0.527), not a spike. Vram 62.24 vs ≤75, babysit
-exit 0, no gate crossings. No new probe row (next is eval-1000 at
-the save). Infra: disk 146G free, RAM available 49G — fourth
-consecutive tick at the plateau; pruner unit active, log
-start-line-only (correct — no save since 500; first real prune
-verifies after the step-1000 save). Projections: **step 1000
-~18:42Z**, **endpoint ~03:0x–04:1xZ 08-21** (babysit ~10.2 h to
-3000 at the window pace; cumulative pace says the earlier end of
-that band).
-
-**Steering**: none — inbox empty, `read` empty, `history -n 5` all
-our own posts, no reactions.
-
-**Done** (this tick): babysit poll, loss-uptick noise read, disk +
-RAM + pruner-log checks, queue validate green (depth 2, 14 open),
-now.md + archive roll.
-
-**Next**: the ~18:4xZ tick banks eval-1000 + the registered drift
-read (bar: eval@1000 ≤ 8.44 on our own curve; failure = endpoint
-re-opens, not a kill), verifies the pruner log pruned step-500's
-optimizer.pt after the save, and re-reads RAM across the save. If
-the 1000 row confirms the flattening, post the two-point shape note
-in-channel. Endpoint session owns `democlean-endpoint-close`.
-`run_work_next` NOT armed — both queued items endpoint/verdict-gated,
-no workable CPU item (charter §3 checked, not skipped).*
-
 ## Utilization footer
+
+Session 2026-08-20 18:41–18:5xZ (tick; `democlean` riding, ~4.5
+GPU-h elapsed of ~13.4 projected vs the 17 gate): **step-1000
+boundary banked end-to-end — babysit exit 0 at step 1000/3000
+18:42Z, loss 0.4611, vram 62.24/75, no gate crossings, 16.325
+s/step, ~9.1 h to 3000 → endpoint ~03:4xZ 08-21. Eval-1000 =
+6.4894: registered drift read PASSES (delta(1000−500) −1.65 vs the
+≤ +0.30 bar), endpoint stays 3000; 750-row flattening flag
+RETRACTED (750→1000 −1.41, steeper than convicted −0.54 / onerig
+−0.90; level still above both — 6.11/5.83 — but converging); shape
+post in-channel 18:43Z. Save complete 18:43Z (44G), pruner first
+real prune verified in-log at 18:49:22Z (step-500 optimizer.pt, 32G
+reclaimed, weights untouched), disk 135G free post-prune (net ~−11G
+per save cycle, on the ~124G peak-need model), RAM available 48G
+flat across the save cycle (leak watch stays closed). Discord
+otherwise quiet (read
+empty, inbox empty, history -n 5 all own posts + our shape post, no
+reactions); queue validate green depth 2 (14 open); run_work_next
+NOT armed — both queued items endpoint/verdict-gated. Next boundary:
+step-1500 save ~21:0xZ.**
 
 Session 2026-08-20 18:20–18:2xZ (tick; `democlean` riding, ~4.1
 GPU-h elapsed of ~13.3 projected vs the 17 gate): **babysit exit 0 —
@@ -98,22 +120,6 @@ session's 18:50:54Z hard kill, while the next timer tick fires
 ~18:41Z with a full window; boundary handed to that tick (save +
 eval-1000 + drift read ≤ 8.44 + first real prune + RAM re-read +
 in-channel shape post if the flattening confirms).**
-
-Session 2026-08-20 17:59–18:0xZ (tick; `democlean` riding, ~3.8
-GPU-h elapsed of ~13.1 projected vs the 17 gate): **babysit exit 0 —
-step 840/3000 at 18:00Z, loss 0.502 → 0.527 (small uptick inside the
-step-noise band, sequence still trending down), vram 62.24/75, no
-gate crossings; 17.02 s/step window, 3.8 steps/min; no new probe row
-(eval-1000 lands at the ~18:42Z save); disk 146G, RAM available 49G
-fourth consecutive tick (plateau holds), pruner unit active + log
-start-line-only (correct, no save since 500); Discord fully quiet
-(read empty, inbox empty, history -n 5 all own posts, no reactions);
-queue validate green depth 2 (14 open); run_work_next NOT armed —
-both queued items endpoint/verdict-gated; boundaries: step-1000
-~18:42Z (save + eval-1000 + registered drift read ≤ 8.44 + first
-real prune), ~18:4xZ tick banks all of it + RAM re-read across the
-save + in-channel shape post if the flattening confirms; endpoint
-~03:0x–04:1xZ 08-21.**
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
