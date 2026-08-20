@@ -55,28 +55,39 @@
 # one cmdline — diagnostics after the loop count too. ~0.5 GPU-h idle,
 # no gate risk.
 
+# onerig_endpoint_battery entry PRUNED 11:2xZ 08-20 tick — battery
+# COMPLETE 11:17:49Z (leg 1 sim100 28/100 MIX-EXONERATED verdict
+# posted 10:51Z; leg 2 k4l2 panel json+html written — bijou@3000
+# native panel MAE 28.808, per-motor + Q2 tables in the html; the
+# panel-guard read vs the disc-1000 banked npz + truthfit rewear are
+# the chained work session's CPU tail, NOT a raw-number call here).
+# Unit consumed 4h30m CPU, 54.6G mem peak, clean exit. Cell honest
+# total ~17.0 GPU-h vs the 17 gate — inside, zero slack, no extra
+# legs. Ckpt bank verified on HF (6 weights-only files,
+# grasp_sft_v2_joint_pdnorm_onerig_step3000, DONE 10:52:39Z).
+# grpo-r2-parity launched in the freed window 11:18:20Z (entry below).
+
 [[run]]
-name = "onerig_endpoint_battery"
+name = "grpo_r2_parity"
 kind = "progress-log"
 host = "local"
-pgrep = "launch_onerig_endpoint_battery"
+pgrep = "rollout_sim"
 pgrep_min = 1
 gpu_indices = [0]
 gpu_mem_min_mib = 5000
-log = "/home/ubuntu/eval__onerig_endpoint_sim100.log"  # leg 1; repoint to eval__grasp_sft_v2_joint_1gpu_pdnorm_onerig__step_003000__panel_v2_k4l2_euler10_draws1_stable.log at the panel roll
-progress_re = "seed [0-9]+ replan"
-started_utc = "2026-08-20T08:37:18Z"
+log = "/home/ubuntu/eval__grpo_r2_parity_discrete.log"  # leg 1 discrete (loop stack, seeds 200-219); leg 2 anchor log eval__grpo_r2_parity_anchor.log; verdict chains in-unit
+progress_re = "seed [0-9]+"
+started_utc = "2026-08-20T11:18:20Z"
 gpu_hours_per_wall_hour = 1.0
-boundary = "leg 1 sim100 ~2.2-2.5 GPU-h (pdnorm battery measured) -> ~10:5x-11:1xZ 08-20; leg 2 panel ~0.5 -> ~11:2x-11:4xZ; then CPU: sim100_paired_read vs disc1000 11/100 AND vs pdnorm-mixed 1/100, panel guard vs disc-1000 npz, truthfit rewear + ladder restamp, onerig endpoint report, verdict post through the frozen grid (prereg 2026-08-19-prereg-demos-plus-one-rig.md)"
+boundary = "~0.7 GPU-h total (two 20-seed greedy legs + CPU verdict) -> ~12:0xZ 08-20; verdict json outputs/sim/grpo_r2/parity/parity_verdict.json (unit grpo-r2-parity, chained grpo_r2_parity_verdict.py)"
 anchors = [
-    "frozen grid on leg-1 successes/100: >=20 mix-exonerated (clean was the poison — bank ckpt same-session), <=10 still-convicted (rig data class, not the specific dataset), 11-19 ambiguous (per-channel MAE + breakdown + videos to the owner); anchors: demosonly baseline 11/100, convicted mixed cell 1/100 (= pdnorm-mixed)",
-    "final probe 4.5266@3000 holds the run low — curve ended improving, unlike the convicted cell's un-retraced elevation; the paired read vs the convicted cell is the direct did-dropping-clean-move-anything estimate",
-    "panel guard (tertiary): endpoint npz vs disc-1000 banked npz on shared frames, worse-by > +0.05 CI-excl-0 fails; interpretation anchors 27.40 re-worn disc / 27.14 released / 25.15 midpoint null / 8.37 state-copy; convicted cell read 29.18 native / 27.44 truth-fit",
-    "17 GPU-h queue gate binds the whole cell: train ~13.4 + battery ~2.7 + idle-gap 0.5 ~= 16.6 — inside, no headroom for extras",
+    "A5 LAUNCH GATE (registered rule): PASS iff |dSuccesses| <= 2 AND |dInteractedFrac| <= 0.30 between the loop stack (--joint-frame rig) and BijouPolicy (--serve-head ar) on seeds 200-219; the convicted mode read 0.00 vs ~0.59 interacted-frac",
+    "on PASS: ./launch_grpo_r2.sh launch fires the frozen A3.4 argv mechanically (preflight PASS stands, gates re-arm fresh, no GO ask); on FAIL: park the lane, bank both jsons, postmortem post — no override exists",
+    "lane budget: spent ~4.0 + parity 0.7 + relaunch ~14.9 ~= 19.6 vs the A4 gate <= 20 — zero slack, any further abort ends the lane at the gate",
 ]
 [[run.gates]]
 kind = "gpu_hours_max"
-value = 3.5
+value = 1.5
 
 # (no_live_runs_reason cleared 14:25Z 08-16 — demo_gen_v1 launched on the A100 box; prior: HOME-GPU-only declaration of 10:2xZ 08-16.)
 

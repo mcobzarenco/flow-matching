@@ -3,6 +3,45 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-20 11:08–11:2xZ (tick) — **endpoint battery
+COMPLETE 11:17:49Z (leg 2 k4l2 panel json+html clean; native
+bijou@3000 panel MAE 28.81 — read withheld for the truthfit rewear +
+panel guard in the chained session); ckpt bank VERIFIED on HF; the
+GPU window rolled straight into the R2 parity read 11:18:20Z — a
+31-second handoff, no idle gap.***
+
+**Status**: `grpo-r2-parity` live on the H100 (launched 11:18:20Z in
+the freed window per queue priority; unit `grpo-r2-parity`, ~0.7
+GPU-h → verdict ~12:0xZ): seeds 200–219 greedy through BOTH serving
+paths — loop stack `--joint-frame rig`, then BijouPolicy
+`--serve-head ar` — chaining `grpo_r2_parity_verdict.py`. Registered
+A5 rule: PASS iff |ΔSuccesses| ≤ 2 AND |ΔInteractedFrac| ≤ 0.30 (the
+convicted mode read 0.00 vs ~0.59). On PASS the frozen A3.4 relaunch
+fires mechanically (~14.9 GPU-h; lane ~19.6/20 — zero slack); on
+FAIL the lane parks, no override. Battery unit exited clean (4h30m
+CPU, 54.6G mem peak); registry rolled battery→parity.
+
+**Steering**: none — read + inbox empty, history clean (the three
+recorded 👍s unchanged; no reaction yet on the 10:51Z VERDICT post).
+
+**Done**: babysit poll exit 0 (leg 2 healthy mid-scoring at 11:08;
+watched in-session to the 11:17:49Z boundary — the babysit
+bare-count 99 was leg-1 residue, the journal was the real progress
+read). Ckpt bank verify closed: 6 weights-only files live under
+`grasp_sft_v2_joint_pdnorm_onerig_step3000` (DONE 10:52:39Z).
+Parity launch + registry roll + Discord post 11:19Z. Disk 107G free
+(+10G, pruner). Queue validate green depth 3 (16 open).
+`run_work_next` stays armed — the chained work session takes the
+leg-2 CPU tail (panel guard vs disc-1000 npz, truthfit rewear,
+ladder restamp, onerig HTML report) + the demos+clean pre-reg draft,
+and catches the parity verdict ~12:0xZ.
+
+**Next**: parity verdict ~12:0xZ → on PASS `./launch_grpo_r2.sh
+launch` fires mechanically (no GO ask) + babysit entry + announce;
+on FAIL park the lane + postmortem post. At the R2 endpoint the
+boundary is `./launch_grpo_r2.sh boundary
+outputs/sim/grpo_r2/loop/step_0010.pt`.*
+
 *Updated 2026-08-20 07:30–11:0xZ (work session) — **ONERIG VERDICT:
 sim100 28/100 — MIX-EXONERATED through the frozen grid. The
 two-dataset mix (demos + v2 ×4, clean dropped) beats its demos-only
@@ -46,86 +85,18 @@ grpo-r2-parity-read-and-relaunch owns the first free GPU window
 endpoint the boundary is `./launch_grpo_r2.sh boundary
 outputs/sim/grpo_r2/loop/step_0010.pt`.*
 
-*Updated 2026-08-20 07:07–07:1xZ (tick) — **onerig healthy at step
-2850; loss 0.3338 (−0.0098 vs 2770 — falling again, the 0.3143 low
-stands); probe curve unchanged (4.50@2750 new-low latest; the final
-probe lands with the step-3000 save); window 3.8 steps/min in band;
-fully quiet; ~150 steps → ~0.7 h → ETA ~07:5xZ 08-20 — the endpoint
-lands after this tick's cap, the next tick catches the battery.***
-
-**Status**: `grasp_sft_v2_joint_1gpu_pdnorm_onerig` step 2850/3000 at
-the 07:08Z poll, loss 0.3338 (−0.0098 vs 0.3436 at 2770 — falling
-again; the 0.3143 low at 2460 stands). Probe curve unchanged
-(4.50@2750 latest — the new run low; the final probe lands with the
-step-3000 save and is the read to beat). Window 3.8 steps/min,
-cumulative 15.734 s/step — in band; starvation absent, restart
-trigger moot this close to the endpoint. ~150 steps → ~0.7 h → ETA
-~07:5xZ 08-20; the endpoint lands just past this tick's 07:38Z cap,
-so the ~07:2x–07:4x tick takes the final probe + step-3000 save and
-opens the endpoint battery (chaining a work session — the sim100
-battery exceeds a tick cap). 62.21/71 GiB, babysit exit 0, no gate
-crossings.
-
-**Steering**: none — read surfaced only our own 06:47Z probe-low
-post (cursor advance), inbox empty, history clean (the three
-recorded 👍s unchanged; no reaction on the 03:24Z / 04:28Z / 05:36Z
-/ 06:47Z posts).
-
-**Done**: babysit poll (healthy, exit 0). Disk 97G free, flat (next
-change at the step-3000 final save, ~86G floor per pruner math). RAM
-available 46G, flat. Queue validate green (depth 2, 15 open). No
-work-session chain this tick: both queued items GPU-gated
-post-onerig, no CPU items, depth at threshold.
-
-**Next**: onerig endpoint ~07:5xZ 08-20 — final probe + step-3000
-save (the next tick catches it; the 4.50@2750 low makes the final
-read the one to beat) → `onerig-endpoint-close` (frozen-grid sim100
-≥20 / ≤10 / 11–19 bands, anchors demosonly 11 and both convicted
-cells 1), then the R2 parity read + relaunch in the freed window (A5
-gate, no GO ask); at the R2 endpoint the boundary is
-`./launch_grpo_r2.sh boundary
-outputs/sim/grpo_r2/loop/step_0010.pt`.*
-
-*Updated 2026-08-20 06:46–06:5xZ (tick) — **onerig step-2750 probe:
-4.50 — NEW RUN LOW (below the 4.56@1750 low); the plateau call gets
-amended: the 2000–2500 stretch was a shoulder, the curve is improving
-again into the endpoint; loss 0.3436 (−0.0116, corroborating); window
-3.8 steps/min in band; fully quiet; ~230 steps → ETA ~07:4x–07:5xZ
-08-20 → endpoint battery.***
-
-**Status**: `grasp_sft_v2_joint_1gpu_pdnorm_onerig` step 2770/3000 at
-the 06:47Z poll. **Probe 4.50@2750 — new run low**: curve 12.85 →
-8.04 → 6.73 → 5.83 → 5.59 → 4.94 → 4.56 → 4.84 → 4.80 → 4.79 →
-**4.50** (−0.29, strongest drop since 1500, undercuts the 4.56@1750
-low). The plateau call closed at 2500 amends to: the 2000–2500
-stretch was a shoulder, not the ceiling — the run is still buying
-probe improvement at the end. Loss 0.3436 (−0.0116 vs 2690; the
-0.3143 low at 2460 stands). Window 3.8 steps/min, 15.92 s/step —
-in band; starvation absent, restart trigger moot this close to the
-endpoint. ~230 steps → ~1.0 h → ETA ~07:4x–07:5xZ 08-20. 62.21/71
-GiB, babysit exit 0, no gate crossings.
-
-**Steering**: none — read + inbox empty, history clean (the three
-recorded 👍s unchanged; no reaction on the 03:24Z / 04:28Z / 05:36Z
-posts).
-
-**Done**: babysit poll (healthy, exit 0). Probe-low post to Discord
-06:47Z. Disk 97G free, flat (next change at the step-3000 final
-save, ~86G floor per pruner math). RAM available 47G, flat. Queue
-validate green (depth 2, 15 open). No work-session chain: both
-queued items GPU-gated post-onerig, no CPU items, depth at
-threshold.
-
-**Next**: onerig endpoint ~07:4x–07:5xZ 08-20 — final probe lands
-with the step-3000 save (the ~07:2x and ~07:4x ticks watch it; the
-4.50@2750 low makes the final read the one to beat) →
-`onerig-endpoint-close` (frozen-grid sim100 ≥20 / ≤10 / 11–19 bands,
-anchors demosonly 11 and both convicted cells 1), then the R2 parity
-read + relaunch in the freed window (A5 gate, no GO ask); at the R2
-endpoint the boundary is `./launch_grpo_r2.sh boundary
-outputs/sim/grpo_r2/loop/step_0010.pt`.*
-
 ## Utilization footer
+
+Session 2026-08-20 11:08–11:2xZ (tick; battery→parity handoff):
+**battery COMPLETE 11:17:49Z (leg 2 panel json+html clean; native
+28.81 read withheld for the rewear; unit 4h30m CPU, clean exit);
+ckpt bank verified on HF (6 weights-only files); parity launched
+11:18:20Z — 31 s handoff, no idle gap (unit `grpo-r2-parity`, A5
+gate, ~0.7 GPU-h → ~12:0xZ; lane ~19.6/20 if the relaunch fires);
+registry rolled battery→parity; post 11:19Z; Discord otherwise
+quiet (read + inbox empty, no new reactions); disk 107G free
+(+10G); run_work_next armed for the CPU tail + parity verdict** —
+queue green depth 3 (16 open).
 
 Session 2026-08-20 07:30–11:0xZ (work session; exploit; onerig cell
 ~17.0 GPU-h total vs gate 17 — train ~13.4 + battery ~2.8 + idle-gap
@@ -138,32 +109,6 @@ pgrep, the 08-19 deadlock class reproduced, registry note
 sharpened); ckpt bank firing (weights-only); queue refilled with the
 demos+clean poison-pinning draft; leg-2 CPU tail chained via
 run_work_next** — queue green depth 3 (16 open).
-
-Session 2026-08-20 07:07–07:1xZ (tick; `onerig` riding, ~13.3 GPU-h
-elapsed of ~14 projected / gate 17): **babysit exit 0 — step
-2850/3000 at the 07:08Z poll, loss 0.3338 (−0.0098 vs 2770 — falling
-again, the 0.3143 low stands); probe curve unchanged (4.50@2750
-new-low latest, final probe lands with the step-3000 save); window
-3.8 steps/min / cumulative 15.734 s/step in band, starvation absent;
-~150 steps → ~0.7 h → ETA ~07:5xZ 08-20 — endpoint lands past this
-tick's cap, the next tick takes the final probe + endpoint battery;
-62.21 GiB, no gate crossings; Discord fully quiet (read surfaced
-only our own 06:47Z post, inbox empty, no new reactions); disk 97G
-free flat; RAM flat (available 46G); no chain (both queued items
-GPU-gated, no CPU items)** — queue green depth 2 (15 open).
-
-Session 2026-08-20 06:46–06:5xZ (tick; `onerig` riding, ~13.0 GPU-h
-elapsed of ~14 projected / gate 17): **babysit exit 0 — step
-2770/3000 at the 06:47Z poll; probe 4.50@2750 NEW RUN LOW (−0.29,
-strongest drop since 1500, below the 4.56@1750 low — the 2000–2500
-plateau amends to a shoulder, curve improving into the endpoint);
-loss 0.3436 (−0.0116, corroborating; the 0.3143 low stands); window
-3.8 steps/min / 15.92 s/step in band, starvation absent; ~230 steps
-→ ETA ~07:4x–07:5xZ 08-20 → endpoint battery; 62.21 GiB, no gate
-crossings; probe-low post 06:47Z; Discord otherwise fully quiet
-(read + inbox empty, no new reactions); disk 97G free flat; RAM flat
-(available 47G); no chain (both queued items GPU-gated, no CPU
-items)** — queue green depth 2 (15 open).
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
