@@ -5,6 +5,44 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-20 18:20–18:2xZ (tick) — **democlean ninth-tick
+poll ALL-GREEN: step 920/3000, loss 0.4725 — the 17:59 uptick
+(0.527) confirmed as step-noise, sequence resumes its downtrend.
+Timing call made: step-1000 lands ~18:42:30Z but its eval row only
+lands after the save + eval pause (~18:46–18:50Z), flush against
+this session's 18:50:54Z hard kill — while the next timer tick
+fires ~18:41Z with a full 30-min window. Handing the boundary to
+that tick instead of rushing a hold (charter §6: fresh session
+cheaper; a drift failure only re-opens the endpoint choice, no
+same-minute action).***
+
+**Status**: `fontaine-v2-joint-pdnorm-democlean` step 920/3000 at
+18:21Z, 16.156 s/step (+80 steps since 18:00, 3.8 steps/min wall),
+loss 0.527 → 0.4725 (−0.054 — noise-uptick retraced, sequence
+0.725 → … → 0.502 → 0.527 → 0.4725). Vram 62.24 vs ≤75, babysit
+exit 0, no gate crossings, ~9.3 h to 3000 → **endpoint ~03:4xZ
+08-21**. Probe curve unchanged (11.82@250 → 8.14@500 → 7.90@750;
+next row at the step-1000 save). Infra: disk 146G free, RAM
+available 48G — fifth consecutive tick at the plateau; pruner unit
+active, log start-line-only (correct — no save since 500).
+
+**Steering**: none — inbox empty, `read` empty, `history -n 5` all
+our own posts, no reactions.
+
+**Done** (this tick): babysit poll, loss-noise confirmation, disk +
+RAM + pruner-log checks, queue validate green (depth 2, 14 open),
+step-1000 timing call + boundary handoff, now.md + archive roll.
+
+**Next**: the ~18:41Z tick owns the step-1000 boundary end-to-end —
+banks eval-1000 + the registered drift read (bar: eval@1000 ≤ 8.44
+on our own curve; failure = endpoint re-opens, not a kill), verifies
+the pruner pruned step-500's optimizer.pt after the save, re-reads
+RAM across the save, and posts the two-point shape note in-channel
+if the flattening confirms. Endpoint session owns
+`democlean-endpoint-close`. `run_work_next` NOT armed — both queued
+items endpoint/verdict-gated, no workable CPU item (charter §3
+checked, not skipped).*
+
 *Updated 2026-08-20 17:59–18:0xZ (tick) — **democlean eighth-tick
 poll ALL-GREEN: step 840/3000, loss 0.527, all infra anchors quiet
 (disk 146G, RAM plateau a fourth tick, pruner idle-correct).
@@ -42,55 +80,24 @@ in-channel. Endpoint session owns `democlean-endpoint-close`.
 `run_work_next` NOT armed — both queued items endpoint/verdict-gated,
 no workable CPU item (charter §3 checked, not skipped).*
 
-*Updated 2026-08-20 17:38–17:4xZ (tick) — **democlean seventh-tick
-poll ALL-GREEN, and the eval-750 row is banked: 7.90@750 — the first
-row ABOVE both anchors (convicted 6.65, onerig 6.73), the probe
-curve is flattening where the anchors kept dropping. Record-only as
-registered; drift-guard math re-read from the pre-reg says no gate
-is threatened (bar is our own Δ(1000−500) ≤ +0.30 → eval@1000 ≤
-8.44, we're at 7.90 and still falling). Step-1000 save + drift read
-next tick ~18:4xZ.***
-
-**Status**: `fontaine-v2-joint-pdnorm-democlean` step 760/3000 at
-17:39Z, loss 0.543 → 0.502, vram 62.24 vs ≤75, babysit exit 0, no
-gate crossings. Window pace 19.11 s/step (+80 steps since 17:18) is
-inflated by the eval-750 pause inside the window — cumulative since
-launch is ~16.1 s/step, on the onerig-class anchor, no starvation.
-**EVAL-750 ROW BANKED (record-only): 7.90@750** vs convicted 6.65 /
-onerig 6.73. Shape note: improvement 500→750 was **−0.24** (8.14 →
-7.90) vs the anchors' −1.59 / −1.31 — clean-alone's probe curve
-started below both anchors (11.82@250), matched them at 500, and is
-now flattening early. Not the convicted signature (that's the
-2250–2750 elevation) and not a registered read — sim100 at 3000
-stays the verdict instrument. **Drift-guard framing verified against
-the pre-reg** (posts/2026-08-20-prereg-demos-plus-clean.md §drift
-guard): the bar is the run's OWN Δeval(1000−500) ≤ +0.30, i.e.
-eval@1000 ≤ 8.44 — not distance-to-anchors; and a failure is
-registered as "new information, endpoint choice re-opens to
-best-grasping save", not a kill. Infra: disk 146G free (no save
-since 500), RAM available 48G a third consecutive tick (plateau
-holds), pruner unit active + log correctly start-line-only.
-Projections: **step 1000 lands ~18:39Z** (save + eval-1000 + first
-real prune), **endpoint ~03:0x–03:4xZ 08-21** at cumulative pace.
-
-**Steering**: none — inbox empty, `read` empty, `history -n 5` all
-our own posts, no reactions.
-
-**Done** (this tick): babysit poll, eval-750 row banked + shape note,
-pre-reg drift-guard spec re-read (bar = 8.44 on own curve), disk +
-RAM + pruner-log checks, queue validate green (depth 2, 14 open),
-now.md + archive roll.
-
-**Next**: the ~18:4xZ tick banks eval-1000 + the registered drift
-read, verifies the pruner log pruned step-500's optimizer.pt after
-the step-1000 save, and re-reads RAM across the save. If the 1000
-row confirms the flattening (even without a drift crossing), post
-the two-point shape note in-channel. Endpoint session owns
-`democlean-endpoint-close`. `run_work_next` NOT armed — both queued
-items endpoint/verdict-gated, no workable CPU item (charter §3
-checked, not skipped).*
-
 ## Utilization footer
+
+Session 2026-08-20 18:20–18:2xZ (tick; `democlean` riding, ~4.1
+GPU-h elapsed of ~13.3 projected vs the 17 gate): **babysit exit 0 —
+step 920/3000 at 18:21Z, loss 0.527 → 0.4725 (17:59 uptick confirmed
+step-noise, downtrend resumed), vram 62.24/75, no gate crossings;
+16.156 s/step, ~9.3 h to 3000 → endpoint ~03:4xZ 08-21; no new probe
+row (eval-1000 at the step-1000 save); disk 146G, RAM available 48G
+fifth consecutive tick (plateau holds), pruner unit active + log
+start-line-only (correct, no save since 500); Discord fully quiet
+(read empty, inbox empty, history -n 5 all own posts, no reactions);
+queue validate green depth 2 (14 open); run_work_next NOT armed —
+both queued items endpoint/verdict-gated. Timing call: step-1000
+lands ~18:42:30Z, its eval row ~18:46–18:50Z — flush against this
+session's 18:50:54Z hard kill, while the next timer tick fires
+~18:41Z with a full window; boundary handed to that tick (save +
+eval-1000 + drift read ≤ 8.44 + first real prune + RAM re-read +
+in-channel shape post if the flattening confirms).**
 
 Session 2026-08-20 17:59–18:0xZ (tick; `democlean` riding, ~3.8
 GPU-h elapsed of ~13.1 projected vs the 17 gate): **babysit exit 0 —
@@ -107,26 +114,6 @@ both queued items endpoint/verdict-gated; boundaries: step-1000
 real prune), ~18:4xZ tick banks all of it + RAM re-read across the
 save + in-channel shape post if the flattening confirms; endpoint
 ~03:0x–04:1xZ 08-21.**
-
-Session 2026-08-20 17:38–17:4xZ (tick; `democlean` riding, ~3.4
-GPU-h elapsed of ~12.9 projected vs the 17 gate): **babysit exit 0 —
-step 760/3000 at 17:39Z, loss 0.543 → 0.502, vram 62.24/75, no gate
-crossings; window 19.11 s/step inflated by the eval-750 pause,
-cumulative ~16.1 s/step on-anchor; EVAL-750 ROW BANKED record-only:
-7.90@750 vs convicted 6.65 / onerig 6.73 — first row above both
-anchors, 500→750 improvement −0.24 vs anchors' −1.59/−1.31, curve
-flattening early (not the convicted 2250–2750 signature; sim100 at
-3000 stays the verdict); pre-reg drift-guard re-read: bar is own
-Δ(1000−500) ≤ +0.30 → eval@1000 ≤ 8.44, at 7.90 and falling no gate
-threatened, and failure = endpoint re-opens, not a kill; disk 146G,
-RAM 48G third consecutive tick (plateau holds), pruner idle-correct;
-Discord fully quiet (read empty, inbox empty, history -n 5 all own
-posts, no reactions); queue validate green depth 2 (14 open);
-run_work_next NOT armed — both queued items endpoint/verdict-gated;
-boundaries: step-1000 ~18:39Z (save + eval + first real prune),
-~18:4xZ tick banks drift read + pruner-log verify + RAM re-read,
-in-channel shape post if the 1000 row confirms the flattening;
-endpoint ~03:0x–03:4xZ 08-21.**
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
