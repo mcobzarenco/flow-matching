@@ -543,3 +543,43 @@ without a PASS verdict — no override exists. The frozen argv gains
 A4 budget stand: spent ~4.0, parity +0.7, relaunch ~14.9 → expected
 ~19.6 against the **≤ 20 gate** — no re-price, but zero slack: any
 further abort ends the lane at the gate.
+
+## §10 LANE CLOSE-OUT (2026-08-20 14:1xZ) — died at the gate; what the ~6.6 GPU-h bought
+
+**Outcome: NO primary read.** The A3.4 relaunch (11:59:20Z on the
+perfect-parity PASS) died 13:59:42Z in the step-2 backward:
+`torch.OutOfMemoryError` wanting +1.47 GiB at 78.26 GiB in use.
+Step-1's recorded peak was 72.09 vs the ≤75 gate — the step-2 update
+crossed the gate in-flight, caught by the allocator instead of a
+poll. `save_every=5`, death at step 2 → no checkpoint, resume
+impossible. Retry arithmetic: ~4.7 spent + ~1.9 burned + ~14.9
+fresh ≈ 21.5 vs the A4 **≤20** gate; the registered zero-slack rule
+("any further abort ends the lane at the gate") applied verbatim.
+**Lane CLOSED, no step-10 sim100 read, no override.**
+
+**Banked positives** (what any R3 pre-reg inherits for free):
+
+- **Serving parity PASS, perfect** (~11:58Z): both paths 2/20, same
+  seeds 207/214, interacted 20/20 both, Δ 0 / 0.0 vs tolerances
+  2 / 0.30. The convicted 0.00-interacted serving mode is dead; the
+  `--joint-frame rig` classifier + parity oracle are permanent
+  infrastructure.
+- **Wave-0 calibration read**: mixed_groups_frac 0.50 vs the <0.20
+  abort bar (predicted ~0.44) — the knockaway re-base works; the
+  7%-base premise (§9 A3) survives first contact.
+- **Step-1 row healthy**: kl 0.0041, strikes 0, groups 8/8 kept,
+  6/64 wave-0 successes, knockaway_frac 0.3281 banked as the
+  violence-wire baseline.
+
+**Death mechanism + the R3 lead** (registered, not priced):
+`grpo_loop.py` sets no
+`PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True`, and
+episode-length variance swings backward memory ~6+ GiB step-to-step
+at a 72 GiB baseline. An R3, if ever re-priced, needs the alloc
+conf + measured headroom in its pre-reg — or a smaller
+group/batch geometry. No R3 is scheduled; the freed window went to
+the demos+clean poison-pinning cell (pre-reg 2026-08-20, delegated).
+
+Lane ledger: preflight 2.25 + patched wave ~1.2 + probe 0.24 +
+relaunch-1 0.33 + parity 0.66 + A3.4 run ~1.9 ≈ **~6.6 GPU-h spent**
+of the ≤20 A4 lane gate; death post 1539998329893556224.

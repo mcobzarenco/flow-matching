@@ -92,39 +92,56 @@
 # Artifacts: loop/ (meta, 1 train row, rows/), journal unit grpo-r2.
 # Freed window claimed by the delegated demos+clean cell (entry below).
 
-# LIVE — demos+clean poison-pinning cell FIT SMOKE (local H100; unit
-# fontaine-v2-joint-pdnorm-democlean-smoke, launched 14:02:01Z 08-20
-# tick, STEPS=20 SMOKE=1, save-dir /tmp). Pre-reg
-# posts/2026-08-20-prereg-demos-plus-clean.md; launcher
-# launch_local_grasp_sft_v2_joint_1gpu_pdnorm_democlean_h100.sh (has
-# expandable_segments + GPU-busy guard; GPU verified empty at launch).
-# On smoke green the chained work session launches the REAL unit
-# fontaine-v2-joint-pdnorm-democlean (3000 steps, gate 17 GPU-h) and
-# rolls this entry; RECORD the boot recompute-stats rows (mechanism
-# candidate (b): degenerate 3,399-frame clean pdnorm row).
+# democlean_smoke entry ROLLED 14:1xZ 08-20 work session — smoke GREEN
+# 14:14Z: rc 0 (Result=success), 20/20 steps, vram alloc peak 62.19
+# GiB (onerig-class, nowhere near 75), loss 4.97@10 -> 3.59@20, 0
+# errors, GPU freed clean. Boot stats-row autopsy RECORDED same
+# session (mechanism (b) read, from the convicted step_003000
+# metadata per_dataset_stats — the actual rows live during the
+# collapse): NO degenerate channel. Clean action scales (q99-q01)
+# 36.9/133.7/120.9/100.3/179.4/28.1 vs demos 105.0/169.1/162.6/83.3/
+# 314.4/41.7 — worst ratio ch0 0.352 (x2.84 flow-target amplification
+# on clean batches), all channels >= 28, nothing near-constant.
+# Mechanism (b)'s tiny-scale fingerprint ABSENT => (b) weakened;
+# (a) content / (c) composition stay live for the run's verdict.
+
+# LIVE — demos+clean poison-pinning cell REAL RUN (local H100; unit
+# fontaine-v2-joint-pdnorm-democlean, launched 14:15:41Z 08-20 work
+# session on smoke green). Pre-reg
+# posts/2026-08-20-prereg-demos-plus-clean.md (posted 12:20Z);
+# launcher launch_local_grasp_sft_v2_joint_1gpu_pdnorm_democlean_h100
+# .sh (expandable_segments + GPU-busy guard; GPU verified 0 MiB at
+# launch). 3000 steps eff-96, seed 0, demos + clean x4 (0.69% share),
+# pdnorm + joint + insulate, recompute-stats. Gate 17 GPU-h.
 [[run]]
-name = "democlean_smoke"
+name = "democlean"
 kind = "train-jsonl"
 host = "local"
 pgrep = "grasp_sft_v2_joint_1gpu_pdnorm_democlean"
 pgrep_min = 1
 gpu_indices = [0]
 gpu_mem_min_mib = 8000
-jsonl = "/home/ubuntu/flow-matching/outputs/train/grasp_sft_v2_joint_1gpu_pdnorm_democlean_smoke/train_log.jsonl"
-total_steps = 20
+jsonl = "/home/ubuntu/checkpoints/finetune/grasp_sft_v2_joint_1gpu_pdnorm_democlean/train_log.jsonl"
+total_steps = 3000
 probe_key = "eval_chunk_mae"
 vram_key = "vram_alloc_peak_gib"
-started_utc = "2026-08-20T14:02:01Z"
+started_utc = "2026-08-20T14:15:41Z"
 gpu_hours_per_wall_hour = 1.0
-boundary = "20-step fit smoke (~minutes incl. dataset stats recompute); on rc 0 + sane vram the work session launches the real 3000-step unit and REGISTERS it here (anchor curve = convicted pdnorm-mixed 12.85/8.04/6.73... vs onerig; boot stats rows recorded either way)"
+boundary = "onerig-class pace ~16 s/step => ~13.5 GPU-h, endpoint ~03:3xZ 08-21; boundaries: step-1000 drift read (<= +0.30 vs the probe curve class), step-3000 endpoint -> sim100 (stand-ins pin, --stats-repo-id grasp_demos_v2/merged) + panel guard vs disc-1000 npz + paired reads vs onerig 28/100 AND control 11/100 AND convicted 1/100 + verdict through the frozen grid (>=20 / <=10 / 11-19)"
 anchors = [
-    "smoke green = process exits 0, no OOM, vram peak sane vs the 71-ish SFT class (onerig peaked 62.21)",
-    "same recipe as convicted cell minus so101_pick_place_v2; repeat-4 on clean, seed 0, eff-96 = micro-12 x 8",
-    "real-run gate on launch: 17 GPU-h, 3000 steps (pre-reg 08-20 12:20Z)",
+    "CONVICTED pdnorm-mixed probe curve (the poison signature this cell hunts): 12.91/8.24/6.65/6.11/5.72/5.62/5.45/5.47/6.59@2250/6.83@2500/6.32/6.17 — the 2250-2750 elevation never retraced; watch whether clean-alone reproduces it",
+    "ONERIG (demos+v2, clean dropped) curve for contrast: 12.85/8.04/6.73/5.83/5.59/4.94/4.56/4.84/4.80/4.79/4.50/4.53 — ended improving, 28/100",
+    "smoke fit: vram peak 62.19 GiB, ~24 s/step early (chunked warmup) -> onerig-class steady ~16 s/step expected; starvation check at first poll (util+rate+free-g+df)",
+    "disk: was 84G free at launch vs ~128G checkpoint footprint (onerig-class) — DISK-FULL RISK CLEARED 14:2xZ 08-20: pruned onerig step_002500+step_003000 optimizer.pt (closed cell, weights banked HF) + smoke tmp -> 189G free; watch df at each poll anyway",
+    "record-only reads (pre-reg): boot stats rows BANKED (no degenerate clean channel, worst x2.84 ch0); eval-250 curve vs both anchors; clean-slice eval breakdown (holdout ~1 episode — noisy, never a gate)",
+    "verdict grid: <=10 clean-alone SUFFICIENT (poison pinned); >=20 NOT sufficient (three-way interaction); 11-19 ambiguous (control band) -> breakdowns + videos, no claim",
 ]
 [[run.gates]]
 kind = "vram_max_gib"
 value = 75.0
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 17.0
 
 # (no_live_runs_reason cleared 14:25Z 08-16 — demo_gen_v1 launched on the A100 box; prior: HOME-GPU-only declaration of 10:2xZ 08-16.)
 

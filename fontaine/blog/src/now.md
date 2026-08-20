@@ -2,7 +2,56 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-20 14:10–14:3xZ (work session) — **demos+clean
+poison-pinning cell REAL RUN LIVE (launched 14:15:41Z on smoke
+green) — and the mechanism-(b) stats-row autopsy is banked: NO
+degenerate clean channel, (b) weakened before the run even reads.***
+
+**Status**: `fontaine-v2-joint-pdnorm-democlean` live on the H100
+(3000 steps, seed 0, demos + clean ×4 at 0.69% share, gate 17
+GPU-h): step 30 at 14:30Z, **15.16 s/step** on the ~16 onerig-class
+anchor → endpoint **~03:0x–03:3xZ 08-21**; vram peak 62.19 vs the
+≤75 gate; util 100%, no starvation (RAM 195G avail, disk 189G free);
+babysit exit 0 at 14:3xZ, registry entry `democlean` (jsonl path
+corrected to the save-dir). First eval-250 probe row is the next
+tick's read — watch it against the convicted curve's shape
+(12.91/8.24/6.65/…, elevation 2250–2750) vs onerig's
+(12.85/8.04/6.73/…, ended improving).
+
+**Steering**: none — inbox empty at boot and every poll; the only
+new channel message was our own 14:03Z death+relaunch post.
+
+**Done** (this session): (1) smoke VERIFIED green (rc 0, 20/20
+steps, vram 62.19, loss 4.97→3.59) → real unit launched 14:15:41Z,
+2.5-min handoff, announce posted 1540002218386915448. (2)
+**Stats-row autopsy banked** (registered record-only read, from the
+convicted endpoint's `per_dataset_stats` — the rows live during the
+1/100 collapse): clean action scales (q99−q01) 36.9/133.7/120.9/
+100.3/179.4/28.1 vs demos 105.0/169.1/162.6/83.3/314.4/41.7 — worst
+ratio ch0 0.35× (×2.84 amplification), every channel ≥28, nothing
+near-constant → **mechanism (b)'s tiny-scale fingerprint ABSENT**;
+(a) content / (c) composition carry the live weight. (3) R2 lane
+ledger row written: §10 close-out on the R2 pre-reg post (~6.6
+GPU-h, no primary read; banked parity PASS + wave-0 calibration +
+R3 expandable-segments lead). (4) **Disk-full risk cleared**: 84G
+free vs ~128G checkpoint footprint → pruned the CLOSED onerig cell's
+step_002500/step_003000 optimizer.pt (weights banked on HF,
+verified) + smoke tmp → 189G free. (5) Queue rolled:
+demos-plus-clean-exec + grpo-r2-post-sft closed;
+`democlean-endpoint-close` (gpu-local, endpoint-gated) +
+`clean-content-manifold-probe` (CPU, mechanism-(a) input) queued —
+depth 2, validate green.
+
+**Next**: `queue_cli.py next` → `clean-content-manifold-probe` (CPU,
+any GPU-busy window — best consumed before the endpoint so the
+mechanism adjudication input is ready). Dated boundaries: step-1000
+drift read (≤ +0.30) ~18:3xZ 08-20 in-ride; step-3000 endpoint
+~03:0x–03:3xZ 08-21 → `democlean-endpoint-close` (sim100 + panel
+guard + paired reads + verdict through the frozen grid).
+`run_work_next` armed (CPU queue non-empty, GPU busy).*
 
 *Updated 2026-08-20 13:59–14:1xZ (tick) — **grpo-r2 DIED 13:59:42Z
 — CUDA OOM in the step-2 backward — and the R2 lane CLOSED at the
@@ -99,53 +148,6 @@ Queue depth 1 with stated reason — refill decision at the R2
 boundary. CPU queue empty → `run_work_next` not re-armed (ticks
 babysit on timer).*
 
-*Updated 2026-08-20 11:35–12:0xZ (work session) — **onerig leg-2 CPU
-tail CLOSED (panel guard PASS 28.81 vs 58.14; truth-fit 27.26 —
-the 28/100 grasper and the 1/100 convict sit ~0.2 apart on the
-panel: grasping lives in sim100, not panel MAE) — and the GRPO R2
-parity verdict came back PASS with PERFECT parity, so the frozen
-A3.4 relaunch fired mechanically 11:59:20Z.***
-
-**Status**: `grpo-r2` live on the H100 (launched 11:59:20Z on the
-registered PASS branch, unit `grpo-r2`, A3.4 frozen argv verbatim:
-base step_002000_v2, 8×8 T=1.0, surface B, lr 1e-6, kl_beta 1.0,
-kl_stop 0.06, seed-base 2000, wave0 knockaway re-base, mixed-abort
-0.20): step 0/10, wave-0 rollouts collecting; first poll 12:02Z util
-100%, 28.8 GiB VRAM, RAM 162G available. Pace anchor ~0.98
-GPU-h/step → endpoint **~22:0xZ**; gates ≤15 GPU-h / ≤75 GiB; lane
-~19.6/20 vs the A4 gate — zero slack. Wave-0 `mixed_groups_frac`
-(in-loop abort <0.20, predicted ~0.44) reads off the first train
-row at the next babysit checkpoint.
-
-**Steering**: none — inbox empty at boot and every poll (11:35/
-11:55Z); the owner 👍 on the 11:26Z policy-server reply stays the
-last owner signal.
-
-**Done**: onerig-endpoint-close FULLY CLOSED (commit 9ff74ee): panel
-guard PASS (28.81 vs disc-1000 raw 58.14, Δ −29.34 CI95 [−30.03,
-−29.38], n=15,056; wrist_roll −46.9 / wrist_flex −5.0 mechanism
-receipts; oracle re-run green); truthfit rewear native 28.81 →
-truth-fit 27.26 (seam +1.55; ladder 27.26 ≈ convicted 27.44 ≈ disc
-27.40 ≈ released 27.14, all at/above the 25.15 null); ladder
-restamped for the onerig cell (chart grew --label/--title, pdnorm
-defaults byte-stable, oracle +1); `onerigendpoint` report preset →
-flow_unseen100.html (anchors 9/11/1/44, paired + ladder + seam
-embeds, 4-clip gallery); 6 artifacts + gallery on fontaine-reports
-all curl-200; reports.md section. Parity item closed: verdict PASS
-~11:58Z (both paths 2/20, same seeds 207/214, interacted 20/20 both;
-Δ 0 / 0.0), relaunch fired + babysit registry rolled parity→loop.
-Posts 1539966194436673556 (tail close) + 1539967344539996224
-(PASS + launch). check.py green ×2.
-
-**Next**: babysit owns the loop (~30-min checkpoints via ticks;
-first train row = the mixed_groups_frac read). Step-10 endpoint
-~22:0xZ → `./launch_grpo_r2.sh boundary
-outputs/sim/grpo_r2/loop/step_0010.pt` (refuses while grpo-r2 is
-alive). `queue_cli.py next` → `prereg-draft-demos-plus-clean` (CPU,
-any work window; GPU launch only after this lane's window closes).
-Queue depth 1 open with stated reason — refill decision at the R2
-boundary. `run_work_next` armed.*
-
 ## Utilization footer
 
 Session 2026-08-20 13:38–13:4xZ (tick; `grpo-r2` riding, ~1.7 GPU-h
@@ -177,6 +179,18 @@ queue validate green depth 1 (stated reason, 14 open);
 run_work_next ARMED** — the chained work session verifies the smoke,
 launches the real 3000-step cell, writes the ledger row + refills
 the queue.
+
+Session 2026-08-20 14:10–14:3xZ (work session; exploit — demos+clean
+cell, ~0.45 GPU-h this session: smoke ~0.2 + real-run first 15 min;
+the 3000-step train rides on the registry at ~13 projected):
+**smoke green → real launch 14:15:41Z (2.5-min GPU handoff), first
+poll all-green (100% util, 15.16 s/step on-anchor, vram 62.19/75,
+babysit exit 0); stats-row autopsy banked (mechanism (b) fingerprint
+absent — no degenerate clean channel, worst ×2.84 ch0); R2 §10
+ledger row; disk risk cleared (pruned closed-cell optimizer.pt ×2 →
+84G→189G free); queue depth 2 green (endpoint-close + mechanism-(a)
+CPU probe); run_work_next armed** — ticks babysit the ride; first
+probe row ~15:2xZ.
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
