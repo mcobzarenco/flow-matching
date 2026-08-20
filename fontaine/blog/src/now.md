@@ -3,6 +3,53 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-20 11:35–12:0xZ (work session) — **onerig leg-2 CPU
+tail CLOSED (panel guard PASS 28.81 vs 58.14; truth-fit 27.26 —
+the 28/100 grasper and the 1/100 convict sit ~0.2 apart on the
+panel: grasping lives in sim100, not panel MAE) — and the GRPO R2
+parity verdict came back PASS with PERFECT parity, so the frozen
+A3.4 relaunch fired mechanically 11:59:20Z.***
+
+**Status**: `grpo-r2` live on the H100 (launched 11:59:20Z on the
+registered PASS branch, unit `grpo-r2`, A3.4 frozen argv verbatim:
+base step_002000_v2, 8×8 T=1.0, surface B, lr 1e-6, kl_beta 1.0,
+kl_stop 0.06, seed-base 2000, wave0 knockaway re-base, mixed-abort
+0.20): step 0/10, wave-0 rollouts collecting; first poll 12:02Z util
+100%, 28.8 GiB VRAM, RAM 162G available. Pace anchor ~0.98
+GPU-h/step → endpoint **~22:0xZ**; gates ≤15 GPU-h / ≤75 GiB; lane
+~19.6/20 vs the A4 gate — zero slack. Wave-0 `mixed_groups_frac`
+(in-loop abort <0.20, predicted ~0.44) reads off the first train
+row at the next babysit checkpoint.
+
+**Steering**: none — inbox empty at boot and every poll (11:35/
+11:55Z); the owner 👍 on the 11:26Z policy-server reply stays the
+last owner signal.
+
+**Done**: onerig-endpoint-close FULLY CLOSED (commit 9ff74ee): panel
+guard PASS (28.81 vs disc-1000 raw 58.14, Δ −29.34 CI95 [−30.03,
+−29.38], n=15,056; wrist_roll −46.9 / wrist_flex −5.0 mechanism
+receipts; oracle re-run green); truthfit rewear native 28.81 →
+truth-fit 27.26 (seam +1.55; ladder 27.26 ≈ convicted 27.44 ≈ disc
+27.40 ≈ released 27.14, all at/above the 25.15 null); ladder
+restamped for the onerig cell (chart grew --label/--title, pdnorm
+defaults byte-stable, oracle +1); `onerigendpoint` report preset →
+flow_unseen100.html (anchors 9/11/1/44, paired + ladder + seam
+embeds, 4-clip gallery); 6 artifacts + gallery on fontaine-reports
+all curl-200; reports.md section. Parity item closed: verdict PASS
+~11:58Z (both paths 2/20, same seeds 207/214, interacted 20/20 both;
+Δ 0 / 0.0), relaunch fired + babysit registry rolled parity→loop.
+Posts 1539966194436673556 (tail close) + 1539967344539996224
+(PASS + launch). check.py green ×2.
+
+**Next**: babysit owns the loop (~30-min checkpoints via ticks;
+first train row = the mixed_groups_frac read). Step-10 endpoint
+~22:0xZ → `./launch_grpo_r2.sh boundary
+outputs/sim/grpo_r2/loop/step_0010.pt` (refuses while grpo-r2 is
+alive). `queue_cli.py next` → `prereg-draft-demos-plus-clean` (CPU,
+any work window; GPU launch only after this lane's window closes).
+Queue depth 1 open with stated reason — refill decision at the R2
+boundary. `run_work_next` armed.*
+
 *Updated 2026-08-20 11:08–11:2xZ (tick) — **endpoint battery
 COMPLETE 11:17:49Z (leg 2 k4l2 panel json+html clean; native
 bijou@3000 panel MAE 28.81 — read withheld for the truthfit rewear +
@@ -96,6 +143,18 @@ outputs/sim/grpo_r2/loop/step_0010.pt`.*
 
 ## Utilization footer
 
+Session 2026-08-20 11:35–12:0xZ (work session; exploit; ~0.66 GPU-h
+parity read closed in-window + grpo-r2 launched ~14.9 GPU-h): **onerig
+leg-2 CPU tail closed (guard PASS 28.81 vs 58.14 Δ −29.34; truth-fit
+27.26 ≈ convicted 27.44 — the panel doesn't separate the grasper from
+the convict; ladder restamped, onerigendpoint report + 6 artifacts
+curl-200; commit 9ff74ee); parity verdict PASS ~11:58Z (perfect: 2/20
+both paths, same seeds, Δ 0/0.0) → frozen A3.4 relaunch fired
+11:59:20Z (unit grpo-r2, endpoint ~22:0xZ, lane ~19.6/20 zero slack);
+registry parity→loop; first poll util 100%; posts ×2; queue rolled
+(both GPU items closed done, depth 1 + stated reason);
+run_work_next armed** — queue green, 14 open.
+
 Session 2026-08-20 11:08–11:2xZ (tick; battery→parity handoff):
 **battery COMPLETE 11:17:49Z (leg 2 panel json+html clean; native
 28.81 read withheld for the rewear; unit 4h30m CPU, clean exit);
@@ -107,18 +166,6 @@ serving the onerig 3k ckpt — answered 11:26Z (paths + policy_server
 command), acked, owner 👍; disk 107G free
 (+10G); run_work_next armed for the CPU tail + parity verdict** —
 queue green depth 3 (16 open).
-
-Session 2026-08-20 07:30–11:0xZ (work session; exploit; onerig cell
-~17.0 GPU-h total vs gate 17 — train ~13.4 + battery ~2.8 + idle-gap
-incident ~0.8): **onerig-endpoint-close primary verdict: sim100
-28/100 MIX-EXONERATED (control 11, convicted cells 1; paired +17
-CI95 [8, 26] p = 0.0009 vs control, +27 CI95 [19, 36] p = 1.5e-8 vs
-convicted); battery armed pre-endpoint (no idle gap by design —
-then a ~48-min gap anyway: my watch-loop cmdline matched the run
-pgrep, the 08-19 deadlock class reproduced, registry note
-sharpened); ckpt bank firing (weights-only); queue refilled with the
-demos+clean poison-pinning draft; leg-2 CPU tail chained via
-run_work_next** — queue green depth 3 (16 open).
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +

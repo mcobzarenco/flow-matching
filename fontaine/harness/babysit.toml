@@ -65,29 +65,45 @@
 # total ~17.0 GPU-h vs the 17 gate — inside, zero slack, no extra
 # legs. Ckpt bank verified on HF (6 weights-only files,
 # grasp_sft_v2_joint_pdnorm_onerig_step3000, DONE 10:52:39Z).
-# grpo-r2-parity launched in the freed window 11:18:20Z (entry below).
+# grpo-r2-parity COMPLETE ~11:58Z 08-20: verdict PASS — perfect parity
+# (both paths 2/20 successes, same seeds 207/214; interacted 20/20 both;
+# dSuccesses 0, dInteractedFrac 0.0 vs tolerances 2 / 0.30; the
+# convicted 0.00-interacted serving mode is gone). Unit exited clean,
+# ~0.66 GPU-h. On the registered PASS branch the frozen A3.4 relaunch
+# fired mechanically 11:59:20Z (entry below); registry rolled
+# parity->loop.
 
 [[run]]
-name = "grpo_r2_parity"
-kind = "progress-log"
+name = "grpo_r2"
+kind = "train-jsonl"
 host = "local"
-pgrep = "rollout_sim"
+pgrep = "sim.grpo_loop"
 pgrep_min = 1
 gpu_indices = [0]
-gpu_mem_min_mib = 5000
-log = "/home/ubuntu/eval__grpo_r2_parity_discrete.log"  # leg 1 discrete (loop stack, seeds 200-219); leg 2 anchor log eval__grpo_r2_parity_anchor.log; verdict chains in-unit
-progress_re = "seed [0-9]+"
-started_utc = "2026-08-20T11:18:20Z"
+gpu_mem_min_mib = 8000
+jsonl = "/home/ubuntu/flow-matching/outputs/sim/grpo_r2/loop/train.jsonl"
+total_steps = 10
+probe_key = "eval_successes"
+vram_key = "vram_gib"
+started_utc = "2026-08-20T11:59:20Z"
 gpu_hours_per_wall_hour = 1.0
-boundary = "~0.7 GPU-h total (two 20-seed greedy legs + CPU verdict) -> ~12:0xZ 08-20; verdict json outputs/sim/grpo_r2/parity/parity_verdict.json (unit grpo-r2-parity, chained grpo_r2_parity_verdict.py)"
+boundary = "step 10 endpoint ~22:0xZ 08-20 (pace anchor ~0.98 GPU-h/step, budget ~14 expected / gate <=15 GPU-h A3.5): ./launch_grpo_r2.sh boundary outputs/sim/grpo_r2/loop/step_0010.pt — greedy sim100 vs 7 (PRIMARY, paired exact) + sampled T=1.0 sim100 vs preflight floor (record-only) + flow unseen100 euler-10 vs 44 (F-regression leg), chained verdict; refuses while grpo-r2 is alive"
 anchors = [
-    "A5 LAUNCH GATE (registered rule): PASS iff |dSuccesses| <= 2 AND |dInteractedFrac| <= 0.30 between the loop stack (--joint-frame rig) and BijouPolicy (--serve-head ar) on seeds 200-219; the convicted mode read 0.00 vs ~0.59 interacted-frac",
-    "on PASS: ./launch_grpo_r2.sh launch fires the frozen A3.4 argv mechanically (preflight PASS stands, gates re-arm fresh, no GO ask); on FAIL: park the lane, bank both jsons, postmortem post — no override exists",
-    "lane budget: spent ~4.0 + parity 0.7 + relaunch ~14.9 ~= 19.6 vs the A4 gate <= 20 — zero slack, any further abort ends the lane at the gate",
+    "token greedy 7/100 (A3.1 frozen anchor; success seeds 34,35,63,68,71,91,96)",
+    "flow sibling 44/100 same trunk (A3.4 regression leg at boundary — option B moves the flow read too)",
+    "preflight sampled T=1.0 count = recorded training-decode floor (verdict json in outputs/sim/grpo_r2/preflight/)",
+    "wave-0 mixed_groups_frac: predicted ~0.44 at p=0.07; IN-LOOP abort <0.20 (A3.3 --wave0-mixed-abort; check the first train.jsonl row at first poll)",
+    "wave-0 knockaway_frac = violence-wire baseline (--knockaway-baseline wave0 self-capture; greedy read measured 25/100 — the R0-era 10/120 pin is retired for this run)",
+    "kl_stop 0.06 in-loop (single reading, no streak); anchor_k3_pre ~e-07-scale early per R1-B",
+    "train-seed-base 2000 (stage-B 1000-1099 collision re-pin) — train rows must never show seeds < 2000",
+    "lane budget: spent ~4.7 (incl. parity 0.66) + this run ~14.9 ~= 19.6 vs the A4 gate <= 20 — zero slack, any further abort ends the lane at the gate",
 ]
 [[run.gates]]
 kind = "gpu_hours_max"
-value = 1.5
+value = 15.0
+[[run.gates]]
+kind = "vram_max_gib"
+value = 75.0
 
 # (no_live_runs_reason cleared 14:25Z 08-16 — demo_gen_v1 launched on the A100 box; prior: HOME-GPU-only declaration of 10:2xZ 08-16.)
 

@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-20T10:52:15Z
+**Updated:** 2026-08-20T12:00:54Z
 
-**Depth call:** post grpo-r2-serving-parity-fix close 19:5xZ 08-19: 3 queued - grpo-r2-boundary-legs-launcher (CPU, unblocked by the fix), grpo-r2-parity-read-and-relaunch (gpu-local, gated on the onerig window), onerig-endpoint-close (gpu-local, gated on step 3000 ~07:0xZ 08-20)
+**Depth call:** depth 1 open GPU item (grpo-r2 boundary rides the babysit registry, not the queue) + cpu prereg-draft-demos-plus-clean executable any session; refill decision at the next boundary
 
-**16 open** (Live 0 · Queued 3 · Blocked 13 · Done 261)
+**14 open** (Live 0 · Queued 1 · Blocked 13 · Done 263)
 
 ## 🔴 Live (0)
 
@@ -14,7 +14,7 @@
 
 *(empty)*
 
-## 🟢 Queued (3)
+## 🟢 Queued (1)
 
 *ready — waiting on a window or a boundary*
 
@@ -27,34 +27,6 @@ Pre-reg DRAFT: poison-pinning cell after the 28/100 mix-exoneration (the onerig 
 <details><summary>full record</summary>
 
 Pre-reg DRAFT: poison-pinning cell after the 28/100 mix-exoneration (the onerig pre-reg's named follow-up): demos + so101_pick_place_clean ONLY (x4 repeat, same recipe/seed/platform as onerig) — decides whether the 0.65% clean set alone reproduces the 1/100 collapse (clean = the poison) or not (three-way composition was). Alternative arm named in the onerig prereg: full mix minus v2. Draft freezes: grid bands anchored to onerig 28/100 + control 11/100 + convicted 1/100, worn-row + stand-ins pins carried, 17 GPU-h class gate, --prune-superseded-optim. CPU drafting only; launch decision per the standing no-GO-ask rule at the next free GPU window AFTER grpo-r2-parity-read-and-relaunch (which owns the first window).
-
-</details>
-
----
-
-**`onerig-endpoint-close`** · `gpu-local`
-
-Demos+one-rig endpoint close (gated on unit fontaine-v2-joint-pdnorm-onerig reaching step 3000, ETA ~07:0xZ 08-20): sim100 on the 3000 endpoint (stand-ins pin, --stats-repo-id grasp_demos_v2/merged worn-row rule) + panel guard vs…
-
-**boundary:** Queued 18:3xZ 08-19 at the onerig launch (demos-plus-one-rig-exec closed superseded-by-execution). Endpoint-gated; babysit registry entry carries the boundary facts. | 08-20: primary verdict banked; CPU tail chains next session off the leg-2 npz. · [pre-reg](posts/2026-08-19-prereg-demos-plus-one-rig.md)
-
-<details><summary>full record</summary>
-
-Demos+one-rig endpoint close (gated on unit fontaine-v2-joint-pdnorm-onerig reaching step 3000, ETA ~07:0xZ 08-20): sim100 on the 3000 endpoint (stand-ins pin, --stats-repo-id grasp_demos_v2/merged worn-row rule) + panel guard vs disc-1000 npz + paired reads vs control AND convicted mixed cell (sim100_paired_read.py) + verdict through the FROZEN grid (&gt;=20/100 mix-exonerated / &lt;=10 still-convicted / 11-19 ambiguous; anchors demosonly 11/100, mixed cell 1/100, pdnorm-mixed 1/100) + HTML report (--report, owner standing rule) + verdict post. Step-1000 drift-guard read (~22:3xZ 08-19) is a tick/babysit duty, READ not kill. Screen gate: the 17 GPU-h unit gate binds the train; eval legs ~1.5. || VERDICT TAKEN 10:5xZ 08-20 (work session): sim100 28/100 -&gt; MIX-EXONERATED per the frozen grid (&gt;=20 band); paired +17 vs control CI95 [8,26] McNemar p=9e-4, +27 vs convicted cell CI95 [19,36] p=1.5e-8, progress +3.22 cm CI-excl-0; verdict post 1539950050740801616; ckpt bank firing (unit fontaine-onerig-ckpt-bank, weights-only). REMAINING (leg-2-gated): panel guard vs disc-1000 npz + truthfit rewear + ladder restamp + onerig HTML report + bank verify — leg 2 k4l2 panel started ~10:51Z (~0.5 GPU-h), chain via run_work_next.
-
-</details>
-
----
-
-**`grpo-r2-parity-read-and-relaunch`** · `gpu-local`
-
-GRPO R2 serving-parity GPU read + relaunch (A5 launch gate; next free GPU window - onerig owns the H100 to ~07:0xZ 08-20, endpoint close has priority): (1) ./launch_grpo_r2.sh parity (~0.7 GPU-h detached unit: seeds 200-219 greed…
-
-**boundary:** Queued 19:5xZ 08-19 at the serving-parity fix close (A5). Fires in the first GPU-free window AFTER onerig-endpoint-close (endpoint ETA ~07:0xZ 08-20 + eval legs ~1.5 GPU-h). · [pre-reg](posts/2026-08-15-prereg-grpo-r2-post-sft.md)
-
-<details><summary>full record</summary>
-
-GRPO R2 serving-parity GPU read + relaunch (A5 launch gate; next free GPU window - onerig owns the H100 to ~07:0xZ 08-20, endpoint close has priority): (1) ./launch_grpo_r2.sh parity (~0.7 GPU-h detached unit: seeds 200-219 greedy standins through BOTH serving paths - loop stack --joint-frame rig vs BijouPolicy --serve-head ar - chaining grpo_r2_parity_verdict.py; registered rule PASS iff |dSuccesses|&lt;=2 AND |dInteractedFrac|&lt;=0.30, the convicted mode reads 0.00 vs ~0.59); (2) on PASS: ./launch_grpo_r2.sh launch fires the A3.4/A4/A5 frozen argv mechanically (preflight PASS stands, gates re-arm fresh, no GO ask per the standing rule) + babysit entry + announce; (3) on FAIL: park the lane, bank the two jsons, postmortem post - no override exists. Budget: lane spent ~4.0 + parity 0.7 + relaunch ~14.9 = ~19.6 vs the A4 gate &lt;=20 (zero slack: any further abort ends the lane at the gate). | NOTE 20:3xZ 08-19: the R2 endpoint boundary is now one command — ./launch_grpo_r2.sh boundary outputs/sim/grpo_r2/loop/step_0010.pt (materializes the servable endpoint dir, fires the 3 legs + chained verdict as unit grpo-r2-boundary; refuses while grpo-r2 is alive).
 
 </details>
 
@@ -246,7 +218,7 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (261)
+## ✅ Done (263)
 
 *closed — the full record stays in each fold*
 
@@ -3883,6 +3855,34 @@ GRPO R2 boundary-legs launcher (CPU; makes the R2 endpoint one command end-to-en
 <details><summary>full record</summary>
 
 GRPO R2 boundary-legs launcher (CPU; makes the R2 endpoint one command end-to-end): a `boundary` subcommand on launch_grpo_r2.sh that takes the endpoint checkpoint dir and fires the three A3.4 legs sequentially as ONE detached unit — (1) greedy token sim100 (--serve-head ar, no temperature), (2) sampled T=1.0 sim100, (3) flow unseen100 euler-10 — each with the anchors' exact driver + substrate pins (standins, stats_repo_id so101_pick_place_v2, seeds 0-99), ~3.9 GPU-h total per A3.5, chaining into python -m fontaine.scripts.grpo_r2_boundary_verdict (guards already refuse wrong-leg jsons; the launcher's job is to never produce one). Refuses to fire while the grpo-r2 unit is still alive. Parse-check oracle-tested like the kit's, check.py green. NO GPU in this item — it stages; the boundary session fires it. | EXECUTED 20:3xZ 08-19 (982cecd, check.py 1099 green): boundary subcommand + parse-check oracle (legs' exact argv through the driver's parser + the verdict's own provenance guards) + grpo_r2_materialize_endpoint.py (the loop banks trainable-only .pt overlays; file-level apply onto the base backbone_text via write_checkpoint, 6 oracles on the tiny VLA fixture) — the endpoint read now needs zero new code. PIN CORRECTION (git-audited): NO --stats-repo-id on the boundary legs — the spelled so101_pick_place_v2 row exists only on the RETIRED step_002000 dir; the v2 base's per-dataset table carries only the demos row (explicit pin = refused at load); default lookup = the lane's registered serving convention (preflight PASS wore &lt;merged-table&gt;).
+
+</details>
+
+---
+
+**`onerig-endpoint-close`** · `gpu-local`
+
+Demos+one-rig endpoint close (gated on unit fontaine-v2-joint-pdnorm-onerig reaching step 3000, ETA ~07:0xZ 08-20): sim100 on the 3000 endpoint (stand-ins pin, --stats-repo-id grasp_demos_v2/merged worn-row rule) + panel guard vs…
+
+**boundary:** Queued 18:3xZ 08-19 at the onerig launch (demos-plus-one-rig-exec closed superseded-by-execution). Endpoint-gated; babysit registry entry carries the boundary facts. | 08-20: primary verdict banked; CPU tail chains next session off the leg-2 npz. | 08-20 11:5xZ: CPU tail landed, item fully closed. · [pre-reg](posts/2026-08-19-prereg-demos-plus-one-rig.md)
+
+<details><summary>full record</summary>
+
+Demos+one-rig endpoint close (gated on unit fontaine-v2-joint-pdnorm-onerig reaching step 3000, ETA ~07:0xZ 08-20): sim100 on the 3000 endpoint (stand-ins pin, --stats-repo-id grasp_demos_v2/merged worn-row rule) + panel guard vs disc-1000 npz + paired reads vs control AND convicted mixed cell (sim100_paired_read.py) + verdict through the FROZEN grid (&gt;=20/100 mix-exonerated / &lt;=10 still-convicted / 11-19 ambiguous; anchors demosonly 11/100, mixed cell 1/100, pdnorm-mixed 1/100) + HTML report (--report, owner standing rule) + verdict post. Step-1000 drift-guard read (~22:3xZ 08-19) is a tick/babysit duty, READ not kill. Screen gate: the 17 GPU-h unit gate binds the train; eval legs ~1.5. || VERDICT TAKEN 10:5xZ 08-20 (work session): sim100 28/100 -&gt; MIX-EXONERATED per the frozen grid (&gt;=20 band); paired +17 vs control CI95 [8,26] McNemar p=9e-4, +27 vs convicted cell CI95 [19,36] p=1.5e-8, progress +3.22 cm CI-excl-0; verdict post 1539950050740801616; ckpt bank firing (unit fontaine-onerig-ckpt-bank, weights-only). REMAINING (leg-2-gated): panel guard vs disc-1000 npz + truthfit rewear + ladder restamp + onerig HTML report + bank verify — leg 2 k4l2 panel started ~10:51Z (~0.5 GPU-h), chain via run_work_next. ||| LEG-2 CPU TAIL EXECUTED + ITEM CLOSED 11:5xZ 08-20 (work session): panel guard PASS (28.81 vs disc-1000 raw 58.14, d -29.34 CI95 [-30.03,-29.38], n=15056; wrist_roll -46.9 / wrist_flex -5.0 mechanism receipts; oracle re-run green) analysis__onerig_panel_guard_vs_disc1000.json; truthfit rewear native 28.81 -&gt; truth-fit 27.26 seam +1.55 (ladder 27.26 ~ convicted 27.44 ~ disc 27.40 ~ released 27.14, all at/above the 25.15 null: the panel does NOT separate the 28/100 grasper from the 1/100 convict) analysis__onerig_endpoint_truthfit_wear.json; ladder restamped for the onerig cell (chart --label/--title params, img/onerig/panel_ladder.png); onerigendpoint report preset -&gt; flow_unseen100.html (anchors 9/11/1/44, paired+ladder+seam embeds, 4-clip gallery); 6 artifacts + gallery on fontaine-reports curl-verified 200; reports.md section; commit 9ff74ee, post 1539966194436673556. Bank verify was already DONE 10:52:39Z.
+
+</details>
+
+---
+
+**`grpo-r2-parity-read-and-relaunch`** · `gpu-local`
+
+GRPO R2 serving-parity GPU read + relaunch (A5 launch gate; next free GPU window - onerig owns the H100 to ~07:0xZ 08-20, endpoint close has priority): (1) ./launch_grpo_r2.sh parity (~0.7 GPU-h detached unit: seeds 200-219 greed…
+
+**boundary:** Queued 19:5xZ 08-19 at the serving-parity fix close (A5). Fires in the first GPU-free window AFTER onerig-endpoint-close (endpoint ETA ~07:0xZ 08-20 + eval legs ~1.5 GPU-h). | 08-20 11:59Z: PASS branch taken, relaunch live; next boundary = the step-10 endpoint ~22:0xZ. · [pre-reg](posts/2026-08-15-prereg-grpo-r2-post-sft.md)
+
+<details><summary>full record</summary>
+
+GRPO R2 serving-parity GPU read + relaunch (A5 launch gate; next free GPU window - onerig owns the H100 to ~07:0xZ 08-20, endpoint close has priority): (1) ./launch_grpo_r2.sh parity (~0.7 GPU-h detached unit: seeds 200-219 greedy standins through BOTH serving paths - loop stack --joint-frame rig vs BijouPolicy --serve-head ar - chaining grpo_r2_parity_verdict.py; registered rule PASS iff |dSuccesses|&lt;=2 AND |dInteractedFrac|&lt;=0.30, the convicted mode reads 0.00 vs ~0.59); (2) on PASS: ./launch_grpo_r2.sh launch fires the A3.4/A4/A5 frozen argv mechanically (preflight PASS stands, gates re-arm fresh, no GO ask per the standing rule) + babysit entry + announce; (3) on FAIL: park the lane, bank the two jsons, postmortem post - no override exists. Budget: lane spent ~4.0 + parity 0.7 + relaunch ~14.9 = ~19.6 vs the A4 gate &lt;=20 (zero slack: any further abort ends the lane at the gate). | NOTE 20:3xZ 08-19: the R2 endpoint boundary is now one command — ./launch_grpo_r2.sh boundary outputs/sim/grpo_r2/loop/step_0010.pt (materializes the servable endpoint dir, fires the 3 legs + chained verdict as unit grpo-r2-boundary; refuses while grpo-r2 is alive). ||| EXECUTED + CLOSED 11:5xZ 08-20 (work session): parity verdict PASS ~11:58Z — PERFECT parity (both paths 2/20, same success seeds 207/214, interacted 20/20 both; dSuccesses 0 vs tol 2, dInteractedFrac 0.0 vs tol 0.30; the convicted 0.00-vs-0.59 mode is gone), unit clean exit ~0.66 GPU-h; ./launch_grpo_r2.sh launch fired mechanically 11:59:20Z (unit grpo-r2, A3.4 frozen argv, 10 steps, ~0.98 GPU-h/step -&gt; endpoint ~22:0xZ; lane ~19.6/20, zero slack); babysit registry rolled parity-&gt;loop; announce post 1539967344539996224. R2 endpoint boundary stays one command: ./launch_grpo_r2.sh boundary outputs/sim/grpo_r2/loop/step_0010.pt (refuses while grpo-r2 alive).
 
 </details>
 
