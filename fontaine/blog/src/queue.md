@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-20T14:25:00Z
+**Updated:** 2026-08-20T14:56:00Z
 
 **Depth call:** depth 2 open items: gpu-local democlean-endpoint-close (endpoint-gated ~03:3xZ 08-21; babysit rides the train) + cpu clean-content-manifold-probe (any work window, feeds the mechanism adjudication). Refill decision owed at the R2 boundary EXECUTED 14:2xZ 08-20 at the democlean launch.
 
-**14 open** (Live 0 · Queued 2 · Blocked 12 · Done 266)
+**14 open** (Live 0 · Queued 2 · Blocked 12 · Done 267)
 
 ## 🔴 Live (0)
 
@@ -18,15 +18,15 @@
 
 *ready — waiting on a window or a boundary*
 
-**`clean-content-manifold-probe`** · `cpu`
+**`clean-gripper-followup-decision`** · `cpu`
 
-Mechanism-(a) clean-content probe (CPU, record-only, any work window): quantify how far the 7 clean episodes sit off the demos and v2 state/action manifolds
+Verdict-contingent follow-up decision (gated on the democlean verdict ~03:3xZ 08-21; natural owner: the endpoint-close session): IF &lt;=10 (clean convicted) -&gt; draft the pre-reg for the gripper-carrier isolation cell
 
-**boundary:** Queued 14:2xZ 08-20 at the democlean launch (queue refill; depth was 1 with stated reason). Best consumed in a GPU-busy window before the ~03:3xZ 08-21 endpoint so the adjudication input is ready when the verdict lands. · [pre-reg](posts/2026-08-20-prereg-demos-plus-clean.md)
+**boundary:** Queued 14:5xZ 08-20 at the manifold-probe close (queue refill, depth 1 -&gt; 2). Verdict-gated; costs nothing until the endpoint lands. · [pre-reg](posts/2026-08-20-prereg-demos-plus-clean.md)
 
 <details><summary>full record</summary>
 
-Mechanism-(a) clean-content probe (CPU, record-only, any work window): quantify how far the 7 clean episodes sit off the demos and v2 state/action manifolds — per-channel action/state distribution overlap (clean vs demos vs v2: KS distance or quantile-overlap per channel off the banked per_dataset_stats + raw parquet), pacing (steps/episode, per-step action deltas = velocity proxy), and gripper-cycle shape. Output: a short table + chart into the pre-reg post's results section, feeding the mechanism adjudication WHEN the democlean verdict lands. Motivation: the (b) stats-row autopsy came back clean (no degenerate channel, worst x2.84 ch0 amplification, banked 14:1xZ 08-20), so if the cell convicts clean (&lt;=10), (a) content vs residual-(b) amplification needs its own evidence; if it exonerates (&gt;=20), the probe documents why 0.7% clean is harmless alone. No GPU.
+Verdict-contingent follow-up decision (gated on the democlean verdict ~03:3xZ 08-21; natural owner: the endpoint-close session): IF &lt;=10 (clean convicted) -&gt; draft the pre-reg for the gripper-carrier isolation cell — demos + clean with clean's gripper channel remapped to the shared open convention (affine amplitude match ~32.3-&gt;41.7 class, or bang-bang re-encode; the manifold probe's banked numbers are the spec input) — testing whether the amplitude convention alone carries the poison vs the modest ch0 shift. IF &gt;=20 (exonerated) or 11-19 (ambiguous) -&gt; close as moot (the grid's breakdowns path owns the next step). Inputs: reports/analysis__clean_content_manifold_probe.json + the banked (b) stats-row autopsy.
 
 </details>
 
@@ -218,7 +218,7 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (266)
+## ✅ Done (267)
 
 *closed — the full record stays in each fold*
 
@@ -3883,6 +3883,20 @@ Demos + clean poison-pinning cell EXECUTION (launch DELEGATED per the standing n
 <details><summary>full record</summary>
 
 Demos + clean poison-pinning cell EXECUTION (launch DELEGATED per the standing no-GO-ask rule — announce in-channel, never gate on GO). At the first free GPU window after the grpo-r2 lane closes its boundary (R2 endpoint ~22:0xZ 08-20 -&gt; boundary eval -&gt; this cell; an R2 in-loop abort also frees the window): STEPS=20 SMOKE=1 fit smoke, then systemd-run unit fontaine-v2-joint-pdnorm-democlean via the staged launcher launch_local_grasp_sft_v2_joint_1gpu_pdnorm_democlean_h100.sh (demos+so101_pick_place_clean x4, pdnorm, joint+insulate, eff-96, seed 0, 3000 steps, prune-superseded-optim); babysit entry at launch, first poll util+rate+free-g+df; RECORD the recomputed per-dataset stats rows at boot (clean row vs v2/demos rows — mechanism-(b) autopsy input); boundaries step-1000 drift read (&lt;=+0.30), step-3000 endpoint -&gt; sim100 (stand-ins pin, --stats-repo-id grasp_demos_v2/merged) + panel guard vs disc-1000 npz + paired reads vs onerig 28/100 AND control 11/100 AND convicted 1/100 + verdict post through the frozen grid. Gate 17 GPU-h.
+
+</details>
+
+---
+
+**`clean-content-manifold-probe`** · `cpu`
+
+Mechanism-(a) clean-content probe (CPU, record-only, any work window): quantify how far the 7 clean episodes sit off the demos and v2 state/action manifolds
+
+**boundary:** CLOSED 14:5xZ 08-20 work session, end-to-end in-session (CPU only, spec frozen in-channel 14:46Z post 1540009095803703316 BEFORE compute). MEASURED: clean is NOT generically off-manifold — 1 of 6 channels (ch0 shoulder pan, 0.295/0.228 vs ref 0.161, modest; same channel as the residual x2.84 (b)-amplification) exceeds the demos&lt;-&gt;v2 reference both ways; velocity profile v2-like (delta-KS &lt;= 0.109 all ch); episode lengths unremarkable. THE find: gripper amplitude compression — clean's open plateau q99 30.6 / max 32.3 raw vs demos 41.69 (strictly bang-bang {0, 41.69}) / v2 40.2; annotations confirm all 7 eps are completed pick-and-place (progress 0-&gt;1), own-range hysteresis cycles normally (1.71/ep) -&gt; 'zero pooled-range cycles' primary was real but threshold-relative; correction posted 1540011239974113311. Script fontaine/scripts/clean_content_manifold_probe.py (11 oracles green), json reports/analysis__clean_content_manifold_probe.json, 2 dark-mode charts + table + adjudication-feed appended to the pre-reg post's results section (Space curl-verified). Results post 1540010444981411900. · [pre-reg](posts/2026-08-20-prereg-demos-plus-clean.md)
+
+<details><summary>full record</summary>
+
+Mechanism-(a) clean-content probe (CPU, record-only, any work window): quantify how far the 7 clean episodes sit off the demos and v2 state/action manifolds — per-channel action/state distribution overlap (clean vs demos vs v2: KS distance or quantile-overlap per channel off the banked per_dataset_stats + raw parquet), pacing (steps/episode, per-step action deltas = velocity proxy), and gripper-cycle shape. Output: a short table + chart into the pre-reg post's results section, feeding the mechanism adjudication WHEN the democlean verdict lands. Motivation: the (b) stats-row autopsy came back clean (no degenerate channel, worst x2.84 ch0 amplification, banked 14:1xZ 08-20), so if the cell convicts clean (&lt;=10), (a) content vs residual-(b) amplification needs its own evidence; if it exonerates (&gt;=20), the probe documents why 0.7% clean is harmless alone. No GPU.
 
 </details>
 

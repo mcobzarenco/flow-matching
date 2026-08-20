@@ -228,3 +228,86 @@ corroboration.
 drafting session; any edit after posting lands as a registered
 amendment first. The launch itself is mechanical at the named
 window.*
+
+## Results — mechanism-(a) clean-content probe (record-only, banked 14:5xZ 08-20)
+
+*This is a results append, not a spec edit. The probe's own reads
+were frozen in-channel (post 1540009095803703316, 14:46Z) before any
+number was computed: per-channel KS distance judged against the
+demos↔v2 reference pair, overlap coefficient, pacing, gripper-cycle
+shape. Full data, raw parquet (clean 3,399 / v2 32,679 / demos
+1,942,375 frames). Script
+`fontaine/scripts/clean_content_manifold_probe.py`, 11 oracle tests
+green; json in `reports/analysis__clean_content_manifold_probe.json`.*
+
+**Headline: the 7 clean episodes are NOT generically off-manifold —
+in joint space they sit closer to v2 than demos sit to v2 on almost
+every channel. The genuine content anomaly is concentrated in the
+gripper, and it is amplitude, not behavior: clean's episodes are
+annotated complete pick-and-place cycles, but their "open" plateau
+never exceeds 32.3 raw — ~25–27% short of the demos (41.69) and v2
+(40+) convention.**
+
+![Per-channel KS distance: clean vs demos, clean vs v2, demos vs v2 reference](../assets/clean-manifold-ks.png)
+
+Per-channel action KS/overlap (state and velocity panels in the
+chart; full grids in the json):
+
+| channel | KS clean↔demos | KS clean↔v2 | KS demos↔v2 (ref) | OVL clean↔demos | OVL clean↔v2 |
+|---|---|---|---|---|---|
+| ch0 shoulder pan | **0.295** | **0.228** | 0.161 | 0.378 | 0.541 |
+| ch1 shoulder lift | 0.382 | 0.074 | 0.395 | 0.520 | 0.686 |
+| ch2 elbow | 0.365 | 0.189 | 0.499 | 0.366 | 0.563 |
+| ch3 wrist flex | 0.267 | 0.250 | 0.310 | 0.461 | 0.545 |
+| ch4 wrist roll | 0.392 | 0.161 | 0.301 | 0.351 | 0.449 |
+| ch5 gripper | 0.684 | 0.211 | 0.684 | **0.008** | 0.548 |
+
+- **Under the frozen framing** (off-manifold only where clean's D
+  exceeds the demos↔v2 reference on the same channel, both ways):
+  **1 of 6 channels qualifies — ch0 shoulder pan** (action 0.295 /
+  0.228 vs ref 0.161; state agrees), and only modestly. Notably ch0
+  is the same channel carrying the residual ×2.84 pdnorm
+  amplification from the mechanism-(b) autopsy — both weakened
+  mechanisms point at the same joint.
+- **Velocity profile is v2-like**: per-step |Δaction| KS clean↔v2 ≤
+  0.109 on every channel, far under the demos↔v2 reference (0.14–
+  0.40). Episode lengths unremarkable: clean mean 486 frames between
+  demos 388 and v2 654.
+- **The gripper is where clean is genuinely strange** — behaviorally,
+  not distributionally-vs-v2:
+
+![Gripper trajectories per dataset, small multiples](../assets/clean-manifold-gripper.png)
+
+  - Demos' gripper action is strictly **bang-bang** {0.0, 41.69} —
+    every rig set is continuous, so the near-zero gripper overlap vs
+    demos (clean 0.008, but also v2 0.011) is a demos-vs-rig
+    *encoding* difference, not clean-specific. Per-dataset flow norm
+    wears each set its own row, which partially absorbs this.
+  - Clean-specific: by the frozen pooled-range hysteresis, **zero
+    full open/close cycles in all 7 episodes** (demos mean
+    2.0/episode, v2 0.84) and a gripper that **never exceeds 32.3
+    raw**. Two cross-checks sharpen what that means (both labeled
+    **post-hoc** — the pooled-range number above is the frozen
+    primary): (1) the episode annotations say these ARE completed
+    pick-and-place demonstrations — all 7 carry the task "Pick up
+    the toy boat and place it on the wooden disk", subtask events
+    through "close the gripper" → "release it", progress 0→1; (2)
+    re-running the hysteresis on each dataset's OWN range, clean
+    cycles normally (mean 1.71/episode, median 2 — demos-like). So
+    the robust clean-specific anomaly is **amplitude compression,
+    not missing behavior**: clean's open-gripper plateau sits at
+    q99 30.6 / max 32.3 raw where demos command 41.69 and v2
+    reaches 40.2 — the clean episodes teach an "open" ~25–27%
+    short of both other sets' convention, on the channel where
+    demos are bang-bang.
+
+**Feed into the adjudication** (when the verdict lands ~03:3xZ
+08-21): if the cell convicts clean (≤10), generic "(a) content
+off-manifold" is *weakly* supported — the specific carriers are the
+gripper amplitude compression (open ≈ 30 vs the 40+ convention,
+×4-repeated at 0.69% share) and the modest ch0 shift; a follow-up
+would edit the gripper channel, not the whole set. If the cell
+exonerates (≥20), this probe documents why 0.7% clean is harmless
+alone: it is near-manifold rig data — annotated complete
+pick-and-place — everywhere except one joint's shift and one
+channel's amplitude convention.
