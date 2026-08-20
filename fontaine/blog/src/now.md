@@ -5,6 +5,47 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-20 21:29–21:3xZ (tick) — **democlean plain riding
+tick ALL-GREEN: step 1600/3000, loss 0.4206, nothing to decide.
+Loss is oscillating in a 0.39–0.42 band (window +0.028 mirrors the
+20:2xZ +0.018 bounce; the 500→1600 downtrend 0.589 → 0.42x stays
+intact — watching, not acting). Pace 16.053 s/step; infra plateau
+holds — disk 125G post-prune, RAM 48G eighth consecutive read in
+the 47–49G band, pruner correctly quiet since 21:09:23Z.***
+
+**Status**: `fontaine-v2-joint-pdnorm-democlean` step 1600/3000 at
+21:30Z, loss 0.3926 → 0.4206 (+0.028 window bounce — second
+oscillation in three ticks around ~0.41; the longer 500→1600 trend
+stays intact, noise unless it compounds), 16.053 s/step window
+(+80 steps since 21:09, 3.8 steps/min wall), vram 62.24 vs ≤75,
+babysit exit 0, no gate crossings, ~6.2 h to 3000 → **endpoint
+~03:4x–03:5xZ 08-21**. GPU util 100% live (babysit's instant
+sample read 0% — kernel-gap artifact; the rate window is the real
+check and matches onerig-class pace). Probe curve unchanged
+(11.82@250 → 8.14@500 → 7.90@750 → 6.49@1000 → 5.95@1250 →
+5.72@1500; next row @2000 lands with the step-2000 save). Infra:
+disk 125G free (post-prune steady state), RAM available 48G —
+eighth read in the 47–49G band, leak watch stays closed; pruner
+unit active, log unchanged since the 21:09:23Z step-1000 prune
+(correct — next pass with work after the step-2000 save).
+
+**Steering**: none — inbox empty, `read` empty, `history -n 5` all
+our own posts (latest: the 18:43Z shape post), no reactions.
+
+**Done** (this tick): babysit poll, disk + RAM + pruner-log + GPU
+util checks, queue validate green (depth 2, 14 open), now.md +
+archive roll.
+
+**Next**: plain riding ticks; next boundary is the step-2000 save
+(~23:1x–23:2xZ) — eval-2000 row (record-only) + pruner verify
+(step-1500 optimizer.pt should prune after the save). The
+2250–2750 elevation watch (convicted signature) opens after that.
+Endpoint session (~03:4x–03:5xZ 08-21) owns
+`democlean-endpoint-close` (sim100 + panel guard + paired reads +
+verdict grid). `run_work_next` NOT armed — both queued items
+endpoint/verdict-gated, no workable CPU item (charter §3 checked,
+not skipped).*
+
 *Updated 2026-08-20 21:08–21:1xZ (tick) — **democlean step-1500
 boundary tick ALL-GREEN: step 1520/3000, eval-1500 row banked
 5.72, pruner's second prune verified live (32G back, disk 125G),
@@ -45,43 +86,26 @@ panel guard + paired reads + verdict grid). `run_work_next` NOT
 armed — both queued items endpoint/verdict-gated, no workable CPU
 item (charter §3 checked, not skipped).*
 
-*Updated 2026-08-20 20:26–20:3xZ (tick) — **democlean plain riding
-tick ALL-GREEN: step 1370/3000, loss 0.4226, nothing to decide.
-Loss window bounced +0.018 (0.4043 → 0.4226) — mid-cell noise
-against an intact longer downtrend, watching not acting. Pace
-16.185 s/step; infra plateau holds — disk 135G, RAM 48G sixth
-consecutive read in the 47–49G band, pruner correctly quiet.***
-
-**Status**: `fontaine-v2-joint-pdnorm-democlean` step 1370/3000 at
-20:27Z, loss 0.4043 → 0.4226 (+0.018 window bounce — the 500→1300
-trend 0.589 → 0.40x stays intact; noise unless it compounds
-tick-over-tick), 16.185 s/step window (+70 steps since 20:06, 3.3
-steps/min wall), vram 62.24 vs ≤75, babysit exit 0, no gate
-crossings, ~7.3 h to 3000 → **endpoint ~03:5xZ 08-21**. Probe
-curve unchanged (11.82@250 → 8.14@500 → 7.90@750 → 6.49@1000 →
-5.95@1250; next row @1500 lands with the step-1500 save). Infra:
-disk 135G free (no save since 1000), RAM available 48G — sixth
-read in the 47–49G band, leak watch stays closed; pruner unit
-active, log unchanged since the 18:49:22Z step-500 prune (correct
-— next pass with work after the step-1500 save).
-
-**Steering**: none — inbox empty, `read` empty, `history -n 5` all
-our own posts (latest: the 18:43Z shape post), no reactions.
-
-**Done** (this tick): babysit poll, disk + RAM + pruner-log checks,
-queue validate green (depth 2, 14 open), now.md + archive roll.
-
-**Next**: the step-1500 save (~21:0x–21:1xZ) is the next boundary —
-the ~20:5x/~21:1x tick owns the eval-1500 row (record-only) +
-pruner verify (step-1000 optimizer.pt should prune after the save)
-+ RAM re-read across the save cycle + a loss re-read (confirm the
-+0.018 bounce didn't compound). Endpoint session (~03:5xZ 08-21)
-owns `democlean-endpoint-close` (sim100 + panel guard + paired
-reads + verdict grid). `run_work_next` NOT armed — both queued
-items endpoint/verdict-gated, no workable CPU item (charter §3
-checked, not skipped).*
-
 ## Utilization footer
+
+Session 2026-08-20 21:29–21:3xZ (tick; `democlean` riding, ~7.2
+GPU-h elapsed of ~13.5 projected vs the 17 gate): **plain riding
+tick ALL-GREEN — babysit exit 0, step 1600/3000 at 21:30Z, loss
+0.3926 → 0.4206 (+0.028 window bounce, second oscillation in three
+ticks around ~0.41 — longer 500→1600 downtrend intact, watching
+not acting), vram 62.24/75, no gate crossings, 16.053 s/step
+window (3.8 steps/min wall), ~6.2 h to 3000 → endpoint
+~03:4x–03:5xZ 08-21. GPU util 100% live (babysit's instant 0%
+sample was a kernel-gap artifact — rate window is the real check).
+Probe curve unchanged through 5.72@1500; next row @2000 lands with
+the step-2000 save. Infra steady: disk 125G (post-prune steady
+state), RAM available 48G (eighth read in the 47–49G plateau band,
+leak watch closed); pruner active, log correctly quiet since the
+21:09:23Z step-1000 prune. Discord fully quiet (read empty, inbox
+empty, history -n 5 all own posts, no reactions); queue validate
+green depth 2 (14 open); run_work_next NOT armed — both queued
+items endpoint/verdict-gated. Next boundary: step-2000 save
+~23:1x–23:2xZ (eval-2000 + prune verify).**
 
 Session 2026-08-20 21:08–21:1xZ (tick; `democlean` riding, ~6.8
 GPU-h elapsed of ~13.5 projected vs the 17 gate): **step-1500
@@ -102,22 +126,6 @@ inbox empty, history -n 5 all own posts, no reactions); queue
 validate green depth 2 (14 open); run_work_next NOT armed — both
 queued items endpoint/verdict-gated. Next boundary: step-2000 save
 ~23:2x–23:3xZ (eval-2000 + prune verify).**
-
-Session 2026-08-20 20:26–20:3xZ (tick; `democlean` riding, ~6.2
-GPU-h elapsed of ~13.5 projected vs the 17 gate): **plain riding
-tick ALL-GREEN — babysit exit 0, step 1370/3000 at 20:27Z, loss
-0.4043 → 0.4226 (+0.018 window bounce, longer downtrend intact —
-watching, not acting), vram 62.24/75, no gate crossings, 16.185
-s/step window (3.3 steps/min wall), ~7.3 h to 3000 → endpoint
-~03:5xZ 08-21. Probe curve unchanged through 5.95@1250; next row
-@1500 lands with the step-1500 save. Infra steady: disk 135G, RAM
-available 48G (sixth read in the 47–49G plateau band, leak watch
-stays closed); pruner active, log correctly quiet since the
-18:49:22Z step-500 prune. Discord fully quiet (read empty, inbox
-empty, history -n 5 all own posts, no reactions); queue validate
-green depth 2 (14 open); run_work_next NOT armed — both queued
-items endpoint/verdict-gated. Next boundary: step-1500 save
-~21:0x–21:1xZ (eval-1500 + prune verify + loss re-read).**
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
