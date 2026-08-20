@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-19T20:30:59Z
+**Updated:** 2026-08-20T10:52:15Z
 
 **Depth call:** post grpo-r2-serving-parity-fix close 19:5xZ 08-19: 3 queued - grpo-r2-boundary-legs-launcher (CPU, unblocked by the fix), grpo-r2-parity-read-and-relaunch (gpu-local, gated on the onerig window), onerig-endpoint-close (gpu-local, gated on step 3000 ~07:0xZ 08-20)
 
-**15 open** (Live 0 · Queued 2 · Blocked 13 · Done 261)
+**16 open** (Live 0 · Queued 3 · Blocked 13 · Done 261)
 
 ## 🔴 Live (0)
 
@@ -14,19 +14,33 @@
 
 *(empty)*
 
-## 🟢 Queued (2)
+## 🟢 Queued (3)
 
 *ready — waiting on a window or a boundary*
+
+**`prereg-draft-demos-plus-clean`** · `cpu`
+
+Pre-reg DRAFT: poison-pinning cell after the 28/100 mix-exoneration (the onerig pre-reg's named follow-up): demos + so101_pick_place_clean ONLY (x4 repeat, same recipe/seed/platform as onerig)
+
+**boundary:** Queued 10:5xZ 08-20 at the onerig verdict (mix-exonerated). Draft in any CPU window; GPU launch only after the R2 parity item claims its window. · [pre-reg](posts/2026-08-19-prereg-demos-plus-one-rig.md)
+
+<details><summary>full record</summary>
+
+Pre-reg DRAFT: poison-pinning cell after the 28/100 mix-exoneration (the onerig pre-reg's named follow-up): demos + so101_pick_place_clean ONLY (x4 repeat, same recipe/seed/platform as onerig) — decides whether the 0.65% clean set alone reproduces the 1/100 collapse (clean = the poison) or not (three-way composition was). Alternative arm named in the onerig prereg: full mix minus v2. Draft freezes: grid bands anchored to onerig 28/100 + control 11/100 + convicted 1/100, worn-row + stand-ins pins carried, 17 GPU-h class gate, --prune-superseded-optim. CPU drafting only; launch decision per the standing no-GO-ask rule at the next free GPU window AFTER grpo-r2-parity-read-and-relaunch (which owns the first window).
+
+</details>
+
+---
 
 **`onerig-endpoint-close`** · `gpu-local`
 
 Demos+one-rig endpoint close (gated on unit fontaine-v2-joint-pdnorm-onerig reaching step 3000, ETA ~07:0xZ 08-20): sim100 on the 3000 endpoint (stand-ins pin, --stats-repo-id grasp_demos_v2/merged worn-row rule) + panel guard vs…
 
-**boundary:** Queued 18:3xZ 08-19 at the onerig launch (demos-plus-one-rig-exec closed superseded-by-execution). Endpoint-gated; babysit registry entry carries the boundary facts. · [pre-reg](posts/2026-08-19-prereg-demos-plus-one-rig.md)
+**boundary:** Queued 18:3xZ 08-19 at the onerig launch (demos-plus-one-rig-exec closed superseded-by-execution). Endpoint-gated; babysit registry entry carries the boundary facts. | 08-20: primary verdict banked; CPU tail chains next session off the leg-2 npz. · [pre-reg](posts/2026-08-19-prereg-demos-plus-one-rig.md)
 
 <details><summary>full record</summary>
 
-Demos+one-rig endpoint close (gated on unit fontaine-v2-joint-pdnorm-onerig reaching step 3000, ETA ~07:0xZ 08-20): sim100 on the 3000 endpoint (stand-ins pin, --stats-repo-id grasp_demos_v2/merged worn-row rule) + panel guard vs disc-1000 npz + paired reads vs control AND convicted mixed cell (sim100_paired_read.py) + verdict through the FROZEN grid (&gt;=20/100 mix-exonerated / &lt;=10 still-convicted / 11-19 ambiguous; anchors demosonly 11/100, mixed cell 1/100, pdnorm-mixed 1/100) + HTML report (--report, owner standing rule) + verdict post. Step-1000 drift-guard read (~22:3xZ 08-19) is a tick/babysit duty, READ not kill. Screen gate: the 17 GPU-h unit gate binds the train; eval legs ~1.5.
+Demos+one-rig endpoint close (gated on unit fontaine-v2-joint-pdnorm-onerig reaching step 3000, ETA ~07:0xZ 08-20): sim100 on the 3000 endpoint (stand-ins pin, --stats-repo-id grasp_demos_v2/merged worn-row rule) + panel guard vs disc-1000 npz + paired reads vs control AND convicted mixed cell (sim100_paired_read.py) + verdict through the FROZEN grid (&gt;=20/100 mix-exonerated / &lt;=10 still-convicted / 11-19 ambiguous; anchors demosonly 11/100, mixed cell 1/100, pdnorm-mixed 1/100) + HTML report (--report, owner standing rule) + verdict post. Step-1000 drift-guard read (~22:3xZ 08-19) is a tick/babysit duty, READ not kill. Screen gate: the 17 GPU-h unit gate binds the train; eval legs ~1.5. || VERDICT TAKEN 10:5xZ 08-20 (work session): sim100 28/100 -&gt; MIX-EXONERATED per the frozen grid (&gt;=20 band); paired +17 vs control CI95 [8,26] McNemar p=9e-4, +27 vs convicted cell CI95 [19,36] p=1.5e-8, progress +3.22 cm CI-excl-0; verdict post 1539950050740801616; ckpt bank firing (unit fontaine-onerig-ckpt-bank, weights-only). REMAINING (leg-2-gated): panel guard vs disc-1000 npz + truthfit rewear + ladder restamp + onerig HTML report + bank verify — leg 2 k4l2 panel started ~10:51Z (~0.5 GPU-h), chain via run_work_next.
 
 </details>
 
