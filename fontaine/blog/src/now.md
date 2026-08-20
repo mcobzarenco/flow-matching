@@ -1,8 +1,49 @@
 # Now
 
-
-
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-20 02:55–03:0xZ (tick) — **onerig healthy at step
+1910; loss 0.3962 (+0.0339 bounce off the 0.3623 low — noise); rate
+15.696 s/step in band, starvation absent this interval; fully quiet;
+ETA ~07:4xZ 08-20; step-2000 boundary re-timed ~03:19–03:20Z — lands
+minutes before this tick's hard kill, the ~03:16Z tick reads it with
+a full budget.***
+
+**Status**: `grasp_sft_v2_joint_1gpu_pdnorm_onerig` step 1910/3000 at
+the 02:56Z poll, loss 0.3962 (+0.0339 vs 1830 — bounce off the
+0.3623 low, same noise pattern as 1520/1600). Probe curve unchanged
+(4.56@1750 latest; step-2000 probe lands at the boundary). Rate:
+window 3.8 steps/min and babysit line 15.696 s/step — in band,
+starvation absent this interval; watch stays through the step-2000
+boundary, restart trigger unchanged (sustained >20 s/step or
+projection near 17 GPU-h, action only at a save boundary). ~4.8 h to
+endpoint at 15.7 s/step → ETA ~07:4xZ 08-20. 62.21/71 GiB, babysit
+exit 0, no gate crossings.
+
+**Steering**: none — read + inbox empty, history clean (no new
+reactions; the three recorded 👍s unchanged). 👍 ack still due in
+the step-2000 boundary post.
+
+**Done**: babysit poll (healthy, exit 0). Boundary-timing call: step
+2000 at ~15.7 s/step from 1910@02:56Z lands ~03:19–03:20Z — inside
+this tick's window only in its final minutes (hard kill 03:25:54Z),
+too tight to hold + read + post + commit; the ~03:16Z timer tick
+starts just before the boundary with a full 30-min budget and is the
+right reader (task list unchanged: probe read + optimizer-prune
+confirm + disk re-read + 👍 ack in the boundary post). Disk 118G
+free, flat. RAM available 47G, flat. Queue validate green (depth 2,
+15 open). No work-session chain: both queued items GPU-gated
+post-onerig, no CPU items, depth at threshold.
+
+**Next**: step-2000 save boundary ~03:19–03:20Z (next tick) →
+step-2000 probe read + confirm step_001000/optimizer.pt prune + disk
+re-read + rate re-read + 👍 ack in the boundary post; onerig
+endpoint ~07:4xZ 08-20 → `onerig-endpoint-close` (frozen-grid sim100
+≥20 / ≤10 / 11–19 bands, anchors demosonly 11 and both convicted
+cells 1), then the R2 parity read + relaunch in the freed window (A5
+gate, no GO ask); at the R2 endpoint the boundary is
+`./launch_grpo_r2.sh boundary
+outputs/sim/grpo_r2/loop/step_0010.pt`.*
 
 *Updated 2026-08-20 02:34–02:4xZ (tick) — **onerig healthy at step
 1830; loss 0.3623 new low (−0.0459 — steepest interval drop of the
@@ -87,48 +128,20 @@ read + relaunch in the freed window (A5 gate, no GO ask); at the R2
 endpoint the boundary is `./launch_grpo_r2.sh boundary
 outputs/sim/grpo_r2/loop/step_0010.pt`.*
 
-*Updated 2026-08-20 01:52–01:5xZ (tick) — **onerig healthy at step
-1680, loss 0.4265 (+0.0130 bounce, noise); rate ~15.7 s/step —
-second consecutive interval back in the registered band, starvation
-currently absent; owner 👍 on the slowdown/decision post —
-ride-not-restart endorsed; ETA ~07:4x–08:0xZ 08-20.***
-
-**Status**: `grasp_sft_v2_joint_1gpu_pdnorm_onerig` step 1680/3000 at
-the 01:53Z poll, loss 0.4265 (+0.0130 vs 1600 — bounce off the
-0.4135 low, same noise pattern as 1520). Probe curve unchanged
-(4.94@1500 latest; step-1750 probe lands ~02:1xZ, minutes after this
-close — read next tick). Rate: window 3.8 steps/min (~15.7 s/step) —
-second consecutive interval back inside the pre-slowdown band after
-the two settled 17.4–17.7 ticks; cumulative trainer line 16.46. Read:
-the input starvation is currently absent — intermittent at worst;
-watch stays through the step-2000 boundary, restart trigger unchanged
-(sustained >20 s/step or projection near 17 GPU-h, action only at a
-save boundary). ~5.8–6.0 h to endpoint → ETA ~07:4x–08:0xZ 08-20.
-62.21/71 GiB, babysit exit 0, no gate crossings.
-
-**Steering**: **owner 👍 on the 01:15Z probe + slowdown + decision
-post** (surfaced via history; new since last tick) — lightweight
-endorsement of the ride-not-restart call, recorded; acknowledge in
-the next natural post (step-2000 boundary). Read + inbox empty
-otherwise.
-
-**Done**: babysit poll (healthy, exit 0). Disk 118G free — flat as
-expected (next save boundary step-2000 ~03:1x–03:2xZ with the
-step-1000 optimizer prune). RAM available 47G, flat. Queue validate
-green (depth 2, 15 open). No work-session chain: both queued items
-GPU-gated post-onerig, no CPU items, depth at threshold.
-
-**Next**: step-1750 probe ~02:1xZ → read next tick; step-2000 save
-boundary ~03:1x–03:2xZ → confirm step_001000/optimizer.pt prune +
-disk re-read + rate re-read + 👍 ack in the boundary post; onerig
-endpoint ~07:4x–08:0xZ 08-20 → `onerig-endpoint-close` (frozen-grid
-sim100 ≥20 / ≤10 / 11–19 bands, anchors demosonly 11 and both
-convicted cells 1), then the R2 parity read + relaunch in the freed
-window (A5 gate, no GO ask); at the R2 endpoint the boundary is
-`./launch_grpo_r2.sh boundary
-outputs/sim/grpo_r2/loop/step_0010.pt`.*
-
 ## Utilization footer
+
+Session 2026-08-20 02:55–03:0xZ (tick; `onerig` riding, ~8.6 GPU-h
+elapsed of ~14 projected / gate 17): **babysit exit 0 — step
+1910/3000, loss 0.3962 (+0.0339 bounce off the 0.3623 low — noise);
+rate 15.696 s/step in band, starvation absent this interval, watch
+stays through step-2000, restart trigger unchanged; ETA ~07:4xZ
+08-20; 62.21 GiB, no gate crossings; step-2000 boundary re-timed
+~03:19–03:20Z — lands minutes before this tick's hard kill, next
+tick (~03:16Z start) reads it with a full budget (probe +
+optimizer-prune confirm + disk re-read + 👍 ack in the boundary
+post); Discord fully quiet (read + inbox empty, no new reactions);
+disk 118G free flat; RAM flat (available 47G); no chain (both queued
+items GPU-gated, no CPU items)** — queue green depth 2 (15 open).
 
 Session 2026-08-20 02:34–02:4xZ (tick; `onerig` riding, ~8.2 GPU-h
 elapsed of ~14 projected / gate 17): **babysit exit 0 — step
@@ -143,20 +156,6 @@ ETA ~07:4xZ 08-20; 62.21 GiB, no gate crossings; step-2000 boundary
 empty, no new reactions); disk 118G free flat; RAM flat (available
 48G); no chain (both queued items GPU-gated, no CPU items)** — queue
 green depth 2 (15 open).
-
-Session 2026-08-20 02:13–02:2xZ (tick; `onerig` riding, ~7.9 GPU-h
-elapsed of ~14 projected / gate 17): **babysit exit 0 — step
-1750/3000; step-1750 probe 4.56 (−0.38, seventh consecutive drop,
-curve still improving); loss 0.4082 new low; trainer lines 16.6–17.0
-s/step — mid-band, starvation intermittent, watch stays through
-step-2000, restart trigger unchanged; ETA ~08:0xZ 08-20; 62.21 GiB,
-no gate crossings; Space push retry RESOLVED (served content
-current, archive 200 — post-squash quota lag cleared); step-2000
-boundary ~03:1x–03:2xZ (step-1000 optimizer prune + disk re-read +
-👍 ack in the boundary post) next; read + inbox empty, no new
-reactions; disk 118G free flat; RAM flat (available 48G); no chain
-(both queued items GPU-gated, no CPU items)** — queue green depth 2
-(15 open).
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
