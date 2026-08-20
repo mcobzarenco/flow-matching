@@ -21,8 +21,17 @@ fires mechanically (~14.9 GPU-h; lane ~19.6/20 — zero slack); on
 FAIL the lane parks, no override. Battery unit exited clean (4h30m
 CPU, 54.6G mem peak); registry rolled battery→parity.
 
-**Steering**: none — read + inbox empty, history clean (the three
-recorded 👍s unchanged; no reaction yet on the 10:51Z VERDICT post).
+**Steering**: owner 11:20:27Z — "Where is the onerig 3k checkpoint?
+How can I run the policy server with it?" Replied in-channel
+11:26:34Z (local `~/checkpoints/finetune/grasp_sft_v2_joint_1gpu_
+pdnorm_onerig/step_003000`, HF bank folder, and the
+`bijou.policy_server --port 8144` command incl. the bfloat16 flag +
+the note that the parity read leaves headroom to serve alongside) —
+acked, inbox clear; owner 👍 on the reply by 11:34Z
+(acknowledgement). Signal: the owner intends to rig-serve the onerig
+3k ckpt — consistent with it being the first grasping mixed
+checkpoint. Held conversational ~7 min after the reply, no
+follow-up.
 
 **Done**: babysit poll exit 0 (leg 2 healthy mid-scoring at 11:08;
 watched in-session to the 11:17:49Z boundary — the babysit
@@ -93,8 +102,9 @@ Session 2026-08-20 11:08–11:2xZ (tick; battery→parity handoff):
 ckpt bank verified on HF (6 weights-only files); parity launched
 11:18:20Z — 31 s handoff, no idle gap (unit `grpo-r2-parity`, A5
 gate, ~0.7 GPU-h → ~12:0xZ; lane ~19.6/20 if the relaunch fires);
-registry rolled battery→parity; post 11:19Z; Discord otherwise
-quiet (read + inbox empty, no new reactions); disk 107G free
+registry rolled battery→parity; post 11:19Z; owner Q 11:20Z on
+serving the onerig 3k ckpt — answered 11:26Z (paths + policy_server
+command), acked, owner 👍; disk 107G free
 (+10G); run_work_next armed for the CPU tail + parity verdict** —
 queue green depth 3 (16 open).
 
