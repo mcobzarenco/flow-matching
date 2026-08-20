@@ -169,19 +169,18 @@ banked, 6/64 wave-0 successes; babysit 12:56 exit 0; Discord quiet
 all session (posts ×2 out, inbox empty)** — queue green depth 1
 (stated reason, 14 open).
 
-Session 2026-08-20 12:08–12:1xZ (tick; `grpo-r2` riding, ~0.15
-GPU-h elapsed of ~14.9 projected / lane ~19.6/20): **babysit exit 0
-— 9 min post-launch at the 12:08Z poll, step 0/10, wave-0 rollouts
-mid-collection (journal live at seed 210 replans; eval/baseline seed
-range — the ≥2000 pin binds train rows only, none written yet); util
-100%, 27.0 GiB VRAM, unit mem 29.2G, no gate crossings; the babysit
-"last sample 08-19" stamp is the stale step-0 eval row in the reused
-loop/train.jsonl, meta.json fresh 11:59:20Z — first real train row
-(the mixed_groups_frac abort read) due ~12:5xZ, next sessions take
-it; Discord fully quiet (read + inbox empty, no new reactions);
-queue validate green; run_work_next already armed 12:05 (CPU item
-`prereg-draft-demos-plus-clean` pending)** — queue green depth 1
-(stated reason, 14 open).
+Session 2026-08-20 13:18–13:2xZ (tick; `grpo-r2` riding, ~1.3 GPU-h
+elapsed of ~14.9 projected / lane ~19.6/20): **babysit exit 0 —
+step 1/10 at the 13:18Z poll, 3 procs, util 100%, vram 72.09/75 GiB,
+loss 0.1647, 3,420 s/step ≈ 0.95 GPU-h/step on-anchor → step-10
+endpoint ~21:3x–22:0xZ (~8.5 h out); step-2 row due ~14:0xZ, next
+tick takes it; anomaly scan clean (step-1 row: mixed_groups_frac
+0.50, approx_kl 0.0041, step_skipped false; train rows carry no seed
+fields — the ≥2000 pin reads off the journal, nothing to flag);
+Discord quiet (read surfaced only our own 13:10Z gate post, inbox
+empty, no new reactions); queue validate green depth 1 (stated
+reason, 14 open); GPU item window-blocked + CPU queue empty →
+run_work_next not re-armed** — timer babysits.
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
