@@ -100,65 +100,7 @@ drift read (≤ +0.30) ~18:3xZ 08-20 in-ride; step-3000 endpoint
 guard + paired reads + verdict through the frozen grid).
 `run_work_next` armed (CPU queue non-empty, GPU busy).*
 
-*Updated 2026-08-20 13:59–14:1xZ (tick) — **grpo-r2 DIED 13:59:42Z
-— CUDA OOM in the step-2 backward — and the R2 lane CLOSED at the
-gate per the registered zero-slack rule; the freed window went
-straight to the delegated demos+clean cell (fit smoke live
-14:02:01Z, a 2.5-minute handoff).***
-
-**Status**: `fontaine-v2-joint-pdnorm-democlean-smoke` live on the
-H100 (launched 14:02:01Z, STEPS=20 SMOKE=1, save-dir /tmp; GPU
-verified empty first — no policy-server). On smoke green the chained
-work session fires the REAL 3000-step unit (gate 17 GPU-h, seed 0,
-pre-reg posted 12:20Z) and RECORDS the boot recompute-stats rows
-(mechanism candidate (b): the 3,399-frame clean pdnorm row).
-
-**Steering**: none — inbox empty at boot, no new reactions; the
-owner 👍 on the 11:26Z policy-server reply stays the last owner
-signal.
-
-**Done**: R2 death diagnosed + lane closed (this tick): babysit exit
-1 (gpu0 0 MiB, unit gone) → journal shows `torch.OutOfMemoryError`
-13:59:42Z in `accumulate_grpo_grads` `loss.backward()` — step-2
-backward tried +1.47 GiB at 78.26 GiB in use (step-1 peak 72.09 vs
-the ≤75 gate: the OOM IS the vram-gate crossing, allocator-caught).
-`save_every=5`, died at step 2 → NO checkpoint, resume impossible;
-retry arithmetic ~4.7 spent + ~1.9 burned + ~14.9 fresh ≈ 21.5 >
-the A4 ≤20 gate → registered rule applied verbatim, **lane closed,
-no step-10 read**. Banked: parity PASS (perfect), wave-0
-mixed_groups_frac 0.50 vs <0.20 (knockaway re-base works), step-1
-row healthy. R3 lead recorded in the registry: grpo_loop.py lacks
-`expandable_segments` and episode-length variance swings backward
-memory ~6 GiB at a 72 GiB baseline. Registry rolled grpo_r2 →
-democlean_smoke; `run_work_next` armed. Death+relaunch post
-1539998329893556224.
-
-**Next**: chained work session — verify smoke rc 0 + vram peak, then
-launch unit `fontaine-v2-joint-pdnorm-democlean` (3000 steps, ~13.5
-GPU-h class, anchors: convicted-cell probe curve + onerig 28/100 /
-control 11/100 / convicted 1/100 grid ≥20 / ≤10 / 11–19), register
-it + announce; R2 lane post-mortem ledger row + queue refill (depth
-1 → ≥2: the R2-boundary refill decision is now the work session's);
-demos-plus-clean-exec queue item rolls in-progress.*
-
 ## Utilization footer
-
-Session 2026-08-20 14:40–14:5xZ (tick; `democlean` riding, ~0.3
-GPU-h elapsed of ~13.5 projected vs the 17 gate): **babysit exit 0 —
-step 70/3000 at the 14:41Z poll, 16.30 s/step on the ~16
-onerig-class anchor (+40 steps since the 14:30Z sample, 3.9
-steps/min — rate on-anchor rules out starvation; the CLI's 0%-util
-snapshot was a between-kernel moment, nvidia-smi read 100% seconds
-later), loss 2.88 → 1.35 falling, vram 62.19/75, 5 procs, RAM 91G
-avail, disk 188G free, no gate crossings; endpoint holds
-~03:0x–03:3xZ 08-21, first eval-250 probe row lands ~15:05Z (next
-tick's read vs the convicted 12.91/8.24/… and onerig 12.85/8.04/…
-curve shapes); Discord fully quiet (read + inbox empty, no new
-reactions, history shows only our own posts); queue validate green
-depth 2 (14 open); run_work_next already armed 14:35** — the chained
-work session takes `clean-content-manifold-probe` (CPU,
-mechanism-(a) input, best done before the endpoint); older footer
-notes rolled to the archive.
 
 Session 2026-08-20 14:43–15:0xZ (work session; explore — mechanism-(a)
 adjudication input, 0 GPU-h, CPU only; `democlean` rides untouched):
