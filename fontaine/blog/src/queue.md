@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-20T12:45:00Z
+**Updated:** 2026-08-20T14:25:00Z
 
-**Depth call:** depth 1 open item: gpu-local demos-plus-clean-exec (window-blocked on the grpo-r2 lane, fires delegated at the next free GPU window; the grpo-r2 boundary itself rides the babysit registry, not the queue). CPU drafting item closed 12:4xZ 08-20; refill decision at the R2 boundary.
+**Depth call:** depth 2 open items: gpu-local democlean-endpoint-close (endpoint-gated ~03:3xZ 08-21; babysit rides the train) + cpu clean-content-manifold-probe (any work window, feeds the mechanism adjudication). Refill decision owed at the R2 boundary EXECUTED 14:2xZ 08-20 at the democlean launch.
 
-**14 open** (Live 0 · Queued 1 · Blocked 13 · Done 264)
+**14 open** (Live 0 · Queued 2 · Blocked 12 · Done 266)
 
 ## 🔴 Live (0)
 
@@ -14,25 +14,39 @@
 
 *(empty)*
 
-## 🟢 Queued (1)
+## 🟢 Queued (2)
 
 *ready — waiting on a window or a boundary*
 
-**`demos-plus-clean-exec`** · `gpu-local`
+**`clean-content-manifold-probe`** · `cpu`
 
-Demos + clean poison-pinning cell EXECUTION (launch DELEGATED per the standing no-GO-ask rule
+Mechanism-(a) clean-content probe (CPU, record-only, any work window): quantify how far the 7 clean episodes sit off the demos and v2 state/action manifolds
 
-**boundary:** Queued 12:4xZ 08-20 at the draft close. Window-blocked only: the grpo-r2 lane owns the H100 through its ~22:0xZ endpoint + boundary eval; this cell fires at the next free GPU window after that, delegated, no owner hold. · [pre-reg](posts/2026-08-20-prereg-demos-plus-clean.md)
+**boundary:** Queued 14:2xZ 08-20 at the democlean launch (queue refill; depth was 1 with stated reason). Best consumed in a GPU-busy window before the ~03:3xZ 08-21 endpoint so the adjudication input is ready when the verdict lands. · [pre-reg](posts/2026-08-20-prereg-demos-plus-clean.md)
 
 <details><summary>full record</summary>
 
-Demos + clean poison-pinning cell EXECUTION (launch DELEGATED per the standing no-GO-ask rule — announce in-channel, never gate on GO). At the first free GPU window after the grpo-r2 lane closes its boundary (R2 endpoint ~22:0xZ 08-20 -&gt; boundary eval -&gt; this cell; an R2 in-loop abort also frees the window): STEPS=20 SMOKE=1 fit smoke, then systemd-run unit fontaine-v2-joint-pdnorm-democlean via the staged launcher launch_local_grasp_sft_v2_joint_1gpu_pdnorm_democlean_h100.sh (demos+so101_pick_place_clean x4, pdnorm, joint+insulate, eff-96, seed 0, 3000 steps, prune-superseded-optim); babysit entry at launch, first poll util+rate+free-g+df; RECORD the recomputed per-dataset stats rows at boot (clean row vs v2/demos rows — mechanism-(b) autopsy input); boundaries step-1000 drift read (&lt;=+0.30), step-3000 endpoint -&gt; sim100 (stand-ins pin, --stats-repo-id grasp_demos_v2/merged) + panel guard vs disc-1000 npz + paired reads vs onerig 28/100 AND control 11/100 AND convicted 1/100 + verdict post through the frozen grid. Gate 17 GPU-h.
+Mechanism-(a) clean-content probe (CPU, record-only, any work window): quantify how far the 7 clean episodes sit off the demos and v2 state/action manifolds — per-channel action/state distribution overlap (clean vs demos vs v2: KS distance or quantile-overlap per channel off the banked per_dataset_stats + raw parquet), pacing (steps/episode, per-step action deltas = velocity proxy), and gripper-cycle shape. Output: a short table + chart into the pre-reg post's results section, feeding the mechanism adjudication WHEN the democlean verdict lands. Motivation: the (b) stats-row autopsy came back clean (no degenerate channel, worst x2.84 ch0 amplification, banked 14:1xZ 08-20), so if the cell convicts clean (&lt;=10), (a) content vs residual-(b) amplification needs its own evidence; if it exonerates (&gt;=20), the probe documents why 0.7% clean is harmless alone. No GPU.
 
 </details>
 
 ---
 
-## 🟡 Blocked (13)
+**`democlean-endpoint-close`** · `gpu-local`
+
+Demos+clean endpoint battery + verdict (endpoint-gated ~03:3xZ 08-21): at step-3000 -&gt; sim100 unseen (stand-ins pin, --stats-repo-id grasp_demos_v2/merged) + panel guard vs disc-1000 npz (+0.05 bar) + paired reads vs onerig 28/10…
+
+**boundary:** Queued 14:2xZ 08-20 at the democlean launch (demos-plus-clean-exec closed superseded-by-execution). Endpoint-gated; babysit registry entry 'democlean' carries the ride facts (launched 14:15:41Z, endpoint ~03:3xZ 08-21). · [pre-reg](posts/2026-08-20-prereg-demos-plus-clean.md)
+
+<details><summary>full record</summary>
+
+Demos+clean endpoint battery + verdict (endpoint-gated ~03:3xZ 08-21): at step-3000 -&gt; sim100 unseen (stand-ins pin, --stats-repo-id grasp_demos_v2/merged) + panel guard vs disc-1000 npz (+0.05 bar) + paired reads vs onerig 28/100 AND control 11/100 AND convicted 1/100 (sim100_paired_read.py) + truthfit rewear + verdict post through the frozen grid (&lt;=10 clean-IS-the-poison / &gt;=20 three-way-interaction / 11-19 ambiguous -&gt; breakdowns + videos, no claim). Record-only reads: eval-250 curve vs convicted (2250-2750 elevation?) + onerig curves; clean-slice eval breakdown (noisy, ~1 holdout episode). Boot stats-row autopsy ALREADY BANKED 14:1xZ 08-20 (no degenerate clean channel, worst x2.84 ch0 =&gt; mechanism (b) weakened). In-flight boundary: step-1000 drift read &lt;= +0.30 (babysit rides it). Within the cell's 17 GPU-h gate (train ~13.5 + battery).
+
+</details>
+
+---
+
+## 🟡 Blocked (12)
 
 *waiting on a prerequisite, a boundary, or the owner*
 
@@ -59,20 +73,6 @@ OWNER-TAKEN 15:30:26Z 08-16 ('I'll fix the different joint convention at convers
 <details><summary>full record</summary>
 
 OWNER-TAKEN 15:30:26Z 08-16 ('I'll fix the different joint convention at conversion time and let you know'): PREREQ FOUND 15:3xZ 08-16 (measured): released so101 checkpoint's recorded q01/q99 stats table is in a different joint convention than ALL our v3.0 data (lift q01-q99 = 45-&gt;186 vs data -103-&gt;+29, non-overlapping) -- direct SFT would clamp-distort every frame (corrected-stats-table failure class, at conversion). Fix: recompute mean/std/q01/q99 from the SFT train mixture (demo-v1 + both rig sets) and write into the converted checkpoint's stats row (+ per-dataset rows if the tooling allows) before any launch; oracle: normalized-range coverage check over a sample of each dataset.
-
-</details>
-
----
-
-**`grpo-r2-post-sft`** · `gpu-local` · **⛔ owner hold**
-
-GRPO R2 on the grasp-SFT policy (DRAFT pre-reg posted 08-15): fresh Decision-11 run on the first-class stack (bijou/grpo_replay.py over the CONVERTED stage-C endpoint
-
-**boundary:** DRAFT posted 07:5xZ 08-15 (queue-refill slice of the stage-C ride session; stage C launched 07:29:55Z same session). ACTIVATION RULE: stage-D verdict owns this item — GRPO_GO (&gt;=20/100) -&gt; finalization per prereg SS6 (base count + checkpoint receipt + lr decision + setback wire call + HEAD re-pin + objection window) THEN launch; ITERATE_BC_ONCE (5-19) -&gt; the bootstrap's iterate arm consumes the GPU slot first, this item waits; F_TRANSFER (&lt;5) -&gt; PARK this item (visual/renderer lane becomes binding per bootstrap SS4). Fresh budget — the bootstrap &lt;=13 gate does NOT carry over. || AMENDMENT A2 REGISTERED 14:4xZ 08-15 (SS8): token-SFT arm pre-reg DRAFT posted (posts/2026-08-15-prereg-grasp-sft-token-sft-arm.md, per A1 decision 2) — if the owner routes token-GRPO, R2 RE-BASES on that arm's endpoint and the activation bar becomes the arm's primary read (unseen sim100 &gt;=20/100 on the DISCRETE head, greedy decode); the stage-D flow-head verdict no longer activates this item. Table lineage inherited (fast codec normalizes token targets with baked q01/q99 — corrected-base init mandatory). Checkpoint receipt re-spelled per owner main 4fd6875 (VLA format: convert_legacy + validate_checkpoint, stats_note provenance). || GPU QUEUE PAUSED 10:2xZ 08-16 (owner 10:13:32Z: local rollouts of the 2k policy; leg-3 eval stopped mid-seed-24, GPU freed+verified): owner_hold set, no GPU launches until they hand it back in-channel; resume recipe in babysit.toml pruned-entry note. || V1-MIRROR AUDIT 19:1xZ 08-17 (local-dataset-mirrors-restore): NO dataset dependency at all — consumes the converted stage-C endpoint checkpoint; reward models are banked. Launch gap unaffected by the box kill. ||| B SS3 BAND FIRED 09:1xZ 08-19: joint ckpt token head 7/100 vs bar &gt;=20 (base-token anchor 0/100) — 5-19 owner-decision band; receipts posted 1539564065414840340. Options put to owner: activate from 7% / token-focused SFT arm first / park. token-decode-diagnosis (CPU) queued to sharpen the call. ||| DECODE DIAGNOSIS BANKED 10:2xZ 08-19 (f960f83, post 1539581325588041780): the 7/100 is magnitude attenuation of greedy decode, not head incapacity — funnel 60 touch/22 pinch, reach + carry under-command, no frozen/no-op class. Fontaine recommendation IN-CHANNEL: ACTIVATE from 7% with wave-0 abort bar mixed-groups &lt;20% (at p=.07 expected ~44% in 8-groups); token-SFT-first argued against (CE owned all route-C trunk updates), park argued against (success-capable + flow-disjoint coverage). Owner call still owns activation. · [pre-reg](posts/2026-08-15-prereg-grpo-r2-post-sft.md)
-
-<details><summary>full record</summary>
-
-GRPO R2 on the grasp-SFT policy (DRAFT pre-reg posted 08-15): fresh Decision-11 run on the first-class stack (bijou/grpo_replay.py over the CONVERTED stage-C endpoint — the exact bijou dir stage D evaluates), reward v2 trained-on / v1 held-out, 8x8 groups T=1.0, full R1 tripwire set inherited, proposed lr 1e-6 (3e-7 fallback) kl_beta 1.0, 10 steps ~10 GPU-h gate &lt;=12. PRIMARY: paired sim100 vs the banked stage-D base count; wave-0 calibration read on group success-variance (predicted &gt;=60% mixed at p&gt;=0.2). CONDITIONAL: activates ONLY on stage-D GRPO_GO (&gt;=20/100).
 
 </details>
 
@@ -218,7 +218,7 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (264)
+## ✅ Done (266)
 
 *closed — the full record stays in each fold*
 
@@ -1181,6 +1181,20 @@ Merge main phase 5a (a51b172, 'bijou.train on the family CLI + the VLA checkpoin
 <details><summary>full record</summary>
 
 Merge main phase 5a (a51b172, 'bijou.train on the family CLI + the VLA checkpoint format', +3115/-2046 across 20 files incl. train args, checkpoint_backbone, convert_molmoact2, test_train_vla) into fontaine; re-run check.py; re-verify the retrain-prep seams exactly as the 15:37Z 08-15 post did (read_checkpoint_info on both real conversions, convert_molmoact2 --norm-stats-from, bijou.train --objective/--backbone-text-lr/--init-from/--expert-init, --image-augment p=0 bitwise oracle, convert_legacy+validate_checkpoint smoke); confirm the pre-registered retrain launch commands still parse against the new family CLI (391-line test_train_args churn suggests arg surface moved). Also confirm whether the parents[2]-&gt;parents[3] bank_processor_goldens fix from bb0f036 landed upstream or still needs the cherry-pick note.
+
+</details>
+
+---
+
+**`grpo-r2-post-sft`** · `gpu-local` · **⛔ owner hold**
+
+GRPO R2 on the grasp-SFT policy (DRAFT pre-reg posted 08-15): fresh Decision-11 run on the first-class stack (bijou/grpo_replay.py over the CONVERTED stage-C endpoint
+
+**boundary:** DRAFT posted 07:5xZ 08-15 (queue-refill slice of the stage-C ride session; stage C launched 07:29:55Z same session). ACTIVATION RULE: stage-D verdict owns this item — GRPO_GO (&gt;=20/100) -&gt; finalization per prereg SS6 (base count + checkpoint receipt + lr decision + setback wire call + HEAD re-pin + objection window) THEN launch; ITERATE_BC_ONCE (5-19) -&gt; the bootstrap's iterate arm consumes the GPU slot first, this item waits; F_TRANSFER (&lt;5) -&gt; PARK this item (visual/renderer lane becomes binding per bootstrap SS4). Fresh budget — the bootstrap &lt;=13 gate does NOT carry over. || AMENDMENT A2 REGISTERED 14:4xZ 08-15 (SS8): token-SFT arm pre-reg DRAFT posted (posts/2026-08-15-prereg-grasp-sft-token-sft-arm.md, per A1 decision 2) — if the owner routes token-GRPO, R2 RE-BASES on that arm's endpoint and the activation bar becomes the arm's primary read (unseen sim100 &gt;=20/100 on the DISCRETE head, greedy decode); the stage-D flow-head verdict no longer activates this item. Table lineage inherited (fast codec normalizes token targets with baked q01/q99 — corrected-base init mandatory). Checkpoint receipt re-spelled per owner main 4fd6875 (VLA format: convert_legacy + validate_checkpoint, stats_note provenance). || GPU QUEUE PAUSED 10:2xZ 08-16 (owner 10:13:32Z: local rollouts of the 2k policy; leg-3 eval stopped mid-seed-24, GPU freed+verified): owner_hold set, no GPU launches until they hand it back in-channel; resume recipe in babysit.toml pruned-entry note. || V1-MIRROR AUDIT 19:1xZ 08-17 (local-dataset-mirrors-restore): NO dataset dependency at all — consumes the converted stage-C endpoint checkpoint; reward models are banked. Launch gap unaffected by the box kill. ||| B SS3 BAND FIRED 09:1xZ 08-19: joint ckpt token head 7/100 vs bar &gt;=20 (base-token anchor 0/100) — 5-19 owner-decision band; receipts posted 1539564065414840340. Options put to owner: activate from 7% / token-focused SFT arm first / park. token-decode-diagnosis (CPU) queued to sharpen the call. ||| DECODE DIAGNOSIS BANKED 10:2xZ 08-19 (f960f83, post 1539581325588041780): the 7/100 is magnitude attenuation of greedy decode, not head incapacity — funnel 60 touch/22 pinch, reach + carry under-command, no frozen/no-op class. Fontaine recommendation IN-CHANNEL: ACTIVATE from 7% with wave-0 abort bar mixed-groups &lt;20% (at p=.07 expected ~44% in 8-groups); token-SFT-first argued against (CE owned all route-C trunk updates), park argued against (success-capable + flow-disjoint coverage). Owner call still owns activation. ||| LANE CLOSED AT THE GATE 14:0xZ 08-20: activation happened via A3 (from 7%, 08-19); preflight PASS, parity PASS (perfect), A3.4 relaunch died 13:59:42Z step-2 backward CUDA OOM, no checkpoint (save_every=5), retry ~21.5 &gt; A4 &lt;=20 =&gt; registered zero-slack rule, NO step-10 read, no R3 scheduled. ~6.6 GPU-h spent. Close-out ledger row = SS10 of the pre-reg post; banked: parity infrastructure + wave-0 calibration (mixed 0.50) + step-1 row. R3 lead (expandable_segments + headroom) recorded in SS10 + babysit registry. · [pre-reg](posts/2026-08-15-prereg-grpo-r2-post-sft.md)
+
+<details><summary>full record</summary>
+
+GRPO R2 on the grasp-SFT policy (DRAFT pre-reg posted 08-15): fresh Decision-11 run on the first-class stack (bijou/grpo_replay.py over the CONVERTED stage-C endpoint — the exact bijou dir stage D evaluates), reward v2 trained-on / v1 held-out, 8x8 groups T=1.0, full R1 tripwire set inherited, proposed lr 1e-6 (3e-7 fallback) kl_beta 1.0, 10 steps ~10 GPU-h gate &lt;=12. PRIMARY: paired sim100 vs the banked stage-D base count; wave-0 calibration read on group success-variance (predicted &gt;=60% mixed at p&gt;=0.2). CONDITIONAL: activates ONLY on stage-D GRPO_GO (&gt;=20/100).
 
 </details>
 
@@ -3855,6 +3869,20 @@ GRPO R2 boundary-legs launcher (CPU; makes the R2 endpoint one command end-to-en
 <details><summary>full record</summary>
 
 GRPO R2 boundary-legs launcher (CPU; makes the R2 endpoint one command end-to-end): a `boundary` subcommand on launch_grpo_r2.sh that takes the endpoint checkpoint dir and fires the three A3.4 legs sequentially as ONE detached unit — (1) greedy token sim100 (--serve-head ar, no temperature), (2) sampled T=1.0 sim100, (3) flow unseen100 euler-10 — each with the anchors' exact driver + substrate pins (standins, stats_repo_id so101_pick_place_v2, seeds 0-99), ~3.9 GPU-h total per A3.5, chaining into python -m fontaine.scripts.grpo_r2_boundary_verdict (guards already refuse wrong-leg jsons; the launcher's job is to never produce one). Refuses to fire while the grpo-r2 unit is still alive. Parse-check oracle-tested like the kit's, check.py green. NO GPU in this item — it stages; the boundary session fires it. | EXECUTED 20:3xZ 08-19 (982cecd, check.py 1099 green): boundary subcommand + parse-check oracle (legs' exact argv through the driver's parser + the verdict's own provenance guards) + grpo_r2_materialize_endpoint.py (the loop banks trainable-only .pt overlays; file-level apply onto the base backbone_text via write_checkpoint, 6 oracles on the tiny VLA fixture) — the endpoint read now needs zero new code. PIN CORRECTION (git-audited): NO --stats-repo-id on the boundary legs — the spelled so101_pick_place_v2 row exists only on the RETIRED step_002000 dir; the v2 base's per-dataset table carries only the demos row (explicit pin = refused at load); default lookup = the lane's registered serving convention (preflight PASS wore &lt;merged-table&gt;).
+
+</details>
+
+---
+
+**`demos-plus-clean-exec`** · `gpu-local`
+
+Demos + clean poison-pinning cell EXECUTION (launch DELEGATED per the standing no-GO-ask rule
+
+**boundary:** Queued 12:4xZ 08-20 at the draft close. Window-blocked only: the grpo-r2 lane owns the H100 through its ~22:0xZ endpoint + boundary eval; this cell fires at the next free GPU window after that, delegated, no owner hold. || CLOSED superseded-by-execution 14:1xZ 08-20 work session: smoke GREEN 14:14Z (rc 0, 20/20 steps, vram peak 62.19 GiB, losses falling) -&gt; REAL unit fontaine-v2-joint-pdnorm-democlean launched 14:15:41Z (GPU verified free; announce in-channel same session). Babysit registry entry 'democlean' carries the ride + boundaries; democlean-endpoint-close (queued this session) carries the endpoint battery. · [pre-reg](posts/2026-08-20-prereg-demos-plus-clean.md)
+
+<details><summary>full record</summary>
+
+Demos + clean poison-pinning cell EXECUTION (launch DELEGATED per the standing no-GO-ask rule — announce in-channel, never gate on GO). At the first free GPU window after the grpo-r2 lane closes its boundary (R2 endpoint ~22:0xZ 08-20 -&gt; boundary eval -&gt; this cell; an R2 in-loop abort also frees the window): STEPS=20 SMOKE=1 fit smoke, then systemd-run unit fontaine-v2-joint-pdnorm-democlean via the staged launcher launch_local_grasp_sft_v2_joint_1gpu_pdnorm_democlean_h100.sh (demos+so101_pick_place_clean x4, pdnorm, joint+insulate, eff-96, seed 0, 3000 steps, prune-superseded-optim); babysit entry at launch, first poll util+rate+free-g+df; RECORD the recomputed per-dataset stats rows at boot (clean row vs v2/demos rows — mechanism-(b) autopsy input); boundaries step-1000 drift read (&lt;=+0.30), step-3000 endpoint -&gt; sim100 (stand-ins pin, --stats-repo-id grasp_demos_v2/merged) + panel guard vs disc-1000 npz + paired reads vs onerig 28/100 AND control 11/100 AND convicted 1/100 + verdict post through the frozen grid. Gate 17 GPU-h.
 
 </details>
 

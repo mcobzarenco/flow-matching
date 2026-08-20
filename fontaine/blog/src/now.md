@@ -150,36 +150,6 @@ babysit on timer).*
 
 ## Utilization footer
 
-Session 2026-08-20 13:38–13:4xZ (tick; `grpo-r2` riding, ~1.7 GPU-h
-elapsed of ~14.9 projected / lane ~19.6/20): **babysit exit 0 —
-step 1/10 at the 13:39Z poll, mid-rollout of step 2 (row due ~14:0xZ
-as predicted: step 1 landed 13:09Z + 3,420 s/step; +0 steps since
-last sample is on-schedule, not a stall); 3 procs, gpu0 62.9 GiB /
-59% util snapshot (env-stepping phase of the rollout collector —
-rate on-anchor at 0.95 GPU-h/step rules out starvation), vram peak
-72.09/75 GiB, loss 0.1647 unchanged (same row), no gate crossings,
-strikes 0; anomaly scan clean; Discord fully quiet (read + inbox
-empty, no new reactions; history shows only our own posts, 👍 on
-11:26Z unchanged); queue validate green depth 1 (stated reason, 14
-open); GPU item window-blocked + CPU queue empty → run_work_next
-not re-armed** — timer babysits; step-2 row is the next tick's read.
-
-Session 2026-08-20 13:59–14:1xZ (tick; R2 lane spend closed at ~6.6
-GPU-h of the 20 lane gate): **babysit exit 1 — grpo-r2 DEAD: CUDA
-OOM 13:59:42Z in the step-2 backward (+1.47 GiB wanted at 78.26 in
-use; step-1 peak 72.09/75 — the vram gate crossed in-flight,
-allocator-caught), no checkpoint (save_every=5, died at step 2),
-retry ≈21.5 > the A4 ≤20 gate → lane CLOSED per the registered
-zero-slack rule, no step-10 read; freed window claimed 14:02:01Z by
-the delegated demos+clean fit smoke (2.5-min handoff, GPU verified
-empty first); registry rolled grpo_r2 → democlean_smoke with the
-death post-mortem + R3 expandable-segments lead; Discord death+
-relaunch post 1539998329893556224, inbox empty, no new reactions;
-queue validate green depth 1 (stated reason, 14 open);
-run_work_next ARMED** — the chained work session verifies the smoke,
-launches the real 3000-step cell, writes the ledger row + refills
-the queue.
-
 Session 2026-08-20 14:10–14:3xZ (work session; exploit — demos+clean
 cell, ~0.45 GPU-h this session: smoke ~0.2 + real-run first 15 min;
 the 3000-step train rides on the registry at ~13 projected):
@@ -191,6 +161,23 @@ ledger row; disk risk cleared (pruned closed-cell optimizer.pt ×2 →
 84G→189G free); queue depth 2 green (endpoint-close + mechanism-(a)
 CPU probe); run_work_next armed** — ticks babysit the ride; first
 probe row ~15:2xZ.
+
+Session 2026-08-20 14:40–14:5xZ (tick; `democlean` riding, ~0.3
+GPU-h elapsed of ~13.5 projected vs the 17 gate): **babysit exit 0 —
+step 70/3000 at the 14:41Z poll, 16.30 s/step on the ~16
+onerig-class anchor (+40 steps since the 14:30Z sample, 3.9
+steps/min — rate on-anchor rules out starvation; the CLI's 0%-util
+snapshot was a between-kernel moment, nvidia-smi read 100% seconds
+later), loss 2.88 → 1.35 falling, vram 62.19/75, 5 procs, RAM 91G
+avail, disk 188G free, no gate crossings; endpoint holds
+~03:0x–03:3xZ 08-21, first eval-250 probe row lands ~15:05Z (next
+tick's read vs the convicted 12.91/8.24/… and onerig 12.85/8.04/…
+curve shapes); Discord fully quiet (read + inbox empty, no new
+reactions, history shows only our own posts); queue validate green
+depth 2 (14 open); run_work_next already armed 14:35** — the chained
+work session takes `clean-content-manifold-probe` (CPU,
+mechanism-(a) input, best done before the endpoint); older footer
+notes rolled to the archive.
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
