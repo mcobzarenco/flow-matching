@@ -2,6 +2,50 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-20 05:22–05:4xZ (tick) — **step-2500 boundary read
+in-session: probe 4.7895 — trend-vs-noise call COMPLETE, plateau
+confirmed (no second rise; the 2000 uptick was noise); loss 0.3143
+new low @2460 (−0.0493, steepest interval drop in hundreds of
+steps); step-1500 optimizer pruned, disk math holds (97G free); fully
+quiet; ETA ~07:4x–07:5xZ 08-20 → endpoint battery.***
+
+**Status**: `grasp_sft_v2_joint_1gpu_pdnorm_onerig` — held in-session
+for the step-2500 boundary (the read the 05:01 tick deferred here).
+At the 05:23Z poll: step 2460/3000, loss **0.3143 new low** (−0.0493
+vs 2380 — the steepest interval drop in hundreds of steps), window
+3.8 steps/min (~15.9 s/step) in band, starvation absent. **Step-2500
+probe landed 05:35:30Z: 4.7895** — curve 12.85 → 8.04 → 6.73 → 5.83
+→ 5.59 → 4.94 → 4.56 → 4.84 → 4.80 → **4.79**; no second consecutive
+rise, so the trend-vs-noise call the 2250 read left half-open closes
+on the **plateau** side (both boundary probes stayed inside the ≤
++0.30 read band; no gate implication). Loss 0.3387@2500. Restart
+trigger unchanged (sustained >20 s/step or projection near 17 GPU-h,
+action only at a save boundary). 500 steps at ~15.9 s/step → ETA
+~07:4x–07:5xZ 08-20. 62.21/71 GiB, babysit exit 0, no gate
+crossings.
+
+**Steering**: none — read + inbox empty, history clean (the three
+recorded 👍s unchanged; no reaction yet on the 03:24Z / 04:28Z /
+05:36Z posts).
+
+**Done**: babysit poll (healthy, exit 0). In-session hold for the
+step-2500 boundary (log-line waiter with trainer-death guard, ~13
+min): probe read + save-settle watch. Boundary mechanics green:
+step_002500 saved (42G full), **step_001500/optimizer.pt pruned**
+(dir 13G weights-only), disk 97G free — net −11G, on the pruner math
+(~86G floor at the step-3000 final save, no risk). Boundary post
+05:36Z. RAM available 46G, flat. Queue validate green (depth 2, 15
+open). No work-session chain: both queued items GPU-gated
+post-onerig, no CPU items, depth at threshold.
+
+**Next**: onerig endpoint ~07:4x–07:5xZ 08-20 — final probe lands
+with the step-3000 save (the ~07:2x and ~07:4x ticks watch it) →
+`onerig-endpoint-close` (frozen-grid sim100 ≥20 / ≤10 / 11–19 bands,
+anchors demosonly 11 and both convicted cells 1), then the R2 parity
+read + relaunch in the freed window (A5 gate, no GO ask); at the R2
+endpoint the boundary is `./launch_grpo_r2.sh boundary
+outputs/sim/grpo_r2/loop/step_0010.pt`.*
+
 *Updated 2026-08-20 05:01–05:0xZ (tick) — **onerig healthy at step
 2380; loss 0.3636 (+0.0063 vs 2300 — noise-scale, the 0.3573 low
 stands); window 3.8 steps/min in band, starvation absent; fully
@@ -84,50 +128,22 @@ the R2 parity read + relaunch in the freed window (A5 gate, no GO
 ask); at the R2 endpoint the boundary is `./launch_grpo_r2.sh
 boundary outputs/sim/grpo_r2/loop/step_0010.pt`.*
 
-*Updated 2026-08-20 04:19–04:3xZ (tick) — **step-2250 probe read
-in-session: 4.8037 (−0.04 vs 2000 — the uptick did NOT continue;
-plateau, not degradation — half the trend-vs-noise call in, the 2500
-probe completes it); loss 0.3879@2220 (+0.0218 bounce off the low —
-noise); rate 15.333 s/step in band; fully quiet; ETA ~07:5xZ
-08-20.***
-
-**Status**: `grasp_sft_v2_joint_1gpu_pdnorm_onerig` — held in-session
-for the probe. At the 04:20Z poll: step 2220/3000, loss 0.3879
-(+0.0218 vs 2140 — noise-scale bounce off the 0.3661 low), rate
-15.333 s/step in the registered band, window 3.8 steps/min,
-starvation absent. **Step-2250 probe landed 04:2xZ: 4.8037** — curve
-12.85 → 8.04 → 6.73 → 5.83 → 5.59 → 4.94 → 4.56 → 4.84 → **4.80**;
-the 2000 uptick did not continue (−0.04), still +0.24 above the 1750
-low but no second consecutive rise, no gate implication (both
-boundary probes stayed inside the ≤ +0.30 read band). Train loss
-corroborates plateau-not-degradation: the fall past 2000 stands.
-Restart trigger unchanged (sustained >20 s/step or projection near
-17 GPU-h, action only at a save boundary). ~750 steps at ~15.3
-s/step → ETA ~07:5xZ 08-20. 62.21/71 GiB, babysit exit 0 both polls,
-no gate crossings.
-
-**Steering**: none — read + inbox empty, history clean (the three
-recorded 👍s unchanged; no reaction yet on the 03:24Z boundary
-post).
-
-**Done**: two babysit polls (exit 0). In-session hold for the
-step-2250 probe (log-line waiter with trainer-death guard, ~8 min);
-probe read posted 04:28:23Z. Disk 108G free, flat (next change at
-the step-2500 save ~05:3x–05:4xZ with the step-1500 optimizer
-prune). RAM available 47G, flat. Queue validate green (depth 2, 15
-open). No work-session chain: both queued items GPU-gated
-post-onerig, no CPU items, depth at threshold.
-
-**Next**: step-2500 save boundary ~05:3x–05:4xZ — probe read
-completes the trend-vs-noise call + step-1500 optimizer prune
-confirm + disk re-read; onerig endpoint ~07:5xZ 08-20 →
-`onerig-endpoint-close` (frozen-grid sim100 ≥20 / ≤10 / 11–19 bands,
-anchors demosonly 11 and both convicted cells 1), then the R2 parity
-read + relaunch in the freed window (A5 gate, no GO ask); at the R2
-endpoint the boundary is `./launch_grpo_r2.sh boundary
-outputs/sim/grpo_r2/loop/step_0010.pt`.*
-
 ## Utilization footer
+
+Session 2026-08-20 05:22–05:4xZ (tick; `onerig` riding, ~11.7 GPU-h
+elapsed of ~14 projected / gate 17): **babysit exit 0 — step
+2460/3000 at the 05:23Z poll, loss 0.3143 new low (−0.0493 vs 2380,
+steepest interval drop in hundreds of steps); held in-session for the
+step-2500 boundary (log waiter + death guard, ~13 min): probe
+4.7895@2500 landed 05:35:30Z — trend-vs-noise call COMPLETE, plateau
+confirmed (no second rise, the 2000 uptick was noise, both boundary
+probes inside the ≤ +0.30 band); loss 0.3387@2500; step_002500 saved
+42G full, step_001500 pruned to 13G weights-only, disk 97G free on
+pruner math (~86G floor at step-3000); window 3.8 steps/min in band,
+starvation absent; ETA ~07:4x–07:5xZ 08-20; boundary post 05:36Z;
+Discord otherwise fully quiet (read + inbox empty, no new
+reactions); RAM flat (available 46G); no chain (both queued items
+GPU-gated, no CPU items)** — queue green depth 2 (15 open).
 
 Session 2026-08-20 05:01–05:0xZ (tick; `onerig` riding, ~11.1 GPU-h
 elapsed of ~14 projected / gate 17): **babysit exit 0 — step
@@ -143,20 +159,6 @@ inbox empty, no new reactions — 03:24Z boundary + 04:28Z probe posts
 unreacted); disk 108G free flat; RAM flat (available 47G); no chain
 (both queued items GPU-gated, no CPU items)** — queue green depth 2
 (15 open).
-
-Session 2026-08-20 04:40–04:4xZ (tick; `onerig` riding, ~10.7 GPU-h
-elapsed of ~14 projected / gate 17): **babysit exit 0 — step
-2300/3000, loss 0.3573 new low (−0.0088 below the prior 0.3661 low —
-the 2220 bounce resolved downward, the fall past 2000 stands, the
-probe uptick stays uncorroborated by train loss); rate 15.083 s/step
-in band (window 3.8 steps/min), starvation absent, restart trigger
-unchanged; ETA ~07:3x–07:4xZ 08-20; 62.21 GiB, no gate crossings;
-step-2500 boundary ~05:3xZ next — probe read completes the
-trend-vs-noise call + step-1500 optimizer prune confirm; Discord
-fully quiet (read surfaced only our own probe post, inbox empty, no
-new reactions); disk 108G free flat; RAM flat (available 47G); no
-chain (both queued items GPU-gated, no CPU items)** — queue green
-depth 2 (15 open).
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
