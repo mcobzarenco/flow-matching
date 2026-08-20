@@ -3,8 +3,44 @@
 
 
 
-
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-20 17:59–18:0xZ (tick) — **democlean eighth-tick
+poll ALL-GREEN: step 840/3000, loss 0.527, all infra anchors quiet
+(disk 146G, RAM plateau a fourth tick, pruner idle-correct).
+Nothing to decide — step-1000 (save + eval-1000 + registered drift
+read + first real prune) lands ~18:42Z, just after this session's
+hard kill; the next tick banks all of it.***
+
+**Status**: `fontaine-v2-joint-pdnorm-democlean` step 840/3000 at
+18:00Z, 17.02 s/step window (+80 steps since 17:39, 3.8 steps/min
+wall), loss 0.502 → 0.527 — a small window-over-window uptick well
+inside the step-noise band (sequence 0.725 → 0.610 → 0.589 → 0.560
+→ 0.543 → 0.502 → 0.527), not a spike. Vram 62.24 vs ≤75, babysit
+exit 0, no gate crossings. No new probe row (next is eval-1000 at
+the save). Infra: disk 146G free, RAM available 49G — fourth
+consecutive tick at the plateau; pruner unit active, log
+start-line-only (correct — no save since 500; first real prune
+verifies after the step-1000 save). Projections: **step 1000
+~18:42Z**, **endpoint ~03:0x–04:1xZ 08-21** (babysit ~10.2 h to
+3000 at the window pace; cumulative pace says the earlier end of
+that band).
+
+**Steering**: none — inbox empty, `read` empty, `history -n 5` all
+our own posts, no reactions.
+
+**Done** (this tick): babysit poll, loss-uptick noise read, disk +
+RAM + pruner-log checks, queue validate green (depth 2, 14 open),
+now.md + archive roll.
+
+**Next**: the ~18:4xZ tick banks eval-1000 + the registered drift
+read (bar: eval@1000 ≤ 8.44 on our own curve; failure = endpoint
+re-opens, not a kill), verifies the pruner log pruned step-500's
+optimizer.pt after the save, and re-reads RAM across the save. If
+the 1000 row confirms the flattening, post the two-point shape note
+in-channel. Endpoint session owns `democlean-endpoint-close`.
+`run_work_next` NOT armed — both queued items endpoint/verdict-gated,
+no workable CPU item (charter §3 checked, not skipped).*
 
 *Updated 2026-08-20 17:38–17:4xZ (tick) — **democlean seventh-tick
 poll ALL-GREEN, and the eval-750 row is banked: 7.90@750 — the first
@@ -54,40 +90,23 @@ the two-point shape note in-channel. Endpoint session owns
 items endpoint/verdict-gated, no workable CPU item (charter §3
 checked, not skipped).*
 
-*Updated 2026-08-20 17:17–17:2xZ (tick) — **democlean sixth-tick
-poll ALL-GREEN: step 680/3000, pace 14.89 s/step (best window yet,
-4.3 steps/min wall), loss 0.543, RAM plateau holds a second tick,
-pruner idle-correct. Nothing to decide; the eval-750 row lands
-~17:3xZ just after this session — next tick banks it, then the
-step-1000 drift read ~18:3xZ.***
-
-**Status**: `fontaine-v2-joint-pdnorm-democlean` step 680/3000 at
-17:18Z, 14.89 s/step (+90 steps since 16:57, 4.3 steps/min wall),
-loss 0.560 → 0.543, vram 62.24 vs ≤75, babysit exit 0, no gate
-crossings. RAM available 48G unchanged a second consecutive tick —
-plateau confirmed, watch closed unless it moves. Disk 146G free;
-pruner unit active, log still start-line-only (correct — no save
-since step-500; first real prune verifies after the step-1000 save).
-No new probe row; **eval-750 lands ~17:3xZ**, too close to this
-session's hard kill to hold for a record-only row — next tick banks
-it. Projections: **step-1000 drift read ~18:3xZ** (≤ +0.30 bar),
-**endpoint ~02:5x–03:3xZ 08-21** (babysit projects ~9.6 h to 3000 at
-current pace).
-
-**Steering**: none — inbox empty, `read` empty, `history -n 5` all
-our own posts, no reactions.
-
-**Done** (this tick): babysit poll, RAM plateau re-confirmed, disk +
-pruner-log verify, queue validate green (depth 2, 14 open), now.md +
-archive roll.
-
-**Next**: next tick banks the eval-750 row; step-1000 drift read at
-the ~18:3xZ tick (+ pruner-log verify + RAM re-read across the
-save). Endpoint session owns `democlean-endpoint-close`.
-`run_work_next` NOT armed — both queued items endpoint/verdict-gated,
-no workable CPU item (charter §3 checked, not skipped).*
-
 ## Utilization footer
+
+Session 2026-08-20 17:59–18:0xZ (tick; `democlean` riding, ~3.8
+GPU-h elapsed of ~13.1 projected vs the 17 gate): **babysit exit 0 —
+step 840/3000 at 18:00Z, loss 0.502 → 0.527 (small uptick inside the
+step-noise band, sequence still trending down), vram 62.24/75, no
+gate crossings; 17.02 s/step window, 3.8 steps/min; no new probe row
+(eval-1000 lands at the ~18:42Z save); disk 146G, RAM available 49G
+fourth consecutive tick (plateau holds), pruner unit active + log
+start-line-only (correct, no save since 500); Discord fully quiet
+(read empty, inbox empty, history -n 5 all own posts, no reactions);
+queue validate green depth 2 (14 open); run_work_next NOT armed —
+both queued items endpoint/verdict-gated; boundaries: step-1000
+~18:42Z (save + eval-1000 + registered drift read ≤ 8.44 + first
+real prune), ~18:4xZ tick banks all of it + RAM re-read across the
+save + in-channel shape post if the flattening confirms; endpoint
+~03:0x–04:1xZ 08-21.**
 
 Session 2026-08-20 17:38–17:4xZ (tick; `democlean` riding, ~3.4
 GPU-h elapsed of ~12.9 projected vs the 17 gate): **babysit exit 0 —
@@ -108,22 +127,6 @@ boundaries: step-1000 ~18:39Z (save + eval + first real prune),
 ~18:4xZ tick banks drift read + pruner-log verify + RAM re-read,
 in-channel shape post if the 1000 row confirms the flattening;
 endpoint ~03:0x–03:4xZ 08-21.**
-
-Session 2026-08-20 17:17–17:2xZ (tick; `democlean` riding, ~3.1
-GPU-h elapsed of ~12.7 projected vs the 17 gate): **babysit exit 0 —
-step 680/3000 at 17:18Z, 14.89 s/step (+90 steps since 16:57, 4.3
-steps/min wall — best window yet), loss 0.560 → 0.543, vram
-62.24/75, no gate crossings; RAM available 48G unchanged a second
-consecutive tick → plateau confirmed, watch closed; pruner unit
-active, log start-line-only as expected (no save since step-500);
-disk 146G free; no new probe row — eval-750 lands ~17:3xZ just after
-this session's hard kill, record-only so the next tick banks it;
-Discord fully quiet (read empty, inbox empty, history -n 5 all own
-posts, no reactions); queue validate green depth 2 (14 open);
-run_work_next NOT armed — both queued items endpoint/verdict-gated;
-boundaries: step-1000 drift read ~18:3xZ (+ pruner-log verify + RAM
-re-read across the save), endpoint ~02:5x–03:3xZ 08-21 (~9.6 h to
-3000 at current pace).**
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
