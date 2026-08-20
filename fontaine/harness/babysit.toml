@@ -37,34 +37,46 @@
 # loop_wave0abort_patched/ (patched wave), loop/ (killed relaunch,
 # eval row only), wave0_diag/ (probe json). Kill post 18:08Z.
 
+# grasp_sft_v2_joint_1gpu_pdnorm_onerig TRAIN entry PRUNED 08:4xZ 08-20
+# work session — TRAIN COMPLETE 3000/3000 (~13.4/17 GPU-h, final loss
+# 0.3299, vram peak 62.21/71, no gate crossings, starvation none).
+# FINAL PROBE eval_chunk_mae 4.5266@3000 (train_mae 4.7412) — holds the
+# 4.50@2750 run low (+0.03 noise-scale): the curve ENDED IMPROVING,
+# opposite of the convicted pdnorm-mixed cell (plateau 5.45/5.47 ->
+# 6.83 peak -> 6.17 endpoint, elevation never retraced). Full curve:
+# 12.85/8.04/6.73/5.83/5.59/4.94/4.56/4.84/4.80/4.79/4.50/4.53.
+# step-3000 endpoint is the unambiguous best save — no best-save
+# flexibility question this time. Battery below owns the verdict.
+# IDLE-GAP INCIDENT (class repeat, 2nd): battery wait deadlocked ~30
+# min on the session's OWN watch loop — the compound command's trailing
+# diagnostics (ls/tail on the run's ckpt paths) put the run string in
+# the babysitting shell's cmdline for the loop's whole 55 min. The
+# 08-19 class note stands, sharpened: the ENTIRE compound command is
+# one cmdline — diagnostics after the loop count too. ~0.5 GPU-h idle,
+# no gate risk.
+
 [[run]]
-name = "grasp_sft_v2_joint_1gpu_pdnorm_onerig"
-kind = "train-jsonl"
+name = "onerig_endpoint_battery"
+kind = "progress-log"
 host = "local"
-pgrep = "grasp_sft_v2_joint_1gpu_pdnorm_onerig"
+pgrep = "launch_onerig_endpoint_battery"
 pgrep_min = 1
 gpu_indices = [0]
-gpu_mem_min_mib = 30000
-jsonl = "/home/ubuntu/checkpoints/finetune/grasp_sft_v2_joint_1gpu_pdnorm_onerig/train_log.jsonl"
-total_steps = 3000
-probe_key = "eval_chunk_mae"
-vram_key = "vram_alloc_peak_gib"
-started_utc = "2026-08-19T18:22:47Z"
+gpu_mem_min_mib = 5000
+log = "/home/ubuntu/eval__onerig_endpoint_sim100.log"  # leg 1; repoint to eval__grasp_sft_v2_joint_1gpu_pdnorm_onerig__step_003000__panel_v2_k4l2_euler10_draws1_stable.log at the panel roll
+progress_re = "seed [0-9]+ replan"
+started_utc = "2026-08-20T08:37:18Z"
 gpu_hours_per_wall_hour = 1.0
-boundary = "3000 steps at ~15.2-15.4 s/step (smoke-measured) ~= 12.7-12.8 h -> endpoint ETA ~07:0x-07:1xZ 08-20; saves every 500, probes every 250; step-1000 drift-guard read ~22:3x-22:4xZ 08-19; at endpoint: sim100 (stand-ins pin, --stats-repo-id grasp_demos_v2/merged worn-row rule) + panel guard vs disc-1000 npz + paired reads vs control AND convicted cell + verdict post through the frozen grid (prereg 2026-08-19-prereg-demos-plus-one-rig.md)"
+boundary = "leg 1 sim100 ~2.2-2.5 GPU-h (pdnorm battery measured) -> ~10:5x-11:1xZ 08-20; leg 2 panel ~0.5 -> ~11:2x-11:4xZ; then CPU: sim100_paired_read vs disc1000 11/100 AND vs pdnorm-mixed 1/100, panel guard vs disc-1000 npz, truthfit rewear + ladder restamp, onerig endpoint report, verdict post through the frozen grid (prereg 2026-08-19-prereg-demos-plus-one-rig.md)"
 anchors = [
-    "ONE recipe delta vs the convicted pdnorm mixed cell (1/100): so101_pick_place_clean DROPPED; v2 repeat-4 share 6.30% preamble-verified at launch (dose held vs 6.26/6.31 registered)",
-    "frozen grid at 3000 sim100: >=20/100 mix-exonerated (clean was the poison) / <=10 still-convicted (rig data class, not the specific dataset) / 11-19 ambiguous band per the pre-reg; anchors: demosonly baseline 11/100, convicted mixed cell 1/100, pdnorm-mixed cell 1/100",
-    "drift guard (READ not kill): delta eval(1000-500) <= +0.30 raw units, precedent pdnorm-mixed rose within band",
-    "first-poll standing checks DONE 18:29Z: 66.4 GiB / 83% util, no starvation; RAM 91G available (rig-video loader buffers priced); disk 214G free after smoke-dir cleanup",
-    "fit smoke green 18:22Z (20 steps, /tmp dir removed after)",
+    "frozen grid on leg-1 successes/100: >=20 mix-exonerated (clean was the poison — bank ckpt same-session), <=10 still-convicted (rig data class, not the specific dataset), 11-19 ambiguous (per-channel MAE + breakdown + videos to the owner); anchors: demosonly baseline 11/100, convicted mixed cell 1/100 (= pdnorm-mixed)",
+    "final probe 4.5266@3000 holds the run low — curve ended improving, unlike the convicted cell's un-retraced elevation; the paired read vs the convicted cell is the direct did-dropping-clean-move-anything estimate",
+    "panel guard (tertiary): endpoint npz vs disc-1000 banked npz on shared frames, worse-by > +0.05 CI-excl-0 fails; interpretation anchors 27.40 re-worn disc / 27.14 released / 25.15 midpoint null / 8.37 state-copy; convicted cell read 29.18 native / 27.44 truth-fit",
+    "17 GPU-h queue gate binds the whole cell: train ~13.4 + battery ~2.7 + idle-gap 0.5 ~= 16.6 — inside, no headroom for extras",
 ]
 [[run.gates]]
-kind = "vram_max_gib"
-value = 71.0
-[[run.gates]]
 kind = "gpu_hours_max"
-value = 17.0                      # queue-item gate (17 GPU-h)
+value = 3.5
 
 # (no_live_runs_reason cleared 14:25Z 08-16 — demo_gen_v1 launched on the A100 box; prior: HOME-GPU-only declaration of 10:2xZ 08-16.)
 
