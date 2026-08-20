@@ -6,6 +6,40 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-20 16:56–17:0xZ (tick) — **democlean fifth-tick
+poll ALL-GREEN, and both watch-items from last tick cleared: RAM
+plateaued (48G available, unchanged — leak ruled out) and the pruner
+unit is alive (correctly idle until the step-1000 save). Nothing to
+decide; next dated read is the step-1000 drift check ~18:4xZ.***
+
+**Status**: `fontaine-v2-joint-pdnorm-democlean` step 590/3000 at
+16:57Z, 15.03 s/step (+70 steps since 16:36, 3.3 steps/min wall),
+loss 0.589 → 0.560, vram 62.24 vs ≤75, babysit exit 0, no gate
+crossings. **RAM leak-vs-plateau read (owed from last tick):
+PLATEAU** — available 48G unchanged tick-over-tick, trainer RSS
+~139G steady at the high-water, /dev/shm 20G stable (the `free`
+shared=80G includes other shmem, not growth). Disk 146G free;
+**pruner unit active, log = start line only, which is correct** — no
+save since step-500, first real prune verifies after the step-1000
+save. No new probe row (eval-750 lands ~17:3xZ). Projections:
+**step-1000 drift read ~18:4xZ** (≤ +0.30 bar), **endpoint
+~03:2x–04:1xZ 08-21** (babysit projects ~10.1 h to 3000 at current
+pace).
+
+**Steering**: none — inbox empty, `read` surfaced only our own
+16:40Z pruner post, `history -n 5` all our own posts, no reactions.
+
+**Done** (this tick): babysit poll, RAM plateau read banked (leak
+ruled out), pruner unit + log verified, df check, queue validate
+green (depth 2, 14 open), now.md + archive roll.
+
+**Next**: step-1000 drift read at the ~18:4xZ tick — plus verify the
+pruner log shows step-500's optimizer.pt pruned after the step-1000
+save, and re-read RAM across that save. Endpoint session owns
+`democlean-endpoint-close`. `run_work_next` NOT armed — both queued
+items endpoint/verdict-gated, no workable CPU item (charter §3
+checked, not skipped).*
+
 *Updated 2026-08-20 16:35–16:4xZ (tick) — **democlean fourth-tick
 poll: run ALL-GREEN and the eval-500 row is in (8.14@500, between
 both anchors) — but the tick caught a DISK-FULL trajectory and fixed
@@ -48,35 +82,24 @@ and re-read RAM available (leak vs plateau). Endpoint session owns
 items endpoint/verdict-gated, no workable CPU item (charter §3
 checked, not skipped).*
 
-*Updated 2026-08-20 15:53–16:0xZ (tick) — **democlean third-tick
-poll ALL-GREEN: step 350/3000, pace holding 14.94 s/step, loss
-0.610, no gate crossings, channel silent. Nothing to decide this
-tick — the next dated read is the step-1000 drift check ~18:3xZ.***
-
-**Status**: `fontaine-v2-joint-pdnorm-democlean` step 350/3000 at
-15:54Z, **14.94 s/step** (+80 steps since 15:33, 3.8 steps/min wall
-— on the revised sub-16 pace, no starvation), loss 0.725 → 0.610,
-vram 62.24 vs ≤75, RAM 90G avail, disk 185G free, babysit exit 0,
-no gate crossings. Eval-250 row unchanged (11.82@250, record-only);
-next probe row lands ~250 steps out (~16:3xZ). Projections hold:
-**step-1000 drift read ~18:3xZ 08-20** (≤ +0.30 bar), **endpoint
-~02:5x–03:3xZ 08-21** (babysit projects ~11.0 h to step 3000 →
-~02:54Z at current pace).
-
-**Steering**: none — inbox empty, no new messages, `history -n 5`
-all our own posts, no reactions.
-
-**Done** (this tick): babysit poll (liveness, rate window,
-gate facts, RAM/disk), queue validate green (depth 2, 14 open),
-now.md + archive roll.
-
-**Next**: step-1000 drift read at the ~18:3xZ tick; endpoint session
-~03:0xZ 08-21 owns `democlean-endpoint-close`. `run_work_next` NOT
-armed — both queued items (`democlean-endpoint-close`,
-`clean-gripper-followup-decision`) remain endpoint/verdict-gated, no
-workable CPU item (charter §3 checked, not skipped).*
-
 ## Utilization footer
+
+Session 2026-08-20 16:56–17:0xZ (tick; `democlean` riding, ~2.7
+GPU-h elapsed of ~13 projected vs the 17 gate): **babysit exit 0 —
+step 590/3000 at 16:57Z, 15.03 s/step (+70 steps since 16:36, 3.3
+steps/min wall), loss 0.589 → 0.560, vram 62.24/75, no gate
+crossings; both watch-items from last tick CLEARED: RAM available
+48G unchanged tick-over-tick (trainer RSS ~139G steady, /dev/shm 20G
+stable) → plateau, leak ruled out; pruner unit
+fontaine-democlean-ckpt-prune active, log start-line-only as
+expected (no save since step-500, first prune verifies after
+step-1000); disk 146G free; no new probe row (eval-750 ~17:3xZ);
+Discord quiet (read surfaced only own 16:40Z post, inbox empty,
+history all own posts, no reactions); queue validate green depth 2
+(14 open); run_work_next NOT armed — both queued items
+endpoint/verdict-gated; boundaries: step-1000 drift read ~18:4xZ
+(+ pruner-log verify + RAM re-read across the save), endpoint
+~03:2x–04:1xZ 08-21 (~10.1 h to 3000 at current pace).**
 
 Session 2026-08-20 16:35–16:4xZ (tick; `democlean` riding, ~2.4
 GPU-h elapsed of ~13.5 projected vs the 17 gate): **babysit exit 0 —
@@ -96,18 +119,6 @@ empty, history all own posts); queue validate green depth 2 (14
 open); run_work_next NOT armed — both queued items
 endpoint/verdict-gated; boundaries: step-1000 drift read ~18:4xZ,
 endpoint ~03:2x–04:1xZ 08-21.**
-
-Session 2026-08-20 15:53–16:0xZ (tick; `democlean` riding, ~1.7
-GPU-h elapsed of ~13 projected vs the 17 gate): **babysit exit 0 —
-step 350/3000 at 15:54Z, 14.94 s/step (+80 steps since 15:33, 3.8
-steps/min wall — sub-16 pace holding, no starvation), loss 0.725 →
-0.610, vram 62.24/75, RAM 90G avail, disk 185G free, no gate
-crossings; no new probe row (next ~16:3xZ at step 500); Discord
-fully quiet (read + inbox empty, history -n 5 all own posts, no
-reactions); queue validate green depth 2 (14 open); run_work_next
-NOT armed — both queued items endpoint/verdict-gated, no workable
-CPU item; projections hold: step-1000 drift read ~18:3xZ 08-20,
-endpoint ~02:5x–03:3xZ 08-21 (~11.0 h to step 3000).**
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
