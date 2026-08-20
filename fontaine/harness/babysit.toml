@@ -73,34 +73,55 @@
 # fired mechanically 11:59:20Z (entry below); registry rolled
 # parity->loop.
 
+# grpo_r2 entry PRUNED 14:0xZ 08-20 tick — run DIED 13:59:42Z: CUDA OOM
+# in the STEP-2 backward (torch.OutOfMemoryError: tried 1.47 GiB, 78.26
+# GiB in use / 77.23 PyTorch-allocated vs 79.18 capacity). Step-1 peak
+# was 72.09 vs the 75 gate; the step-2 update crossed the gate in-flight
+# — the OOM IS the vram-gate crossing, caught by the allocator instead
+# of a poll. save_every=5, died at step 2 => NO checkpoint, resume
+# impossible. Lane arithmetic: ~4.7 spent + ~1.9 burned (2 waves + 1
+# update) = ~6.6; a from-scratch retry ~14.9 => ~21.5 > the A4 <= 20
+# gate. Registered rule applied verbatim ("any further abort ends the
+# lane at the gate"): **R2 LANE CLOSED 14:0xZ, no step-10 read.** Banked
+# from the run: parity PASS (perfect), wave-0 mixed_groups_frac 0.50
+# vs <0.20 abort bar (knockaway re-base works), step-1 row healthy
+# (kl 0.0041, strikes 0). Post-mortem lead for any future R2 pre-reg:
+# grpo_loop.py lacks PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+# and episode-length variance moves backward memory ~6+ GiB step-to-
+# step at 72 GiB baseline — an R3 needs headroom or the alloc conf.
+# Artifacts: loop/ (meta, 1 train row, rows/), journal unit grpo-r2.
+# Freed window claimed by the delegated demos+clean cell (entry below).
+
+# LIVE — demos+clean poison-pinning cell FIT SMOKE (local H100; unit
+# fontaine-v2-joint-pdnorm-democlean-smoke, launched 14:02:01Z 08-20
+# tick, STEPS=20 SMOKE=1, save-dir /tmp). Pre-reg
+# posts/2026-08-20-prereg-demos-plus-clean.md; launcher
+# launch_local_grasp_sft_v2_joint_1gpu_pdnorm_democlean_h100.sh (has
+# expandable_segments + GPU-busy guard; GPU verified empty at launch).
+# On smoke green the chained work session launches the REAL unit
+# fontaine-v2-joint-pdnorm-democlean (3000 steps, gate 17 GPU-h) and
+# rolls this entry; RECORD the boot recompute-stats rows (mechanism
+# candidate (b): degenerate 3,399-frame clean pdnorm row).
 [[run]]
-name = "grpo_r2"
+name = "democlean_smoke"
 kind = "train-jsonl"
 host = "local"
-pgrep = "sim.grpo_loop"
+pgrep = "grasp_sft_v2_joint_1gpu_pdnorm_democlean"
 pgrep_min = 1
 gpu_indices = [0]
 gpu_mem_min_mib = 8000
-jsonl = "/home/ubuntu/flow-matching/outputs/sim/grpo_r2/loop/train.jsonl"
-total_steps = 10
-probe_key = "eval_successes"
-vram_key = "vram_gib"
-started_utc = "2026-08-20T11:59:20Z"
+jsonl = "/home/ubuntu/flow-matching/outputs/train/grasp_sft_v2_joint_1gpu_pdnorm_democlean_smoke/train_log.jsonl"
+total_steps = 20
+probe_key = "eval_chunk_mae"
+vram_key = "vram_alloc_peak_gib"
+started_utc = "2026-08-20T14:02:01Z"
 gpu_hours_per_wall_hour = 1.0
-boundary = "step 10 endpoint ~22:0xZ 08-20 (pace anchor ~0.98 GPU-h/step, budget ~14 expected / gate <=15 GPU-h A3.5): ./launch_grpo_r2.sh boundary outputs/sim/grpo_r2/loop/step_0010.pt — greedy sim100 vs 7 (PRIMARY, paired exact) + sampled T=1.0 sim100 vs preflight floor (record-only) + flow unseen100 euler-10 vs 44 (F-regression leg), chained verdict; refuses while grpo-r2 is alive"
+boundary = "20-step fit smoke (~minutes incl. dataset stats recompute); on rc 0 + sane vram the work session launches the real 3000-step unit and REGISTERS it here (anchor curve = convicted pdnorm-mixed 12.85/8.04/6.73... vs onerig; boot stats rows recorded either way)"
 anchors = [
-    "token greedy 7/100 (A3.1 frozen anchor; success seeds 34,35,63,68,71,91,96)",
-    "flow sibling 44/100 same trunk (A3.4 regression leg at boundary — option B moves the flow read too)",
-    "preflight sampled T=1.0 count = recorded training-decode floor (verdict json in outputs/sim/grpo_r2/preflight/)",
-    "wave-0 mixed_groups_frac: predicted ~0.44 at p=0.07; IN-LOOP abort <0.20 (A3.3 --wave0-mixed-abort; check the first train.jsonl row at first poll)",
-    "wave-0 knockaway_frac = violence-wire baseline (--knockaway-baseline wave0 self-capture; greedy read measured 25/100 — the R0-era 10/120 pin is retired for this run)",
-    "kl_stop 0.06 in-loop (single reading, no streak); anchor_k3_pre ~e-07-scale early per R1-B",
-    "train-seed-base 2000 (stage-B 1000-1099 collision re-pin) — train rows must never show seeds < 2000",
-    "lane budget: spent ~4.7 (incl. parity 0.66) + this run ~14.9 ~= 19.6 vs the A4 gate <= 20 — zero slack, any further abort ends the lane at the gate",
+    "smoke green = process exits 0, no OOM, vram peak sane vs the 71-ish SFT class (onerig peaked 62.21)",
+    "same recipe as convicted cell minus so101_pick_place_v2; repeat-4 on clean, seed 0, eff-96 = micro-12 x 8",
+    "real-run gate on launch: 17 GPU-h, 3000 steps (pre-reg 08-20 12:20Z)",
 ]
-[[run.gates]]
-kind = "gpu_hours_max"
-value = 15.0
 [[run.gates]]
 kind = "vram_max_gib"
 value = 75.0

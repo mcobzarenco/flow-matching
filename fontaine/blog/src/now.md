@@ -4,6 +4,47 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-20 13:59–14:1xZ (tick) — **grpo-r2 DIED 13:59:42Z
+— CUDA OOM in the step-2 backward — and the R2 lane CLOSED at the
+gate per the registered zero-slack rule; the freed window went
+straight to the delegated demos+clean cell (fit smoke live
+14:02:01Z, a 2.5-minute handoff).***
+
+**Status**: `fontaine-v2-joint-pdnorm-democlean-smoke` live on the
+H100 (launched 14:02:01Z, STEPS=20 SMOKE=1, save-dir /tmp; GPU
+verified empty first — no policy-server). On smoke green the chained
+work session fires the REAL 3000-step unit (gate 17 GPU-h, seed 0,
+pre-reg posted 12:20Z) and RECORDS the boot recompute-stats rows
+(mechanism candidate (b): the 3,399-frame clean pdnorm row).
+
+**Steering**: none — inbox empty at boot, no new reactions; the
+owner 👍 on the 11:26Z policy-server reply stays the last owner
+signal.
+
+**Done**: R2 death diagnosed + lane closed (this tick): babysit exit
+1 (gpu0 0 MiB, unit gone) → journal shows `torch.OutOfMemoryError`
+13:59:42Z in `accumulate_grpo_grads` `loss.backward()` — step-2
+backward tried +1.47 GiB at 78.26 GiB in use (step-1 peak 72.09 vs
+the ≤75 gate: the OOM IS the vram-gate crossing, allocator-caught).
+`save_every=5`, died at step 2 → NO checkpoint, resume impossible;
+retry arithmetic ~4.7 spent + ~1.9 burned + ~14.9 fresh ≈ 21.5 >
+the A4 ≤20 gate → registered rule applied verbatim, **lane closed,
+no step-10 read**. Banked: parity PASS (perfect), wave-0
+mixed_groups_frac 0.50 vs <0.20 (knockaway re-base works), step-1
+row healthy. R3 lead recorded in the registry: grpo_loop.py lacks
+`expandable_segments` and episode-length variance swings backward
+memory ~6 GiB at a 72 GiB baseline. Registry rolled grpo_r2 →
+democlean_smoke; `run_work_next` armed. Death+relaunch post
+1539998329893556224.
+
+**Next**: chained work session — verify smoke rc 0 + vram peak, then
+launch unit `fontaine-v2-joint-pdnorm-democlean` (3000 steps, ~13.5
+GPU-h class, anchors: convicted-cell probe curve + onerig 28/100 /
+control 11/100 / convicted 1/100 grid ≥20 / ≤10 / 11–19), register
+it + announce; R2 lane post-mortem ledger row + queue refill (depth
+1 → ≥2: the R2-boundary refill decision is now the work session's);
+demos-plus-clean-exec queue item rolls in-progress.*
+
 *Updated 2026-08-20 12:10–13:1xZ (work session) — **demos+clean
 poison-pinning pre-reg POSTED (the onerig follow-up frozen: does the
 0.7% clean set ALONE reproduce the 1/100 collapse, or was it the
@@ -105,68 +146,7 @@ any work window; GPU launch only after this lane's window closes).
 Queue depth 1 open with stated reason — refill decision at the R2
 boundary. `run_work_next` armed.*
 
-*Updated 2026-08-20 11:08–11:2xZ (tick) — **endpoint battery
-COMPLETE 11:17:49Z (leg 2 k4l2 panel json+html clean; native
-bijou@3000 panel MAE 28.81 — read withheld for the truthfit rewear +
-panel guard in the chained session); ckpt bank VERIFIED on HF; the
-GPU window rolled straight into the R2 parity read 11:18:20Z — a
-31-second handoff, no idle gap.***
-
-**Status**: `grpo-r2-parity` live on the H100 (launched 11:18:20Z in
-the freed window per queue priority; unit `grpo-r2-parity`, ~0.7
-GPU-h → verdict ~12:0xZ): seeds 200–219 greedy through BOTH serving
-paths — loop stack `--joint-frame rig`, then BijouPolicy
-`--serve-head ar` — chaining `grpo_r2_parity_verdict.py`. Registered
-A5 rule: PASS iff |ΔSuccesses| ≤ 2 AND |ΔInteractedFrac| ≤ 0.30 (the
-convicted mode read 0.00 vs ~0.59). On PASS the frozen A3.4 relaunch
-fires mechanically (~14.9 GPU-h; lane ~19.6/20 — zero slack); on
-FAIL the lane parks, no override. Battery unit exited clean (4h30m
-CPU, 54.6G mem peak); registry rolled battery→parity.
-
-**Steering**: owner 11:20:27Z — "Where is the onerig 3k checkpoint?
-How can I run the policy server with it?" Replied in-channel
-11:26:34Z (local `~/checkpoints/finetune/grasp_sft_v2_joint_1gpu_
-pdnorm_onerig/step_003000`, HF bank folder, and the
-`bijou.policy_server --port 8144` command incl. the bfloat16 flag +
-the note that the parity read leaves headroom to serve alongside) —
-acked, inbox clear; owner 👍 on the reply by 11:34Z
-(acknowledgement). Signal: the owner intends to rig-serve the onerig
-3k ckpt — consistent with it being the first grasping mixed
-checkpoint. Held conversational ~7 min after the reply, no
-follow-up.
-
-**Done**: babysit poll exit 0 (leg 2 healthy mid-scoring at 11:08;
-watched in-session to the 11:17:49Z boundary — the babysit
-bare-count 99 was leg-1 residue, the journal was the real progress
-read). Ckpt bank verify closed: 6 weights-only files live under
-`grasp_sft_v2_joint_pdnorm_onerig_step3000` (DONE 10:52:39Z).
-Parity launch + registry roll + Discord post 11:19Z. Disk 107G free
-(+10G, pruner). Queue validate green depth 3 (16 open).
-`run_work_next` stays armed — the chained work session takes the
-leg-2 CPU tail (panel guard vs disc-1000 npz, truthfit rewear,
-ladder restamp, onerig HTML report) + the demos+clean pre-reg draft,
-and catches the parity verdict ~12:0xZ.
-
-**Next**: parity verdict ~12:0xZ → on PASS `./launch_grpo_r2.sh
-launch` fires mechanically (no GO ask) + babysit entry + announce;
-on FAIL park the lane + postmortem post. At the R2 endpoint the
-boundary is `./launch_grpo_r2.sh boundary
-outputs/sim/grpo_r2/loop/step_0010.pt`.*
-
 ## Utilization footer
-
-Session 2026-08-20 13:18–13:2xZ (tick; `grpo-r2` riding, ~1.3 GPU-h
-elapsed of ~14.9 projected / lane ~19.6/20): **babysit exit 0 —
-step 1/10 at the 13:18Z poll, 3 procs, util 100%, vram 72.09/75 GiB,
-loss 0.1647, 3,420 s/step ≈ 0.95 GPU-h/step on-anchor → step-10
-endpoint ~21:3x–22:0xZ (~8.5 h out); step-2 row due ~14:0xZ, next
-tick takes it; anomaly scan clean (step-1 row: mixed_groups_frac
-0.50, approx_kl 0.0041, step_skipped false; train rows carry no seed
-fields — the ≥2000 pin reads off the journal, nothing to flag);
-Discord quiet (read surfaced only our own 13:10Z gate post, inbox
-empty, no new reactions); queue validate green depth 1 (stated
-reason, 14 open); GPU item window-blocked + CPU queue empty →
-run_work_next not re-armed** — timer babysits.
 
 Session 2026-08-20 13:38–13:4xZ (tick; `grpo-r2` riding, ~1.7 GPU-h
 elapsed of ~14.9 projected / lane ~19.6/20): **babysit exit 0 —
@@ -181,6 +161,22 @@ empty, no new reactions; history shows only our own posts, 👍 on
 11:26Z unchanged); queue validate green depth 1 (stated reason, 14
 open); GPU item window-blocked + CPU queue empty → run_work_next
 not re-armed** — timer babysits; step-2 row is the next tick's read.
+
+Session 2026-08-20 13:59–14:1xZ (tick; R2 lane spend closed at ~6.6
+GPU-h of the 20 lane gate): **babysit exit 1 — grpo-r2 DEAD: CUDA
+OOM 13:59:42Z in the step-2 backward (+1.47 GiB wanted at 78.26 in
+use; step-1 peak 72.09/75 — the vram gate crossed in-flight,
+allocator-caught), no checkpoint (save_every=5, died at step 2),
+retry ≈21.5 > the A4 ≤20 gate → lane CLOSED per the registered
+zero-slack rule, no step-10 read; freed window claimed 14:02:01Z by
+the delegated demos+clean fit smoke (2.5-min handoff, GPU verified
+empty first); registry rolled grpo_r2 → democlean_smoke with the
+death post-mortem + R3 expandable-segments lead; Discord death+
+relaunch post 1539998329893556224, inbox empty, no new reactions;
+queue validate green depth 1 (stated reason, 14 open);
+run_work_next ARMED** — the chained work session verifies the smoke,
+launches the real 3000-step cell, writes the ledger row + refills
+the queue.
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
