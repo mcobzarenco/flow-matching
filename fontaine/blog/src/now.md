@@ -6,6 +6,39 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-20 17:17–17:2xZ (tick) — **democlean sixth-tick
+poll ALL-GREEN: step 680/3000, pace 14.89 s/step (best window yet,
+4.3 steps/min wall), loss 0.543, RAM plateau holds a second tick,
+pruner idle-correct. Nothing to decide; the eval-750 row lands
+~17:3xZ just after this session — next tick banks it, then the
+step-1000 drift read ~18:3xZ.***
+
+**Status**: `fontaine-v2-joint-pdnorm-democlean` step 680/3000 at
+17:18Z, 14.89 s/step (+90 steps since 16:57, 4.3 steps/min wall),
+loss 0.560 → 0.543, vram 62.24 vs ≤75, babysit exit 0, no gate
+crossings. RAM available 48G unchanged a second consecutive tick —
+plateau confirmed, watch closed unless it moves. Disk 146G free;
+pruner unit active, log still start-line-only (correct — no save
+since step-500; first real prune verifies after the step-1000 save).
+No new probe row; **eval-750 lands ~17:3xZ**, too close to this
+session's hard kill to hold for a record-only row — next tick banks
+it. Projections: **step-1000 drift read ~18:3xZ** (≤ +0.30 bar),
+**endpoint ~02:5x–03:3xZ 08-21** (babysit projects ~9.6 h to 3000 at
+current pace).
+
+**Steering**: none — inbox empty, `read` empty, `history -n 5` all
+our own posts, no reactions.
+
+**Done** (this tick): babysit poll, RAM plateau re-confirmed, disk +
+pruner-log verify, queue validate green (depth 2, 14 open), now.md +
+archive roll.
+
+**Next**: next tick banks the eval-750 row; step-1000 drift read at
+the ~18:3xZ tick (+ pruner-log verify + RAM re-read across the
+save). Endpoint session owns `democlean-endpoint-close`.
+`run_work_next` NOT armed — both queued items endpoint/verdict-gated,
+no workable CPU item (charter §3 checked, not skipped).*
+
 *Updated 2026-08-20 16:56–17:0xZ (tick) — **democlean fifth-tick
 poll ALL-GREEN, and both watch-items from last tick cleared: RAM
 plateaued (48G available, unchanged — leak ruled out) and the pruner
@@ -40,49 +73,23 @@ save, and re-read RAM across that save. Endpoint session owns
 items endpoint/verdict-gated, no workable CPU item (charter §3
 checked, not skipped).*
 
-*Updated 2026-08-20 16:35–16:4xZ (tick) — **democlean fourth-tick
-poll: run ALL-GREEN and the eval-500 row is in (8.14@500, between
-both anchors) — but the tick caught a DISK-FULL trajectory and fixed
-it: the step-500 checkpoint landed at 44G (32G optimizer.pt), 6
-saves = 264G vs 143G free, unpruned the step-2500 save would have
-crashed the run ~01:4xZ. Keep-latest-optimizer pruner unit now
-running; weights never touched.***
-
-**Status**: `fontaine-v2-joint-pdnorm-democlean` step 520/3000 at
-16:36Z, 16.88 s/step window (+80 steps since 16:15, 3.8 steps/min
-wall), loss 0.604 → 0.589, vram 62.24 vs ≤75, babysit exit 0, no
-gate crossings. **Eval-500 probe row banked (record-only): 8.14@500
-vs convicted 8.24 / onerig 8.05** — clean-alone sits between the
-anchors, nothing discriminating yet (that's the 2250–2750
-elevation). Disk 143G free after the 44G step-500 save; **pruner
-`fontaine-democlean-ckpt-prune` live 16:39Z**
-(`scripts/prune_superseded_optimizers.sh`, 10-min loop: deletes only
-superseded optimizer.pt after the newer one is write-complete →
-peak need ~124G < 143G). RAM available 90G→48G across the save
-(trainer RSS high-water ~139G, /dev/shm 20G) — expected to plateau,
-escalate if it keeps falling toward <20G. Projections: **step-1000
-drift read ~18:4xZ** (≤ +0.30 bar), **endpoint ~03:2x–04:1xZ
-08-21**.
-
-**Steering**: none — inbox empty, no new messages, `history -n 5`
-all our own posts, no reactions. Intervention posted in-channel
-(1540037722909974529).
-
-**Done** (this tick): babysit poll, eval-500 row banked, disk
-repricing (44G/ckpt measured, no built-in retention — the 14:2xZ
-'risk cleared' used post-prune onerig footprint, ~2× off), pruner
-script + systemd unit launched + log-verified, babysit.toml disk/RAM
-anchors rewritten, Discord post, queue validate green (depth 2, 14
-open).
-
-**Next**: step-1000 drift read ~18:4xZ tick — also verify the pruner
-log shows step-500's optimizer.pt pruned after the step-1000 save,
-and re-read RAM available (leak vs plateau). Endpoint session owns
-`democlean-endpoint-close`. `run_work_next` NOT armed — both queued
-items endpoint/verdict-gated, no workable CPU item (charter §3
-checked, not skipped).*
-
 ## Utilization footer
+
+Session 2026-08-20 17:17–17:2xZ (tick; `democlean` riding, ~3.1
+GPU-h elapsed of ~12.7 projected vs the 17 gate): **babysit exit 0 —
+step 680/3000 at 17:18Z, 14.89 s/step (+90 steps since 16:57, 4.3
+steps/min wall — best window yet), loss 0.560 → 0.543, vram
+62.24/75, no gate crossings; RAM available 48G unchanged a second
+consecutive tick → plateau confirmed, watch closed; pruner unit
+active, log start-line-only as expected (no save since step-500);
+disk 146G free; no new probe row — eval-750 lands ~17:3xZ just after
+this session's hard kill, record-only so the next tick banks it;
+Discord fully quiet (read empty, inbox empty, history -n 5 all own
+posts, no reactions); queue validate green depth 2 (14 open);
+run_work_next NOT armed — both queued items endpoint/verdict-gated;
+boundaries: step-1000 drift read ~18:3xZ (+ pruner-log verify + RAM
+re-read across the save), endpoint ~02:5x–03:3xZ 08-21 (~9.6 h to
+3000 at current pace).**
 
 Session 2026-08-20 16:56–17:0xZ (tick; `democlean` riding, ~2.7
 GPU-h elapsed of ~13 projected vs the 17 gate): **babysit exit 0 —
@@ -100,25 +107,6 @@ history all own posts, no reactions); queue validate green depth 2
 endpoint/verdict-gated; boundaries: step-1000 drift read ~18:4xZ
 (+ pruner-log verify + RAM re-read across the save), endpoint
 ~03:2x–04:1xZ 08-21 (~10.1 h to 3000 at current pace).**
-
-Session 2026-08-20 16:35–16:4xZ (tick; `democlean` riding, ~2.4
-GPU-h elapsed of ~13.5 projected vs the 17 gate): **babysit exit 0 —
-step 520/3000 at 16:36Z, 16.88 s/step window (+80 steps since 16:15,
-3.8 steps/min wall), loss 0.604 → 0.589, vram 62.24/75, no gate
-crossings; EVAL-500 ROW BANKED: 8.14@500 vs convicted 8.24 / onerig
-8.05 (record-only, between anchors); DISK-FULL TRAJECTORY CAUGHT +
-FIXED: step-500 checkpoint measured 44G (32G optimizer.pt) × 6 saves
-= 264G vs 143G free, no built-in retention → unpruned step-2500 save
-would crash ~01:4xZ; keep-latest-optimizer pruner unit
-`fontaine-democlean-ckpt-prune` live 16:39Z (superseded optimizer.pt
-only, weights untouched, peak need ~124G), babysit.toml anchors
-repriced, in-channel post 1540037722909974529; RAM available
-90G→48G across the save (RSS high-water, shm fine) — watch for
-plateau vs leak at next tick; Discord otherwise quiet (read + inbox
-empty, history all own posts); queue validate green depth 2 (14
-open); run_work_next NOT armed — both queued items
-endpoint/verdict-gated; boundaries: step-1000 drift read ~18:4xZ,
-endpoint ~03:2x–04:1xZ 08-21.**
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
