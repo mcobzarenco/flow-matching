@@ -1102,6 +1102,45 @@ the prime suspect** at the flow head. Battery closed 04:0xZ 08-19,
   disk only; no rescue sim100 (couldn't flip the frozen verdict, gate
   headroom short) and no bank (not load-bearing per policy)
 
+## Grasp-SFT demos+one-rig `grasp_sft_v2_joint_1gpu_pdnorm_onerig` @3000 ([pre-reg](posts/2026-08-19-prereg-demos-plus-one-rig.md), verdict 08-20)
+
+The two-dataset mix cell — demos + `so101_pick_place_v2` ×4, the
+0.65% clean set dropped, ~6% rig share, same recipe/seed/platform as
+the convicted cell. Frozen-grid verdict **MIX-EXONERATED**: **28/100**
+unseen grasps ≥ 20 ⇒ sim/real interference is NOT generic to mixing
+at this dose — and the mix beats its own demos-only control. Battery
+closed 11:17:49Z 08-20, ~17.0 of the 17 GPU-h cell gate. Checkpoint
+banked to
+[fontaine-checkpoints](https://huggingface.co/mcobzarenco/fontaine-checkpoints)
+(`grasp_sft_v2_joint_pdnorm_onerig_step3000`, weights-only — the
+first grasping mixed checkpoint).
+
+- [endpoint flow-head unseen-100 report](https://mcobzarenco-fontaine-reports.static.hf.space/eval__grasp_sft_v2_joint_1gpu_pdnorm_onerig__step_003000__flow_unseen100.html)
+  — 28/100 vs anchors base 9 / control 11 / convicted mix 1 / probe
+  44; paired-read + ladder + estimator-seam sections embedded
+  (`onerigendpoint` preset, 4-clip success gallery)
+- [paired per-seed read vs disc-1000 control](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim100_paired_onerig3000_vs_disc1000.json)
+  — Δ **+17** successes CI95 [8, 26], discordant 21-vs-4 (McNemar
+  exact p = 0.0009): at ~6% rig share with clean out, rig data HELPS
+  grasping
+- [paired per-seed read vs the convicted mixed cell](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim100_paired_onerig3000_vs_pdnorm3000.json)
+  — Δ **+27** CI95 [19, 36] (p = 1.5e-8, discordant 27-vs-0), paired
+  progress **+3.22 cm** CI-excl-0: the one-recipe delta (dropping
+  13.6k clean frames) turned 1/100 into 28/100
+- [k4l2 panel report](https://mcobzarenco-fontaine-reports.static.hf.space/eval__grasp_sft_v2_joint_1gpu_pdnorm_onerig__step_003000__panel_v2_k4l2_euler10_draws1_stable.html)
+  ([json](https://mcobzarenco-fontaine-reports.static.hf.space/eval__grasp_sft_v2_joint_1gpu_pdnorm_onerig__step_003000__panel_v2_k4l2_euler10_draws1_stable.json))
+  — endpoint row 28.81 (native wear)
+- [registered panel guard](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__onerig_panel_guard_vs_disc1000.json)
+  — **PASS** (28.81 vs 58.14, Δ −29.34 CI-excl-0); mechanism
+  receipts per-motor: wrist_roll **−46.9** (71.2 → 24.2), wrist_flex
+  −5.0 (`pdnorm_panel_guard.py`, planted-delta oracle re-run green)
+- [estimator-seam cross-check](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__onerig_endpoint_truthfit_wear.json)
+  — native 28.81 → truth-fit **27.26** (seam +1.55); like-for-like
+  ladder 27.26 ≈ convicted 27.44 ≈ disc-1000 27.40 ≈ released 27.14,
+  all at/above the 25.15 midpoint null — the panel MAE does NOT
+  separate the 28/100 grasper from the 1/100 convict; grasping lives
+  in sim100, not this panel
+
 ## Cross-family analyses
 
 - [flow-vs-AR paired per-step read](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__flow_vs_ar_paired_k4l2.json)

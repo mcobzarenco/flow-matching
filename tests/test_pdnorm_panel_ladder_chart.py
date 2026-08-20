@@ -48,6 +48,13 @@ def test_endpoint_slot_pending_then_stamped() -> None:
     assert "FILL" not in stamped[0][3]
 
 
+def test_endpoint_label_override_touches_only_the_slot() -> None:
+    rungs = build_rungs(28.81, label="onerig endpoint step3000")
+    assert rungs[0][0] == "onerig endpoint step3000"
+    assert rungs[0][1] == 28.81
+    assert rungs[1:] == build_rungs(28.81)[1:]  # ladder itself frozen
+
+
 @pytest.mark.parametrize("endpoint", [None, 23.5])
 def test_main_writes_png_and_matching_b64(
     tmp_path: Path,

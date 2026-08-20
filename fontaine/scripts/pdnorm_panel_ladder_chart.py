@@ -69,22 +69,30 @@ LADDER: list[tuple[str, float, str, str]] = [
 
 ENDPOINT_LABEL = "pdnorm endpoint step3000"
 PENDING_NOTE = "FILL-AT-ENDPOINT — stamped on GO"
+TITLE = "pdnorm endpoint — panel anchor ladder, wear-corrected class"
 
 
 def build_rungs(
     endpoint: float | None,
+    label: str = ENDPOINT_LABEL,
 ) -> list[tuple[str, float | None, str, str]]:
     """The render rows: the endpoint slot (pending or stamped) + LADDER."""
     slot: tuple[str, float | None, str, str] = (
-        (ENDPOINT_LABEL, None, META, PENDING_NOTE)
+        (label, None, META, PENDING_NOTE)
         if endpoint is None
-        else (ENDPOINT_LABEL, endpoint, MAGENTA, "this run — read vs the class above")
+        else (label, endpoint, MAGENTA, "this run — read vs the class above")
     )
     return [slot, *LADDER]
 
 
-def render(endpoint: float | None, out_png: Path, out_b64: Path) -> None:
-    rungs = build_rungs(endpoint)
+def render(
+    endpoint: float | None,
+    out_png: Path,
+    out_b64: Path,
+    label: str = ENDPOINT_LABEL,
+    title: str = TITLE,
+) -> None:
+    rungs = build_rungs(endpoint, label)
     xmax = 64.0
     fig, ax = plt.subplots(figsize=(9.6, 4.6), dpi=140)
     fig.patch.set_facecolor(PAGE)
@@ -156,12 +164,7 @@ def render(endpoint: float | None, out_png: Path, out_b64: Path) -> None:
         spine.set_color(GRID)
     ax.grid(axis="x", color=GRID, linewidth=0.5, alpha=0.5, zorder=1)
     ax.set_axisbelow(True)
-    ax.set_title(
-        "pdnorm endpoint — panel anchor ladder, wear-corrected class",
-        color=HEADING,
-        fontsize=11,
-        pad=10,
-    )
+    ax.set_title(title, color=HEADING, fontsize=11, pad=10)
     fig.text(
         0.99,
         0.01,
@@ -184,8 +187,10 @@ def main() -> int:
     parser.add_argument("--endpoint", type=float, default=None)
     parser.add_argument("--out-png", type=Path, default=OUT_PNG)
     parser.add_argument("--out-b64", type=Path, default=OUT_B64)
+    parser.add_argument("--label", default=ENDPOINT_LABEL)
+    parser.add_argument("--title", default=TITLE)
     args = parser.parse_args()
-    render(args.endpoint, args.out_png, args.out_b64)
+    render(args.endpoint, args.out_png, args.out_b64, args.label, args.title)
     print(f"wrote {args.out_png} + {args.out_b64}")
     return 0
 
