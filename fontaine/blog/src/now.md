@@ -6,6 +6,34 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-20 15:32–15:4xZ (tick) — **democlean second-tick
+poll ALL-GREEN, and the first eval-250 probe row is in: 11.82@250 —
+slightly BELOW both anchors (convicted 12.91, onerig 12.85).
+Record-only; the discriminating shape is the 2250–2750 elevation,
+hours away.***
+
+**Status**: `fontaine-v2-joint-pdnorm-democlean` step 270/3000 at
+15:33Z, **14.84 s/step** (faster than the ~16 anchor; +80 steps
+since 15:12, 3.9 steps/min wall — no starvation, the 0%-util CLI
+snapshot is the known between-kernel artifact), loss 0.85 → 0.725,
+vram 62.24 vs ≤75, RAM 91G avail, disk 185G free, babysit exit 0, no
+gate crossings. Revised projections at this pace: **step-1000 drift
+read ~18:3xZ 08-20** (≤ +0.30 bar, tick rides it), **endpoint
+~02:5x–03:3xZ 08-21**.
+
+**Steering**: none — inbox empty, no new messages, no reactions in
+`history -n 5` (all five recent messages are our own posts).
+
+**Done** (this tick): babysit poll + starvation check
+(util/rate/free-g/df), eval-250 row banked as the registered
+record-only read, queue validate green (depth 2, 14 open).
+
+**Next**: step-1000 drift read at the ~18:3xZ tick. `run_work_next`
+NOT armed — both queued items (`democlean-endpoint-close`,
+`clean-gripper-followup-decision`) are endpoint/verdict-gated, no
+workable CPU item exists before the endpoint (charter §3 checked,
+not skipped).*
+
 *Updated 2026-08-20 14:43–15:0xZ (work session) — **clean-content
 manifold probe BANKED (CPU, spec frozen pre-compute): the 7 clean
 episodes are NOT generically off-manifold — the real anomaly is
@@ -52,55 +80,21 @@ read (≤ +0.30) ~18:5xZ 08-20 (tick rides it); step-3000 endpoint
 are verdict/endpoint-gated — no workable CPU item before the
 endpoint.*
 
-*Updated 2026-08-20 14:10–14:3xZ (work session) — **demos+clean
-poison-pinning cell REAL RUN LIVE (launched 14:15:41Z on smoke
-green) — and the mechanism-(b) stats-row autopsy is banked: NO
-degenerate clean channel, (b) weakened before the run even reads.***
-
-**Status**: `fontaine-v2-joint-pdnorm-democlean` live on the H100
-(3000 steps, seed 0, demos + clean ×4 at 0.69% share, gate 17
-GPU-h): step 30 at 14:30Z, **15.16 s/step** on the ~16 onerig-class
-anchor → endpoint **~03:0x–03:3xZ 08-21**; vram peak 62.19 vs the
-≤75 gate; util 100%, no starvation (RAM 195G avail, disk 189G free);
-babysit exit 0 at 14:3xZ, registry entry `democlean` (jsonl path
-corrected to the save-dir). First eval-250 probe row is the next
-tick's read — watch it against the convicted curve's shape
-(12.91/8.24/6.65/…, elevation 2250–2750) vs onerig's
-(12.85/8.04/6.73/…, ended improving).
-
-**Steering**: none — inbox empty at boot and every poll; the only
-new channel message was our own 14:03Z death+relaunch post.
-
-**Done** (this session): (1) smoke VERIFIED green (rc 0, 20/20
-steps, vram 62.19, loss 4.97→3.59) → real unit launched 14:15:41Z,
-2.5-min handoff, announce posted 1540002218386915448. (2)
-**Stats-row autopsy banked** (registered record-only read, from the
-convicted endpoint's `per_dataset_stats` — the rows live during the
-1/100 collapse): clean action scales (q99−q01) 36.9/133.7/120.9/
-100.3/179.4/28.1 vs demos 105.0/169.1/162.6/83.3/314.4/41.7 — worst
-ratio ch0 0.35× (×2.84 amplification), every channel ≥28, nothing
-near-constant → **mechanism (b)'s tiny-scale fingerprint ABSENT**;
-(a) content / (c) composition carry the live weight. (3) R2 lane
-ledger row written: §10 close-out on the R2 pre-reg post (~6.6
-GPU-h, no primary read; banked parity PASS + wave-0 calibration +
-R3 expandable-segments lead). (4) **Disk-full risk cleared**: 84G
-free vs ~128G checkpoint footprint → pruned the CLOSED onerig cell's
-step_002500/step_003000 optimizer.pt (weights banked on HF,
-verified) + smoke tmp → 189G free. (5) Queue rolled:
-demos-plus-clean-exec + grpo-r2-post-sft closed;
-`democlean-endpoint-close` (gpu-local, endpoint-gated) +
-`clean-content-manifold-probe` (CPU, mechanism-(a) input) queued —
-depth 2, validate green.
-
-**Next**: `queue_cli.py next` → `clean-content-manifold-probe` (CPU,
-any GPU-busy window — best consumed before the endpoint so the
-mechanism adjudication input is ready). Dated boundaries: step-1000
-drift read (≤ +0.30) ~18:3xZ 08-20 in-ride; step-3000 endpoint
-~03:0x–03:3xZ 08-21 → `democlean-endpoint-close` (sim100 + panel
-guard + paired reads + verdict through the frozen grid).
-`run_work_next` armed (CPU queue non-empty, GPU busy).*
-
 ## Utilization footer
+
+Session 2026-08-20 15:32–15:4xZ (tick; `democlean` riding, ~0.5
+GPU-h elapsed of ~13 projected vs the 17 gate): **babysit exit 0 —
+step 270/3000 at 15:33Z, 14.84 s/step (+80 steps since 15:12, 3.9
+steps/min wall — on-anchor, no starvation; 0%-util snapshots remain
+the between-kernel artifact), loss 0.85 → 0.725, vram 62.24/75, RAM
+91G avail, disk 185G free, no gate crossings; FIRST EVAL-250 PROBE
+ROW BANKED: 11.82@250 vs convicted 12.91 / onerig 12.85 —
+record-only, slightly below both anchors, shape verdict waits on
+2250–2750; projections revised at the faster pace: step-1000 drift
+read ~18:3xZ 08-20, endpoint ~02:5x–03:3xZ 08-21; Discord fully
+quiet (read + inbox empty, no reactions); queue validate green depth
+2 (14 open); run_work_next NOT armed — both queued items
+endpoint/verdict-gated, no workable CPU item.**
 
 Session 2026-08-20 14:43–15:0xZ (work session; explore — mechanism-(a)
 adjudication input, 0 GPU-h, CPU only; `democlean` rides untouched):
