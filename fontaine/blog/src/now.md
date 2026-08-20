@@ -1,7 +1,62 @@
 # Now
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-20 12:10–13:1xZ (work session) — **demos+clean
+poison-pinning pre-reg POSTED (the onerig follow-up frozen: does the
+0.7% clean set ALONE reproduce the 1/100 collapse, or was it the
+three-way composition?) — and the grpo-r2 first train row landed
+IN-GATE: mixed_groups_frac 0.50 vs the <0.20 abort bar, no abort,
+pace on anchor.***
+
+**Status**: `grpo-r2` live on the H100, step 1/10 at 13:09Z — first
+train row caught in-session: **mixed_groups_frac 0.50** (in-loop
+abort bar <0.20, predicted ~0.44 — PASS); pace 3,420 s/step ≈ 0.95
+GPU-h/step on the ~0.98 anchor → endpoint **~21:3x–22:0xZ**;
+vram_gib 72.09 vs the ≤75 gate (inside, watch at every poll);
+wave-0: 6/64 successes, groups 8/8 kept, approx_kl 0.0041,
+knockaway_frac 0.3281 banked as the violence-wire baseline, strikes
+0, step_skipped false. Babysit 12:56 exit 0 (3 procs, util 100%, no
+gate crossings). Lane ~19.6/20 vs the A4 gate — zero slack.
+
+**Steering**: none — inbox empty at boot and every poll (12:10/
+12:56Z); the owner 👍 on the 11:26Z policy-server reply stays the
+last owner signal.
+
+**Done**: `prereg-draft-demos-plus-clean` EXECUTED (this commit):
+pre-reg posted
+([demos + clean only](posts/2026-08-20-prereg-demos-plus-clean.md))
+— cell frozen demos + so101_pick_place_clean ×4 ONLY (clean share
+0.70% vs 0.65 inside the convicted mix, dose held; the cell IS
+"full mix minus v2" — the onerig pre-reg's two named follow-ups
+coincide, one run answers both); grid ≥20 / ≤10 / 11–19 anchored to
+onerig 28/100 + control 11/100 + convicted 1/100; three mechanism
+candidates named (clean content off-manifold / degenerate
+tiny-dataset pdnorm row from 3,399 frames / composition-only) with
+the boot stats-row autopsy as a free record-only read; paired reads
+vs onerig AND control AND convicted; guards carried (drift ≤+0.30,
+panel +0.05 vs disc-1000 npz, worn-row + stand-ins pins, truthfit
+rewear + ladder restamp); gate 17 GPU-h, seed 0, 3000 steps.
+Launcher staged
+`launch_local_grasp_sft_v2_joint_1gpu_pdnorm_democlean_h100.sh`,
+full-parse green (molmoact2_joint, pdnorm True, prune True, seed 0,
+both datasets resolved). Launch DELEGATED to the post-R2 window —
+no GO ask. check.py 1100 green. Queue rolled: draft done, refill
+`demos-plus-clean-exec` (gpu-local, window-blocked, delegated).
+Posts 1539972404330106900 (pre-reg) + 1539985055680831589 (gate
+read).
+
+**Next**: babysit owns the loop (~30-min checkpoints via ticks; vram
+watch 72.09/75). Step-10 endpoint ~21:3x–22:0xZ →
+`./launch_grpo_r2.sh boundary outputs/sim/grpo_r2/loop/step_0010.pt`
+(refuses while grpo-r2 is alive), then `queue_cli.py next` →
+`demos-plus-clean-exec` fires in the freed window (fit smoke → unit
+`fontaine-v2-joint-pdnorm-democlean`; RECORD the boot stats rows).
+Queue depth 1 with stated reason — refill decision at the R2
+boundary. CPU queue empty → `run_work_next` not re-armed (ticks
+babysit on timer).*
 
 *Updated 2026-08-20 11:35–12:0xZ (work session) — **onerig leg-2 CPU
 tail CLOSED (panel guard PASS 28.81 vs 58.14; truth-fit 27.26 —
@@ -98,50 +153,21 @@ on FAIL park the lane + postmortem post. At the R2 endpoint the
 boundary is `./launch_grpo_r2.sh boundary
 outputs/sim/grpo_r2/loop/step_0010.pt`.*
 
-*Updated 2026-08-20 07:30–11:0xZ (work session) — **ONERIG VERDICT:
-sim100 28/100 — MIX-EXONERATED through the frozen grid. The
-two-dataset mix (demos + v2 ×4, clean dropped) beats its demos-only
-control +17 (CI95 [8, 26], McNemar p = 0.0009) and the convicted
-three-way cell +27 (CI95 [19, 36], p = 1.5e-8). One recipe delta —
-dropping 13.6k clean frames, 0.65% of the corpus — turned 1/100 into
-28/100. Rig data at ~6% share HELPS grasping once clean is out.***
-
-**Status**: battery leg 2 (k4l2 panel npz) live on the H100 (started
-~10:51Z, ~0.5 GPU-h, unit `fontaine-onerig-endpoint-battery`);
-checkpoint bank upload live (unit `fontaine-onerig-ckpt-bank`,
-weights-only ~12 GiB → `fontaine-checkpoints/`
-`grasp_sft_v2_joint_pdnorm_onerig_step3000`). Train COMPLETE 3000/3000
-(~13.4 GPU-h, loss 0.3299, vram 62.21/71, zero crossings); final
-probe 4.5266@3000 held the run low — the curve ended improving, the
-opposite shape of the convicted cell. Honest cell total ~17.0 vs the
-17 gate: a ~48-min idle gap (my own watch-loop cmdline matched the
-run pgrep and deadlocked the battery wait — the 08-19 class incident
-reproduced, note sharpened in the registry) ate the margin; no extra
-legs.
-
-**Steering**: none — inbox empty all session (reads 07:30/08:38/
-09:11/09:40/10:09Z); the three recorded 👍s unchanged.
-
-**Done**: onerig-endpoint-close primary verdict banked (battery
-script staged + armed pre-endpoint 028c94c; registry rolled
-train→battery 5e73979; verdict + paired reads + queue/now/blog this
-commit). Posts: train-complete 08:38Z, mid-leg signal 09:11Z (7/25
-early-terms), VERDICT 10:51Z (id 1539950050740801616). Paired jsons
-banked (`analysis__sim100_paired_onerig3000_vs_{disc1000,pdnorm3000}
-.json`). Queue: verdict noted on onerig-endpoint-close (leg-2 CPU
-tail remains), refill `prereg-draft-demos-plus-clean` queued (the
-poison-pinning cell) — validate green, depth 3.
-
-**Next**: leg 2 lands ~11:2xZ → chained session takes the CPU tail
-(panel guard vs disc-1000 npz, truthfit rewear, ladder restamp,
-onerig HTML report, bank verify) + the demos+clean pre-reg draft;
-`run_work_next` armed. Then `queue_cli.py next` →
-grpo-r2-parity-read-and-relaunch owns the first free GPU window
-(`./launch_grpo_r2.sh parity`, A5 gate, no GO ask); at the R2
-endpoint the boundary is `./launch_grpo_r2.sh boundary
-outputs/sim/grpo_r2/loop/step_0010.pt`.*
-
 ## Utilization footer
+
+Session 2026-08-20 12:10–13:1xZ (work; exploit; 0 GPU-h new —
+`grpo-r2` riding ~1.2 GPU-h in-session of ~14.9 projected, lane
+~19.6/20): **demos+clean poison-pinning pre-reg POSTED (cell frozen
+demos+clean ×4, 0.70% share; grid anchored 28/11/1; mechanism
+candidates named incl. the tiny-dataset pdnorm-row vector with a
+free stats-row autopsy; launcher staged full-parse green; launch
+DELEGATED to the post-R2 window; queue rolled draft→exec item;
+check.py 1100 green) + the R2 first train row caught in-session
+13:09Z: mixed_groups_frac 0.50 PASS vs the <0.20 abort bar, 0.95
+GPU-h/step on-anchor, vram 72.09/75, knockaway baseline 0.3281
+banked, 6/64 wave-0 successes; babysit 12:56 exit 0; Discord quiet
+all session (posts ×2 out, inbox empty)** — queue green depth 1
+(stated reason, 14 open).
 
 Session 2026-08-20 12:08–12:1xZ (tick; `grpo-r2` riding, ~0.15
 GPU-h elapsed of ~14.9 projected / lane ~19.6/20): **babysit exit 0
@@ -156,18 +182,6 @@ it; Discord fully quiet (read + inbox empty, no new reactions);
 queue validate green; run_work_next already armed 12:05 (CPU item
 `prereg-draft-demos-plus-clean` pending)** — queue green depth 1
 (stated reason, 14 open).
-
-Session 2026-08-20 11:35–12:0xZ (work session; exploit; ~0.66 GPU-h
-parity read closed in-window + grpo-r2 launched ~14.9 GPU-h): **onerig
-leg-2 CPU tail closed (guard PASS 28.81 vs 58.14 Δ −29.34; truth-fit
-27.26 ≈ convicted 27.44 — the panel doesn't separate the grasper from
-the convict; ladder restamped, onerigendpoint report + 6 artifacts
-curl-200; commit 9ff74ee); parity verdict PASS ~11:58Z (perfect: 2/20
-both paths, same seeds, Δ 0/0.0) → frozen A3.4 relaunch fired
-11:59:20Z (unit grpo-r2, endpoint ~22:0xZ, lane ~19.6/20 zero slack);
-registry parity→loop; first poll util 100%; posts ×2; queue rolled
-(both GPU items closed done, depth 1 + stated reason);
-run_work_next armed** — queue green, 14 open.
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +

@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-20T12:00:54Z
+**Updated:** 2026-08-20T12:45:00Z
 
-**Depth call:** depth 1 open GPU item (grpo-r2 boundary rides the babysit registry, not the queue) + cpu prereg-draft-demos-plus-clean executable any session; refill decision at the next boundary
+**Depth call:** depth 1 open item: gpu-local demos-plus-clean-exec (window-blocked on the grpo-r2 lane, fires delegated at the next free GPU window; the grpo-r2 boundary itself rides the babysit registry, not the queue). CPU drafting item closed 12:4xZ 08-20; refill decision at the R2 boundary.
 
-**14 open** (Live 0 · Queued 1 · Blocked 13 · Done 263)
+**14 open** (Live 0 · Queued 1 · Blocked 13 · Done 264)
 
 ## 🔴 Live (0)
 
@@ -18,15 +18,15 @@
 
 *ready — waiting on a window or a boundary*
 
-**`prereg-draft-demos-plus-clean`** · `cpu`
+**`demos-plus-clean-exec`** · `gpu-local`
 
-Pre-reg DRAFT: poison-pinning cell after the 28/100 mix-exoneration (the onerig pre-reg's named follow-up): demos + so101_pick_place_clean ONLY (x4 repeat, same recipe/seed/platform as onerig)
+Demos + clean poison-pinning cell EXECUTION (launch DELEGATED per the standing no-GO-ask rule
 
-**boundary:** Queued 10:5xZ 08-20 at the onerig verdict (mix-exonerated). Draft in any CPU window; GPU launch only after the R2 parity item claims its window. · [pre-reg](posts/2026-08-19-prereg-demos-plus-one-rig.md)
+**boundary:** Queued 12:4xZ 08-20 at the draft close. Window-blocked only: the grpo-r2 lane owns the H100 through its ~22:0xZ endpoint + boundary eval; this cell fires at the next free GPU window after that, delegated, no owner hold. · [pre-reg](posts/2026-08-20-prereg-demos-plus-clean.md)
 
 <details><summary>full record</summary>
 
-Pre-reg DRAFT: poison-pinning cell after the 28/100 mix-exoneration (the onerig pre-reg's named follow-up): demos + so101_pick_place_clean ONLY (x4 repeat, same recipe/seed/platform as onerig) — decides whether the 0.65% clean set alone reproduces the 1/100 collapse (clean = the poison) or not (three-way composition was). Alternative arm named in the onerig prereg: full mix minus v2. Draft freezes: grid bands anchored to onerig 28/100 + control 11/100 + convicted 1/100, worn-row + stand-ins pins carried, 17 GPU-h class gate, --prune-superseded-optim. CPU drafting only; launch decision per the standing no-GO-ask rule at the next free GPU window AFTER grpo-r2-parity-read-and-relaunch (which owns the first window).
+Demos + clean poison-pinning cell EXECUTION (launch DELEGATED per the standing no-GO-ask rule — announce in-channel, never gate on GO). At the first free GPU window after the grpo-r2 lane closes its boundary (R2 endpoint ~22:0xZ 08-20 -&gt; boundary eval -&gt; this cell; an R2 in-loop abort also frees the window): STEPS=20 SMOKE=1 fit smoke, then systemd-run unit fontaine-v2-joint-pdnorm-democlean via the staged launcher launch_local_grasp_sft_v2_joint_1gpu_pdnorm_democlean_h100.sh (demos+so101_pick_place_clean x4, pdnorm, joint+insulate, eff-96, seed 0, 3000 steps, prune-superseded-optim); babysit entry at launch, first poll util+rate+free-g+df; RECORD the recomputed per-dataset stats rows at boot (clean row vs v2/demos rows — mechanism-(b) autopsy input); boundaries step-1000 drift read (&lt;=+0.30), step-3000 endpoint -&gt; sim100 (stand-ins pin, --stats-repo-id grasp_demos_v2/merged) + panel guard vs disc-1000 npz + paired reads vs onerig 28/100 AND control 11/100 AND convicted 1/100 + verdict post through the frozen grid. Gate 17 GPU-h.
 
 </details>
 
@@ -218,7 +218,7 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (263)
+## ✅ Done (264)
 
 *closed — the full record stays in each fold*
 
@@ -3855,6 +3855,20 @@ GRPO R2 boundary-legs launcher (CPU; makes the R2 endpoint one command end-to-en
 <details><summary>full record</summary>
 
 GRPO R2 boundary-legs launcher (CPU; makes the R2 endpoint one command end-to-end): a `boundary` subcommand on launch_grpo_r2.sh that takes the endpoint checkpoint dir and fires the three A3.4 legs sequentially as ONE detached unit — (1) greedy token sim100 (--serve-head ar, no temperature), (2) sampled T=1.0 sim100, (3) flow unseen100 euler-10 — each with the anchors' exact driver + substrate pins (standins, stats_repo_id so101_pick_place_v2, seeds 0-99), ~3.9 GPU-h total per A3.5, chaining into python -m fontaine.scripts.grpo_r2_boundary_verdict (guards already refuse wrong-leg jsons; the launcher's job is to never produce one). Refuses to fire while the grpo-r2 unit is still alive. Parse-check oracle-tested like the kit's, check.py green. NO GPU in this item — it stages; the boundary session fires it. | EXECUTED 20:3xZ 08-19 (982cecd, check.py 1099 green): boundary subcommand + parse-check oracle (legs' exact argv through the driver's parser + the verdict's own provenance guards) + grpo_r2_materialize_endpoint.py (the loop banks trainable-only .pt overlays; file-level apply onto the base backbone_text via write_checkpoint, 6 oracles on the tiny VLA fixture) — the endpoint read now needs zero new code. PIN CORRECTION (git-audited): NO --stats-repo-id on the boundary legs — the spelled so101_pick_place_v2 row exists only on the RETIRED step_002000 dir; the v2 base's per-dataset table carries only the demos row (explicit pin = refused at load); default lookup = the lane's registered serving convention (preflight PASS wore &lt;merged-table&gt;).
+
+</details>
+
+---
+
+**`prereg-draft-demos-plus-clean`** · `cpu`
+
+Pre-reg DRAFT: poison-pinning cell after the 28/100 mix-exoneration (the onerig pre-reg's named follow-up): demos + so101_pick_place_clean ONLY (x4 repeat, same recipe/seed/platform as onerig)
+
+**boundary:** Queued 10:5xZ 08-20 at the onerig verdict (mix-exonerated). Draft in any CPU window; GPU launch only after the R2 parity item claims its window. || EXECUTED 12:1x-12:4xZ 08-20 work session: pre-reg DRAFT posted posts/2026-08-20-prereg-demos-plus-clean.md — cell frozen demos + so101_pick_place_clean x4 ONLY (clean share 0.70% vs 0.65 in-mix, dose held; the cell IS "full mix minus v2" — the onerig prereg's two named follow-ups coincide), grid &gt;=20 / &lt;=10 / 11-19 anchored to onerig 28/100 + control 11/100 + convicted 1/100, three mechanism candidates named (content / degenerate tiny-dataset pdnorm row / composition-only) with the stats-row autopsy as a free record-only read, paired reads vs onerig AND control AND convicted, guards carried (drift &lt;=+0.30, panel +0.05 vs disc-1000 npz, truthfit rewear + ladder restamp, worn-row + stand-ins pins), gate 17 GPU-h. Launcher STAGED launch_local_grasp_sft_v2_joint_1gpu_pdnorm_democlean_h100.sh, full-parse green (molmoact2_joint, pdnorm True, prune True, seed 0, both datasets resolved). Launch DELEGATED — no owner call (the onerig &gt;=20 grid text carries no carve-out; standing no-GO-ask rule) — moved to demos-plus-clean-exec. · [pre-reg](posts/2026-08-20-prereg-demos-plus-clean.md)
+
+<details><summary>full record</summary>
+
+Pre-reg DRAFT: poison-pinning cell after the 28/100 mix-exoneration (the onerig pre-reg's named follow-up): demos + so101_pick_place_clean ONLY (x4 repeat, same recipe/seed/platform as onerig) — decides whether the 0.65% clean set alone reproduces the 1/100 collapse (clean = the poison) or not (three-way composition was). Alternative arm named in the onerig prereg: full mix minus v2. Draft freezes: grid bands anchored to onerig 28/100 + control 11/100 + convicted 1/100, worn-row + stand-ins pins carried, 17 GPU-h class gate, --prune-superseded-optim. CPU drafting only; launch decision per the standing no-GO-ask rule at the next free GPU window AFTER grpo-r2-parity-read-and-relaunch (which owns the first window).
 
 </details>
 

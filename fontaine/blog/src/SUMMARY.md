@@ -328,3 +328,4 @@
   - [2026-08-18 — Pre-reg: clutter-patch promotion re-gate (pinned 20×5 probe, production path)](posts/2026-08-18-prereg-clutter-patch-promotion-regate.md)
   - [2026-08-19 — Pre-registration DRAFT: demos + one rig dataset (the post-convict isolation cell)](posts/2026-08-19-prereg-demos-plus-one-rig.md)
   - [2026-08-19 — HF evacuation audit: the schema-2 fleet is fully recoverable, zero weight gaps](posts/2026-08-19-hf-evacuation-audit-v2-fleet.md)
+  - [2026-08-20 — Pre-registration: demos + clean only (the poison-pinning cell)](posts/2026-08-20-prereg-demos-plus-clean.md)
