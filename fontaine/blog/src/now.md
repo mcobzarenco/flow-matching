@@ -150,9 +150,17 @@ amendment posted in-channel, smoke 62.19 GiB fit, LAUNCHED 08:28:45Z
 (ch5 ×1.2907 exact, others pinned). Democlean final optimizer.pt
 (32G) pruned post-close (onerig precedent) → 163G free vs ~124G
 peak. Queue rolled (exec closed, endpoint-close queued, depth 2);
-first-poll util check + run_work_next armed at close. Incident
-(logged): two commit-message clock stamps written ahead of `date -u`
-(07:5x stamped as 08:0x) — re-anchored, class rule re-read.**
+first-poll util check (88% util / 559W / 62.19 GiB, no starvation)
++ run_work_next armed 08:40Z at close. Incidents (both logged): (1)
+two commit-message clock stamps written ahead of `date -u` (07:5x
+stamped as 08:0x) — re-anchored; (2) 4th self-match of the pgrep
+wait-loop class — a smoke wait-loop's own cmdline matched its
+pattern, spun 42 min past the smoke's exit and tripped the babysit
+driver-cgroup guard as a phantom session-child trainer; killed at
+first poll, no GPU idle, rule sharpened in the registry (anchor
+pgrep patterns outside the loop's own cmdline; file-existence waits
+are the safe default). Smoke debris pruned (+44G, /tmp step-20
+save).**
 
 Session 2026-08-21 07:29–07:4xZ (tick; 0 GPU-h — quiet handoff, no
 live runs): **state-verify tick between the democlean close and the

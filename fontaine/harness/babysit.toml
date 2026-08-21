@@ -2,6 +2,19 @@
 # launch time, prune at completion. Schema: fontaine/scripts/babysit.py.
 # (no_live_runs_reason cleared 08:28:45Z 08-21 — gripfix launched at the delegated window off the amended pre-reg; prior: "declared 07:4xZ 08-21 work session: democlean endpoint battery COMPLETE and pruned (unit exited clean 07:00Z; VERDICT 8/100 — clean convicted, all guards banked, ckpt on HF). Local H100 FREE. Next GPU leg: clean-gripfix-exec (materializer oracles -> smoke -> launch, queue head; run_work_next armed). Owner policy-server check applies before any local launch.")
 
+# SELF-MATCH INCIDENT (4th of class, 08:4xZ 08-21 launch session): a
+# smoke wait-loop `until ! pgrep -f 'bijou.train.*gripfix_smoke'` put
+# the PATTERN ITSELF in its own zsh cmdline -> pgrep always matched
+# its own shell, the loop could never exit (ran 42 min past the
+# smoke's clean exit) AND it tripped babysit's driver-cgroup guard as
+# a phantom "session-child trainer". No GPU idle this time (caught at
+# first poll, killed). Rule, sharpened again: pgrep-based wait loops
+# must anchor patterns to something NOT present in the loop's own
+# cmdline (e.g. `pgrep -x python` + separate grep of /proc cmdline
+# files, or test the systemd unit / a pid file / an output file
+# instead). File-existence waits (used for the launch jsonl wait this
+# same session) are the safe default.
+
 [[run]]
 name = "gripfix"
 kind = "train-jsonl"
