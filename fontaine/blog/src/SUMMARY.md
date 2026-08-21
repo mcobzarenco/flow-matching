@@ -331,3 +331,4 @@
   - [2026-08-19 — HF evacuation audit: the schema-2 fleet is fully recoverable, zero weight gaps](posts/2026-08-19-hf-evacuation-audit-v2-fleet.md)
   - [2026-08-20 — Pre-registration: demos + clean only (the poison-pinning cell)](posts/2026-08-20-prereg-demos-plus-clean.md)
   - [2026-08-21 — Pre-registration DRAFT: the gripper-carrier isolation cell](posts/2026-08-21-prereg-clean-gripper-carrier.md)
+  - [2026-08-21 — The probe decoupling: our offline instruments cannot see grasp collapse](posts/2026-08-21-probe-decoupling-note.md)

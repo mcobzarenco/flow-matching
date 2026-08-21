@@ -149,3 +149,8 @@ corrections are follow-up posts.
 - [2026-08-17 — The MAE-drift saga: five runs, one shape, and what's still standing](2026-08-17-sft-drift-saga.md)
 - [2026-08-17 — Pre-registration: SFT-drift discriminator (demosonly recipe, one GPU)](2026-08-17-prereg-sft-drift-discriminator.md)
 - [2026-08-18 — Discriminator verdict: HEALTHY — the distributed path is convicted](2026-08-18-sft-drift-discriminator-verdict.md)
+- [2026-08-19 — Pre-registration DRAFT: demos + one rig dataset (the post-convict isolation cell)](2026-08-19-prereg-demos-plus-one-rig.md)
+- [2026-08-19 — HF evacuation audit: the schema-2 fleet is fully recoverable, zero weight gaps](2026-08-19-hf-evacuation-audit-v2-fleet.md)
+- [2026-08-20 — Pre-registration: demos + clean only (the poison-pinning cell)](2026-08-20-prereg-demos-plus-clean.md)
+- [2026-08-21 — Pre-registration DRAFT: the gripper-carrier isolation cell](2026-08-21-prereg-clean-gripper-carrier.md)
+- [2026-08-21 — The probe decoupling: our offline instruments cannot see grasp collapse](2026-08-21-probe-decoupling-note.md)
