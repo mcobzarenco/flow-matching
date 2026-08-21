@@ -5,6 +5,37 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-21 07:29–07:4xZ (tick) — **quiet handoff tick in
+the gap between the democlean close and the gripfix work session:
+GPU free, Discord silent, `run_work_next` already armed 07:23Z by
+the closing session — state verified green, exited fast to keep the
+idle window short.***
+
+**Status**: no live runs — `democlean` cell CLOSED (verdict 8/100,
+battery exited 07:00Z). GPU idle-by-design pending
+`clean-gripfix-exec`: 0 MiB used, no bijou procs, no policy-server
+claim. `run_work_next` marker present (07:23Z) — the chained work
+session owns the whole launch sequence.
+
+**Steering**: none — inbox empty, `read` empty, `history -n 5` all
+our own posts (latest: the 07:23Z endpoint-close post), no
+reactions.
+
+**Done** (this tick): Discord poll + history (quiet), queue
+validate green (depth 2, 14 open), GPU/marker/process state
+verified, git audit of `clean-gripfix-exec` per standing rule —
+`make_clean_gripfix_dataset.py` NOT yet in tree (item accurate:
+the work session writes it; battery pattern
+`launch_democlean_endpoint_battery.sh` present to clone), now.md +
+archive roll (03:26 aged out).
+
+**Next**: chained work session (4-h budget) executes
+`clean-gripfix-exec` per the pre-reg: materializer + oracles →
+frozen command block in-channel → fit smoke → launch with pruner
+unit + babysit registry entry (H100 contention check vs the owner
+policy-server at launch). Then the gripfix cell rides ~13.7 h to
+its own step-3000 battery.*
+
 *Updated 2026-08-21 04:02–07:xxZ (work session) — **VERDICT: 8/100 —
 CLEAN IS THE POISON, sufficiency PROVED. Seven episodes at 0.7%
 share reproduce the grasp collapse with v2 absent, under clean's own
@@ -100,45 +131,18 @@ AND convicted 1/100) → post-process per charter §4 (panel, report,
 blog, ledger, checkpoint upload per standing rule) → next queued
 pre-registered run per the verdict.*
 
-*Updated 2026-08-21 03:26–03:4xZ (tick) — **final riding tick before
-the endpoint: ALL-GREEN at step 2880/3000, ~0.5 h to go. Step 3000
-projects ~03:59Z — ~2 min past this tick's 03:56:54Z hard kill, and
-the 44G save write plus endpoint-close plus sim100 all follow it, so
-nothing is decidable in-window: exit clean per charter §6, the next
-session owns the whole endpoint sequence.***
-
-**Status**: `fontaine-v2-joint-pdnorm-democlean` step 2880/3000 at
-03:27Z, loss 0.2999 → 0.2968 (−0.0031 — the 03:05 bounce retraced),
-16.171 s/step (3.8 steps/min wall), vram 62.24 vs ≤75, babysit exit
-0, no gate crossings, ~0.5 h to 3000 → **endpoint ~03:59–04:0xZ
-08-21**. Probe curve complete through 2750: 11.82@250 → 8.14@500 →
-7.90@750 → 6.49@1000 → 5.95@1250 → 5.72@1500 → 5.454@1750 →
-4.9305@2000 → 4.8687@2250 → 4.809@2500 → 4.6445@2750 (vs convicted
-6.32, onerig 4.50). Infra: disk 104G free (steady state; step-3000
-trough ~60G, margin holds), RAM available 46G (twenty-fourth read,
-in-band 46–49G lower edge, no leak trend), pruner unit active, log
-clean: 01:49:24Z step-2000 prune is the latest line, next work at
-the step-3000 save.
-
-**Steering**: none — inbox empty, `read` empty, `history -n 5` all
-our own posts (latest: the 18:43Z shape post), no reactions.
-
-**Done** (this tick): babysit poll, disk + RAM + pruner-log +
-pruner-unit checks, queue validate green (depth 2, 14 open),
-endpoint hold/exit judgment call (exit — step 3000 lands past the
-hard kill and the save+verdict sequence needs a fresh session's
-budget anyway), now.md + archive roll (02:44 aged out).
-
-**Next**: endpoint ~03:59–04:0xZ — step-3000 save (trough ~60G,
-then +32G back at the step-2500 optimizer prune) →
-`democlean-endpoint-close` → sim100 verdict through the frozen
-grid (≥20 / ≤10 / 11–19); next session owns the whole sequence and
-should expect to arm `run_work_next` for the post-processing.
-`run_work_next` NOT armed this tick — both queued items
-endpoint/verdict-gated, no workable CPU item (charter §3 checked,
-not skipped).*
-
 ## Utilization footer
+
+Session 2026-08-21 07:29–07:4xZ (tick; 0 GPU-h — quiet handoff, no
+live runs): **state-verify tick between the democlean close and the
+gripfix work session — GPU free (0 MiB, no bijou procs, no
+policy-server claim), Discord fully quiet (read empty, inbox empty,
+history all own posts, no reactions), queue green depth 2 (14
+open), `run_work_next` marker confirmed armed (07:23Z). Git audit
+of `clean-gripfix-exec`: materializer not yet in tree (item
+accurate — work session writes it), battery pattern script present
+to clone. Exited fast to keep the idle window short; chained work
+session owns materializer + oracles + smoke + launch.**
 
 Session 2026-08-21 04:02–07:xxZ (work; exploit — democlean endpoint
 close, battery ~2.9 GPU-h, cell honest total ~16.6 vs the 17 gate):
@@ -152,44 +156,6 @@ weights-only to HF. Gripper-carrier pre-reg drafted
 run_work_next armed. Discord quiet at 6 babysit checkpoints; queue
 green depth 2 (14 open). Incident: pgrep self-match wait-loop, ~20
 min, rule sharpened.**
-
-Session 2026-08-21 03:47–04:0xZ (tick; `democlean` ENDPOINT, ~13.7
-GPU-h final vs the 17 gate): **run COMPLETE — step 3000/3000 at
-03:58:45Z, final loss 0.2903, zero gate crossings across the run.
-Probe curve closed at 4.6848@3000 (vs convicted 6.17 / onerig
-4.53): the convicted 2250–2750 elevation signature is absent
-end-to-end, clean-alone reproduced nothing of the poison signature
-— record-only, sim100 stays the verdict instrument. Held
-in-session through the endpoint per charter §6 (babysit exit 0 at
-step 2960, foreground hold to 3000, eval-3000 banked,
-save-write-start confirmed 04:00Z — all shards + 33.69G
-optimizer.pt writing, train proc alive at exit). run_work_next
-ARMED 03:48 — the chained work session owns: save write-complete
-verify → step-2500 optimizer prune check (+32G back) →
-democlean-endpoint-close → sim100 verdict through the frozen grid
-(≥20 / ≤10 / 11–19) → charter §4 post-processing + next launch.
-Infra: disk 104G free pre-trough (margin holds), RAM 47G
-(twenty-fifth read, in-band, no leak trend). Discord fully quiet
-(read empty, inbox empty, history all own posts, no reactions);
-queue green depth 2 (14 open).**
-
-Session 2026-08-21 03:26–03:4xZ (tick; `democlean` riding, ~13.4
-GPU-h elapsed of ~13.5 projected vs the 17 gate): **final riding
-tick before the endpoint, ALL-GREEN — babysit exit 0, step
-2880/3000 at 03:27Z, loss 0.2999→0.2968 (−0.0031, the 03:05 bounce
-retraced; probe curve complete through 4.6445@2750 vs convicted
-6.32 / onerig 4.50), 16.171 s/step, vram 62.24/75, no gate
-crossings, ~0.5 h to 3000 → endpoint ~03:59–04:0xZ 08-21, ~2 min
-past this tick's 03:56:54Z hard kill — endpoint sequence (step-3000
-save trough ~60G → democlean-endpoint-close → sim100 verdict
-through the frozen grid ≥20 / ≤10 / 11–19) belongs to the next
-session; exit clean per charter §6. Infra: disk 104G free (trough
-margin holds), RAM 46G (twenty-fourth read, in-band lower edge, no
-leak trend), pruner active + correctly quiet since the 01:49:24Z
-step-2000 prune (next work at the step-3000 save). Discord fully
-quiet (read empty, inbox empty, history all own posts, no
-reactions); queue green depth 2 (14 open); run_work_next NOT armed
-— both queued items endpoint/verdict-gated.**
 
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
