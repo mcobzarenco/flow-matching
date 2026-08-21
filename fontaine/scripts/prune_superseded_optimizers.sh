@@ -8,7 +8,7 @@
 set -u
 CKPT_DIR="${1:-/home/ubuntu/checkpoints/finetune/grasp_sft_v2_joint_1gpu_pdnorm_democlean}"
 FINAL_STEP="${2:-step_003000}"
-LOG="/home/ubuntu/flow-matching/outputs/logs/democlean_ckpt_prune.log"
+LOG="${3:-/home/ubuntu/flow-matching/outputs/logs/$(basename "$CKPT_DIR")_ckpt_prune.log}"
 mkdir -p "$(dirname "$LOG")"
 
 log() { echo "$(date -u +%FT%TZ) $*" >> "$LOG"; }

@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-21T07:21:43Z
+**Updated:** 2026-08-21T08:31:00Z
 
 **Depth call:** depth 2 open items: gpu-local democlean-endpoint-close (endpoint-gated ~03:3xZ 08-21; babysit rides the train) + cpu clean-content-manifold-probe (any work window, feeds the mechanism adjudication). Refill decision owed at the R2 boundary EXECUTED 14:2xZ 08-20 at the democlean launch.
 
-**14 open** (Live 0 · Queued 2 · Blocked 12 · Done 269)
+**14 open** (Live 0 · Queued 2 · Blocked 12 · Done 270)
 
 ## 🔴 Live (0)
 
@@ -18,6 +18,20 @@
 
 *ready — waiting on a window or a boundary*
 
+**`gripfix-endpoint-close`** · `gpu-local`
+
+gripfix endpoint close (verdict-gated): step-3000 save write-complete verify + pruner sole-survivor check -&gt; endpoint battery (clone launch_democlean_endpoint_battery.sh pattern, name deltas only: leg 1 sim100 flow unseen seeds 0…
+
+**boundary:** Queued 08:3xZ 08-21 at launch (08:28:45Z, units fontaine-v2-joint-pdnorm-gripfix + fontaine-gripfix-ckpt-prune). Endpoint ~22:0x-22:2xZ 08-21 (~13.7 GPU-h measured class); battery fires at the endpoint — verdict-gated until then. Boundaries en route: step-1000 drift read (record-only), saves every 500 (pruner-log check each). · [pre-reg](posts/2026-08-21-prereg-clean-gripper-carrier.md)
+
+<details><summary>full record</summary>
+
+gripfix endpoint close (verdict-gated): step-3000 save write-complete verify + pruner sole-survivor check -&gt; endpoint battery (clone launch_democlean_endpoint_battery.sh pattern, name deltas only: leg 1 sim100 flow unseen seeds 0-99, euler-10, ep 30s, execute-horizon 30, bf16 decoder, --stats-repo-id grasp_demos_v2/merged, --clutter-appearance standins; leg 2 k4l2 panel) -&gt; verdict through the FROZEN grid: &gt;=20 gripper amplitude IS the carrier (bank same-session; mix-hygiene rule + clean re-enters pool remapped) / &lt;=10 NOT sole carrier (follow-up ladder: ch0 shift next, then per-episode LOO at x4 = 7 cheap cells) / 11-19 ambiguous (control band: per-channel MAE, per-slice breakdown, videos, no claim). Paired reads (sim100_paired_read.py): vs democlean 8/100 THE read + onerig 28/100 + control 11/100. Panel guard vs disc-1000 banked npz (fail = worse than +0.05 CI-excl-0) + truthfit rewear. Record-only: eval-250 twin curve vs democlean (probe canNOT clear the cell — decoupling banked twice). Ckpt banks weights-only on any decisive read; charter §4 post-processing (results append + charts on the pre-reg post, unseen-100 HTML report, ladder restamp) + next pre-reg draft per the verdict branch. Cell gate 17 GPU-h (train ~13.7 + battery ~3).
+
+</details>
+
+---
+
 **`probe-decoupling-note`** · `cpu`
 
 Probe-decoupling consolidation note (CPU, any GPU-busy window): the lineage now has TWO banked cases where offline instruments miss the grasp collapse (k4l2 panel: 28.81/27.26 onerig vs 27.44 convicted 1/100
@@ -27,20 +41,6 @@ Probe-decoupling consolidation note (CPU, any GPU-busy window): the lineage now 
 <details><summary>full record</summary>
 
 Probe-decoupling consolidation note (CPU, any GPU-busy window): the lineage now has TWO banked cases where offline instruments miss the grasp collapse (k4l2 panel: 28.81/27.26 onerig vs 27.44 convicted 1/100 — no separation; eval-probe curve: democlean 4.6848 at onerig's 4.53 level while 8/100). Write the short methods post: what the offline instruments DO see (drift, normalization seams, wear), what they cannot (grasp competence), and the standing rule it implies — sim100 (or a rollout eval) is the only verdict instrument for mix/recipe cells; probes are drift guards only. Feeds the eventual VLA eval-design doc (north star). Chart: panel + probe columns for the 4 cells vs their sim100 rows.
-
-</details>
-
----
-
-**`clean-gripfix-exec`** · `gpu-local`
-
-Gripper-carrier isolation cell EXECUTION (pre-reg drafted 06:4xZ 08-21, launch delegated): (1) materializer fontaine/scripts/make_clean_gripfix_dataset.py
-
-**boundary:** Queued 07:2xZ 08-21 at the democlean endpoint close. GPU free at queue time (battery exited 07:00Z) — next work session owns materializer+smoke+launch; H100 contention check (owner policy-server) at launch per standing rule. · [pre-reg](posts/2026-08-21-prereg-clean-gripper-carrier.md)
-
-<details><summary>full record</summary>
-
-Gripper-carrier isolation cell EXECUTION (pre-reg drafted 06:4xZ 08-21, launch delegated): (1) materializer fontaine/scripts/make_clean_gripfix_dataset.py — so101_pick_place_clean with ch5 (action AND state) scaled by the frozen 1.2907 (41.69/32.3), all else byte-identical; oracles: exact x1.2907 on ch5, byte-equal elsewhere, counts identical, transformed max ~41.69, no-op guard if source max&gt;40. (2) freeze final command block in-channel (democlean launcher verbatim, one delta: clean-&gt;clean_gripfix in --train-data + --dataset-repeat). (3) fit smoke, then launch w/ pruner unit from step 0; babysit entry at launch. (4) endpoint battery script pattern (launch_democlean_endpoint_battery.sh with name deltas) -&gt; sim100 frozen grid &gt;=20 amplitude-IS-the-carrier / &lt;=10 not-sole-carrier (next: ch0, then per-episode LOO) / 11-19 ambiguous; paired vs democlean 8/100 (THE read) + onerig 28 + control 11. Gate 17 GPU-h (train ~13.7 measured + battery ~3). Record-only: gripfix pdnorm row vs clean's (ch5 x1.29, else pinned — live materializer oracle); eval-250 twin-curve vs democlean. Probe canNOT clear the cell (decoupling banked twice).
 
 </details>
 
@@ -218,9 +218,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (269)
+## ✅ Done (270)
 
 *closed — the full record stays in each fold*
+
+**`clean-gripfix-exec`** · `gpu-local`
+
+Gripper-carrier isolation cell EXECUTION (pre-reg drafted 06:4xZ 08-21, launch delegated): (1) materializer fontaine/scripts/make_clean_gripfix_dataset.py
+
+**boundary:** Queued 07:2xZ 08-21 at the democlean endpoint close. GPU free at queue time (battery exited 07:00Z) — next work session owns materializer+smoke+launch; H100 contention check (owner policy-server) at launch per standing rule. || CLOSED 08:3xZ 08-21 work session: EXECUTED end-to-end — materializer make_clean_gripfix_dataset.py landed (5 hard-fail oracles green; ch5 x1.2907 exact bitwise, action max 32.3019-&gt;41.6924, non-ch5 + 9 files byte/sha256-identical, no-op guard tested); AMENDMENT 1 registered pre-launch (dataset named _a: holdout keys on repo_id, draft name would swap trained ep 2&lt;-&gt;6 vs democlean — _a draws (2,), split episode-identical, 3026 frames 0.69% share byte-matching democlean boot line); frozen command + amendment posted in-channel (07:51/07:56Z); fit smoke green (vram 62.19 == democlean smoke, 14.76 s/step @20); LAUNCHED 08:28:45Z units fontaine-v2-joint-pdnorm-gripfix + fontaine-gripfix-ckpt-prune (GPU contention-checked clear); babysit entry live; record-only pdnorm-row oracle banked (ch5 q99 x1.2907 exact, ch0-4 pinned). Endpoint battery + verdict -&gt; gripfix-endpoint-close. · [pre-reg](posts/2026-08-21-prereg-clean-gripper-carrier.md)
+
+<details><summary>full record</summary>
+
+Gripper-carrier isolation cell EXECUTION (pre-reg drafted 06:4xZ 08-21, launch delegated): (1) materializer fontaine/scripts/make_clean_gripfix_dataset.py — so101_pick_place_clean with ch5 (action AND state) scaled by the frozen 1.2907 (41.69/32.3), all else byte-identical; oracles: exact x1.2907 on ch5, byte-equal elsewhere, counts identical, transformed max ~41.69, no-op guard if source max&gt;40. (2) freeze final command block in-channel (democlean launcher verbatim, one delta: clean-&gt;clean_gripfix in --train-data + --dataset-repeat). (3) fit smoke, then launch w/ pruner unit from step 0; babysit entry at launch. (4) endpoint battery script pattern (launch_democlean_endpoint_battery.sh with name deltas) -&gt; sim100 frozen grid &gt;=20 amplitude-IS-the-carrier / &lt;=10 not-sole-carrier (next: ch0, then per-episode LOO) / 11-19 ambiguous; paired vs democlean 8/100 (THE read) + onerig 28 + control 11. Gate 17 GPU-h (train ~13.7 measured + battery ~3). Record-only: gripfix pdnorm row vs clean's (ch5 x1.29, else pinned — live materializer oracle); eval-250 twin-curve vs democlean. Probe canNOT clear the cell (decoupling banked twice).
+
+</details>
+
+---
 
 **`clean-gripper-followup-decision`** · `cpu`
 
