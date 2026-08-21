@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-20T14:56:00Z",
+ "updated_utc": "2026-08-21T07:21:43Z",
  "depth_reason": "depth 2 open items: gpu-local democlean-endpoint-close (endpoint-gated ~03:3xZ 08-21; babysit rides the train) + cpu clean-content-manifold-probe (any work window, feeds the mechanism adjudication). Refill decision owed at the R2 boundary EXECUTED 14:2xZ 08-20 at the democlean launch.",
  "items": [
   {
@@ -41,11 +41,11 @@
   {
    "id": "democlean-endpoint-close",
    "class": "gpu-local",
-   "status": "queued",
+   "status": "done",
    "owner_hold": false,
    "prereg": "fontaine/blog/src/posts/2026-08-20-prereg-demos-plus-clean.md",
    "title": "Demos+clean endpoint battery + verdict (endpoint-gated ~03:3xZ 08-21): at step-3000 -> sim100 unseen (stand-ins pin, --stats-repo-id grasp_demos_v2/merged) + panel guard vs disc-1000 npz (+0.05 bar) + paired reads vs onerig 28/100 AND control 11/100 AND convicted 1/100 (sim100_paired_read.py) + truthfit rewear + verdict post through the frozen grid (<=10 clean-IS-the-poison / >=20 three-way-interaction / 11-19 ambiguous -> breakdowns + videos, no claim). Record-only reads: eval-250 curve vs convicted (2250-2750 elevation?) + onerig curves; clean-slice eval breakdown (noisy, ~1 holdout episode). Boot stats-row autopsy ALREADY BANKED 14:1xZ 08-20 (no degenerate clean channel, worst x2.84 ch0 => mechanism (b) weakened). In-flight boundary: step-1000 drift read <= +0.30 (babysit rides it). Within the cell's 17 GPU-h gate (train ~13.5 + battery).",
-   "boundary": "Queued 14:2xZ 08-20 at the democlean launch (demos-plus-clean-exec closed superseded-by-execution). Endpoint-gated; babysit registry entry 'democlean' carries the ride facts (launched 14:15:41Z, endpoint ~03:3xZ 08-21)."
+   "boundary": "Queued 14:2xZ 08-20 at the democlean launch (demos-plus-clean-exec closed superseded-by-execution). Endpoint-gated; babysit registry entry 'democlean' carries the ride facts (launched 14:15:41Z, endpoint ~03:3xZ 08-21). || CLOSED 07:2xZ 08-21 work session: VERDICT 8/100 <=10 \u2014 CLEAN CONVICTED, sufficiency proved (sim100 closed 06:33:22Z; success seeds 16/18/39/45/58/60/61/95, mean progress 3.39cm, 0 strikes). Paired: -20 vs onerig [-30,-10] p=0.00033; -3 vs control [-11,+5] p=0.61 (indistinguishable from never mixing); +7 vs convicted [+2,+13] p=0.039. Probe curve DECOUPLED (closed 4.6848 at onerig's level, no elevation, while grasping collapsed \u2014 2nd offline-probe miss in lineage). Guard PASS (30.3446 native vs 58.14 raw base, delta -27.80 CI-excl-0; truthfit 28.43 vs ladder 27.40/27.14/25.15). Mechanism: (c) REFUTED, (b) weakened, (a) standing w/ gripper-amplitude + ch0 carriers. Ckpt banked HF grasp_sft_v2_joint_pdnorm_democlean_step3000 (weights-only). Battery ~2.9 GPU-h, cell total ~16.6 vs 17 gate. Artifacts: flow_unseen.json, 3 paired jsons, panel npz/json/html, guard+truthfit jsons, unseen100 html + gallery, probe-curve chart, results append on the pre-reg post."
   },
   {
    "id": "clean-content-manifold-probe",
@@ -2532,11 +2532,29 @@
   {
    "id": "clean-gripper-followup-decision",
    "class": "cpu",
-   "status": "queued",
+   "status": "done",
    "owner_hold": false,
    "prereg": "fontaine/blog/src/posts/2026-08-20-prereg-demos-plus-clean.md",
    "title": "Verdict-contingent follow-up decision (gated on the democlean verdict ~03:3xZ 08-21; natural owner: the endpoint-close session): IF <=10 (clean convicted) -> draft the pre-reg for the gripper-carrier isolation cell \u2014 demos + clean with clean's gripper channel remapped to the shared open convention (affine amplitude match ~32.3->41.7 class, or bang-bang re-encode; the manifold probe's banked numbers are the spec input) \u2014 testing whether the amplitude convention alone carries the poison vs the modest ch0 shift. IF >=20 (exonerated) or 11-19 (ambiguous) -> close as moot (the grid's breakdowns path owns the next step). Inputs: reports/analysis__clean_content_manifold_probe.json + the banked (b) stats-row autopsy.",
-   "boundary": "Queued 14:5xZ 08-20 at the manifold-probe close (queue refill, depth 1 -> 2). Verdict-gated; costs nothing until the endpoint lands."
+   "boundary": "Queued 14:5xZ 08-20 at the manifold-probe close (queue refill, depth 1 -> 2). Verdict-gated; costs nothing until the endpoint lands. || CLOSED 07:2xZ 08-21 work session: <=10 branch fired \u2014 gripper-carrier isolation pre-reg DRAFTED + posted (posts/2026-08-21-prereg-clean-gripper-carrier.md): demos + clean_gripfix x4 (ch5 action+state scaled by frozen 41.69/32.3=1.2907, zero fixed point preserved), same grid, paired-vs-democlean-8 is THE read. Repeat-1 dose arm parked (autopsy was decisive, not inconclusive). Exec item queued (clean-gripfix-exec)."
+  },
+  {
+   "id": "clean-gripfix-exec",
+   "class": "gpu-local",
+   "status": "queued",
+   "owner_hold": false,
+   "prereg": "fontaine/blog/src/posts/2026-08-21-prereg-clean-gripper-carrier.md",
+   "title": "Gripper-carrier isolation cell EXECUTION (pre-reg drafted 06:4xZ 08-21, launch delegated): (1) materializer fontaine/scripts/make_clean_gripfix_dataset.py \u2014 so101_pick_place_clean with ch5 (action AND state) scaled by the frozen 1.2907 (41.69/32.3), all else byte-identical; oracles: exact x1.2907 on ch5, byte-equal elsewhere, counts identical, transformed max ~41.69, no-op guard if source max>40. (2) freeze final command block in-channel (democlean launcher verbatim, one delta: clean->clean_gripfix in --train-data + --dataset-repeat). (3) fit smoke, then launch w/ pruner unit from step 0; babysit entry at launch. (4) endpoint battery script pattern (launch_democlean_endpoint_battery.sh with name deltas) -> sim100 frozen grid >=20 amplitude-IS-the-carrier / <=10 not-sole-carrier (next: ch0, then per-episode LOO) / 11-19 ambiguous; paired vs democlean 8/100 (THE read) + onerig 28 + control 11. Gate 17 GPU-h (train ~13.7 measured + battery ~3). Record-only: gripfix pdnorm row vs clean's (ch5 x1.29, else pinned \u2014 live materializer oracle); eval-250 twin-curve vs democlean. Probe canNOT clear the cell (decoupling banked twice).",
+   "boundary": "Queued 07:2xZ 08-21 at the democlean endpoint close. GPU free at queue time (battery exited 07:00Z) \u2014 next work session owns materializer+smoke+launch; H100 contention check (owner policy-server) at launch per standing rule."
+  },
+  {
+   "id": "probe-decoupling-note",
+   "class": "cpu",
+   "status": "queued",
+   "owner_hold": false,
+   "prereg": "",
+   "title": "Probe-decoupling consolidation note (CPU, any GPU-busy window): the lineage now has TWO banked cases where offline instruments miss the grasp collapse (k4l2 panel: 28.81/27.26 onerig vs 27.44 convicted 1/100 \u2014 no separation; eval-probe curve: democlean 4.6848 at onerig's 4.53 level while 8/100). Write the short methods post: what the offline instruments DO see (drift, normalization seams, wear), what they cannot (grasp competence), and the standing rule it implies \u2014 sim100 (or a rollout eval) is the only verdict instrument for mix/recipe cells; probes are drift guards only. Feeds the eventual VLA eval-design doc (north star). Chart: panel + probe columns for the 4 cells vs their sim100 rows.",
+   "boundary": "Queued 07:2xZ 08-21 at the democlean endpoint close (queue refill, keeps open depth >=2 alongside clean-gripfix-exec)."
   }
  ]
 }

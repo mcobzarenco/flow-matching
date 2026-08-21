@@ -95,6 +95,7 @@ PROBE_ANCHOR = 44  # route-C joint step2000, flow-unseen (banked 08-16)
 V1_ENDPOINT_ANCHOR = 5  # v1 run-2 step3000, flow-unseen (banked 08-17)
 DISC1000_ANCHOR = 11  # disc step1000 demosonly baseline (banked 04:19Z 08-18)
 PDNORM_ENDPOINT_ANCHOR = 1  # pdnorm convicted mixed cell (banked 03:17Z 08-19)
+ONERIG_ENDPOINT_ANCHOR = 28  # onerig exonerated cell (banked 10:5xZ 08-20)
 TOKEN_BASE_ANCHOR = 0  # base (no SFT), token head (leg 4, banked 09:01Z 08-19)
 
 # Sentinel gallery pick: the farthest spawn whose jaws never made
@@ -292,6 +293,69 @@ PRESETS: dict[str, dict] = {
         "ladder_b64": Path("reports/onerig_panel_ladder.b64"),
         "truthfit_json": Path(
             "reports/analysis__onerig_endpoint_truthfit_wear.json",
+        ),
+    },
+    # Demos+clean poison-pinning cell endpoint (pre-reg
+    # posts/2026-08-20-prereg-demos-plus-clean.md): the convicted mix
+    # minus v2 — equivalently the other single-rig-dataset cell vs
+    # onerig. The meta line's verdict clause is stamped at the frozen
+    # grid read (endpoint-close session).
+    "democleanendpoint": {
+        "leg_json": Path("outputs/sim/grasp_sft/democlean_endpoint/flow_unseen.json"),
+        "video_dir": Path("outputs/sim/grasp_sft/democlean_endpoint/flow_unseen"),
+        "out_html": Path(
+            "reports/eval__grasp_sft_v2_joint_1gpu_pdnorm_democlean"
+            "__step_003000__flow_unseen100.html",
+        ),
+        "gallery_dir": Path("reports/democlean_unseen_gallery"),
+        "anchor_rows": [
+            ("base (no SFT)", BASE_ANCHOR, ANCHOR),
+            ("disc1000 demosonly control (paired arm)", DISC1000_ANCHOR, "#f593bd"),
+            (
+                "pdnorm convicted mixed cell (paired arm)",
+                PDNORM_ENDPOINT_ANCHOR,
+                "#f593bd",
+            ),
+            (
+                "onerig exonerated cell (paired arm)",
+                ONERIG_ENDPOINT_ANCHOR,
+                "#f593bd",
+            ),
+        ],
+        "subject_label": "democlean endpoint step3000",
+        "anchors_tile_label": "anchors: base / control / convicted mix / onerig",
+        "title": "democlean endpoint step3000 — flow head, unseen 100",
+        "h1": "Grasp-SFT demos+clean — endpoint, flow head on unseen seeds",
+        "meta_html": (
+            "Checkpoint <code>grasp_sft_v2_joint_1gpu_pdnorm_democlean/"
+            "step_003000</code> (demos + so101_pick_place_clean ×4 ONLY —"
+            " v2 dropped, ~0.70% clean share; per-dataset flow norm;"
+            " launched 14:15:41Z 08-20, train complete 03:58:45Z 08-21,"
+            " ~13.7 GPU-h) · euler-10, execute-horizon 30, seeds 0–99,"
+            " 30 s episodes; sim leg wears the sim demos' row +"
+            " stand-ins substrate pin (frozen serving rules) · frozen"
+            ' decision grid: <b style="color:{success}">&le;10'
+            " clean-IS-the-poison</b> / 11&ndash;19 ambiguous / &ge;20"
+            " three-way-interaction · verdict: <b>8/100 &le; 10 — CLEAN"
+            " CONVICTED, sufficiency proved</b> (read 06:33Z 08-21);"
+            " paired &minus;20 vs the onerig cell's 28/100 (CI95"
+            " [&minus;30, &minus;10], McNemar p = 0.00033), &minus;3 vs"
+            " the 11/100 control (CI95 [&minus;11, +5], p = 0.61 —"
+            " indistinguishable from never mixing), +7 vs the convicted"
+            " cell's 1/100 (CI95 [+2, +13], p = 0.039) · the probe"
+            " curve closed at 4.68@3000 (onerig's level, no elevation"
+            " signature) while grasping collapsed — offline probes do"
+            " not see this failure class"
+        ),
+        "paired_band_note": (
+            " The demosonly control's 11/100 sits inside this pre-reg's"
+            " own 11&ndash;19 ambiguous band, so the paired read rides"
+            " alongside the frozen absolute bands &mdash; it is"
+            " recorded, never gating."
+        ),
+        "ladder_b64": Path("reports/democlean_panel_ladder.b64"),
+        "truthfit_json": Path(
+            "reports/analysis__democlean_endpoint_truthfit_wear.json",
         ),
     },
     # Token (AR) head page of the same route-C probe family: subject =

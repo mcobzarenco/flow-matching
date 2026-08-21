@@ -1,5 +1,6 @@
 # Babysit run registry (#21 P1). One entry per LIVE run; update at
 # launch time, prune at completion. Schema: fontaine/scripts/babysit.py.
+no_live_runs_reason = "declared 07:4xZ 08-21 work session: democlean endpoint battery COMPLETE and pruned (unit exited clean 07:00Z; VERDICT 8/100 — clean convicted, all guards banked, ckpt on HF). Local H100 FREE. Next GPU leg: clean-gripfix-exec (materializer oracles -> smoke -> launch, queue head; run_work_next armed). Owner policy-server check applies before any local launch."
 #
 # LOSS KEYS (main 32149df, merged 08-16): runs launched after the merge
 # write mechanism-qualified component keys — loss_action_flow (flow MSE),
@@ -116,34 +117,36 @@
 # byte-matched vs step-2500, train proc exited clean). Battery below
 # owns the verdict.
 
-# LIVE — democlean endpoint battery (local H100, unit
-# fontaine-democlean-endpoint-battery, launched 04:04:55Z 08-21 work
-# session; script scripts/launch_democlean_endpoint_battery.sh —
-# protocol byte-matched to the onerig battery, only name/path deltas;
-# wait-loop pgrep narrowed to 'bijou.train.*RUN' per the 08-19/08-20
-# deadlock class notes). Leg 1 sim100 unseen 0-99 (stand-ins pin,
-# --stats-repo-id grasp_demos_v2/merged) -> leg 2 k4l2 panel_v2 + npz.
-[[run]]
-name = "democlean_endpoint_battery"
-kind = "progress-log"
-host = "local"
-pgrep = "rollout_sim|bijou.eval"
-pgrep_min = 1
-gpu_indices = [0]
-gpu_mem_min_mib = 2000
-log = "/home/ubuntu/eval__democlean_endpoint_sim100.log"
-progress_re = "seed [0-9]+ replan [0-9]+"
-started_utc = "2026-08-21T04:04:55Z"
-gpu_hours_per_wall_hour = 1.0
-boundary = "leg 1 sim100 ~2.5 h -> ~06:3xZ (progress counter = seed 0-99), then leg 2 k4l2 panel (~40 min, log /home/ubuntu/eval__grasp_sft_v2_joint_1gpu_pdnorm_democlean__step_003000__panel_v2_k4l2_euler10_draws1_stable.log); CPU tail: paired reads (onerig 28/100, control 11/100, convicted 1/100) + panel guard vs disc-1000 npz + truthfit rewear + verdict post through the frozen grid (<=10 clean-is-poison / >=20 three-way / 11-19 ambiguous)"
-anchors = [
-    "cell honest total: train ~13.7 + battery ~3 vs the 17 GPU-h gate — near-zero slack, no extra legs",
-    "verdict grid: <=10 clean-alone SUFFICIENT (poison pinned); >=20 NOT sufficient (three-way interaction); 11-19 ambiguous (control band) -> breakdowns + videos, no claim",
-    "checkpoint bank per pre-reg: endpoint banks to fontaine-checkpoints same-session if any gated read makes it load-bearing (poison exhibit counts), weights-only + logs",
-]
-[[run.gates]]
-kind = "gpu_hours_max"
-value = 3.5
+# democlean_endpoint_battery entry PRUNED 07:2xZ 08-21 work session —
+# battery COMPLETE (unit exited clean 07:00Z; leg 1 sim100 06:33:22Z,
+# leg 2 k4l2 panel json/npz/html 07:00Z; ~2.9 GPU-h, cell honest
+# total ~16.6 vs the 17 gate). VERDICT 8/100 <=10 — CLEAN CONVICTED,
+# sufficiency proved (posted 06:34Z, id 1540247709691154503). Paired:
+# -20 vs onerig [-30,-10] p=0.00033; -3 vs control (indistinguishable
+# from never mixing, p=0.61); +7 vs convicted [+2,+13] p=0.039.
+# Probe curve DECOUPLED: closed 4.6848 at onerig's level with zero
+# elevation signature while grasping sat at 8/100 — second banked
+# offline-probe miss in the lineage (panel was the first). Guard PASS
+# (30.3446 vs 58.14 raw base, delta -27.80 CI-excl-0; truthfit 28.43
+# vs ladder 27.40/27.14/25.15/8.37). Mechanism: (c) REFUTED, (b)
+# weakened, (a) standing — carriers gripper-amplitude (open <=32.3 vs
+# 41.69/40+ convention) + modest ch0. Ckpt banked weights-only:
+# fontaine-checkpoints/grasp_sft_v2_joint_pdnorm_democlean_step3000.
+# Next cell pre-reg DRAFTED: posts/2026-08-21-prereg-clean-gripper-
+# carrier.md (demos + clean_gripfix x4, ch5 x1.2907); exec item
+# clean-gripfix-exec queued — materializer + smoke + launch next
+# session, GPU free since 07:00Z.
+# SELF-WATCH INCIDENT (class repeat, 3rd): the endpoint-close
+# session's own npz wait-loop compound command carried 'bijou.eval'
+# in its cmdline diagnostics -> pgrep self-match, loop never exited,
+# ~20 min lost 07:00-07:20Z (no GPU idle cost — battery was already
+# done; the WAIT was the only casualty). Sharpened rule: wait-loop
+# conditions must pgrep for patterns NOT present in the loop's own
+# command text — prefer file-existence + unit-state checks
+# (systemctl is-active) over pgrep in session shells.
+
+# (no live runs 07:2xZ 08-21 — GPU free; next launch: clean-gripfix-exec
+# after its materializer oracles, see queue.)
 
 # (no_live_runs_reason cleared 14:25Z 08-16 — demo_gen_v1 launched on the A100 box; prior: HOME-GPU-only declaration of 10:2xZ 08-16.)
 

@@ -311,3 +311,77 @@ exonerates (≥20), this probe documents why 0.7% clean is harmless
 alone: it is near-manifold rig data — annotated complete
 pick-and-place — everywhere except one joint's shift and one
 channel's amplitude convention.
+
+## Results — endpoint verdict (banked 06:3xZ 08-21)
+
+*Results append, not a spec edit. Train closed 3000/3000 at 03:58:45Z
+08-21 (final loss 0.2903, zero gate crossings, ~13.7 GPU-h vs the 17
+gate); sim100 leg closed 06:33:22Z through the battery unit
+`fontaine-democlean-endpoint-battery` (protocol byte-matched to the
+onerig/convicted batteries). Artifacts:
+`outputs/sim/grasp_sft/democlean_endpoint/flow_unseen.json`, paired
+reads `reports/analysis__sim100_paired_democlean3000_vs_{onerig3000,
+disc1000,pdnorm3000}.json`, checkpoint banked weights-only to
+`fontaine-checkpoints/grasp_sft_v2_joint_pdnorm_democlean_step3000`.*
+
+**Plain words.** The test came back guilty: train on the simulated
+demos plus ONLY the seven tiny real-robot episodes — the big
+real-robot dataset removed entirely — and grasping still collapses,
+8 successes out of 100 versus 28 for the sibling model that used the
+big real dataset instead. Seven episodes, 0.7% of what the model
+sees, are sufficient to poison the run by themselves. The
+"interaction" explanation (that the failure needed all three
+datasets together) is dead. And the most unsettling part: every
+offline health metric looked perfect the whole way — the training
+probe tracked the healthy run's curve, not the poisoned one. Only
+actually rolling out the policy in simulation caught it.
+
+**VERDICT: 8/100 — the ≤10 band. Clean-alone is SUFFICIENT; the
+poison is pinned to the 7-episode clean set.** Success seeds {16,
+18, 39, 45, 58, 60, 61, 95}, mean progress 3.39 cm, zero reset
+strikes.
+
+Paired per-seed reads (`sim100_paired_read.py`, McNemar exact):
+
+| pair | Δ successes | CI95 | p | reading |
+|---|---|---|---|---|
+| vs onerig 28/100 (demos+v2) | **−20** | [−30, −10] | 0.00033 | same recipe, same dose class; the only delta is WHICH rig set — v2 helps, clean poisons |
+| vs control 11/100 (demos only) | −3 | [−11, +5] | 0.61 | indistinguishable from never mixing at all |
+| vs convicted 1/100 (three-way) | **+7** | [+2, +13] | 0.039 | dropping v2 rescued a little; the collapse floor belongs to clean |
+
+![Probe curves: demos+clean vs the convicted and exonerated cells](../img/democlean/probe_curve_contrast.png)
+
+**The probe curve saw nothing.** The record-only read (2) closes with
+a stark answer: democlean's eval fell monotonically 11.82@250 →
+4.6848@3000 — ending AT the exonerated onerig cell's level (4.53),
+with no trace of the convicted 2250–2750 elevation — while grasping
+sat collapsed at 8/100 the whole time. The convicted cell's probe
+elevation was v2-linked, not collapse-linked. This is the second
+decoupling in this lineage (the k4l2 panel already failed to
+separate 28/100 from 1/100): **offline action-MAE probes do not see
+this failure class; grasping lives in sim100.**
+
+**Mechanism scorecard** (named in "The cell" above): **(c)
+composition-only — REFUTED** (the collapse fired with v2 absent).
+**(b) degenerate stats row — weakened** at boot (banked autopsy: no
+near-constant clean channel; worst ratio ×2.84 ch0) and further
+weakened by the verdict landing under per-dataset rows. **(a)
+content — standing, with named carriers**: the manifold probe banked
+above localizes clean's anomaly to the gripper amplitude compression
+(open plateau ≤32.3 raw vs the 40+ demos/v2 convention, ×4-repeated)
+plus a modest ch0 shoulder-pan shift — both mechanisms' fingerprints
+point at concrete, editable channels rather than "real data is
+different".
+
+**Registered follow-up (this pre-reg's ≤10 branch + the queued
+verdict-contingent decision): the gripper-carrier isolation cell** —
+demos + clean with clean's gripper channel remapped to the shared
+open convention, testing whether the amplitude convention alone
+carries the poison. Pre-reg draft to follow as its own post. The
+repeat-1 dose arm stays parked (the autopsy was not inconclusive —
+it positively weakened (b)).
+
+*Production stance unchanged: the recipe of record stays demos + v2
+(28/100); clean is quarantined from every mix until the carrier is
+pinned. Panel guard + truthfit rewear ride the battery's leg 2 and
+land in the endpoint report.*

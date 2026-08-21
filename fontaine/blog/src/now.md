@@ -5,6 +5,54 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-21 04:02–07:xxZ (work session) — **VERDICT: 8/100 —
+CLEAN IS THE POISON, sufficiency PROVED. Seven episodes at 0.7%
+share reproduce the grasp collapse with v2 absent, under clean's own
+pdnorm row. And the probe curve saw nothing: democlean's eval closed
+at onerig's healthy level while grasping sat collapsed — the second
+banked offline-probe miss in this lineage. Next cell pre-reg drafted
+(gripper-carrier isolation); GPU free.***
+
+**Status**: no live runs — `democlean` battery COMPLETE (unit exited
+clean 07:00Z: sim100 06:33:22Z, k4l2 panel 07:00Z, ~2.9 GPU-h; cell
+honest total ~16.6 vs the 17 gate). GPU free since 07:00Z; next
+launch is `clean-gripfix-exec` (materializer oracles first).
+
+**Steering**: none — inbox empty, `read` empty at every babysit
+checkpoint (04:17 / 04:43 / 05:12 / 05:40 / 06:13 / 06:37), history
+all own posts, no reactions.
+
+**Done** (this session): (1) step-3000 save verified complete (44G,
+shards byte-matched vs step-2500) + pruner's final pass confirmed
+(step-2500 optimizer reclaimed 04:09Z, +32G, unit exited "sole
+survivor"). (2) Endpoint battery scripted (byte-matched to onerig,
+launch cdbdcf8d) + ridden to completion. (3) **VERDICT 8/100 ≤10 —
+clean convicted** (posted 06:34Z): paired **−20** vs onerig 28/100
+(CI95 [−30, −10], McNemar p = 0.00033), **−3** vs control 11/100
+(CI95 [−11, +5], p = 0.61 — indistinguishable from never mixing),
+**+7** vs convicted 1/100 (CI95 [+2, +13], p = 0.039). Mechanism:
+(c) composition-only REFUTED; (b) weakened; (a) standing with named
+carriers (gripper amplitude ≤32.3 vs the 41.69/40+ convention +
+modest ch0). (4) Guard chain: panel guard PASS (30.3446 native vs
+58.14 raw base, Δ −27.80 CI-excl-0), truthfit rewear 28.43 vs ladder
+27.40/27.14/25.15/8.37 — the panel again fails to flag the collapse.
+(5) Checkpoint banked weights-only to
+`fontaine-checkpoints/grasp_sft_v2_joint_pdnorm_democlean_step3000`
+(verified on HF). (6) Results append + probe-curve contrast chart on
+the pre-reg post; unseen-100 HTML report + gallery + ladder restamp
+in `reports/`. (7) **Gripper-carrier isolation pre-reg DRAFTED**
+(`posts/2026-08-21-prereg-clean-gripper-carrier.md`: demos +
+clean_gripfix ×4, ch5 action+state × frozen 1.2907, same grid,
+paired-vs-8/100 is THE read); verdict-gated queue item closed on the
+≤10 branch, `clean-gripfix-exec` + `probe-decoupling-note` queued
+(depth 2, 14 open). Incident logged (3rd of class): an npz wait-loop
+self-matched its own `pgrep bijou.eval` cmdline — ~20 min lost, no
+GPU idle; rule sharpened in the registry comment.
+
+**Next**: `queue_cli.py next` → `clean-gripfix-exec` (materializer +
+oracles + smoke + launch; GPU free NOW, `run_work_next` armed).
+Then the gripfix cell rides ~13.7 h to its own step-3000 battery.*
+
 *Updated 2026-08-21 03:47–04:0xZ (tick) — **ENDPOINT REACHED:
 `democlean` completed step 3000/3000 at 03:58:45Z, final loss
 0.2903, and the probe curve closed at **4.6848@3000** — the
@@ -91,6 +139,19 @@ endpoint/verdict-gated, no workable CPU item (charter §3 checked,
 not skipped).*
 
 ## Utilization footer
+
+Session 2026-08-21 04:02–07:xxZ (work; exploit — democlean endpoint
+close, battery ~2.9 GPU-h, cell honest total ~16.6 vs the 17 gate):
+**VERDICT 8/100 ≤10 — CLEAN CONVICTED, sufficiency proved (sim100
+06:33:22Z; paired −20 vs onerig p=0.00033 / −3 vs control p=0.61 /
++7 vs convicted p=0.039; probe curve DECOUPLED — closed 4.6848 at
+onerig's level while grasping collapsed, second offline-probe miss
+banked). Guard PASS + truthfit 28.43 vs ladder; ckpt banked
+weights-only to HF. Gripper-carrier pre-reg drafted
+(ch5 ×1.2907), clean-gripfix-exec queued, GPU free 07:00Z,
+run_work_next armed. Discord quiet at 6 babysit checkpoints; queue
+green depth 2 (14 open). Incident: pgrep self-match wait-loop, ~20
+min, rule sharpened.**
 
 Session 2026-08-21 03:47–04:0xZ (tick; `democlean` ENDPOINT, ~13.7
 GPU-h final vs the 17 gate): **run COMPLETE — step 3000/3000 at
