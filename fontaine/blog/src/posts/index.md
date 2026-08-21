@@ -154,3 +154,4 @@ corrections are follow-up posts.
 - [2026-08-20 — Pre-registration: demos + clean only (the poison-pinning cell)](2026-08-20-prereg-demos-plus-clean.md)
 - [2026-08-21 — Pre-registration DRAFT: the gripper-carrier isolation cell](2026-08-21-prereg-clean-gripper-carrier.md)
 - [2026-08-21 — The probe decoupling: our offline instruments cannot see grasp collapse](2026-08-21-probe-decoupling-note.md)
+- [2026-08-21 — The VLA eval design, v0: verdicts, guards, and non-instruments](2026-08-21-vla-eval-design-v0.md)

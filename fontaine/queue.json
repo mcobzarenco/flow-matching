@@ -1,6 +1,6 @@
 {
- "updated_utc": "2026-08-21T09:05:00Z",
- "depth_reason": "depth 2 open items: gpu-local democlean-endpoint-close (endpoint-gated ~03:3xZ 08-21; babysit rides the train) + cpu clean-content-manifold-probe (any work window, feeds the mechanism adjudication). Refill decision owed at the R2 boundary EXECUTED 14:2xZ 08-20 at the democlean launch.",
+ "updated_utc": "2026-08-21T23:55:00Z",
+ "depth_reason": "depth 2 open items: gpu-local gripfix-endpoint-close (battery LIVE, verdict-gated ~02:5xZ 08-22) + cpu squint-twin-screen-prereg (any work window; eval-design v0 slot 2). Refilled 23:5xZ 08-21 at the vla-eval-design-doc close.",
  "items": [
   {
    "id": "grpo-r2-serving-parity-fix",
@@ -2570,11 +2570,22 @@
   {
    "id": "vla-eval-design-doc",
    "class": "cpu",
-   "status": "queued",
+   "status": "done",
    "owner_hold": false,
    "prereg": "",
    "title": "VLA eval-design doc v0 (CPU, any GPU-busy window; north star feed): turn the probe-decoupling standing rule (posts/2026-08-21-probe-decoupling-note.md) into the rig-eval design skeleton the eventual owner-rig VLA needs: (1) verdict instruments \u2014 rollout-based only; sim100 today, Squint-class twin rollouts (lit 0819) as the cheap relative screen, real-rig protocol sketch (seeds, paired per-seed reads, McNemar, reset discipline); (2) guard instruments \u2014 k4l2 panel as wear/normalization-seam guard with banked-anchor thresholds, in-train probe as divergence alarm, truthfit-rewear seam decomposition; (3) the explicit non-instruments list (what may never gate a verdict) with the two banked decoupling cases as the exhibits. One blog page, chart reuse OK; ideas.md hook line.",
-   "boundary": "Queued 09:0xZ 08-21 at the probe-decoupling-note close (refill, keeps open depth >=2 alongside gripfix-endpoint-close)."
+   "boundary": "Queued 09:0xZ 08-21 at the probe-decoupling-note close (refill, keeps open depth >=2 alongside gripfix-endpoint-close).",
+   "done_utc": "2026-08-21T23:55:00Z",
+   "done_note": "Design doc v0 landed posts/2026-08-21-vla-eval-design-v0.md (chart reuse: decoupling_columns.png) + ideas.md #16 hook line. Architecture: every instrument gets exactly one pre-registered role \u2014 verdict (rollouts only: sim100 paired-McNemar today, Squint-tier relative screens next, rig protocol sketch w/ blinded paired trials >=50/cell, KS-on-CDFs + continuous progress, exteroceptive label audits, replay-retention rider) / guard (k4l2 panel wear-bug threshold vs banked npz, in-train probe divergence alarm, truthfit-rewear seam bound \u2014 hygiene only, silence proves nothing) / non-instrument (six-entry never-gates-a-verdict list, each with its banked convicting exhibit). v1 slots named: sim-vs-rig calibration + rig-day riders, Squint pre-reg (refilled as squint-twin-screen-prereg), rig verdict-grid grammar in KS terms, precision ceiling c. No new experiments; every number a banked read."
+  },
+  {
+   "id": "squint-twin-screen-prereg",
+   "class": "cpu",
+   "status": "queued",
+   "owner_hold": false,
+   "prereg": "",
+   "title": "Squint-twin relative-screen pre-reg DRAFT (CPU, any work window; eval-design v0 slot 2): resolve the tier decision from the banked wrist-transfer screen outcome, then draft the pre-registration for first Squint-substrate use \u2014 camera/overlay variant (ThirdCameraEnv vs wrist, apply_overlay choice, 224x224 sensor_configs), sim-adaptation sanity arm design, which checkpoint pairs A/B first, and the claims contract (relative deltas only, domain gap held constant; absolute numbers never \u2014 in-domain BC 41.9% is the warning label). Draft posts for owner visibility; NO launch from this item. Preflight facts banked 08-14 (GO mechanically, 1.35 s/ep CPU floor).",
+   "boundary": "Queued 23:5xZ 08-21 at the eval-design-v0 close (refill, keeps open depth >=2 alongside gripfix-endpoint-close)."
   }
  ]
 }

@@ -912,7 +912,19 @@ record; the line here is the hook). *Index last updated 2026-08-13.*
   reward patch (in-reward knock-away penalty), an lr/β re-price from
   the banked step_0004, or stopping the ladder are the owner's
   boundary options (in-channel 03:1xZ,
-  `grpo-phase2-boundary-decision`).
+  `grpo-phase2-boundary-decision`). New 2026-08-21
+  ([eval-design doc v0](posts/2026-08-21-vla-eval-design-v0.md)):
+  the probe-decoupling rule generalized into the bench's instrument
+  architecture — every instrument gets exactly one pre-registered
+  role: **verdict** (rollouts only: sim100 paired-McNemar today →
+  Squint-tier relative screens → rig protocol sketch with blinded
+  paired trials, ≥50/cell, KS-on-CDFs, exteroceptive label audits,
+  retention rider) / **guard** (panel, probe, truthfit rewear —
+  anchored thresholds, hygiene only, silence proves nothing) /
+  **non-instrument** (the six-entry list of what may never gate a
+  verdict, each with its banked convicting exhibit). v1 slots named:
+  sim-vs-rig calibration, Squint pre-reg, rig verdict-grid grammar
+  in KS terms, precision ceiling c.
 - **`lit-arms` [#15 Literature-sourced arms](ideas/15-literature-arms.md)** —
   the arXiv radar; every borrowed idea cites its source, every
   "novel" idea gets a search first. Feeds the Papers section.
