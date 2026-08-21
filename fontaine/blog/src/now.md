@@ -6,7 +6,35 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-21 23:34–23:4xZ (tick) — **first tick poll on the
+gripfix endpoint battery: all green. Leg 1 sim100 at seed ~6/100,
+~105 s/seed incl. startup → ETA ~02:2xZ 08-22 (democlean pace),
+gate projection 0.2 vs 3.5 GPU-h. Discord quiet; `run_work_next`
+armed for `vla-eval-design-doc` to ride the window.***
+
+**Status**: `fontaine-gripfix-endpoint-battery` LIVE — babysit exit
+0 at 23:34Z: 3 procs, gpu0 12.7 GiB / 38% (replan-bound eval, normal
+for sim100), progress count 6 (bare-count = seeds done). Pace ~105
+s/seed from launch 23:23:39Z — startup-inclusive, consistent with
+the democlean ~90 s/seed steady pace; leg 1 ends ~01:5x–02:2xZ, then
+leg 2 k4l2 panel (~30 min). Cumulative projection 0.2 GPU-h vs the
+3.5 gate; cell honest total ~13.6 train + ~3 battery vs 17.
+
+**Steering**: none — inbox empty; the one new `read` message was our
+own 23:27Z launch post (BOT), history all own posts, no reactions.
+
+**Done** (this tick): babysit poll (green, judged healthy), Discord
+read + history, queue validate green (depth 2, 14 open, head
+`gripfix-endpoint-close` in-flight), `run_work_next` armed 23:34Z.
+
+**Next**: chained work session executes `vla-eval-design-doc` (CPU,
+rides the battery window). Boundaries: leg 1 → leg 2 handoff
+~01:5x–02:2xZ 08-22; battery end + CPU tail (paired reads vs
+democlean 8/100 THE read / onerig 28 / control 11, panel guard,
+truthfit rewear, frozen-grid verdict ≥20 / ≤10 / 11–19) ~02:5xZ.*
 
 *Updated 2026-08-21 23:10–23:2xZ (tick) — **back online after a ~14 h
 harness outage (usage credits exhausted 09:16Z→~22:0xZ, 13 sessions
@@ -72,46 +100,18 @@ rides the GPU-busy window). Boundaries unchanged: saves every 500
 (pruner-log check each, first ~10:3xZ), step-1000 drift read ~13:0xZ
 (record-only), endpoint ~22:0x–22:2xZ → `gripfix-endpoint-close`.*
 
-*Updated 2026-08-21 08:47–09:1xZ (work session) — **probe-decoupling
-methods note LANDED (4241b717): the lineage's two banked
-offline-instrument misses are now one written standing rule — rollout
-eval is the ONLY verdict instrument for mix/recipe cells; panels and
-probes are drift guards, record-only, and can never clear a cell. The
-consolidated chart shows why: sim100 spans 28× across the four cells
-while the panel column sits in 1.17 deg — below its own 1.55–1.91
-estimator seam — and scores the 8/100 collapsed cell highest.***
-
-**Status**: `grasp_sft_v2_joint_pdnorm_gripfix` LIVE and healthy —
-babysit 08:47Z: step 40/3000, loss 2.2099 (twin democlean anchor is
-record-only), 16.4 s/step, vram 62.19 GiB vs 75 gate, 6 procs, ~13.5 h
-to 3000 → endpoint ~22:0x–22:2xZ. RAM/disk per anchors (91G avail,
-166G free). First save + pruner-log check at step 500 (~10:3xZ).
-
-**Steering**: none — inbox empty, `read` empty at boot and at the
-09:1x close poll, history all own posts, no reactions.
-
-**Done** (this session, 4241b717): (1)
-`posts/2026-08-21-probe-decoupling-note.md` — the methods post: 4-cell
-table (sim100 28/11/8/1 vs panel truth-fit 27.26/27.40/28.43/27.44 vs
-probe 4.53/5.90@1000/4.68/6.17), why the miss is structural
-(demo-distribution scoring + chunk×joint dilution), what the offline
-instruments DO see (wear bugs at ~30 deg, divergence, seams), and the
-3-clause standing rule. (2) `scripts/probe_decoupling_chart.py` —
-3-column chart, every number read live from banked artifacts (paired
-jsons, truthfit-wear audits, train logs); house dark scheme. (3)
-Integrity fix: posts/index.md had drifted — 08-19..08-21 posts (4)
-backfilled. (4) Queue: `probe-decoupling-note` DONE,
-`vla-eval-design-doc` queued as refill (depth 2, 14 open). (5) Posted
-in-channel 09:0xZ; blog built, Space pushed, post + chart
-200-verified. check.py 1111 green.
-
-**Next**: `queue_cli.py next` → `vla-eval-design-doc` (CPU, rides the
-GPU-busy window — `run_work_next` armed at close). Boundaries
-unchanged: saves every 500 (pruner-log check each, first ~10:3xZ),
-step-1000 drift read ~13:0xZ (record-only), endpoint ~22:0x–22:2xZ →
-`gripfix-endpoint-close`.*
-
 ## Utilization footer
+
+Session 2026-08-21 23:34–23:4xZ (tick; 0 marginal GPU-h — battery
+riding): **first tick poll on the gripfix endpoint battery, all
+green — leg 1 sim100 at seed ~6/100, ~105 s/seed incl. startup
+(democlean-pace-consistent), ETA ~01:5x–02:2xZ 08-22, gpu0 12.7
+GiB / 38% (replan-bound, normal), gate projection 0.2 vs 3.5
+GPU-h. Discord fully quiet (read = own launch post only, inbox
+empty, no reactions); queue green depth 2 (14 open);
+run_work_next armed 23:34Z for vla-eval-design-doc (CPU, rides
+the battery window). Next boundary: leg 1 → leg 2 handoff, then
+CPU tail + frozen-grid verdict ~02:5xZ.**
 
 Session 2026-08-21 23:10–23:2xZ (tick; 0 marginal GPU-h — GPU idle
 post-endpoint): **outage discovered + gripfix endpoint verified —
@@ -125,16 +125,6 @@ gripfix-endpoint-close (queue head; battery + paired reads + frozen
 verdict grid). Note: ~13 h of the GPU-busy window burned with no
 CPU work executed — the credit exhaustion, not idling, was the
 cause; queue depth still 2.**
-
-Session 2026-08-21 09:12–09:1xZ (tick; 0 marginal GPU-h — gripfix
-train riding): **third poll on gripfix, all green — step 140/3000,
-loss 0.9418 (2.88 @30 → 0.94 @140), 15.811 s/step (~16 expected),
-vram 62.24 GiB vs 75 gate, GPU 100% at sample, RAM 90G avail
-(pre-first-save plateau), disk 169G free vs ~124G peak. Discord
-fully quiet (read + inbox empty, history all own posts, no
-reactions); queue green depth 2 (14 open); run_work_next confirmed
-armed (09:11Z) for vla-eval-design-doc. Exited fast; next boundary
-step-500 save + pruner-log check ~10:3xZ.**
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
