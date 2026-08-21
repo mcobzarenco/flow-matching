@@ -9,12 +9,15 @@
 # Recipe = the democlean launcher
 # (launch_local_grasp_sft_v2_joint_1gpu_pdnorm_democlean_h100.sh,
 # convicted cell 8/100 on 2026-08-21) with exactly ONE delta:
-# so101_pick_place_clean -> so101_pick_place_clean_gripfix — the same
-# 7 episodes with ch5 (gripper, action AND state) scaled by the
+# so101_pick_place_clean -> so101_pick_place_clean_gripfix_a — the
+# same 7 episodes with ch5 (gripper, action AND state) scaled by the
 # frozen 41.69/32.3 = 1.2907 (materializer
-# make_clean_gripfix_dataset.py, oracles hard-fail). The
-# --dataset-repeat glob 'mcobzarenco/so101_pick_place*=4' matches the
-# renamed set unchanged. Everything else verbatim: per-dataset flow
+# make_clean_gripfix_dataset.py, oracles hard-fail). The `_a` suffix
+# is pre-reg Amendment 1: the episode holdout keys on repo_id, and
+# `_a` is chosen so the draw is (2,) — episode-identical clean train
+# split vs democlean ({0,1,3,4,5,6}, 3026 kept frames, 0.69% share).
+# The --dataset-repeat glob 'mcobzarenco/so101_pick_place*=4' matches
+# the renamed set unchanged. Everything else verbatim: per-dataset flow
 # norm, joint objective + insulate-flow, recompute-stats (gives
 # clean_gripfix its own pdnorm row from the transformed values),
 # repeat-4, eff-96 = micro-12 x 8 chunks, act-ckpt + offload-optim +
@@ -58,7 +61,7 @@ fi
 
 uv run python -m bijou.train \
   --train-data ~/datasets/fontaine/grasp_demos_v2/merged \
-               ~/datasets/mcobzarenco/so101_pick_place_clean_gripfix \
+               ~/datasets/mcobzarenco/so101_pick_place_clean_gripfix_a \
   --dataset-repeat 'mcobzarenco/so101_pick_place*=4' \
   --init-from ~/checkpoints/molmoact2-so101-released \
   --objective joint --joint-ce-weight 1.0 --insulate-flow \

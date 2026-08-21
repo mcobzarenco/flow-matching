@@ -164,3 +164,30 @@ democlean curve (same-seed, one-channel-delta twin runs).
 session's only freedoms are the materializer's file-format details
 and the launch window. Any spec change lands as a registered
 amendment first.*
+
+## Amendment 1 (registered 08:0xZ 2026-08-21, pre-launch): dataset named `_a` to preserve the episode-identical train split
+
+**Found at exec, before launch.** The episode holdout is a pure
+function of `(repo_id, num_episodes, fraction, split_seed)`
+(`bijou/data.py::holdout_episodes`). Renaming the clean set therefore
+redraws which of the 7 episodes is held out: `so101_pick_place_clean`
+(democlean) holds out **episode 2** (373 frames; 3026 trained, 0.69%
+effective share), while the draft's `so101_pick_place_clean_gripfix`
+would hold out **episode 6** — the run would train on {0,1,2,3,4,5}
+where democlean trained on {0,1,3,4,5,6}. That one-episode swap is a
+second treatment variable riding THE paired read: a ≥20 verdict could
+mean "the gripper convention was the carrier" or "poison-heavy episode
+6 left the train split" (per-episode content demonstrably matters —
+per-episode LOO is this pre-reg's own named follow-up).
+
+**The fix stays inside the frozen recipe**: the materialized dataset is
+named **`so101_pick_place_clean_gripfix_a`**, chosen so its draw is
+exactly `(2,)` — the clean-side train split becomes episode-identical
+to democlean's ({0,1,3,4,5,6}, 3026 kept frames, 0.69% share, the same
+373-frame episode held out). The demos split is untouched (its draw
+keys on its own repo id) and the `--dataset-repeat
+'mcobzarenco/so101_pick_place*=4'` glob matches the new name
+unchanged. No flag, seed, or read moves; the launcher's single delta
+is the dataset path. (The draft's "0.70% share" line was itself a
+rounding of democlean's logged 0.69% — the `_a` split reproduces the
+logged value exactly.)*

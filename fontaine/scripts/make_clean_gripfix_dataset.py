@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-"""Materialize so101_pick_place_clean_gripfix — the gripper-carrier
+"""Materialize so101_pick_place_clean_gripfix_a — the gripper-carrier
 isolation transform (pre-reg 2026-08-21, posts/2026-08-21-prereg-clean-
-gripper-carrier.md).
+gripper-carrier.md). The ``_a`` suffix is pre-reg Amendment 1: the
+episode holdout keys on repo_id, and ``_a`` makes the draw ``(2,)`` —
+the clean-side train split stays episode-identical to democlean's.
 
 One frozen edit: channel 5 (gripper.pos) of BOTH the ``action`` and
 ``observation.state`` columns is scaled by SCALE = 41.69 / 32.3 (the
@@ -29,7 +31,7 @@ Oracles (all hard-fail):
 Usage:
   uv run python fontaine/scripts/make_clean_gripfix_dataset.py \
       [--src ~/datasets/mcobzarenco/so101_pick_place_clean] \
-      [--dst ~/datasets/mcobzarenco/so101_pick_place_clean_gripfix]
+      [--dst ~/datasets/mcobzarenco/so101_pick_place_clean_gripfix_a]
 """
 
 from __future__ import annotations
@@ -165,7 +167,7 @@ def main() -> None:
     ap.add_argument("--src", default="~/datasets/mcobzarenco/so101_pick_place_clean")
     ap.add_argument(
         "--dst",
-        default="~/datasets/mcobzarenco/so101_pick_place_clean_gripfix",
+        default="~/datasets/mcobzarenco/so101_pick_place_clean_gripfix_a",
     )
     ap.add_argument("--force", action="store_true", help="overwrite an existing dst")
     args = ap.parse_args()
