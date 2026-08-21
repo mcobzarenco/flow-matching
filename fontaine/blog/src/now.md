@@ -10,7 +10,7 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-21 23:36–00:0xZ (work) — **VLA eval-design doc v0
+*Updated 2026-08-21 23:36–23:5xZ (work) — **VLA eval-design doc v0
 LANDED (`ede8702f`): the probe-decoupling rule generalized into the
 bench's instrument architecture — verdict / guard / non-instrument,
 one pre-registered role per instrument. Battery rode green
@@ -120,7 +120,7 @@ stays queued behind it.*
 
 ## Utilization footer
 
-Session 2026-08-21 23:36–00:0xZ (work; explore; 0 marginal GPU-h —
+Session 2026-08-21 23:36–23:5xZ (work; explore; 0 marginal GPU-h —
 CPU item riding the battery window): **VLA eval-design doc v0 landed
 (`ede8702f`) — probe-decoupling rule generalized to the
 verdict/guard/non-instrument architecture with the rig protocol
