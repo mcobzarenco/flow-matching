@@ -8,7 +8,35 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-21 23:54–23:5xZ (tick) — **routine poll, all
+green: battery at seed 20/100, window pace ~0.9 seed/min (faster
+than the startup-inclusive estimate), gate projection 0.5 vs 3.5
+GPU-h. Discord quiet; `run_work_next` already armed (23:50Z) for
+the chained `squint-twin-screen-prereg` work session.***
+
+**Status**: `fontaine-gripfix-endpoint-battery` LIVE — babysit exit
+0 at 23:55Z: 3 procs, gpu0 12.7 GiB / 28%, seed 20/100, window rate
+~0.9 seed/min (15 → 20 since 23:49Z), gate projection 0.5 vs 3.5
+GPU-h. At the window pace leg 1 ends ~01:3xZ 08-22 (vs ~02:1xZ on
+the startup-inclusive estimate), then leg 2 k4l2 (~30 min) + CPU
+tail → frozen-grid verdict ~02:3x–02:5xZ.
+
+**Steering**: none — inbox empty, `read` empty, history all own
+posts, no reactions.
+
+**Done** (this tick): babysit poll (green, judged healthy), Discord
+read + history, queue validate green (depth 2, 14 open),
+`run_work_next` confirmed armed (23:50Z, untouched).
+
+**Next**: chained work session babysits the battery and works
+`squint-twin-screen-prereg` (CPU). Boundaries unchanged: leg 1 →
+leg 2 handoff ~01:3x–02:1xZ 08-22; battery end + CPU tail (paired
+reads vs democlean 8/100 THE read / onerig 28 / control 11, panel
+guard, truthfit rewear, frozen-grid verdict ≥20 / ≤10 / 11–19)
+~02:3x–02:5xZ.*
 
 *Updated 2026-08-21 23:36–23:5xZ (work) — **VLA eval-design doc v0
 LANDED (`ede8702f`): the probe-decoupling rule generalized into the
@@ -79,46 +107,16 @@ rides the battery window). Boundaries: leg 1 → leg 2 handoff
 democlean 8/100 THE read / onerig 28 / control 11, panel guard,
 truthfit rewear, frozen-grid verdict ≥20 / ≤10 / 11–19) ~02:5xZ.*
 
-*Updated 2026-08-21 23:10–23:2xZ (tick) — **back online after a ~14 h
-harness outage (usage credits exhausted 09:16Z→~22:0xZ, 13 sessions
-died 429 at boot); gripfix ran unattended through all of it and
-COMPLETED clean: 3000/3000, endpoint ~22:07Z, probe closed 4.88@3000.
-Endpoint state verified; `gripfix-endpoint-close` chained.***
-
-**Status**: `grasp_sft_v2_joint_pdnorm_gripfix` TRAIN COMPLETE —
-3000/3000, ~13.6/17 GPU-h, wandb synced 22:08Z. Probe curve closed
-smooth (5.06@2000 → 4.97 → 4.96 → 4.89 → 4.88@3000, no convicted-cell
-elevation; record-only, sim100 owns the verdict). All 6 saves verified
-(step_003000 full weights + optimizer; pruner kept-latest worked, unit
-inactive). GPU 0 MiB, no strays (babysit's "1 proc" = the known pgrep
-self-match). Disk 74G free, RAM 196G avail. Battery NOT yet run.
-
-**Steering**: none from the owner — inbox empty; the 13 new `read`
-messages were all harness BOT alerts (session exit 1, 09:17Z→22:08Z).
-Root cause from the 220818Z tick log: 429 `out_of_credits`
-(seven-day overage rejected, resetsAt 22:00Z 08-22 in the payload;
-credits evidently topped back up — this 23:10Z session runs). Every
-boundary check during the outage (step-500…3000 saves, step-1000
-drift read) was missed; all were record-only/hygiene, the run never
-needed intervention. Outage + completion posted in-channel 23:1xZ
-(id 1540498974002258013).
-
-**Done** (this tick): Discord read (13 alerts) + history; babysit
-(exit 1 = post-completion liveness trip, judged benign); endpoint
-verification (log tail + wandb footer, 6 save dirs, step_003000
-full, pruner log, GPU/procs); babysit.toml gripfix entry PRUNED
-with the outage post-mortem; queue validate green (depth 2, 14
-open, head `gripfix-endpoint-close`); `run_work_next` armed 23:12Z.
-
-**Next**: chained work session executes `gripfix-endpoint-close` —
-sim100 battery (democlean pattern: stand-ins pin, stats-repo
-grasp_demos_v2/merged) + k4l2 panel + guard vs disc-1000 npz +
-paired reads vs democlean 8/100 (THE read) / onerig 28/100 /
-control 11/100; verdict through the frozen grid (≥20 / ≤10 / 11–19).
-GPU free; policy-server check at launch. `vla-eval-design-doc`
-stays queued behind it.*
-
 ## Utilization footer
+
+Session 2026-08-21 23:54–23:5xZ (tick; 0 marginal GPU-h — battery
+riding): **routine green poll — seed 20/100 @ 23:55Z, ~0.9 seed/min
+window rate (15 → 20 since 23:49Z), gpu0 12.7 GiB / 28%, gate
+projection 0.5 vs 3.5 GPU-h. Discord fully quiet (read + inbox
+empty, no reactions); queue green depth 2 (14 open); run_work_next
+already armed 23:50Z for squint-twin-screen-prereg. Next boundary:
+leg 1 → leg 2 handoff ~01:3x–02:1xZ 08-22, frozen-grid verdict
+~02:3x–02:5xZ.**
 
 Session 2026-08-21 23:36–23:5xZ (work; explore; 0 marginal GPU-h —
 CPU item riding the battery window): **VLA eval-design doc v0 landed
@@ -130,30 +128,6 @@ pre-reg slot (depth 2 green). Battery green at all three polls
 (seed 15/100 @ 23:49Z, gate 0.4/3.5 GPU-h). Discord quiet.
 run_work_next armed for squint-twin-screen-prereg; battery verdict
 ~02:5xZ.**
-
-Session 2026-08-21 23:34–23:4xZ (tick; 0 marginal GPU-h — battery
-riding): **first tick poll on the gripfix endpoint battery, all
-green — leg 1 sim100 at seed ~6/100, ~105 s/seed incl. startup
-(democlean-pace-consistent), ETA ~01:5x–02:2xZ 08-22, gpu0 12.7
-GiB / 38% (replan-bound, normal), gate projection 0.2 vs 3.5
-GPU-h. Discord fully quiet (read = own launch post only, inbox
-empty, no reactions); queue green depth 2 (14 open);
-run_work_next armed 23:34Z for vla-eval-design-doc (CPU, rides
-the battery window). Next boundary: leg 1 → leg 2 handoff, then
-CPU tail + frozen-grid verdict ~02:5xZ.**
-
-Session 2026-08-21 23:10–23:2xZ (tick; 0 marginal GPU-h — GPU idle
-post-endpoint): **outage discovered + gripfix endpoint verified —
-harness was down ~14 h (429 out_of_credits, 09:16Z→22:08Z, 13
-sessions died at boot; credits reset, this tick first through).
-gripfix COMPLETED unattended 3000/3000 ~22:07Z (~13.6/17 GPU-h,
-probe 4.88@3000 record-only, all saves verified, pruner clean, GPU
-0 MiB). babysit.toml pruned with post-mortem; outage + completion
-posted in-channel; run_work_next armed 23:12Z for
-gripfix-endpoint-close (queue head; battery + paired reads + frozen
-verdict grid). Note: ~13 h of the GPU-busy window burned with no
-CPU work executed — the credit exhaustion, not idling, was the
-cause; queue depth still 2.**
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +

@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-21T09:05:00Z
+**Updated:** 2026-08-21T23:55:00Z
 
-**Depth call:** depth 2 open items: gpu-local democlean-endpoint-close (endpoint-gated ~03:3xZ 08-21; babysit rides the train) + cpu clean-content-manifold-probe (any work window, feeds the mechanism adjudication). Refill decision owed at the R2 boundary EXECUTED 14:2xZ 08-20 at the democlean launch.
+**Depth call:** depth 2 open items: gpu-local gripfix-endpoint-close (battery LIVE, verdict-gated ~02:5xZ 08-22) + cpu squint-twin-screen-prereg (any work window; eval-design v0 slot 2). Refilled 23:5xZ 08-21 at the vla-eval-design-doc close.
 
-**14 open** (Live 0 · Queued 2 · Blocked 12 · Done 271)
+**14 open** (Live 0 · Queued 2 · Blocked 12 · Done 272)
 
 ## 🔴 Live (0)
 
@@ -18,15 +18,15 @@
 
 *ready — waiting on a window or a boundary*
 
-**`vla-eval-design-doc`** · `cpu`
+**`squint-twin-screen-prereg`** · `cpu`
 
-VLA eval-design doc v0 (CPU, any GPU-busy window; north star feed): turn the probe-decoupling standing rule (posts/2026-08-21-probe-decoupling-note.md) into the rig-eval design skeleton the eventual owner-rig VLA needs: (1) verdi…
+Squint-twin relative-screen pre-reg DRAFT (CPU, any work window; eval-design v0 slot 2): resolve the tier decision from the banked wrist-transfer screen outcome, then draft the pre-registration for first Squint-substrate use
 
-**boundary:** Queued 09:0xZ 08-21 at the probe-decoupling-note close (refill, keeps open depth &gt;=2 alongside gripfix-endpoint-close).
+**boundary:** Queued 23:5xZ 08-21 at the eval-design-v0 close (refill, keeps open depth &gt;=2 alongside gripfix-endpoint-close).
 
 <details><summary>full record</summary>
 
-VLA eval-design doc v0 (CPU, any GPU-busy window; north star feed): turn the probe-decoupling standing rule (posts/2026-08-21-probe-decoupling-note.md) into the rig-eval design skeleton the eventual owner-rig VLA needs: (1) verdict instruments — rollout-based only; sim100 today, Squint-class twin rollouts (lit 0819) as the cheap relative screen, real-rig protocol sketch (seeds, paired per-seed reads, McNemar, reset discipline); (2) guard instruments — k4l2 panel as wear/normalization-seam guard with banked-anchor thresholds, in-train probe as divergence alarm, truthfit-rewear seam decomposition; (3) the explicit non-instruments list (what may never gate a verdict) with the two banked decoupling cases as the exhibits. One blog page, chart reuse OK; ideas.md hook line.
+Squint-twin relative-screen pre-reg DRAFT (CPU, any work window; eval-design v0 slot 2): resolve the tier decision from the banked wrist-transfer screen outcome, then draft the pre-registration for first Squint-substrate use — camera/overlay variant (ThirdCameraEnv vs wrist, apply_overlay choice, 224x224 sensor_configs), sim-adaptation sanity arm design, which checkpoint pairs A/B first, and the claims contract (relative deltas only, domain gap held constant; absolute numbers never — in-domain BC 41.9% is the warning label). Draft posts for owner visibility; NO launch from this item. Preflight facts banked 08-14 (GO mechanically, 1.35 s/ep CPU floor).
 
 </details>
 
@@ -218,9 +218,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (271)
+## ✅ Done (272)
 
 *closed — the full record stays in each fold*
+
+**`vla-eval-design-doc`** · `cpu`
+
+VLA eval-design doc v0 (CPU, any GPU-busy window; north star feed): turn the probe-decoupling standing rule (posts/2026-08-21-probe-decoupling-note.md) into the rig-eval design skeleton the eventual owner-rig VLA needs: (1) verdi…
+
+**boundary:** Queued 09:0xZ 08-21 at the probe-decoupling-note close (refill, keeps open depth &gt;=2 alongside gripfix-endpoint-close).
+
+<details><summary>full record</summary>
+
+VLA eval-design doc v0 (CPU, any GPU-busy window; north star feed): turn the probe-decoupling standing rule (posts/2026-08-21-probe-decoupling-note.md) into the rig-eval design skeleton the eventual owner-rig VLA needs: (1) verdict instruments — rollout-based only; sim100 today, Squint-class twin rollouts (lit 0819) as the cheap relative screen, real-rig protocol sketch (seeds, paired per-seed reads, McNemar, reset discipline); (2) guard instruments — k4l2 panel as wear/normalization-seam guard with banked-anchor thresholds, in-train probe as divergence alarm, truthfit-rewear seam decomposition; (3) the explicit non-instruments list (what may never gate a verdict) with the two banked decoupling cases as the exhibits. One blog page, chart reuse OK; ideas.md hook line.
+
+</details>
+
+---
 
 **`probe-decoupling-note`** · `cpu`
 
