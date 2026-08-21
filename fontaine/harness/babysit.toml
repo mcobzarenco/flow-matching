@@ -1,7 +1,44 @@
 # Babysit run registry (#21 P1). One entry per LIVE run; update at
 # launch time, prune at completion. Schema: fontaine/scripts/babysit.py.
 
-no_live_runs_reason = "declared 23:1xZ 08-21 tick: gripfix train COMPLETE 3000/3000 ~22:07Z and pruned (endpoint verified clean after the ~14 h credit outage; battery NOT yet run). Local H100 FREE. Next GPU leg: gripfix-endpoint-close battery in the chained work session (run_work_next armed 23:12Z). Owner policy-server check applies before any local launch."
+# (no_live_runs_reason cleared 23:23:39Z 08-21 work session — gripfix
+# endpoint battery launched, entry below; prior: "declared 23:1xZ 08-21
+# tick: gripfix train COMPLETE 3000/3000 ~22:07Z and pruned (endpoint
+# verified clean after the ~14 h credit outage; battery NOT yet run).
+# Local H100 FREE. Next GPU leg: gripfix-endpoint-close battery in the
+# chained work session (run_work_next armed 23:12Z). Owner
+# policy-server check applies before any local launch.")
+
+# LIVE — gripfix endpoint battery (queue: gripfix-endpoint-close;
+# pre-reg posts/2026-08-21-prereg-clean-gripper-carrier.md + amendment
+# 1; launched 23:23:39Z 08-21, unit fontaine-gripfix-endpoint-battery;
+# script launch_gripfix_endpoint_battery.sh, protocol byte-matched to
+# the democlean battery, only name/path deltas — compute-app guard
+# passed, GPU was 0 MiB, no policy-server). Leg 1 sim100 unseen 0-99
+# (stand-ins pin, --stats-repo-id grasp_demos_v2/merged) -> leg 2 k4l2
+# panel_v2 + npz.
+[[run]]
+name = "gripfix_endpoint_battery"
+kind = "progress-log"
+host = "local"
+pgrep = "rollout_sim|bijou.eval"
+pgrep_min = 1
+gpu_indices = [0]
+gpu_mem_min_mib = 2000
+log = "/home/ubuntu/eval__gripfix_endpoint_sim100.log"
+progress_re = "seed [0-9]+ replan [0-9]+"
+started_utc = "2026-08-21T23:23:39Z"
+gpu_hours_per_wall_hour = 1.0
+boundary = "leg 1 sim100 ~2.5 h -> ~01:5xZ 08-22 (progress counter = seed 0-99), then leg 2 k4l2 panel (~30 min, log /home/ubuntu/eval__grasp_sft_v2_joint_1gpu_pdnorm_gripfix__step_003000__panel_v2_k4l2_euler10_draws1_stable.log); CPU tail: paired reads (democlean 8/100 THE read, onerig 28/100, control 11/100) + panel guard vs disc-1000 npz + truthfit rewear + verdict post through the frozen grid (>=20 gripper amplitude IS the carrier / <=10 NOT sole carrier / 11-19 ambiguous)"
+anchors = [
+    "cell honest total: train ~13.6 + battery ~3 vs the 17 GPU-h gate — near-zero slack, no extra legs",
+    "verdict grid (pre-reg, frozen): >=20 carrier confirmed -> bank same-session, mix-hygiene rule, clean re-enters pool remapped; <=10 not sole carrier -> follow-up ladder ch0 shift then per-episode LOO; 11-19 ambiguous -> per-channel MAE + slices + videos, no claim",
+    "paired anchors banked: democlean 8/100 (THE read), onerig 28/100, control 11/100, convicted 1/100; probe closed 4.88@3000 RECORD-ONLY (decoupling banked twice)",
+    "checkpoint bank per pre-reg: endpoint banks weights-only to fontaine-checkpoints same-session on any decisive read",
+]
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 3.5
 # (no_live_runs_reason cleared 08:28:45Z 08-21 — gripfix launched at the delegated window off the amended pre-reg; prior: "declared 07:4xZ 08-21 work session: democlean endpoint battery COMPLETE and pruned (unit exited clean 07:00Z; VERDICT 8/100 — clean convicted, all guards banked, ckpt on HF). Local H100 FREE. Next GPU leg: clean-gripfix-exec (materializer oracles -> smoke -> launch, queue head; run_work_next armed). Owner policy-server check applies before any local launch.")
 
 # SELF-MATCH INCIDENT (4th of class, 08:4xZ 08-21 launch session): a
