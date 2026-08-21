@@ -6,6 +6,34 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-21 08:44–08:5xZ (tick) — **second poll on gripfix,
+all green: step 30/3000, loss 3.59 → 2.88, 15.4 s/step on the ~16
+expectation, vram 62.19 GiB vs the 75 gate. The babysit snapshot's
+0% util read was an inter-step dip — resampled 100%/565–571W.
+Discord quiet; exited fast.***
+
+**Status**: `grasp_sft_v2_joint_pdnorm_gripfix` LIVE and healthy
+(launched 08:28:45Z). Babysit exit 0: 6 procs, step 30, loss
+2.8807, window 2.2 steps/min (log-quantization noise on a 4.5-min
+window, instantaneous 15.437 s/step is the real rate → ~12.7 h to
+3000, endpoint ~22:0x–22:2xZ). RAM 91G available (pre-first-save
+plateau per the democlean anchor), disk 166G free vs ~124G peak.
+First save + pruner-log check at step 500 (~10:3xZ); step-1000
+drift read ~13:0xZ (record-only).
+
+**Steering**: none — inbox empty, `read` empty, `history -n 5` all
+own posts (latest: the 08:34Z launch post), no reactions.
+
+**Done** (this tick): babysit poll (green, judged healthy),
+starvation spot-check (3× util samples: 100/100/0% — dip, not
+starvation), RAM/disk check, queue validate green (depth 2, 14
+open), `run_work_next` confirmed armed (08:40Z).
+
+**Next**: chained work session executes `probe-decoupling-note`
+(CPU, rides the GPU-busy window). Boundaries unchanged: saves
+every 500 (pruner-log check each), step-1000 drift read ~13:0xZ,
+endpoint ~22:0x–22:2xZ → `gripfix-endpoint-close`.*
+
 *Updated 2026-08-21 07:33–08:4xZ (work session) — **GRIPFIX LAUNCHED
 08:28:45Z: the gripper-carrier isolation cell is training. Amendment
 1 registered pre-launch: the holdout draw keys on repo_id, so the
@@ -139,6 +167,16 @@ Then the gripfix cell rides ~13.7 h to its own step-3000 battery.*
 
 ## Utilization footer
 
+Session 2026-08-21 08:44–08:5xZ (tick; 0 marginal GPU-h — gripfix
+train riding): **second poll on gripfix, all green — step 30/3000,
+loss 2.8807, 15.437 s/step (~16 expected), vram 62.19 GiB vs 75
+gate, RAM 91G avail, disk 166G free. Babysit's instantaneous 0%
+util read resampled: 100%/565–571W with one inter-step dip — no
+starvation. Discord fully quiet (read + inbox empty, history all
+own posts, no reactions); queue green depth 2 (14 open);
+run_work_next armed (08:40Z) for probe-decoupling-note. Exited
+fast; next boundary step-500 save + pruner-log check ~10:3xZ.**
+
 Session 2026-08-21 07:33–08:4xZ (work; exploit — gripfix cell
 launch, ~0.1 GPU-h smokes, train riding on the 17 gate):
 **clean-gripfix-exec EXECUTED end-to-end: materializer + 5 oracles
@@ -161,17 +199,6 @@ first poll, no GPU idle, rule sharpened in the registry (anchor
 pgrep patterns outside the loop's own cmdline; file-existence waits
 are the safe default). Smoke debris pruned (+44G, /tmp step-20
 save).**
-
-Session 2026-08-21 07:29–07:4xZ (tick; 0 GPU-h — quiet handoff, no
-live runs): **state-verify tick between the democlean close and the
-gripfix work session — GPU free (0 MiB, no bijou procs, no
-policy-server claim), Discord fully quiet (read empty, inbox empty,
-history all own posts, no reactions), queue green depth 2 (14
-open), `run_work_next` marker confirmed armed (07:23Z). Git audit
-of `clean-gripfix-exec`: materializer not yet in tree (item
-accurate — work session writes it), battery pattern script present
-to clone. Exited fast to keep the idle window short; chained work
-session owns materializer + oracles + smoke + launch.**
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
