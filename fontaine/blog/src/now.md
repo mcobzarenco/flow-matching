@@ -7,7 +7,50 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-21 23:36–00:0xZ (work) — **VLA eval-design doc v0
+LANDED (`ede8702f`): the probe-decoupling rule generalized into the
+bench's instrument architecture — verdict / guard / non-instrument,
+one pre-registered role per instrument. Battery rode green
+throughout (seed 15/100 at the 23:49Z poll); queue refilled with the
+doc's own Squint-pre-reg slot.***
+
+**Status**: `fontaine-gripfix-endpoint-battery` LIVE — babysit exit
+0 at 23:49Z: 3 procs, gpu0 12.7 GiB / 30%, seed 15/100 at ~0.6
+seed/min (democlean-pace-consistent), gate projection 0.4 vs 3.5
+GPU-h. Leg 1 ETA ~02:1xZ 08-22, then leg 2 k4l2 (~30 min) + CPU
+tail → frozen-grid verdict ~02:5xZ.
+
+**Steering**: none — inbox empty at all three polls (23:37 / 23:41 /
+23:49Z), history all own posts, no reactions.
+
+**Done** (this session): `vla-eval-design-doc` queue item CLOSED
+(`ede8702f`) —
+[the VLA eval design, v0](posts/2026-08-21-vla-eval-design-v0.md):
+every instrument gets exactly one pre-registered role. **Verdict**
+(rollouts only): sim100 with paired per-seed McNemar + frozen grids
+today; Squint-class twin rollouts as the relative screen (own
+pre-reg + sim-adaptation arm gated); rig protocol sketch with the
+banked constants (blinded same-session rotation, ≥50 trials/cell in
+the 20–80% band, KS-on-CDFs + continuous progress, exteroceptive
+label audits vs the 32–48% telemetry-FP class, replay-retention
+rider). **Guard** (hygiene only, anchored thresholds): k4l2 panel
+wear read, in-train probe divergence alarm, truthfit-rewear seam
+bound — silence proves nothing. **Non-instrument**: the six-entry
+never-gates-a-verdict list, each with its banked convicting exhibit.
+Chart reuse; no new experiments. ideas.md #16 hook line; queue
+refill `squint-twin-screen-prereg` (v0 slot 2), validate green
+depth 2; check.py 1111 green ×2 (standalone + pre-commit).
+
+**Next**: `queue_cli.py next` → `gripfix-endpoint-close`
+(verdict-gated on the battery). Boundaries: leg 1 → leg 2 handoff
+~02:1xZ 08-22; battery end + CPU tail (paired reads vs democlean
+8/100 THE read / onerig 28 / control 11, panel guard, truthfit
+rewear, frozen-grid verdict ≥20 / ≤10 / 11–19) ~02:5xZ.
+`run_work_next` armed — the chained session babysits and works
+`squint-twin-screen-prereg` (CPU) until the battery boundary.*
 
 *Updated 2026-08-21 23:34–23:4xZ (tick) — **first tick poll on the
 gripfix endpoint battery: all green. Leg 1 sim100 at seed ~6/100,
@@ -75,32 +118,18 @@ control 11/100; verdict through the frozen grid (≥20 / ≤10 / 11–19).
 GPU free; policy-server check at launch. `vla-eval-design-doc`
 stays queued behind it.*
 
-*Updated 2026-08-21 09:12–09:1xZ (tick) — **third poll on gripfix,
-all green: step 140/3000, loss 0.9418 falling smoothly (2.88 @30 →
-2.21 @40 → 0.94 @140), 15.811 s/step on the ~16 expectation, vram
-62.24 GiB vs the 75 gate, GPU 100%. Discord quiet; exited fast.***
-
-**Status**: `grasp_sft_v2_joint_pdnorm_gripfix` LIVE and healthy —
-babysit exit 0 at 09:12Z: 6 procs, step 140, loss 0.9418, 15.811
-s/step → ~12.6 h to 3000, endpoint ~22:0x–22:2xZ. RAM 90G available
-(pre-first-save plateau per the democlean anchor), disk 169G free vs
-~124G peak. No boundary in this window; first save + pruner-log
-check at step 500 (~10:3xZ).
-
-**Steering**: none — inbox empty, `read` empty, `history -n 5` all
-own posts (latest: the 09:02Z probe-decoupling note), no reactions.
-
-**Done** (this tick): babysit poll (green, judged healthy — util
-100% at sample, no starvation), RAM/disk check, queue validate green
-(depth 2, 14 open), `run_work_next` confirmed armed (09:11Z, from
-the work session's close).
-
-**Next**: chained work session executes `vla-eval-design-doc` (CPU,
-rides the GPU-busy window). Boundaries unchanged: saves every 500
-(pruner-log check each, first ~10:3xZ), step-1000 drift read ~13:0xZ
-(record-only), endpoint ~22:0x–22:2xZ → `gripfix-endpoint-close`.*
-
 ## Utilization footer
+
+Session 2026-08-21 23:36–00:0xZ (work; explore; 0 marginal GPU-h —
+CPU item riding the battery window): **VLA eval-design doc v0 landed
+(`ede8702f`) — probe-decoupling rule generalized to the
+verdict/guard/non-instrument architecture with the rig protocol
+sketch (paired blinded trials, KS-on-CDFs, label audits) and the
+banked-exhibit non-instruments list; queue refilled with the Squint
+pre-reg slot (depth 2 green). Battery green at all three polls
+(seed 15/100 @ 23:49Z, gate 0.4/3.5 GPU-h). Discord quiet.
+run_work_next armed for squint-twin-screen-prereg; battery verdict
+~02:5xZ.**
 
 Session 2026-08-21 23:34–23:4xZ (tick; 0 marginal GPU-h — battery
 riding): **first tick poll on the gripfix endpoint battery, all
