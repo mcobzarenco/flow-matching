@@ -1,5 +1,7 @@
 # Babysit run registry (#21 P1). One entry per LIVE run; update at
 # launch time, prune at completion. Schema: fontaine/scripts/babysit.py.
+
+no_live_runs_reason = "declared 23:1xZ 08-21 tick: gripfix train COMPLETE 3000/3000 ~22:07Z and pruned (endpoint verified clean after the ~14 h credit outage; battery NOT yet run). Local H100 FREE. Next GPU leg: gripfix-endpoint-close battery in the chained work session (run_work_next armed 23:12Z). Owner policy-server check applies before any local launch."
 # (no_live_runs_reason cleared 08:28:45Z 08-21 — gripfix launched at the delegated window off the amended pre-reg; prior: "declared 07:4xZ 08-21 work session: democlean endpoint battery COMPLETE and pruned (unit exited clean 07:00Z; VERDICT 8/100 — clean convicted, all guards banked, ckpt on HF). Local H100 FREE. Next GPU leg: clean-gripfix-exec (materializer oracles -> smoke -> launch, queue head; run_work_next armed). Owner policy-server check applies before any local launch.")
 
 # SELF-MATCH INCIDENT (4th of class, 08:4xZ 08-21 launch session): a
@@ -15,37 +17,28 @@
 # instead). File-existence waits (used for the launch jsonl wait this
 # same session) are the safe default.
 
-[[run]]
-name = "gripfix"
-kind = "train-jsonl"
-host = "local"
-pgrep = "grasp_sft_v2_joint_1gpu_pdnorm_gripfix"
-pgrep_min = 1
-gpu_indices = [0]
-gpu_mem_min_mib = 8000
-jsonl = "/home/ubuntu/checkpoints/finetune/grasp_sft_v2_joint_1gpu_pdnorm_gripfix/train_log.jsonl"
-total_steps = 3000
-probe_key = "eval_chunk_mae"
-vram_key = "vram_alloc_peak_gib"
-started_utc = "2026-08-21T08:28:45Z"
-gpu_hours_per_wall_hour = 1.0
-boundary = "democlean-class pace ~16 s/step => ~13.7 GPU-h, endpoint ~22:0x-22:2xZ 08-21; boundaries: step-1000 drift read (record-only — the probe canNOT clear this cell, decoupling banked twice), step-3000 endpoint -> same battery pattern as democlean (sim100 stand-ins pin, --stats-repo-id grasp_demos_v2/merged) + panel guard vs disc-1000 npz + paired reads vs democlean 8/100 (THE read) AND onerig 28/100 AND control 11/100; verdict through the frozen grid (>=20 gripper-IS-the-carrier / <=10 not-sole-carrier -> ch0 next, then per-episode LOO / 11-19 ambiguous)"
-anchors = [
-    "DEMOCLEAN twin curve (same seed, one-channel delta, episode-identical clean split per Amendment 1): 11.82/8.14/7.90/6.49/5.95/5.72/5.454/4.9305/4.8687/4.809/4.6445/4.6848 — RECORD-ONLY twin read; the collapsed democlean cell closed at onerig's healthy level, so curve position proves nothing about grasping",
-    "CONVICTED pdnorm-mixed curve (the 2250-2750 elevation signature, also record-only): 12.91/8.24/6.65/6.11/5.72/5.62/5.45/5.47/6.59/6.83/6.32/6.17",
-    "smoke fit (final _a config): vram peak 62.19 GiB (== democlean smoke), 20.7 -> 14.76 s/step by step 20 (chunked warmup) -> ~16 s/step steady expected; starvation check at first poll (util+rate+free-g+df)",
-    "boot-line oracle BANKED at smoke: clean_gripfix_a x4 3026 -> 12104 frames 0.69% share, byte-matching democlean's logged line (Amendment 1: holdout draw (2,) episode-identical); demos split untouched",
-    "record-only pdnorm-row oracle: clean_gripfix_a recomputed stats row vs clean's banked row — ch5 scale moves x1.29, every other channel pinned (live materializer check at boot)",
-    "disk: 163G free at launch (democlean final optimizer.pt 32G pruned post-close per onerig precedent); 44G/save class, keep-latest pruner unit fontaine-gripfix-ckpt-prune live from launch (scripts/prune_superseded_optimizers.sh, 10-min loop, weights never touched, log outputs/logs/gripfix_ckpt_prune.log) -> peak need ~124G, margin ~39G; each poll: df + pruner-log check after each save",
-    "RAM (democlean-measured on the identical recipe): available drops ~90G -> 46-49G across the first save then plateaus (trainer RSS high-water ~139G, shm 20G); escalate only on a falling tick-over-tick trend toward <20G",
-    "verdict grid: >=20 gripper amplitude IS the carrier (banks same-session, mix-hygiene rule + clean re-enters pool remapped); <=10 NOT the sole carrier (follow-up ladder: ch0, then per-episode LOO); 11-19 ambiguous (control band) -> breakdowns + videos, no claim",
-]
-[[run.gates]]
-kind = "vram_max_gib"
-value = 75.0
-[[run.gates]]
-kind = "gpu_hours_max"
-value = 17.0
+# gripfix TRAIN entry PRUNED 23:1xZ 08-21 tick — TRAIN COMPLETE
+# 3000/3000, endpoint ~22:07Z 08-21 (wandb sync footer 22:08Z; log +
+# save mtimes; ~13.6/17 GPU-h). Discovered at the FIRST session after a
+# ~14 h HARNESS OUTAGE (usage credits exhausted 09:16Z-~22:0xZ —
+# work session 091622Z + 13 hourly ticks all died 429 out_of_credits,
+# resetsAt read 22:00Z from the 220818Z tick log; every in-flight
+# boundary check step-500..3000 was missed; the run itself never
+# needed intervention). Endpoint state verified clean at discovery:
+# all 6 saves on disk, step_003000 full (weights + optimizer.pt),
+# keep-latest pruner did its job (earlier saves weights-only, unit
+# inactive post-run), GPU 0 MiB, no leftover procs (babysit's "1 proc"
+# was the known pgrep self-match class). Probe curve closed
+# 4.88@3000: 6.11@1250 -> 5.78/5.50/5.06/4.97/4.96/4.89/4.88 —
+# RECORD-ONLY (decoupling banked twice; sim100 owns the verdict).
+# Battery NOT yet run — queue head gripfix-endpoint-close fires in
+# the chained work session (run_work_next armed 23:12Z), GPU free.
+# Verdict grid + battery pattern + anchors live in the queue item and
+# posts/2026-08-21-prereg-clean-gripper-carrier.md.
+
+# (no live runs 23:1xZ 08-21 — GPU free; next launch:
+# gripfix-endpoint-close battery in the chained work session. Owner
+# policy-server check applies before any local launch.)
 #
 # LOSS KEYS (main 32149df, merged 08-16): runs launched after the merge
 # write mechanism-qualified component keys — loss_action_flow (flow MSE),

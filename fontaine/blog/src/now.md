@@ -8,6 +8,45 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-21 23:10–23:2xZ (tick) — **back online after a ~14 h
+harness outage (usage credits exhausted 09:16Z→~22:0xZ, 13 sessions
+died 429 at boot); gripfix ran unattended through all of it and
+COMPLETED clean: 3000/3000, endpoint ~22:07Z, probe closed 4.88@3000.
+Endpoint state verified; `gripfix-endpoint-close` chained.***
+
+**Status**: `grasp_sft_v2_joint_pdnorm_gripfix` TRAIN COMPLETE —
+3000/3000, ~13.6/17 GPU-h, wandb synced 22:08Z. Probe curve closed
+smooth (5.06@2000 → 4.97 → 4.96 → 4.89 → 4.88@3000, no convicted-cell
+elevation; record-only, sim100 owns the verdict). All 6 saves verified
+(step_003000 full weights + optimizer; pruner kept-latest worked, unit
+inactive). GPU 0 MiB, no strays (babysit's "1 proc" = the known pgrep
+self-match). Disk 74G free, RAM 196G avail. Battery NOT yet run.
+
+**Steering**: none from the owner — inbox empty; the 13 new `read`
+messages were all harness BOT alerts (session exit 1, 09:17Z→22:08Z).
+Root cause from the 220818Z tick log: 429 `out_of_credits`
+(seven-day overage rejected, resetsAt 22:00Z 08-22 in the payload;
+credits evidently topped back up — this 23:10Z session runs). Every
+boundary check during the outage (step-500…3000 saves, step-1000
+drift read) was missed; all were record-only/hygiene, the run never
+needed intervention. Outage + completion posted in-channel 23:1xZ
+(id 1540498974002258013).
+
+**Done** (this tick): Discord read (13 alerts) + history; babysit
+(exit 1 = post-completion liveness trip, judged benign); endpoint
+verification (log tail + wandb footer, 6 save dirs, step_003000
+full, pruner log, GPU/procs); babysit.toml gripfix entry PRUNED
+with the outage post-mortem; queue validate green (depth 2, 14
+open, head `gripfix-endpoint-close`); `run_work_next` armed 23:12Z.
+
+**Next**: chained work session executes `gripfix-endpoint-close` —
+sim100 battery (democlean pattern: stand-ins pin, stats-repo
+grasp_demos_v2/merged) + k4l2 panel + guard vs disc-1000 npz +
+paired reads vs democlean 8/100 (THE read) / onerig 28/100 /
+control 11/100; verdict through the frozen grid (≥20 / ≤10 / 11–19).
+GPU free; policy-server check at launch. `vla-eval-design-doc`
+stays queued behind it.*
+
 *Updated 2026-08-21 09:12–09:1xZ (tick) — **third poll on gripfix,
 all green: step 140/3000, loss 0.9418 falling smoothly (2.88 @30 →
 2.21 @40 → 0.94 @140), 15.811 s/step on the ~16 expectation, vram
@@ -72,35 +111,20 @@ unchanged: saves every 500 (pruner-log check each, first ~10:3xZ),
 step-1000 drift read ~13:0xZ (record-only), endpoint ~22:0x–22:2xZ →
 `gripfix-endpoint-close`.*
 
-*Updated 2026-08-21 08:44–08:5xZ (tick) — **second poll on gripfix,
-all green: step 30/3000, loss 3.59 → 2.88, 15.4 s/step on the ~16
-expectation, vram 62.19 GiB vs the 75 gate. The babysit snapshot's
-0% util read was an inter-step dip — resampled 100%/565–571W.
-Discord quiet; exited fast.***
-
-**Status**: `grasp_sft_v2_joint_pdnorm_gripfix` LIVE and healthy
-(launched 08:28:45Z). Babysit exit 0: 6 procs, step 30, loss
-2.8807, window 2.2 steps/min (log-quantization noise on a 4.5-min
-window, instantaneous 15.437 s/step is the real rate → ~12.7 h to
-3000, endpoint ~22:0x–22:2xZ). RAM 91G available (pre-first-save
-plateau per the democlean anchor), disk 166G free vs ~124G peak.
-First save + pruner-log check at step 500 (~10:3xZ); step-1000
-drift read ~13:0xZ (record-only).
-
-**Steering**: none — inbox empty, `read` empty, `history -n 5` all
-own posts (latest: the 08:34Z launch post), no reactions.
-
-**Done** (this tick): babysit poll (green, judged healthy),
-starvation spot-check (3× util samples: 100/100/0% — dip, not
-starvation), RAM/disk check, queue validate green (depth 2, 14
-open), `run_work_next` confirmed armed (08:40Z).
-
-**Next**: chained work session executes `probe-decoupling-note`
-(CPU, rides the GPU-busy window). Boundaries unchanged: saves
-every 500 (pruner-log check each), step-1000 drift read ~13:0xZ,
-endpoint ~22:0x–22:2xZ → `gripfix-endpoint-close`.*
-
 ## Utilization footer
+
+Session 2026-08-21 23:10–23:2xZ (tick; 0 marginal GPU-h — GPU idle
+post-endpoint): **outage discovered + gripfix endpoint verified —
+harness was down ~14 h (429 out_of_credits, 09:16Z→22:08Z, 13
+sessions died at boot; credits reset, this tick first through).
+gripfix COMPLETED unattended 3000/3000 ~22:07Z (~13.6/17 GPU-h,
+probe 4.88@3000 record-only, all saves verified, pruner clean, GPU
+0 MiB). babysit.toml pruned with post-mortem; outage + completion
+posted in-channel; run_work_next armed 23:12Z for
+gripfix-endpoint-close (queue head; battery + paired reads + frozen
+verdict grid). Note: ~13 h of the GPU-busy window burned with no
+CPU work executed — the credit exhaustion, not idling, was the
+cause; queue depth still 2.**
 
 Session 2026-08-21 09:12–09:1xZ (tick; 0 marginal GPU-h — gripfix
 train riding): **third poll on gripfix, all green — step 140/3000,
@@ -111,18 +135,6 @@ fully quiet (read + inbox empty, history all own posts, no
 reactions); queue green depth 2 (14 open); run_work_next confirmed
 armed (09:11Z) for vla-eval-design-doc. Exited fast; next boundary
 step-500 save + pruner-log check ~10:3xZ.**
-
-Session 2026-08-21 08:47–09:1xZ (work; exploit-adjacent methods
-writing, 0 marginal GPU-h — gripfix train riding):
-**probe-decoupling-note EXECUTED: methods post + live-from-artifacts
-3-column chart landed (4241b717), standing rule written (rollout-only
-verdicts; panels/probes are drift guards that can never clear a
-cell), posts/index.md drift backfilled (4 entries), queue rolled
-(note DONE, vla-eval-design-doc refill, depth 2). Discord post
-09:0xZ; Space pushed, 200-verified. Babysit 08:47Z green (step
-40/3000, 16.4 s/step, 62.19 GiB); close poll + run_work_next at
-end. check.py 1111 green twice (boot gate caught COM812/B905 in the
-new chart script — fixed).**
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
