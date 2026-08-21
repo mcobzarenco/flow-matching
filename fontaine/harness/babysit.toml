@@ -105,44 +105,45 @@
 # Mechanism (b)'s tiny-scale fingerprint ABSENT => (b) weakened;
 # (a) content / (c) composition stay live for the run's verdict.
 
-# LIVE — demos+clean poison-pinning cell REAL RUN (local H100; unit
-# fontaine-v2-joint-pdnorm-democlean, launched 14:15:41Z 08-20 work
-# session on smoke green). Pre-reg
-# posts/2026-08-20-prereg-demos-plus-clean.md (posted 12:20Z);
-# launcher launch_local_grasp_sft_v2_joint_1gpu_pdnorm_democlean_h100
-# .sh (expandable_segments + GPU-busy guard; GPU verified 0 MiB at
-# launch). 3000 steps eff-96, seed 0, demos + clean x4 (0.69% share),
-# pdnorm + joint + insulate, recompute-stats. Gate 17 GPU-h.
+# democlean TRAIN entry PRUNED 04:0xZ 08-21 work session — TRAIN
+# COMPLETE 3000/3000 at 03:58:45Z (~13.7/17 GPU-h, final loss 0.2903,
+# vram peak 62.24/75, zero gate crossings, no starvation). Probe curve
+# CLOSED 4.6848@3000 (train_mae 4.6311): 11.82/8.14/7.90/6.49/5.95/
+# 5.72/5.454/4.9305/4.8687/4.809/4.6445/4.6848 — the convicted
+# 2250-2750 elevation signature ABSENT end-to-end; final +0.04 uptick
+# mirrors onerig's own 4.50->4.53 (record-only read; sim100 is the
+# verdict). Step-3000 save VERIFIED complete 04:03Z (44G, all shards
+# byte-matched vs step-2500, train proc exited clean). Battery below
+# owns the verdict.
+
+# LIVE — democlean endpoint battery (local H100, unit
+# fontaine-democlean-endpoint-battery, launched 04:04:55Z 08-21 work
+# session; script scripts/launch_democlean_endpoint_battery.sh —
+# protocol byte-matched to the onerig battery, only name/path deltas;
+# wait-loop pgrep narrowed to 'bijou.train.*RUN' per the 08-19/08-20
+# deadlock class notes). Leg 1 sim100 unseen 0-99 (stand-ins pin,
+# --stats-repo-id grasp_demos_v2/merged) -> leg 2 k4l2 panel_v2 + npz.
 [[run]]
-name = "democlean"
-kind = "train-jsonl"
+name = "democlean_endpoint_battery"
+kind = "progress-log"
 host = "local"
-pgrep = "grasp_sft_v2_joint_1gpu_pdnorm_democlean"
+pgrep = "rollout_sim|bijou.eval"
 pgrep_min = 1
 gpu_indices = [0]
-gpu_mem_min_mib = 8000
-jsonl = "/home/ubuntu/checkpoints/finetune/grasp_sft_v2_joint_1gpu_pdnorm_democlean/train_log.jsonl"
-total_steps = 3000
-probe_key = "eval_chunk_mae"
-vram_key = "vram_alloc_peak_gib"
-started_utc = "2026-08-20T14:15:41Z"
+gpu_mem_min_mib = 2000
+log = "/home/ubuntu/eval__democlean_endpoint_sim100.log"
+progress_re = "seed [0-9]+ replan [0-9]+"
+started_utc = "2026-08-21T04:04:55Z"
 gpu_hours_per_wall_hour = 1.0
-boundary = "onerig-class pace ~16 s/step => ~13.5 GPU-h, endpoint ~03:3xZ 08-21; boundaries: step-1000 drift read (<= +0.30 vs the probe curve class), step-3000 endpoint -> sim100 (stand-ins pin, --stats-repo-id grasp_demos_v2/merged) + panel guard vs disc-1000 npz + paired reads vs onerig 28/100 AND control 11/100 AND convicted 1/100 + verdict through the frozen grid (>=20 / <=10 / 11-19)"
+boundary = "leg 1 sim100 ~2.5 h -> ~06:3xZ (progress counter = seed 0-99), then leg 2 k4l2 panel (~40 min, log /home/ubuntu/eval__grasp_sft_v2_joint_1gpu_pdnorm_democlean__step_003000__panel_v2_k4l2_euler10_draws1_stable.log); CPU tail: paired reads (onerig 28/100, control 11/100, convicted 1/100) + panel guard vs disc-1000 npz + truthfit rewear + verdict post through the frozen grid (<=10 clean-is-poison / >=20 three-way / 11-19 ambiguous)"
 anchors = [
-    "CONVICTED pdnorm-mixed probe curve (the poison signature this cell hunts): 12.91/8.24/6.65/6.11/5.72/5.62/5.45/5.47/6.59@2250/6.83@2500/6.32/6.17 — the 2250-2750 elevation never retraced; watch whether clean-alone reproduces it",
-    "ONERIG (demos+v2, clean dropped) curve for contrast: 12.85/8.04/6.73/5.83/5.59/4.94/4.56/4.84/4.80/4.79/4.50/4.53 — ended improving, 28/100",
-    "smoke fit: vram peak 62.19 GiB, ~24 s/step early (chunked warmup) -> onerig-class steady ~16 s/step expected; starvation check at first poll (util+rate+free-g+df)",
-    "disk: REPRICED 16:3xZ 08-20 at the step-500 save — full checkpoint is 44G (32G optimizer.pt), 6 saves = 264G vs 143G free after save-500, no built-in retention (onerig kept all 6) -> unpruned trajectory FAILS at the step-2500 save ~01:4xZ; FIX LIVE: keep-latest-optimizer pruner unit fontaine-democlean-ckpt-prune (systemd-run --user, scripts/prune_superseded_optimizers.sh, 10-min loop, weights never touched, log outputs/logs/democlean_ckpt_prune.log) — with it peak need ~124G < 143G, margin ~19G; each poll: df + check pruner log pruned the superseded optimizer after each save",
-    "RAM: available dropped 90G->48G across the step-500 save (trainer RSS high-water ~139G, /dev/shm fine at 20G) — expected to plateau (allocator reuses heap at next save); if available keeps falling tick-over-tick toward <20G, escalate as a leak",
-    "record-only reads (pre-reg): boot stats rows BANKED (no degenerate clean channel, worst x2.84 ch0); eval-250 curve vs both anchors; clean-slice eval breakdown (holdout ~1 episode — noisy, never a gate)",
+    "cell honest total: train ~13.7 + battery ~3 vs the 17 GPU-h gate — near-zero slack, no extra legs",
     "verdict grid: <=10 clean-alone SUFFICIENT (poison pinned); >=20 NOT sufficient (three-way interaction); 11-19 ambiguous (control band) -> breakdowns + videos, no claim",
+    "checkpoint bank per pre-reg: endpoint banks to fontaine-checkpoints same-session if any gated read makes it load-bearing (poison exhibit counts), weights-only + logs",
 ]
 [[run.gates]]
-kind = "vram_max_gib"
-value = 75.0
-[[run.gates]]
 kind = "gpu_hours_max"
-value = 17.0
+value = 3.5
 
 # (no_live_runs_reason cleared 14:25Z 08-16 — demo_gen_v1 launched on the A100 box; prior: HOME-GPU-only declaration of 10:2xZ 08-16.)
 
