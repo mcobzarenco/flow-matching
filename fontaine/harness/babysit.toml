@@ -26,7 +26,7 @@ pgrep_min = 1
 gpu_indices = [0]
 gpu_mem_min_mib = 500
 log = "/home/ubuntu/flow-matching/outputs/squint_screen/leg_a.log"
-progress_re = "=== |success_at_end|\\[rollout|\\[rerender|\\[convert"
+progress_re = "[0-9]+/[0-9]+"  # tqdm 6144/1500000, collection "banked N/M", rerender "N/M replayed" — grep -oE span must carry digits (03:1xZ fix: word-only spans parse no counter -> false liveness fail)
 started_utc = "2026-08-22T02:54:49Z"
 gpu_hours_per_wall_hour = 1.0
 boundary = "experts ~10-45 min each (paper claims 2-9 min/task; smoke measured ~420 env-steps/s after warmup => 1.5M default ~60 min worst case, timeout caps at 45 min with the last 100k-boundary ckpt banked), collection ~10 min, conversion ~10 min; whole unit expected done ~03:4x-04:3xZ 08-22"
