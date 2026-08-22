@@ -22,15 +22,24 @@
 # Leg B fit smoke green (16.5 s/step, vram 62.4, loss 5.68->4.25@20)
 # -> fontaine-squint-adapt launched 05:52:41Z (entry below).
 
-# LIVE — Squint qualification screen GPU LEG B: Gate-1 adaptation,
-# BOTH arms chained in one unit (fontaine-squint-adapt; frozen command
-# block = the finalization amendment Slot 6). Arm 1 onerig 500 steps
-# (~2.3 GPU-h at the smoked 16.5 s/step) then arm 2 democlean
-# identical. Jsonl below is ARM 1 — repoint to
+# LIVE — Squint qualification screen GPU LEG B RETRY r4 (incident
+# 08:10Z 08-22: attempt 1 trained arm 1 to 500/500 but the endpoint
+# save died ENOSPC (disk 99%) and the unit exited before arm 2;
+# arm-1 endpoint weights lost. Disk cleared to 196G (weights-only
+# intermediates of the 3 closed pdnorm runs pruned; endpoints kept).
+# TWO resume attempts (r2 08:40Z / r3 09:02Z, --resume step_000250,
+# fresh seed 1) both restarted the FLOW head at fresh-init loss
+# (0.09 -> 1.44 deterministic, probe 2.80@300 -> 9.19@300; AR
+# continuous) — bijou --resume bug, receipts + repro substrate in
+# ~/checkpoints/finetune/grasp_sft_v2_squint_adapt_onerig_attempt1;
+# queue item bijou-resume-flow-state-bug. r4 = full retrain, frozen
+# Slot 6 recipe VERBATIM (launch_squint_adapt_arms.sh, both arms;
+# step-10 loss 5.6788 == attempt-1 5.6789, recipe reproducing).
+# Jsonl below is ARM 1 — repoint to
 # grasp_sft_v2_squint_adapt_democlean/train_log.jsonl at the arm roll
-# (~08:1xZ; the step counter resets, that is the roll not a stall).
+# (~11:2xZ; the step counter resets, that is the roll not a stall).
 # At rc 0: adapted ckpts step_000500 both arms -> Gate-1 band pilot
-# via squint_serve_and_eval.sh (adapted onerig, port 8145) — >=20/100
+# via squint_gate12_leg.sh (adapted onerig, port 8145) — >=20/100
 # best task = Gate-1 pass; then Gate-2 paired cells.
 [[run]]
 name = "squint_adapt"
@@ -44,14 +53,15 @@ jsonl = "/home/ubuntu/checkpoints/finetune/grasp_sft_v2_squint_adapt_onerig/trai
 total_steps = 500
 probe_key = "eval_chunk_mae"
 vram_key = "vram_alloc_peak_gib"
-started_utc = "2026-08-22T05:52:41Z"
+started_utc = "2026-08-22T09:09:50Z"
 gpu_hours_per_wall_hour = 1.0
-boundary = "arm 1 onerig ~500 steps x 16.5 s => done ~08:1xZ 08-22, then arm 2 democlean => unit done ~10:3xZ; saves at 250/500; NO kill-on-probe rule (a twin-data probe has no banked reference curve — record-only first wear)"
+boundary = "r4 unit fontaine-squint-adapt-r4 launched 09:09:50Z: arm 1 onerig 500 steps x ~15.5 s => done ~11:2xZ 08-22, then arm 2 democlean => unit done ~13:3x-13:4xZ; saves at 250/500; NO kill-on-probe rule (record-only first wear). DISK: >=90G must stay free through both endpoint saves (the failure class r4 recovers from; 196G at launch). At unit done: launch leg C (squint_gate12_leg.sh header command, unit fontaine-squint-gate12), then ch0-affine-exec at the window after."
 anchors = [
-    "identical recipe both arms, seed same, no tuning, no second attempt (frozen Slot 6); ~4.5 GPU-h of the <=7 cell gate (leg A consumed ~1.9 incl. expert caps — watch the cell total at Gate-2 pricing)",
+    "identical recipe both arms, seed same, no tuning; CELL GATE CROSSING RECORDED in-channel 09:1xZ: ~4.6 GPU-h re-spend (arm-1 attempt-1 2.3 + resumes 0.4 burned by the incident) on top of the <=7 projection — infra fault, not experiment-design spend",
     "vram smoke 62.38 GiB (onerig-class); a NEW peak above ~70 = investigate",
-    "probe eval_chunk_mae on twin holdout is FIRST-WEAR record-only — no cross-lineage comparison, no kill bar",
+    "probe eval_chunk_mae on twin holdout is FIRST-WEAR record-only — no cross-lineage comparison, no kill bar; attempt-1 arm-1 curve (4.20@100 -> 2.48@500) is the informal twin",
     "at completion: do NOT delete arm-1 optimizer state before arm 2 finishes (prune-superseded-optim handles within-run saves)",
+    "attempt-1 archive grasp_sft_v2_squint_adapt_onerig_attempt1 (step_000250 + poisoned-resume jsonl sidecars) is the bijou-resume-flow-state-bug repro substrate — do NOT delete before that item closes",
 ]
 [[run.gates]]
 kind = "vram_max_gib"
