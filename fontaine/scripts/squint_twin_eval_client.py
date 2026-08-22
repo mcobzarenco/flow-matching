@@ -112,6 +112,13 @@ def main() -> None:
     ap.add_argument("--stats-repo-id", required=True)
     ap.add_argument("--num-seeds", type=int, default=100)
     ap.add_argument("--seed0", type=int, default=0)
+    ap.add_argument(
+        "--out-name",
+        default=None,
+        help="output filename stem (default <arm>_<task>); the band "
+        "pilot and its remainder use suffixed stems so the merged "
+        "n=100 cell owns the plain name",
+    )
     ap.add_argument("--replans", type=int, default=5)
     ap.add_argument("--sample-steps", type=int, default=10)
     ap.add_argument("--method", default="euler")
@@ -230,7 +237,7 @@ def main() -> None:
             )
     env.close()
 
-    out = OUT_ROOT / f"{args.arm_name}_{args.task}.json"
+    out = OUT_ROOT / f"{args.out_name or f'{args.arm_name}_{args.task}'}.json"
     out.write_text(
         json.dumps(
             {
