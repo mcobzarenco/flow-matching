@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-21T23:55:00Z
+**Updated:** 2026-08-22T00:45:00Z
 
 **Depth call:** depth 2 open items: gpu-local gripfix-endpoint-close (battery LIVE, verdict-gated ~02:5xZ 08-22) + cpu squint-twin-screen-prereg (any work window; eval-design v0 slot 2). Refilled 23:5xZ 08-21 at the vla-eval-design-doc close.
 
-**14 open** (Live 0 · Queued 2 · Blocked 12 · Done 272)
+**14 open** (Live 0 · Queued 2 · Blocked 12 · Done 273)
 
 ## 🔴 Live (0)
 
@@ -18,15 +18,15 @@
 
 *ready — waiting on a window or a boundary*
 
-**`squint-twin-screen-prereg`** · `cpu`
+**`squint-twin-screen-exec`** · `gpu-local`
 
-Squint-twin relative-screen pre-reg DRAFT (CPU, any work window; eval-design v0 slot 2): resolve the tier decision from the banked wrist-transfer screen outcome, then draft the pre-registration for first Squint-substrate use
+Squint-twin qualification screen EXEC (pre-reg drafted 08-22, eval-design v0 slot 2): (a) preflight-2 receipts, CPU any window
 
-**boundary:** Queued 23:5xZ 08-21 at the eval-design-v0 close (refill, keeps open depth &gt;=2 alongside gripfix-endpoint-close).
+**boundary:** Queued 00:3xZ 08-22 at the pre-reg draft close (refill; keeps open depth &gt;=2 alongside gripfix-endpoint-close). Sequenced AFTER gripfix-endpoint-close's battery verdict + its post-processing; preflight-2 (CPU) may ride any battery/train window earlier. | Part (a) preflight-2 receipts EXECUTED 00:4xZ 08-22 (same session as the draft; probe fontaine/scripts/squint_preflight2.py, facts outputs/squint_preflight2/facts.json + reports Space): R1 dual-camera 224 GREEN (frames banked), R2 determinism bit-equal GREEN, R3 replay tracking p50 0.0025 rad GREEN + gripper 3/3 BUT 41 arm clips all &lt;=0.047 rad (twin shoulder_lift limit ~2.7 deg tighter than our deepest demo pose; wrist_flex grazes by &lt;=0.0032) -&gt; Gate-0 limit line re-price named for finalization ('no arm clip &gt; 0.05 rad'), R4 train_squint --help rc 0 after dep install (venv torch drifted 2.6.0-cpu -&gt; 2.13.0+cu130, replay stats bit-identical across the drift). Open before FINAL: conversion oracle, adaptation command block, instruction strings, third-camera kind tag (elevated three-quarter view -&gt; front/side, NOT top), limit-line re-price, pair-2 slot (gripfix verdict). · [pre-reg](posts/2026-08-22-prereg-squint-twin-screen.md)
 
 <details><summary>full record</summary>
 
-Squint-twin relative-screen pre-reg DRAFT (CPU, any work window; eval-design v0 slot 2): resolve the tier decision from the banked wrist-transfer screen outcome, then draft the pre-registration for first Squint-substrate use — camera/overlay variant (ThirdCameraEnv vs wrist, apply_overlay choice, 224x224 sensor_configs), sim-adaptation sanity arm design, which checkpoint pairs A/B first, and the claims contract (relative deltas only, domain gap held constant; absolute numbers never — in-domain BC 41.9% is the warning label). Draft posts for owner visibility; NO launch from this item. Preflight facts banked 08-14 (GO mechanically, 1.35 s/ep CPU floor).
+Squint-twin qualification screen EXEC (pre-reg drafted 08-22, eval-design v0 slot 2): (a) preflight-2 receipts, CPU any window — dual-camera subclass renders both views (saved frames), resolve_camera_kinds judgment on the third frame (frozen kind tag), gripper affine constants (ours open 41.69 &lt;-&gt; twin sim -10..120 deg) + Gate-0 rig-episode replay green (tracking p50 &lt; 0.05 rad, determinism entry gate), LeRobot conversion oracle, train_squint.py CPU smoke; (b) finalization amendment in-channel (adaptation-recipe command block, instruction strings, third-camera kind, pair-2 slot from the gripfix frozen-grid verdict) — exec session decides + announces per no-GO-ask; (c) GPU legs at a free window, policy-server checked, systemd-run detached: SAC experts ~0.5 GPU-h -&gt; ~100 success demos/task re-rendered through the adapter -&gt; identical short bijou.train adaptation both arms (&lt;=2.5 GPU-h/arm hard) -&gt; Gate-1 floor &gt;=20/100 else F-instrument close -&gt; Gate-2 n=100 paired cells LiftCube primary/PlaceCube secondary (20-80 pct band pilot, substitution ladder Reach/Stack), adapted onerig vs democlean paired McNemar + KS-on-CDF co-primary, unadapted pair record-only rider. Cell gate &lt;=7 GPU-h abort-and-close. Twin never preempts a sim100 verdict leg.
 
 </details>
 
@@ -218,9 +218,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (272)
+## ✅ Done (273)
 
 *closed — the full record stays in each fold*
+
+**`squint-twin-screen-prereg`** · `cpu`
+
+Squint-twin relative-screen pre-reg DRAFT (CPU, any work window; eval-design v0 slot 2): resolve the tier decision from the banked wrist-transfer screen outcome, then draft the pre-registration for first Squint-substrate use
+
+**boundary:** Queued 23:5xZ 08-21 at the eval-design-v0 close (refill, keeps open depth &gt;=2 alongside gripfix-endpoint-close). | DONE 00:3xZ 08-22 (work session): pre-reg DRAFT posted (2026-08-22-prereg-squint-twin-screen.md) — tier decision resolved GO-for-qualification (wrist F-instrument + 28/100 floor both fired the 08-14 rule); three frozen gates (mechanical adapter w/ rig-episode replay, sim-adaptation positive control at n=100 w/ &gt;=20/100 floor, qualification read = adapted onerig vs democlean paired-McNemar + KS-on-CDF rehearsal); relative-only claims contract; cell gate &lt;=7 GPU-h. NO launch — exec item queued, pends preflight-2 receipts + finalization amendment (pair-2 slot waits on gripfix verdict). · [pre-reg](posts/2026-08-22-prereg-squint-twin-screen.md)
+
+<details><summary>full record</summary>
+
+Squint-twin relative-screen pre-reg DRAFT (CPU, any work window; eval-design v0 slot 2): resolve the tier decision from the banked wrist-transfer screen outcome, then draft the pre-registration for first Squint-substrate use — camera/overlay variant (ThirdCameraEnv vs wrist, apply_overlay choice, 224x224 sensor_configs), sim-adaptation sanity arm design, which checkpoint pairs A/B first, and the claims contract (relative deltas only, domain gap held constant; absolute numbers never — in-domain BC 41.9% is the warning label). Draft posts for owner visibility; NO launch from this item. Preflight facts banked 08-14 (GO mechanically, 1.35 s/ep CPU floor).
+
+</details>
+
+---
 
 **`vla-eval-design-doc`** · `cpu`
 

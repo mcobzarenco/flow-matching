@@ -191,3 +191,81 @@ unchanged. No flag, seed, or read moves; the launcher's single delta
 is the dataset path. (The draft's "0.70% share" line was itself a
 rounding of democlean's logged 0.69% — the `_a` split reproduces the
 logged value exactly.)*
+
+## Results — endpoint verdict (banked 02:1xZ 08-22)
+
+*Results append, not a spec edit. Train closed 3000/3000 ~22:07Z
+08-21 (~13.6 GPU-h vs the 17 gate, all saves verified, probe closed
+4.88@3000 — record-only per the decoupling rule); sim100 leg closed
+01:56Z 08-22 through the battery unit
+`fontaine-gripfix-endpoint-battery` (protocol byte-matched to the
+democlean/onerig/convicted batteries, ~2.6 GPU-h vs the 3.5 gate at
+the leg-1 boundary). Artifacts:
+`outputs/sim/grasp_sft/gripfix_endpoint/flow_unseen.json`, paired
+reads `reports/analysis__sim100_paired_gripfix_vs_{democlean,onerig,
+control}.json`, checkpoint banked weights-only to
+`fontaine-checkpoints/grasp_sft_v2_joint_pdnorm_gripfix_step3000`.*
+
+**Plain words.** The one-number fix didn't work. We rescaled the
+seven poisonous episodes' gripper channel so their "open" matches
+everyone else's convention — the loudest, most measurable anomaly
+those episodes have — retrained the exact same recipe, and grasping
+stayed collapsed: 5 successes out of 100, statistically
+indistinguishable from the unfixed version's 8. Whatever makes seven
+real-robot episodes poison a 5,000-episode training mix, it is not
+(only) the gripper amplitude. The suspect list now moves to the next
+candidate: a shifted shoulder joint, and if that also fails, testing
+the seven episodes one at a time.
+
+**VERDICT: 5/100 — the ≤10 band. The gripper amplitude convention is
+NOT the (sole) carrier; the poison survives the loudest-suspect
+edit.** Success seeds {16, 39, 60, 61, 71} (4 of 5 shared with
+democlean's 8), mean progress **−1.65 cm** (democlean: +3.39), zero
+reset strikes.
+
+![sim100 successes across the five protocol-matched cells vs the frozen verdict bands: onerig 28, control 11, democlean 8, gripfix 5, convicted 1](../img/gripfix/verdict_columns.png)
+
+Paired per-seed reads (`sim100_paired_read.py`, McNemar exact):
+
+| pair | Δ successes | CI95 | p | reading |
+|---|---|---|---|---|
+| vs democlean 8/100 (THE read) | −3 | [−8, +1] | 0.375 | the one-channel remap bought NO recovery |
+| vs onerig 28/100 (yardstick) | **−23** | [−32, −14] | 5.7e−06 | nowhere near the healthy cell |
+| vs control 11/100 (demos only) | −6 | [−13, +1] | 0.18 | still at-or-below never mixing at all |
+
+**The remap didn't just fail — paired progress got certifiably
+worse.** Δprogress vs democlean **−2.07 cm, CI95 [−3.03, −1.12]
+excluding zero** (win rate 31/100); vs control −1.55 [−2.55, −0.55].
+Record-only interpretation: the ×1.2907 rescale touches ch5 in both
+action AND state columns, so the model trains on gripper *states* no
+real rollout revisits — the edit may have added its own
+off-manifold artifact on top of whatever the true carrier is. The
+verdict stands on the success grid; this nuance feeds the follow-up
+design, not the claim.
+
+**Mechanism scorecard update.** The democlean verdict left "(a)
+content, with named carriers" standing, fingerprinting the gripper
+amplitude + the modest ch0 shoulder-pan shift. This cell strikes the
+gripper amplitude as a sufficient explanation. Standing: **the ch0
+shift** (the only channel exceeding the demos↔v2 reference KS both
+ways, ×2.84 worst pdnorm amplification), then content-level slicing.
+
+**Registered follow-up (this pre-reg's ≤10 branch): the ch0-shift
+cell** — same one-variable discipline, clean's shoulder-pan channel
+shifted to the shared convention; per-episode leave-one-out at ×4 (7
+cheap cells) remains the ladder's last rung. Pre-reg draft queued as
+its own item per the branch.
+
+**Hygiene guards (leg 2, banked 02:2xZ): both green, both silent as
+expected.** Panel guard vs the disc-1000 banked npz: **PASS** —
+endpoint 30.28 vs baseline 58.14 pooled chunk MAE (Δ −27.86, CI95
+[−28.56, −27.89], n=15056), nowhere near the +0.05 fail line.
+Truthfit rewear: native 30.28 → truthfit 28.35, estimator seam +1.94
+(democlean's: +1.91 — same class); ladder anchors reproduced
+(disc-1000 27.40 / released 27.14 / null 25.15). The pair of numbers
+worth staring at: gripfix's truthfit panel wear 28.35 vs democlean's
+28.43 — **essentially identical offline panels for a 5/100 and an
+8/100 policy**, the third exhibit in this lineage that the k4l2
+panel cannot see grasp collapse. Guards are hygiene; sim100 owns the
+verdict. Unseen-100 HTML report:
+`reports/eval__grasp_sft_v2_joint_1gpu_pdnorm_gripfix__step_003000__panel_v2_k4l2_euler10_draws1_stable.html`.
