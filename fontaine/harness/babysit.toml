@@ -6,39 +6,59 @@
 # 1540554796493180988); prior: "declared 02:3xZ 08-22 work session:
 # gripfix endpoint battery COMPLETE and pruned ... Local H100 FREE.")
 
-# LIVE — Squint qualification screen GPU LEG A (local H100; pre-reg
-# posts/2026-08-22-prereg-squint-twin-screen.md FINALIZED 02:5xZ; unit
-# fontaine-squint-leg-a). Five chained stages, one unit: SAC expert
-# Lift -> SAC expert Place (train_squint DR-off, ckpt each 100k steps,
-# timeout 45 min/stage) -> collect lift -> collect place (rollout +
-# dual-cam 224 re-render) -> LeRobot conversion + oracle (main venv).
-# At rc 0: verify conversion_oracle.json (round-trip < 1e-5 rad,
-# counts ~100/task) THEN launch leg B (adaptation, frozen command
-# block, both arms chained). Expert quality read: tqdm success_once /
-# success_at_end in the log — a weak expert (<~0.3 success at its
-# timeout ckpt) is a finding to price, not auto-fail.
+# squint_leg_a entry PRUNED 05:5xZ 08-22 work session — LEG A COMPLETE
+# 05:43:22Z across 3 launches (02:54:49Z + two relaunches; ~1.9 GPU-h
+# wall vs the 2.5 gate, most of it the two 45-min expert caps).
+# Banked: experts lift+place ckpt@1.1M steps (success_at_end 1.00
+# both, DR-off); demos lift 124/130 re-render successes keep 100 /
+# place 122/130 keep 100, replay divergence p50 ~0.001 rad; dataset
+# squint_twin_demos_v1 (100+100 eps, 147 rows @30Hz each); ORACLE
+# GREEN round-trip 6.5e-8 rad (gate 1e-5), PSNR 35.6/39.6 dB. Two
+# class fixes landed en route: (1) set -e turned the DESIGNED expert
+# timeout rc 124 into a unit kill; (2) vector-env truncation AUTO-RESET
+# poisoned the recorded final step (reset pose's open gripper replayed
+# as a release -> 0/130; --smoke had bypassed exactly that check —
+# smoke flags that bypass the read under test leave it untested).
+# Leg B fit smoke green (16.5 s/step, vram 62.4, loss 5.68->4.25@20)
+# -> fontaine-squint-adapt launched 05:52:41Z (entry below).
+
+# LIVE — Squint qualification screen GPU LEG B: Gate-1 adaptation,
+# BOTH arms chained in one unit (fontaine-squint-adapt; frozen command
+# block = the finalization amendment Slot 6). Arm 1 onerig 500 steps
+# (~2.3 GPU-h at the smoked 16.5 s/step) then arm 2 democlean
+# identical. Jsonl below is ARM 1 — repoint to
+# grasp_sft_v2_squint_adapt_democlean/train_log.jsonl at the arm roll
+# (~08:1xZ; the step counter resets, that is the roll not a stall).
+# At rc 0: adapted ckpts step_000500 both arms -> Gate-1 band pilot
+# via squint_serve_and_eval.sh (adapted onerig, port 8145) — >=20/100
+# best task = Gate-1 pass; then Gate-2 paired cells.
 [[run]]
-name = "squint_leg_a"
-kind = "progress-log"
+name = "squint_adapt"
+kind = "train-jsonl"
 host = "local"
-pgrep = "squint_leg_a[.]sh"
+pgrep = "squint_adapt"
 pgrep_min = 1
 gpu_indices = [0]
-gpu_mem_min_mib = 500
-log = "/home/ubuntu/flow-matching/outputs/squint_screen/leg_a.log"
-progress_re = "[0-9]+/[0-9]+"  # tqdm 6144/1500000, collection "banked N/M", rerender "N/M replayed" — grep -oE span must carry digits (03:1xZ fix: word-only spans parse no counter -> false liveness fail)
-started_utc = "2026-08-22T02:54:49Z"
+gpu_mem_min_mib = 8000
+jsonl = "/home/ubuntu/checkpoints/finetune/grasp_sft_v2_squint_adapt_onerig/train_log.jsonl"
+total_steps = 500
+probe_key = "eval_chunk_mae"
+vram_key = "vram_alloc_peak_gib"
+started_utc = "2026-08-22T05:52:41Z"
 gpu_hours_per_wall_hour = 1.0
-boundary = "experts ~10-45 min each (paper claims 2-9 min/task; smoke measured ~420 env-steps/s after warmup => 1.5M default ~60 min worst case, timeout caps at 45 min with the last 100k-boundary ckpt banked), collection ~10 min, conversion ~10 min; whole unit expected done ~03:4x-04:3xZ 08-22"
+boundary = "arm 1 onerig ~500 steps x 16.5 s => done ~08:1xZ 08-22, then arm 2 democlean => unit done ~10:3xZ; saves at 250/500; NO kill-on-probe rule (a twin-data probe has no banked reference curve — record-only first wear)"
 anchors = [
-    "priced ~0.8 GPU-h of the <=7 GPU-h cell gate (adaptation 4.5 + Gate-2 ~1 follow)",
-    "stage timeouts are hard caps: a timeout kill mid-expert still leaves runs/squint_expert_*/ckpt.pt from the last 100k eval boundary",
-    "oracle gate (frozen): action+state round-trip max |delta| < 1e-5 rad; frames bit-exact pre-encode; PSNR recorded as fact",
-    "keep-rate + replay-divergence receipts land in outputs/squint_screen/{lift,place}/rerender_facts.json",
+    "identical recipe both arms, seed same, no tuning, no second attempt (frozen Slot 6); ~4.5 GPU-h of the <=7 cell gate (leg A consumed ~1.9 incl. expert caps — watch the cell total at Gate-2 pricing)",
+    "vram smoke 62.38 GiB (onerig-class); a NEW peak above ~70 = investigate",
+    "probe eval_chunk_mae on twin holdout is FIRST-WEAR record-only — no cross-lineage comparison, no kill bar",
+    "at completion: do NOT delete arm-1 optimizer state before arm 2 finishes (prune-superseded-optim handles within-run saves)",
 ]
 [[run.gates]]
+kind = "vram_max_gib"
+value = 71.0
+[[run.gates]]
 kind = "gpu_hours_max"
-value = 2.5
+value = 5.5
 
 # gripfix endpoint battery entry PRUNED 02:3xZ 08-22 (was: launched
 # 23:23:39Z 08-21, unit fontaine-gripfix-endpoint-battery, protocol

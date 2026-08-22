@@ -2,17 +2,29 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-22T02:30:00Z
+**Updated:** 2026-08-22T05:55:00Z
 
-**Depth call:** depth 2 open items: gpu-local gripfix-endpoint-close (battery LIVE, verdict-gated ~02:5xZ 08-22) + cpu squint-twin-screen-prereg (any work window; eval-design v0 slot 2). Refilled 23:5xZ 08-21 at the vla-eval-design-doc close.
+**Depth call:** depth 2 open items: cpu ch0-shift-isolation-prereg (any work window; <=10-branch ladder rung 2) + cpu squint-gate2-harness (added 03:0xZ 08-22 — the exec item's remaining named slot broken out as its own CPU deliverable). gpu-local squint-twin-screen-exec is LIVE (leg A riding since 02:54:49Z).
 
-**14 open** (Live 0 · Queued 2 · Blocked 12 · Done 274)
+**15 open** (Live 1 · Queued 2 · Blocked 12 · Done 274)
 
-## 🔴 Live (0)
+## 🔴 Live (1)
 
 *running right now (GPU or owner-window)*
 
-*(empty)*
+**`squint-twin-screen-exec`** · `gpu-local`
+
+Squint-twin qualification screen EXEC (pre-reg drafted 08-22, eval-design v0 slot 2): (a) preflight-2 receipts, CPU any window
+
+**boundary:** Queued 00:3xZ 08-22 at the pre-reg draft close (refill; keeps open depth &gt;=2 alongside gripfix-endpoint-close). Sequenced AFTER gripfix-endpoint-close's battery verdict + its post-processing; preflight-2 (CPU) may ride any battery/train window earlier. | Part (a) preflight-2 receipts EXECUTED 00:4xZ 08-22 (same session as the draft; probe fontaine/scripts/squint_preflight2.py, facts outputs/squint_preflight2/facts.json + reports Space): R1 dual-camera 224 GREEN (frames banked), R2 determinism bit-equal GREEN, R3 replay tracking p50 0.0025 rad GREEN + gripper 3/3 BUT 41 arm clips all &lt;=0.047 rad (twin shoulder_lift limit ~2.7 deg tighter than our deepest demo pose; wrist_flex grazes by &lt;=0.0032) -&gt; Gate-0 limit line re-price named for finalization ('no arm clip &gt; 0.05 rad'), R4 train_squint --help rc 0 after dep install (venv torch drifted 2.6.0-cpu -&gt; 2.13.0+cu130, replay stats bit-identical across the drift). Open before FINAL: conversion oracle, adaptation command block, instruction strings, third-camera kind tag (elevated three-quarter view -&gt; front/side, NOT top), limit-line re-price, pair-2 slot (gripfix verdict). | Part (b) FINALIZATION AMENDMENT posted 02:5xZ 08-22 (all slots frozen: Gate-0 limit line 'no arm clip &gt; 0.05 rad'; kind tag front; instructions 'Pick up the red cube.' / '...place it in the bin.'; conversion 10-&gt;30 Hz repeat-3 + oracle re-price round-trip &lt; 1e-5 rad; adaptation block 500 steps ~2.25 GPU-h/arm identical both arms init step_003000; pair-2 EMPTY on the gripfix 5/100 verdict) + announced in-channel (id 1540554796493180988). Pipeline smoke-tested end-to-end pre-announce (replay divergence p50 0.0038 rad, oracle 6.6e-8). Part (c) LEG A LAUNCHED 02:54:49Z (unit fontaine-squint-leg-a: experts DR-off -&gt; collection -&gt; LeRobot squint_twin_demos_v1 + oracle, ~0.8 GPU-h, babysit entry live). Leg B staged: launch_squint_adapt_arms.sh fires after the oracle receipt verifies; Gate-2 rollout harness = remaining slot. | LEG A COMPLETE 05:43:22Z 08-22 (~1.9 GPU-h/2.5 gate, 3 launches): experts lift+place ckpt@1.1M success 1.00 DR-off; demos 100+100 eps (re-render keep 124/130, 122/130, divergence p50 ~0.001 rad); dataset squint_twin_demos_v1; ORACLE GREEN 6.5e-8 rad, PSNR 35.6/39.6. Two class fixes: set-e-vs-timeout unit kill; vector-env truncation auto-reset poisoned the final recorded step (open-gripper reset pose replayed as release -&gt; 0/130; --smoke had bypassed the success check). LEG B LAUNCHED 05:52:41Z (fontaine-squint-adapt, fit smoke green 16.5 s/step vram 62.4): arm 1 onerig -&gt; ~08:1xZ, arm 2 democlean -&gt; ~10:3xZ, saves 250/500. Then Gate-1 band pilot (squint_serve_and_eval.sh, adapted onerig, &gt;=20/100 best task) and Gate-2 paired cells. · [pre-reg](posts/2026-08-22-prereg-squint-twin-screen.md)
+
+<details><summary>full record</summary>
+
+Squint-twin qualification screen EXEC (pre-reg drafted 08-22, eval-design v0 slot 2): (a) preflight-2 receipts, CPU any window — dual-camera subclass renders both views (saved frames), resolve_camera_kinds judgment on the third frame (frozen kind tag), gripper affine constants (ours open 41.69 &lt;-&gt; twin sim -10..120 deg) + Gate-0 rig-episode replay green (tracking p50 &lt; 0.05 rad, determinism entry gate), LeRobot conversion oracle, train_squint.py CPU smoke; (b) finalization amendment in-channel (adaptation-recipe command block, instruction strings, third-camera kind, pair-2 slot from the gripfix frozen-grid verdict) — exec session decides + announces per no-GO-ask; (c) GPU legs at a free window, policy-server checked, systemd-run detached: SAC experts ~0.5 GPU-h -&gt; ~100 success demos/task re-rendered through the adapter -&gt; identical short bijou.train adaptation both arms (&lt;=2.5 GPU-h/arm hard) -&gt; Gate-1 floor &gt;=20/100 else F-instrument close -&gt; Gate-2 n=100 paired cells LiftCube primary/PlaceCube secondary (20-80 pct band pilot, substitution ladder Reach/Stack), adapted onerig vs democlean paired McNemar + KS-on-CDF co-primary, unadapted pair record-only rider. Cell gate &lt;=7 GPU-h abort-and-close. Twin never preempts a sim100 verdict leg.
+
+</details>
+
+---
 
 ## 🟢 Queued (2)
 
@@ -32,15 +44,15 @@ ch0-shift isolation cell pre-reg DRAFT (CPU, any window; the gripfix verdict's &
 
 ---
 
-**`squint-twin-screen-exec`** · `gpu-local`
+**`squint-gate2-harness`** · `cpu`
 
-Squint-twin qualification screen EXEC (pre-reg drafted 08-22, eval-design v0 slot 2): (a) preflight-2 receipts, CPU any window
+Squint Gate-1/2 rollout harness (CPU build; the exec item's remaining engineering slot): policy-in-twin eval loop
 
-**boundary:** Queued 00:3xZ 08-22 at the pre-reg draft close (refill; keeps open depth &gt;=2 alongside gripfix-endpoint-close). Sequenced AFTER gripfix-endpoint-close's battery verdict + its post-processing; preflight-2 (CPU) may ride any battery/train window earlier. | Part (a) preflight-2 receipts EXECUTED 00:4xZ 08-22 (same session as the draft; probe fontaine/scripts/squint_preflight2.py, facts outputs/squint_preflight2/facts.json + reports Space): R1 dual-camera 224 GREEN (frames banked), R2 determinism bit-equal GREEN, R3 replay tracking p50 0.0025 rad GREEN + gripper 3/3 BUT 41 arm clips all &lt;=0.047 rad (twin shoulder_lift limit ~2.7 deg tighter than our deepest demo pose; wrist_flex grazes by &lt;=0.0032) -&gt; Gate-0 limit line re-price named for finalization ('no arm clip &gt; 0.05 rad'), R4 train_squint --help rc 0 after dep install (venv torch drifted 2.6.0-cpu -&gt; 2.13.0+cu130, replay stats bit-identical across the drift). Open before FINAL: conversion oracle, adaptation command block, instruction strings, third-camera kind tag (elevated three-quarter view -&gt; front/side, NOT top), limit-line re-price, pair-2 slot (gripfix verdict). · [pre-reg](posts/2026-08-22-prereg-squint-twin-screen.md)
+**boundary:** Queued 03:0xZ 08-22 at the finalization amendment (leg A riding). Sequenced: build may proceed any CPU window; first GPU use = the Gate-1 band pilot on the leg-B adapted onerig arm. Budget rides inside the exec item's &lt;=7 GPU-h cell gate (~1 GPU-h priced for pilots + both n=100 cells + riders). | CLIENT BUILT 03:1xZ 08-22 (squint_twin_eval_client.py, lint-green, compile-checked in the twin venv; live smoke pends a served arm): two-process deploy-path design — bijou.policy_server in the main venv on PORT 8145 (owner rig server owns 8144, never touched), twin-venv client speaks the raw wire protocol (schema 1, /spec + /predict, b64-JPEG — the same lossy path the rig rides, identical across arms, recorded not gated). Frozen client constants: physx_cpu num_envs 1 (the R2/R3 receipt backend), 5 replans x (first 30 chunk rows, subsample-3) x 10 pd_joint_pos steps, euler-10, paired seeds 0..99, per-step predicates + qpos/target traces banked per row. Stats worn via --stats-repo-id against /spec per_dataset_stats. Named consistency decision: the twin dataset ships NO meta/camera_kinds.json — grasp_demos_v2/merged itself trains kinds-file-less, so the adaptation sees the twin demos exactly as the arms saw the rig demos; the client asserts kinds {wrist,front} at eval like sim100 asserts {top,wrist}. Remaining: server-orchestration launcher + band pilot + live smoke (first served arm), then Gate-1/Gate-2 legs. · [pre-reg](posts/2026-08-22-prereg-squint-twin-screen.md)
 
 <details><summary>full record</summary>
 
-Squint-twin qualification screen EXEC (pre-reg drafted 08-22, eval-design v0 slot 2): (a) preflight-2 receipts, CPU any window — dual-camera subclass renders both views (saved frames), resolve_camera_kinds judgment on the third frame (frozen kind tag), gripper affine constants (ours open 41.69 &lt;-&gt; twin sim -10..120 deg) + Gate-0 rig-episode replay green (tracking p50 &lt; 0.05 rad, determinism entry gate), LeRobot conversion oracle, train_squint.py CPU smoke; (b) finalization amendment in-channel (adaptation-recipe command block, instruction strings, third-camera kind, pair-2 slot from the gripfix frozen-grid verdict) — exec session decides + announces per no-GO-ask; (c) GPU legs at a free window, policy-server checked, systemd-run detached: SAC experts ~0.5 GPU-h -&gt; ~100 success demos/task re-rendered through the adapter -&gt; identical short bijou.train adaptation both arms (&lt;=2.5 GPU-h/arm hard) -&gt; Gate-1 floor &gt;=20/100 else F-instrument close -&gt; Gate-2 n=100 paired cells LiftCube primary/PlaceCube secondary (20-80 pct band pilot, substitution ladder Reach/Stack), adapted onerig vs democlean paired McNemar + KS-on-CDF co-primary, unadapted pair record-only rider. Cell gate &lt;=7 GPU-h abort-and-close. Twin never preempts a sim100 verdict leg.
+Squint Gate-1/2 rollout harness (CPU build; the exec item's remaining engineering slot): policy-in-twin eval loop — bijou checkpoint serving (euler-10, bf16 decoder, adapted arms wear their own recomputed stats; unadapted rider wears the sim100 worn-row rule) -&gt; [wrist|front] 224 frames + frozen instruction strings -&gt; 30 Hz chunk -&gt; subsample-by-3 deploy adapter (deg2rad + gripper affine 41.69&lt;-&gt;[-10,120]) -&gt; 10 twin env-steps per replan, n=100 paired seeds DR off, per-step honest predicates banked (reached_object/is_item_grasped/item_lifted/success) for the McNemar primary + KM/KS co-primary. Gate-1 read (adapted stronger arm &gt;=20/100 best task after the 20-80 band pilot) and Gate-2 cells both run through this one harness. Build + CPU smoke any window; GPU legs at a free window after leg B.
 
 </details>
 
