@@ -40,10 +40,26 @@ echo "=== leg A start $(date -u +%FT%TZ)"
 
 for task in lift place; do
   if [ "$task" = lift ]; then envid=SO101LiftCube-v1; else envid=SO101PlaceCube-v1; fi
+  if [ -f "runs/squint_expert_$task/ckpt.pt" ]; then
+    echo "=== expert $task SKIP — ckpt already banked (relaunch idempotency)"
+    continue
+  fi
   echo "=== expert $task ($envid) $(date -u +%FT%TZ)"
+  # timeout rc 124 is the DESIGNED cap (last 100k-boundary ckpt is the
+  # banked expert, per the amendment) — only a real crash aborts.
+  # 03:39Z incident: set -e turned the cap itself into a unit kill.
+  rc=0
   timeout 2700 "$V" train_squint.py \
     --env-id "$envid" --exp-name "squint_expert_$task" --seed 1 \
-    --no-track --no-capture-video --no-env-domain-randomization
+    --no-track --no-capture-video --no-env-domain-randomization || rc=$?
+  if [ "$rc" != 0 ] && [ "$rc" != 124 ]; then
+    echo "ABORT: expert $task crashed rc $rc" >&2
+    exit "$rc"
+  fi
+  if [ ! -f "runs/squint_expert_$task/ckpt.pt" ]; then
+    echo "ABORT: expert $task left no ckpt" >&2
+    exit 4
+  fi
 done
 
 for task in lift place; do
