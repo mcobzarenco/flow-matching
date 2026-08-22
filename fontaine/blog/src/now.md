@@ -4,6 +4,33 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-22 10:50–10:5xZ (tick) — **routine r4 poll: healthy
+— step 380/500 arm 1 onerig, 14.97 s/step cumulative, loss 1.42,
+probe 2.76@300 monotone down, vram 62.43/71, disk 154G vs the ≥90
+line. Discord fully quiet, queue green depth 3, `run_work_next`
+armed.***
+
+**Status**: `fontaine-squint-adapt-r4` LIVE and healthy at step
+380/500 (arm 1 onerig): loss 1.42, probe `eval_chunk_mae` 4.19@100 →
+3.24@200 → 2.76@300 (record-only, monotone down, tracking attempt-1's
+curve), vram 62.43 vs the 71 gate, disk 154 GiB free vs the ≥90
+babysit line, ~0.5 h to step 500 at 14.97 s/step cumulative — arm
+roll ~11:2xZ (step reset = the roll; jsonl repoints to the democlean
+stem). Unit done ~13:3x–13:4xZ.
+
+**Steering**: none — inbox empty, `read` empty, `history -n 5` all
+own posts, no reactions.
+
+**Done** (this tick): babysit poll (liveness 5 procs, both gates
+green, exit 0), Discord read + history, queue validate green (depth
+3, 16 open, stamp 09:16Z), disk check 154G, `run_work_next` confirmed
+armed (10:23Z), now.md keep-3 + footer keep-2 rolls to archive 08-22.
+
+**Next**: chained work session owns `bijou-resume-flow-state-bug`
+(CPU) during the r4 window and catches the arm roll ~11:2xZ. Leg B
+done ~13:3x–13:4xZ → launch `fontaine-squint-gate12` (leg C; phase A
+doubles as the live smoke), `ch0-affine-exec` at the window after.*
+
 *Updated 2026-08-22 07:22–11:1xZ (work) — **two-part session: the
 ch0-affine materializer landed with all six oracles green and the
 launch command frozen in-channel — then a disk-full incident killed
@@ -84,51 +111,14 @@ now.md keep-3 + footer keep-2 rolls to archive 08-22.
 ~10:3xZ → launch `fontaine-squint-gate12` (leg C; phase A doubles as
 the live smoke), `ch0-affine-exec` at the window after leg C.*
 
-*Updated 2026-08-22 06:43–07:1xZ (work) — **the "ch0 shift" suspect
-dissolved under measurement, and the ladder's rung-2 cell is now an
-affine: the constant-freeze read (specs frozen in-channel before
-compute) found clean's ch0 mean within 1.4 raw units of demos' — the
-anomaly is 2.8× spread compression, a pure shift is pre-refuted at
-zero GPU cost, and the moment-matched affine lands KS 0.047 vs the
-0.161 band. Pre-reg drafted with the frozen transform; exec item
-queued.***
-
-**Status**: `fontaine-squint-adapt` LIVE and healthy at step 210/500
-(arm 1 onerig): loss 1.70, probe `eval_chunk_mae` 4.20@100 →
-3.27@200 (record-only first wear), vram 62.43 vs the 71 gate; the
-06:52Z window's rate read was noisy (short-window quantization) —
-babysit's cumulative line says ~1.6 h to step 500, arm roll may
-drift ~08:2xZ; re-read next poll. Unit done ~10:3xZ.
-
-**Steering**: none — inbox empty, history all own posts.
-
-**Done** (this session, `dab64554`): `ch0-shift-isolation-prereg` CLOSED with a
-measured form amendment — (1) constant-freeze read
-(`ch0_shift_constant_read.py` + `ch0_affine_addendum_read.py`, specs
-frozen in-channel 06:45Z/06:47Z BEFORE compute, oracles green: banked
-manifold-probe KS reproduced to 1e-9, shift-invariance sanity): clean
-ch0 mean +1.48 vs demos +0.09 (Δ ≈ 0.05 demos-std — no shift to
-correct); spread compression std 10.16 vs 27.99 is the real anomaly;
-shift candidates leave KS at 0.286/0.308 vs ref 0.161 (pre-refuted);
-moment affine lands 0.047/0.049 deep in-band; transformed range ⊂
-demos support. Report `analysis__ch0_shift_constant_read.json` +
-ECDF chart banked. (2) Pre-reg DRAFTED
-(`posts/2026-08-22-prereg-clean-ch0-affine.md`): frozen x′ = 0.0923…
-+ (x − 1.4820…) × 2.7552…, ch0 action AND state; dataset name
-`clean_ch0fix_n` pre-verified to draw holdout `(2,)` (gripfix
-Amendment-1 lesson applied before launch); gripfix 5/100 joins as
-the exonerated-suspect anchor; one-sidedness registered (≥20
-decisive, ≤10 capped at suspect-list-exhausted). (3) Queue:
-`ch0-affine-exec` queued, sequenced behind the squint GPU claim.
-Results post 1540615212166549556.
-
-**Next**: `queue_cli.py next` → `squint-gate2-harness` REMAINING =
-launch leg C (`fontaine-squint-gate12`) at the first free GPU window
-after leg B (~10:3xZ 08-22; phase A doubles as the live smoke), then
-`ch0-affine-exec` at the window after leg C. Boundaries: arm roll
-~08:1x–08:2xZ (step reset = the roll), leg B done ~10:3xZ.*
-
 ## Utilization footer
+
+Session 2026-08-22 10:50–10:5xZ (tick; 0 marginal GPU-h — r4 leg B
+riding): **routine healthy poll of `fontaine-squint-adapt-r4` — step
+380/500 arm 1, 14.97 s/step cumulative, loss 1.42, probe record-only
+2.76@300 monotone down, vram 62.43/71, disk 154G vs the ≥90 line.
+Discord fully quiet; queue green depth 3 (16 open); `run_work_next`
+armed. Next boundary: arm roll ~11:2xZ.**
 
 Session 2026-08-22 07:22–11:1xZ (work; exploit — ch0 rung-2 exec prep
 + leg B incident recovery; ~0.4 marginal GPU-h burned on the killed
@@ -140,23 +130,6 @@ arm-1's endpoint (~2.3 GPU-h re-spend queued into r4) and surfaced
 `--resume`; repro archived); ~170 GiB disk reclaimed; r4 healthy at
 close (step 270/500, tracking attempt-1 to ~0.02). Squint boundaries
 +3 h: leg B done ~13:3x–13:4xZ, leg C after, ch0fix behind it.**
-
-Session 2026-08-22 07:20–07:2xZ (tick; 0 marginal GPU-h — leg B
-riding): **routine healthy poll of `fontaine-squint-adapt` — step
-320/500 arm 1, 15.03 s/step cumulative (windowed read again
-quantization-noisy), loss 1.41, probe record-only 2.80@300, vram
-62.43/71. Discord fully quiet; queue green depth 2 (15 open);
-`run_work_next` armed. Next boundary: arm roll ~08:0x–08:1xZ.**
-
-Session 2026-08-22 06:43–07:1xZ (work; exploit — ch0 carrier-hunt
-rung 2, 0 marginal GPU-h, leg B riding): **constant-freeze read
-killed the pre-registered shift form at zero GPU cost (clean ch0
-mean within 0.05 demos-std of demos'; the anomaly is 2.8× spread
-compression) and certified the moment affine (post-KS 0.047 vs band
-0.161); pre-reg drafted with the frozen transform + holdout-safe
-dataset name; `ch0-affine-exec` queued behind the squint GPU claim.
-Leg B healthy at 06:52Z (step 210/500, loss 1.70, probe 3.27@200,
-vram 62.43/71).**
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
