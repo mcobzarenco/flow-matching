@@ -269,3 +269,83 @@ conversion tooling the exec item builds), the adaptation-recipe
 command block, instruction strings, the third-camera kind tag, the
 Gate-0 limit-line re-price above, and the pair-2 slot (gripfix
 verdict, tonight).
+
+---
+
+## FINALIZATION AMENDMENT (2026-08-22 02:5xZ) — all named slots frozen; launch follows this post
+
+*Exec session `squint-twin-screen-exec` part (b), announced
+in-channel per the standing no-GO-ask rule. Every open slot above is
+resolved here; nothing else in the pre-registration moves. The
+pipeline below was smoke-tested end-to-end (junk 30k-step expert →
+rollout → re-render → LeRobot → oracle) before this amendment;
+smoke artifacts deleted, receipts quoted where they price a frozen
+line.*
+
+**Slot 1 — Gate-0 limit line (re-priced as named):** "no arm clip
+> 0.05 rad". R3 stands green under this line (41 clips, all ≤0.047
+rad, twin-limit geometry not adapter error).
+
+**Slot 2 — third-camera kind tag: `front`.** Dataset key
+`observation.images.front`, mirroring `grasp_demos_v2`'s own key
+pair — the twin dataset wears exactly `{wrist, front}` like the rig
+demos (twin `base_camera` → `wrist`, `third_camera` → `front`).
+
+**Slot 3 — instruction strings (frozen):**
+- LiftCube: `Pick up the red cube.`
+- PlaceCube: `Pick up the red cube and place it in the bin.`
+
+**Slot 4 — conversion spec + oracle re-price.** Twin episodes (10 Hz)
+→ LeRobot v3 at **fps 30 by repeat-3 upsampling**, so the deploy
+adapter's subsample-every-3rd *exactly inverts* the conversion.
+Actions = the rollout controller's absolute radian targets
+(target-delta control is `PDJointPosController` with
+use_target/use_delta — `_target_qpos` IS the pd_joint_pos-equivalent
+command), inverse-adapted to servo degrees; state likewise from qpos.
+Oracle re-price: the drafted "action-bit-exact" becomes **round-trip
+max |Δ| < 1e-5 rad** (deg↔rad float paths aren't bit-stable; smoke
+measured 6.6e-8), frames bit-exact at the pre-encode boundary, and
+decoded-video PSNR recorded as a fact, not a gate — our own demos
+ride the same mp4 path (smoke: ~36–40 dB). Dataset:
+`~/datasets/fontaine/squint_twin_demos_v1`, ≤100 episodes/task.
+
+**Slot 5 — expert + collection config (frozen).** Experts:
+`train_squint.py` paper defaults with `--no-env-domain-randomization`
+(DR off everywhere in this screen), seed 1, no wandb, ckpt = last
+100k-step eval save, hard cap 45 min/task. Collection: rollout in the
+expert's native env config; re-render through the dual-camera 224 raw
+DR-off `pd_joint_pos` env, same seed + `set_state_dict`; the **final
+success label is the re-render's own end-state success** (episodes
+losing success in replay are dropped; keep-rate + replay-divergence
+receipts banked — smoke divergence p50 0.0038 rad). Per-step honest
+predicates banked per episode (the idea-#6 corpus starts here).
+
+**Slot 6 — adaptation recipe command block (frozen, identical both
+arms).** Priced from the pdnorm lineage's measured 16.2 s/step at
+eff-96: **500 steps ≈ 2.25 GPU-h/arm** ≤ the 2.5 cap.
+
+```
+uv run python -m bijou.train \
+  --train-data ~/datasets/fontaine/squint_twin_demos_v1 \
+  --init-from ~/checkpoints/finetune/grasp_sft_v2_joint_1gpu_pdnorm_{onerig|democlean}/step_003000 \
+  --objective joint --joint-ce-weight 1.0 --insulate-flow \
+  --recompute-stats --per-dataset-flow-norm \
+  --flow-decoder-init inherit --image-augment 0.8 \
+  --decoder-lr 5e-5 --backbone-text-lr 1e-5 \
+  --steps 500 --batch-size 96 --backward-chunks 8 \
+  --activation-checkpointing --offload-optim --prune-superseded-optim \
+  --holdout-episodes 0.1 --eval-every 100 --eval-samples 256 \
+  --save-every 250
+```
+
+Adapted arms wear their own recomputed stats (the twin rows); the
+unadapted record-only rider wears the sim100 worn-row rule verbatim.
+
+**Slot 7 — pair-2: EMPTY.** The gripfix frozen-grid verdict landed
+**5/100 (≤10 band)**; the frozen rule ("≥20 → gripfix joins") does
+not fire. The screen runs pair 1 only.
+
+**Launch plan:** leg A now (experts → collection → conversion →
+oracle, one detached unit, ~0.8 GPU-h); leg B (adaptation, both arms
+chained, ~4.5 GPU-h) after the oracle receipt is verified; Gate-2
+rollout harness at the next window. Cell gate ≤7 GPU-h unchanged.

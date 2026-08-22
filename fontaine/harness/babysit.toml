@@ -1,7 +1,44 @@
 # Babysit run registry (#21 P1). One entry per LIVE run; update at
 # launch time, prune at completion. Schema: fontaine/scripts/babysit.py.
 
-no_live_runs_reason = "declared 02:3xZ 08-22 work session: gripfix endpoint battery COMPLETE and pruned (unit exited clean ~02:24Z; VERDICT 5/100 — <=10 band, gripper amplitude NOT the sole carrier; paired vs democlean -3 p 0.375, vs onerig -23 p 5.7e-06; guards green, ckpt banked weights-only on HF; battery ~3.0/3.5 GPU-h, cell ~16.6/17). Local H100 FREE. Next GPU leg: none queued-executable until the ch0-shift cell pre-reg (drafting queued, CPU) or the Squint exec item's GPU legs finalize. Owner policy-server check applies before any local launch."
+# (no_live_runs_reason cleared 02:54:49Z 08-22 — squint leg A launched
+# off the finalization amendment (posted in-channel 02:54Z, id
+# 1540554796493180988); prior: "declared 02:3xZ 08-22 work session:
+# gripfix endpoint battery COMPLETE and pruned ... Local H100 FREE.")
+
+# LIVE — Squint qualification screen GPU LEG A (local H100; pre-reg
+# posts/2026-08-22-prereg-squint-twin-screen.md FINALIZED 02:5xZ; unit
+# fontaine-squint-leg-a). Five chained stages, one unit: SAC expert
+# Lift -> SAC expert Place (train_squint DR-off, ckpt each 100k steps,
+# timeout 45 min/stage) -> collect lift -> collect place (rollout +
+# dual-cam 224 re-render) -> LeRobot conversion + oracle (main venv).
+# At rc 0: verify conversion_oracle.json (round-trip < 1e-5 rad,
+# counts ~100/task) THEN launch leg B (adaptation, frozen command
+# block, both arms chained). Expert quality read: tqdm success_once /
+# success_at_end in the log — a weak expert (<~0.3 success at its
+# timeout ckpt) is a finding to price, not auto-fail.
+[[run]]
+name = "squint_leg_a"
+kind = "progress-log"
+host = "local"
+pgrep = "squint_leg_a[.]sh"
+pgrep_min = 1
+gpu_indices = [0]
+gpu_mem_min_mib = 500
+log = "/home/ubuntu/flow-matching/outputs/squint_screen/leg_a.log"
+progress_re = "=== |success_at_end|\\[rollout|\\[rerender|\\[convert"
+started_utc = "2026-08-22T02:54:49Z"
+gpu_hours_per_wall_hour = 1.0
+boundary = "experts ~10-45 min each (paper claims 2-9 min/task; smoke measured ~420 env-steps/s after warmup => 1.5M default ~60 min worst case, timeout caps at 45 min with the last 100k-boundary ckpt banked), collection ~10 min, conversion ~10 min; whole unit expected done ~03:4x-04:3xZ 08-22"
+anchors = [
+    "priced ~0.8 GPU-h of the <=7 GPU-h cell gate (adaptation 4.5 + Gate-2 ~1 follow)",
+    "stage timeouts are hard caps: a timeout kill mid-expert still leaves runs/squint_expert_*/ckpt.pt from the last 100k eval boundary",
+    "oracle gate (frozen): action+state round-trip max |delta| < 1e-5 rad; frames bit-exact pre-encode; PSNR recorded as fact",
+    "keep-rate + replay-divergence receipts land in outputs/squint_screen/{lift,place}/rerender_facts.json",
+]
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 2.5
 
 # gripfix endpoint battery entry PRUNED 02:3xZ 08-22 (was: launched
 # 23:23:39Z 08-21, unit fontaine-gripfix-endpoint-battery, protocol
