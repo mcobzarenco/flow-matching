@@ -21,8 +21,9 @@ subclass, physx_cpu (the R2/R3 receipt backend), num_envs 1, paired
 seeds seed0..seed0+n-1 identical across arms.
 
 Per-episode banked: success (final-step, the honest end-state read),
-per-step predicates reached_object / is_item_grasped / item_lifted /
-success (the KM/KS co-primary consumes these), qpos + target traces.
+per-step predicates per PRED_KEYS_BY_TASK — the env's own evaluate()
+keys in milestone order (the KM/KS co-primary consumes these; the read
+side derives keys from the banked rows), qpos + target traces.
 
 Stats row: --stats-repo-id picks the worn row from /spec's
 per_dataset_stats (loud list on a miss). Adapted arms wear their own
@@ -53,7 +54,15 @@ SIM_MIN, SIM_MAX = -10.0, 120.0
 SUBSAMPLE = 3
 EXEC_STEPS = 10  # twin env-steps per replan (30 chunk rows / 3)
 HORIZON = 50
-PRED_KEYS = ("reached_object", "is_item_grasped", "item_lifted", "success")
+# Per-task honest predicate ladders, in milestone order — the env's own
+# evaluate() keys (REALIZED 13:40Z 08-22: place's evaluate() carries no
+# reached_object — its approach milestone is is_item_above_bin; a
+# uniform ladder KeyError-killed leg C's place pilot). The read side
+# derives its keys from the banked rows, so per-task sets flow through.
+PRED_KEYS_BY_TASK = {
+    "lift": ("reached_object", "is_item_grasped", "item_lifted", "success"),
+    "place": ("is_item_grasped", "item_lifted", "is_item_above_bin", "success"),
+}
 
 TASKS = {
     "lift": {
@@ -169,10 +178,11 @@ def main() -> None:
     high = env.action_space.high.astype(np.float64)
 
     OUT_ROOT.mkdir(parents=True, exist_ok=True)
+    pred_keys = PRED_KEYS_BY_TASK[args.task]
     rows, t_start = [], time.perf_counter()
     for seed in range(args.seed0, args.seed0 + args.num_seeds):
         obs, _ = env.reset(seed=seed)
-        preds = {k: [] for k in PRED_KEYS}
+        preds = {k: [] for k in pred_keys}
         qpos_tr, tgt_tr, latencies = [], [], []
         info = {}
         for replan in range(args.replans):
@@ -211,7 +221,7 @@ def main() -> None:
                 qpos_tr.append(
                     base.agent.robot.get_qpos().cpu().numpy()[0, :6].tolist(),
                 )
-                for k in PRED_KEYS:
+                for k in pred_keys:
                     preds[k].append(bool(info[k].reshape(-1)[0]))
         rows.append(
             {
@@ -220,7 +230,7 @@ def main() -> None:
                 "predicates": preds,
                 "first_true_step": {
                     k: (preds[k].index(True) if True in preds[k] else None)
-                    for k in PRED_KEYS
+                    for k in pred_keys
                 },
                 "predict_ms_mean": float(np.mean(latencies)),
                 "qpos_trace": qpos_tr,

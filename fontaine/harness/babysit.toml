@@ -41,34 +41,38 @@
 # At rc 0: adapted ckpts step_000500 both arms -> Gate-1 band pilot
 # via squint_gate12_leg.sh (adapted onerig, port 8145) — >=20/100
 # best task = Gate-1 pass; then Gate-2 paired cells.
+# squint_adapt (leg B, r4) COMPLETE 13:32:55Z 08-22, unit success:
+# arm 1 onerig 2.47@500 / arm 2 democlean 2.5187@500 (twins; arm-1
+# attempt-1 informal twin 2.48), both step_000500 endpoints saved
+# clean, disk 41G after both saves. Entry pruned at the leg C launch
+# per the retained-entry liveness-fail footgun. The attempt-1 archive
+# anchor is RETIRED: bijou-resume-flow-state-bug CLOSED 13:3xZ 08-22
+# (fix 665dadb7 GPU-VERIFIED: resumed flow 0.0833@260 vs poisoned
+# 1.4374; archive kept as a historical incident record, deletable at
+# the next disk squeeze).
+
 [[run]]
-name = "squint_adapt"
-kind = "train-jsonl"
+name = "squint_gate12"
+kind = "progress-log"
 host = "local"
-pgrep = "squint_adapt"
+pgrep = "squint"
 pgrep_min = 1
 gpu_indices = [0]
 gpu_mem_min_mib = 8000
-jsonl = "/home/ubuntu/checkpoints/finetune/grasp_sft_v2_squint_adapt_democlean/train_log.jsonl"
-total_steps = 500
-probe_key = "eval_chunk_mae"
-vram_key = "vram_alloc_peak_gib"
-started_utc = "2026-08-22T09:09:50Z"
+log = "/home/ubuntu/flow-matching/outputs/squint_screen/eval/band_pilot.log"
+progress_re = "band"
+started_utc = "2026-08-22T13:38:31Z"
 gpu_hours_per_wall_hour = 1.0
-boundary = "r4 unit fontaine-squint-adapt-r4 launched 09:09:50Z: arm 1 onerig 500 steps x ~15.5 s => done ~11:2xZ 08-22, then arm 2 democlean => unit done ~13:3x-13:4xZ; saves at 250/500; NO kill-on-probe rule (record-only first wear). DISK: >=90G must stay free through both endpoint saves (the failure class r4 recovers from; 196G at launch). At unit done: launch leg C (squint_gate12_leg.sh header command, unit fontaine-squint-gate12), then ch0-affine-exec at the window after."
+boundary = "leg C unit fontaine-squint-gate12 launched 13:38:31Z 08-22 (server up 13:38:56Z serving adapt_onerig step_000500 on 8145; owner rig server owns 8144, NEVER touched). Phases: A pilot n=20 both tasks (live smoke passed at launch) -> band verdicts -> complete onerig to n=100; B Gate-1 best task >=20/100 (exit 5 = F-instrument, screen closes); C/D adapt_democlean n=100 + unadapted @3000 riders; E reads + CDF panel to reports/. Rough wall: pilots ~1-2 h class, full leg into the evening; poll cadence = liveness + band_pilot.log/gate1.log + journalctl -u fontaine-squint-gate12. At exit: read gate1.log verdict, then ch0-affine-exec at the next free window (command frozen in-channel 1540627296807821333)."
 anchors = [
-    "identical recipe both arms, seed same, no tuning; CELL GATE CROSSING RECORDED in-channel 09:1xZ: ~4.6 GPU-h re-spend (arm-1 attempt-1 2.3 + resumes 0.4 burned by the incident) on top of the <=7 projection — infra fault, not experiment-design spend",
-    "vram smoke 62.38 GiB (onerig-class); a NEW peak above ~70 = investigate",
-    "probe eval_chunk_mae on twin holdout is FIRST-WEAR record-only — no cross-lineage comparison, no kill bar; attempt-1 arm-1 curve (4.20@100 -> 2.48@500) is the informal twin",
-    "at completion: do NOT delete arm-1 optimizer state before arm 2 finishes (prune-superseded-optim handles within-run saves)",
-    "attempt-1 archive grasp_sft_v2_squint_adapt_onerig_attempt1 (step_000250 + poisoned-resume jsonl sidecars) is the bijou-resume-flow-state-bug repro substrate — do NOT delete before that item closes",
+    "~1 GPU-h priced for pilots + both n=100 cells + riders inside the exec item's <=7 cell gate (already crossed by the leg B incident, recorded in-channel 09:1xZ)",
+    "per-seed progress lines live in the unit JOURNAL, not the log file — band_pilot.log advances only at pilot completions (progress stalls there are not liveness failures; check journalctl before alarming)",
+    "adapted arms wear fontaine/squint_twin_demos_v1 stats; riders wear grasp_demos_v2/merged (sim100 worn-row rule)",
+    "exit 4 = no in-band task (substitution ladder logged, never auto-run); exit 5 = Gate-1 F-instrument; both are VALID ends, not failures to babysit-retry",
 ]
 [[run.gates]]
-kind = "vram_max_gib"
-value = 71.0
-[[run.gates]]
 kind = "gpu_hours_max"
-value = 5.5
+value = 7.0
 
 # gripfix endpoint battery entry PRUNED 02:3xZ 08-22 (was: launched
 # 23:23:39Z 08-21, unit fontaine-gripfix-endpoint-battery, protocol

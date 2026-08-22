@@ -39,7 +39,25 @@ from fontaine.scripts.sim100_reads import bootstrap_ci
 
 PREREG = "posts/2026-08-22-prereg-squint-twin-screen.md"
 HORIZON = 50
-PRED_KEYS = ("reached_object", "is_item_grasped", "item_lifted", "success")
+# Predicate keys are DERIVED from the banked rows (banked order
+# preserved), not pinned here: the ladders are per-task — the env's own
+# evaluate() keys (place has no reached_object; its approach milestone
+# is is_item_above_bin — the 13:40Z 08-22 leg C KeyError). Both arms of
+# a read must bank the identical set.
+
+
+def banked_pred_keys(rows_a: list[dict], rows_b: list[dict]) -> tuple[str, ...]:
+    keys = tuple(rows_a[0]["predicates"].keys())
+    for rows in (rows_a, rows_b):
+        for r in rows:
+            if tuple(r["predicates"].keys()) != keys:
+                raise SystemExit(
+                    f"predicate keys differ across rows: {keys} vs "
+                    f"{tuple(r['predicates'].keys())} — arms/tasks mixed?",
+                )
+    return keys
+
+
 BAND_LOW, BAND_HIGH = 0.20, 0.80  # inclusive (the banked bench rule)
 GATE1_MIN = 20  # successes /100, best task, adapted stronger arm
 PERM_DRAWS = 10_000
@@ -94,11 +112,12 @@ def km_ks_read(rows_a: list[dict], rows_b: list[dict]) -> dict[str, Any]:
     predicates, paired label-swap permutation p on macro-KS, and a
     seed-clustered bootstrap CI95 on the macro AUC delta."""
     n = len(rows_a)
-    ta = {p: event_times(rows_a, p) for p in PRED_KEYS}
-    tb = {p: event_times(rows_b, p) for p in PRED_KEYS}
+    pred_keys = banked_pred_keys(rows_a, rows_b)
+    ta = {p: event_times(rows_a, p) for p in pred_keys}
+    tb = {p: event_times(rows_b, p) for p in pred_keys}
 
     per_pred: dict[str, Any] = {}
-    for p in PRED_KEYS:
+    for p in pred_keys:
         ks, auc = ks_and_auc(ta[p], tb[p])
         per_pred[p] = {
             "events_a": int((ta[p] < HORIZON).sum()),
@@ -108,19 +127,19 @@ def km_ks_read(rows_a: list[dict], rows_b: list[dict]) -> dict[str, Any]:
             "cdf_a": ecdf(ta[p]).round(4).tolist(),
             "cdf_b": ecdf(tb[p]).round(4).tolist(),
         }
-    macro_ks = float(np.mean([per_pred[p]["ks"] for p in PRED_KEYS]))
-    macro_auc = float(np.mean([per_pred[p]["auc_delta"] for p in PRED_KEYS]))
+    macro_ks = float(np.mean([per_pred[p]["ks"] for p in pred_keys]))
+    macro_auc = float(np.mean([per_pred[p]["auc_delta"] for p in pred_keys]))
 
     rng = np.random.default_rng(RNG_SEED)
     swaps = rng.integers(0, 2, size=(PERM_DRAWS, n)).astype(bool)
     perm_ge = 0
     for s in swaps:
         stat = 0.0
-        for p in PRED_KEYS:
+        for p in pred_keys:
             pa = np.where(s, tb[p], ta[p])
             pb = np.where(s, ta[p], tb[p])
             stat += ks_and_auc(pa, pb)[0]
-        if stat / len(PRED_KEYS) >= macro_ks - 1e-12:
+        if stat / len(pred_keys) >= macro_ks - 1e-12:
             perm_ge += 1
     perm_p = (1 + perm_ge) / (1 + PERM_DRAWS)
 
@@ -128,7 +147,7 @@ def km_ks_read(rows_a: list[dict], rows_b: list[dict]) -> dict[str, Any]:
     boot = np.empty(BOOT_DRAWS)
     for i, sel in enumerate(idx):
         boot[i] = np.mean(
-            [ks_and_auc(ta[p][sel], tb[p][sel])[1] for p in PRED_KEYS],
+            [ks_and_auc(ta[p][sel], tb[p][sel])[1] for p in pred_keys],
         )
     lo, hi = np.percentile(boot, [2.5, 97.5])
 
@@ -346,7 +365,7 @@ def render_cdf_panel(
 
     t = np.arange(HORIZON)
     fig, axes = plt.subplots(2, 2, figsize=(9.6, 7.2), facecolor=PAGE)
-    for ax, pred in zip(axes.flat, PRED_KEYS, strict=True):
+    for ax, pred in zip(axes.flat, list(co["per_predicate"]), strict=True):
         pp = co["per_predicate"][pred]
         ax.set_facecolor(PAGE)
         ax.step(t, pp["cdf_a"], where="post", color=COL_A, lw=2)
@@ -442,7 +461,9 @@ def _fake_row(seed: int, first: dict[str, int | None]) -> dict[str, Any]:
         "seed": seed,
         "success": first["success"] is not None,
         "first_true_step": dict(first),
-        "predicates": {},
+        # keys mirror first_true_step (banked_pred_keys reads them);
+        # per-step traces are not exercised by the oracle cases
+        "predicates": {k: [] for k in first},
         "qpos_trace": [],
         "target_trace": [],
         "predict_ms_mean": 0.0,
@@ -470,8 +491,9 @@ def cmd_self_test(_args: argparse.Namespace) -> int:
     # 4. Permutation p: maximally separated 8-seed pair -> only the
     #    identity/full-swap patterns reach KS 1 (p ~= 2/256); identical
     #    arms -> p ~= 1.
-    fast = [_fake_row(s, dict.fromkeys(PRED_KEYS, 0)) for s in range(8)]
-    slow = [_fake_row(s, dict.fromkeys(PRED_KEYS)) for s in range(8)]
+    lift_keys = ("reached_object", "is_item_grasped", "item_lifted", "success")
+    fast = [_fake_row(s, dict.fromkeys(lift_keys, 0)) for s in range(8)]
+    slow = [_fake_row(s, dict.fromkeys(lift_keys)) for s in range(8)]
     co = km_ks_read(fast, slow)
     assert co["macro_ks"] == 1.0 and co["macro_auc_delta"] == 1.0
     assert co["perm_p_macro_ks"] < 0.05
@@ -514,7 +536,7 @@ def cmd_self_test(_args: argparse.Namespace) -> int:
             s,
             {
                 "success": 10 if s < 6 else None,
-                **{p: 0 for p in PRED_KEYS if p != "success"},
+                **{p: 0 for p in lift_keys if p != "success"},
             },
         )
         for s in range(10)
@@ -524,7 +546,7 @@ def cmd_self_test(_args: argparse.Namespace) -> int:
             s,
             {
                 "success": 10 if 4 <= s < 8 else None,
-                **{p: 0 for p in PRED_KEYS if p != "success"},
+                **{p: 0 for p in lift_keys if p != "success"},
             },
         )
         for s in range(10)
