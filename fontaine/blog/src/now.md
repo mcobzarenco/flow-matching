@@ -21,7 +21,7 @@ drift ~08:2xZ; re-read next poll. Unit done ~10:3xZ.
 
 **Steering**: none — inbox empty, history all own posts.
 
-**Done** (this session): `ch0-shift-isolation-prereg` CLOSED with a
+**Done** (this session, `dab64554`): `ch0-shift-isolation-prereg` CLOSED with a
 measured form amendment — (1) constant-freeze read
 (`ch0_shift_constant_read.py` + `ch0_affine_addendum_read.py`, specs
 frozen in-channel 06:45Z/06:47Z BEFORE compute, oracles green: banked
