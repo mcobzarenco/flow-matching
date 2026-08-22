@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-22T00:45:00Z
+**Updated:** 2026-08-22T02:30:00Z
 
 **Depth call:** depth 2 open items: gpu-local gripfix-endpoint-close (battery LIVE, verdict-gated ~02:5xZ 08-22) + cpu squint-twin-screen-prereg (any work window; eval-design v0 slot 2). Refilled 23:5xZ 08-21 at the vla-eval-design-doc close.
 
-**14 open** (Live 0 · Queued 2 · Blocked 12 · Done 273)
+**14 open** (Live 0 · Queued 2 · Blocked 12 · Done 274)
 
 ## 🔴 Live (0)
 
@@ -18,6 +18,20 @@
 
 *ready — waiting on a window or a boundary*
 
+**`ch0-shift-isolation-prereg`** · `cpu`
+
+ch0-shift isolation cell pre-reg DRAFT (CPU, any window; the gripfix verdict's &lt;=10-branch follow-up, ladder rung 2 of the carrier hunt): draft the pre-registration for demos + clean with clean's ch0 shoulder-pan channel shifted…
+
+**boundary:** Queued 02:3xZ 08-22 at the gripfix verdict close (the pre-reg's registered &lt;=10-branch follow-up).
+
+<details><summary>full record</summary>
+
+ch0-shift isolation cell pre-reg DRAFT (CPU, any window; the gripfix verdict's &lt;=10-branch follow-up, ladder rung 2 of the carrier hunt): draft the pre-registration for demos + clean with clean's ch0 shoulder-pan channel shifted to the shared convention (the standing named suspect: only channel exceeding the demos&lt;-&gt;v2 reference KS both ways, x2.84 worst pdnorm amplification; transform form + frozen constants from the banked manifold-probe reads, action AND state columns, one variable). Same frozen verdict grid + paired reads (vs democlean 8 THE read / onerig 28 / control 11 / gripfix 5 joins as the exonerated-suspect anchor). Record the gripfix nuance in the design: channel edits touch state columns too — the remap itself can add off-manifold artifact (gripfix's certified -2.07 cm paired progress regression); consider shift (mean-recenter) vs affine choice on that evidence. If ch0 also exonerates: per-episode LOO at x4 = 7 cheap cells is the ladder's last rung. NO launch from the draft item; exec per no-GO-ask at a free GPU window.
+
+</details>
+
+---
+
 **`squint-twin-screen-exec`** · `gpu-local`
 
 Squint-twin qualification screen EXEC (pre-reg drafted 08-22, eval-design v0 slot 2): (a) preflight-2 receipts, CPU any window
@@ -27,20 +41,6 @@ Squint-twin qualification screen EXEC (pre-reg drafted 08-22, eval-design v0 slo
 <details><summary>full record</summary>
 
 Squint-twin qualification screen EXEC (pre-reg drafted 08-22, eval-design v0 slot 2): (a) preflight-2 receipts, CPU any window — dual-camera subclass renders both views (saved frames), resolve_camera_kinds judgment on the third frame (frozen kind tag), gripper affine constants (ours open 41.69 &lt;-&gt; twin sim -10..120 deg) + Gate-0 rig-episode replay green (tracking p50 &lt; 0.05 rad, determinism entry gate), LeRobot conversion oracle, train_squint.py CPU smoke; (b) finalization amendment in-channel (adaptation-recipe command block, instruction strings, third-camera kind, pair-2 slot from the gripfix frozen-grid verdict) — exec session decides + announces per no-GO-ask; (c) GPU legs at a free window, policy-server checked, systemd-run detached: SAC experts ~0.5 GPU-h -&gt; ~100 success demos/task re-rendered through the adapter -&gt; identical short bijou.train adaptation both arms (&lt;=2.5 GPU-h/arm hard) -&gt; Gate-1 floor &gt;=20/100 else F-instrument close -&gt; Gate-2 n=100 paired cells LiftCube primary/PlaceCube secondary (20-80 pct band pilot, substitution ladder Reach/Stack), adapted onerig vs democlean paired McNemar + KS-on-CDF co-primary, unadapted pair record-only rider. Cell gate &lt;=7 GPU-h abort-and-close. Twin never preempts a sim100 verdict leg.
-
-</details>
-
----
-
-**`gripfix-endpoint-close`** · `gpu-local`
-
-gripfix endpoint close (verdict-gated): step-3000 save write-complete verify + pruner sole-survivor check -&gt; endpoint battery (clone launch_democlean_endpoint_battery.sh pattern, name deltas only: leg 1 sim100 flow unseen seeds 0…
-
-**boundary:** Queued 08:3xZ 08-21 at launch (08:28:45Z, units fontaine-v2-joint-pdnorm-gripfix + fontaine-gripfix-ckpt-prune). Endpoint ~22:0x-22:2xZ 08-21 (~13.7 GPU-h measured class); battery fires at the endpoint — verdict-gated until then. Boundaries en route: step-1000 drift read (record-only), saves every 500 (pruner-log check each). · [pre-reg](posts/2026-08-21-prereg-clean-gripper-carrier.md)
-
-<details><summary>full record</summary>
-
-gripfix endpoint close (verdict-gated): step-3000 save write-complete verify + pruner sole-survivor check -&gt; endpoint battery (clone launch_democlean_endpoint_battery.sh pattern, name deltas only: leg 1 sim100 flow unseen seeds 0-99, euler-10, ep 30s, execute-horizon 30, bf16 decoder, --stats-repo-id grasp_demos_v2/merged, --clutter-appearance standins; leg 2 k4l2 panel) -&gt; verdict through the FROZEN grid: &gt;=20 gripper amplitude IS the carrier (bank same-session; mix-hygiene rule + clean re-enters pool remapped) / &lt;=10 NOT sole carrier (follow-up ladder: ch0 shift next, then per-episode LOO at x4 = 7 cheap cells) / 11-19 ambiguous (control band: per-channel MAE, per-slice breakdown, videos, no claim). Paired reads (sim100_paired_read.py): vs democlean 8/100 THE read + onerig 28/100 + control 11/100. Panel guard vs disc-1000 banked npz (fail = worse than +0.05 CI-excl-0) + truthfit rewear. Record-only: eval-250 twin curve vs democlean (probe canNOT clear the cell — decoupling banked twice). Ckpt banks weights-only on any decisive read; charter §4 post-processing (results append + charts on the pre-reg post, unseen-100 HTML report, ladder restamp) + next pre-reg draft per the verdict branch. Cell gate 17 GPU-h (train ~13.7 + battery ~3).
 
 </details>
 
@@ -218,7 +218,7 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (273)
+## ✅ Done (274)
 
 *closed — the full record stays in each fold*
 
@@ -245,6 +245,20 @@ VLA eval-design doc v0 (CPU, any GPU-busy window; north star feed): turn the pro
 <details><summary>full record</summary>
 
 VLA eval-design doc v0 (CPU, any GPU-busy window; north star feed): turn the probe-decoupling standing rule (posts/2026-08-21-probe-decoupling-note.md) into the rig-eval design skeleton the eventual owner-rig VLA needs: (1) verdict instruments — rollout-based only; sim100 today, Squint-class twin rollouts (lit 0819) as the cheap relative screen, real-rig protocol sketch (seeds, paired per-seed reads, McNemar, reset discipline); (2) guard instruments — k4l2 panel as wear/normalization-seam guard with banked-anchor thresholds, in-train probe as divergence alarm, truthfit-rewear seam decomposition; (3) the explicit non-instruments list (what may never gate a verdict) with the two banked decoupling cases as the exhibits. One blog page, chart reuse OK; ideas.md hook line.
+
+</details>
+
+---
+
+**`gripfix-endpoint-close`** · `gpu-local`
+
+gripfix endpoint close (verdict-gated): step-3000 save write-complete verify + pruner sole-survivor check -&gt; endpoint battery (clone launch_democlean_endpoint_battery.sh pattern, name deltas only: leg 1 sim100 flow unseen seeds 0…
+
+**boundary:** Queued 08:3xZ 08-21 at launch (08:28:45Z, units fontaine-v2-joint-pdnorm-gripfix + fontaine-gripfix-ckpt-prune). Endpoint ~22:0x-22:2xZ 08-21 (~13.7 GPU-h measured class); battery fires at the endpoint — verdict-gated until then. Boundaries en route: step-1000 drift read (record-only), saves every 500 (pruner-log check each). | DONE 02:3xZ 08-22 (work session rode the battery to the boundary): VERDICT 5/100 — &lt;=10 band, gripper amplitude NOT the (sole) carrier; the poison survives the one-channel remap. Paired: vs democlean -3 [-8,+1] p 0.375 (THE read, no recovery; paired dprogress -2.07 cm CI-excl-0 — the remap certifiably HURT progress), vs onerig -23 p 5.7e-06, vs control -6 p 0.18. Success seeds {16,39,60,61,71} (4/5 shared w/ democlean), mean progress -1.65 cm, 0 strikes. Guards green: panel guard PASS (delta -27.86 vs disc-1000), truthfit 28.35 seam +1.94 (democlean-class; 5/100 vs 8/100 offline-indistinguishable — third decoupling exhibit). Ckpt banked weights-only (fontaine-checkpoints/grasp_sft_v2_joint_pdnorm_gripfix_step3000, 12.2 GiB). Results append + verdict chart on the pre-reg post; HTML report reports/eval__...gripfix__step_003000...html. Battery ~3.0 GPU-h vs 3.5 gate; cell ~16.6 vs 17. Follow-up per the &lt;=10 branch: ch0-shift cell pre-reg queued. · [pre-reg](posts/2026-08-21-prereg-clean-gripper-carrier.md)
+
+<details><summary>full record</summary>
+
+gripfix endpoint close (verdict-gated): step-3000 save write-complete verify + pruner sole-survivor check -&gt; endpoint battery (clone launch_democlean_endpoint_battery.sh pattern, name deltas only: leg 1 sim100 flow unseen seeds 0-99, euler-10, ep 30s, execute-horizon 30, bf16 decoder, --stats-repo-id grasp_demos_v2/merged, --clutter-appearance standins; leg 2 k4l2 panel) -&gt; verdict through the FROZEN grid: &gt;=20 gripper amplitude IS the carrier (bank same-session; mix-hygiene rule + clean re-enters pool remapped) / &lt;=10 NOT sole carrier (follow-up ladder: ch0 shift next, then per-episode LOO at x4 = 7 cheap cells) / 11-19 ambiguous (control band: per-channel MAE, per-slice breakdown, videos, no claim). Paired reads (sim100_paired_read.py): vs democlean 8/100 THE read + onerig 28/100 + control 11/100. Panel guard vs disc-1000 banked npz (fail = worse than +0.05 CI-excl-0) + truthfit rewear. Record-only: eval-250 twin curve vs democlean (probe canNOT clear the cell — decoupling banked twice). Ckpt banks weights-only on any decisive read; charter §4 post-processing (results append + charts on the pre-reg post, unseen-100 HTML report, ladder restamp) + next pre-reg draft per the verdict branch. Cell gate 17 GPU-h (train ~13.7 + battery ~3).
 
 </details>
 
