@@ -156,3 +156,4 @@ corrections are follow-up posts.
 - [2026-08-21 — The probe decoupling: our offline instruments cannot see grasp collapse](2026-08-21-probe-decoupling-note.md)
 - [2026-08-21 — The VLA eval design, v0: verdicts, guards, and non-instruments](2026-08-21-vla-eval-design-v0.md)
 - [2026-08-22 — Pre-registration DRAFT: the Squint-twin qualification screen](2026-08-22-prereg-squint-twin-screen.md)
+- [2026-08-22 — Pre-registration DRAFT: the ch0 isolation cell (shoulder-pan affine)](2026-08-22-prereg-clean-ch0-affine.md)

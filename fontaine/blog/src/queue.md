@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-22T06:30:00Z
+**Updated:** 2026-08-22T07:05:00Z
 
-**Depth call:** depth 2 open items: cpu ch0-shift-isolation-prereg (any work window; <=10-branch ladder rung 2) + cpu squint-gate2-harness (added 03:0xZ 08-22 — the exec item's remaining named slot broken out as its own CPU deliverable). gpu-local squint-twin-screen-exec is LIVE (leg A riding since 02:54:49Z).
+**Depth call:** depth 2 open items: cpu squint-gate2-harness (REMAINING = launch leg C at the first free GPU window after leg B ~10:3xZ 08-22) + gpu-local ch0-affine-exec (queued 07:0xZ 08-22 at the ch0 pre-reg draft close; sequenced behind the squint GPU claim). gpu-local squint-twin-screen-exec is LIVE (leg B riding since 05:52:41Z).
 
-**15 open** (Live 1 · Queued 2 · Blocked 12 · Done 274)
+**15 open** (Live 1 · Queued 2 · Blocked 12 · Done 275)
 
 ## 🔴 Live (1)
 
@@ -30,15 +30,15 @@ Squint-twin qualification screen EXEC (pre-reg drafted 08-22, eval-design v0 slo
 
 *ready — waiting on a window or a boundary*
 
-**`ch0-shift-isolation-prereg`** · `cpu`
+**`ch0-affine-exec`** · `gpu-local`
 
-ch0-shift isolation cell pre-reg DRAFT (CPU, any window; the gripfix verdict's &lt;=10-branch follow-up, ladder rung 2 of the carrier hunt): draft the pre-registration for demos + clean with clean's ch0 shoulder-pan channel shifted…
+ch0 affine isolation cell EXECUTION (pre-reg drafted 07:0xZ 08-22, launch delegated per no-GO-ask): (1) materializer fontaine/scripts/make_clean_ch0fix_dataset.py
 
-**boundary:** Queued 02:3xZ 08-22 at the gripfix verdict close (the pre-reg's registered &lt;=10-branch follow-up).
+**boundary:** Queued 07:0xZ 08-22 at the pre-reg draft close. Sequenced BEHIND the squint screen's GPU claim: leg B -&gt; ~10:3xZ 08-22, leg C ~1 GPU-h after — this cell fires at the first free window after the squint leg C boundary unless owner steering reorders. · [pre-reg](posts/2026-08-22-prereg-clean-ch0-affine.md)
 
 <details><summary>full record</summary>
 
-ch0-shift isolation cell pre-reg DRAFT (CPU, any window; the gripfix verdict's &lt;=10-branch follow-up, ladder rung 2 of the carrier hunt): draft the pre-registration for demos + clean with clean's ch0 shoulder-pan channel shifted to the shared convention (the standing named suspect: only channel exceeding the demos&lt;-&gt;v2 reference KS both ways, x2.84 worst pdnorm amplification; transform form + frozen constants from the banked manifold-probe reads, action AND state columns, one variable). Same frozen verdict grid + paired reads (vs democlean 8 THE read / onerig 28 / control 11 / gripfix 5 joins as the exonerated-suspect anchor). Record the gripfix nuance in the design: channel edits touch state columns too — the remap itself can add off-manifold artifact (gripfix's certified -2.07 cm paired progress regression); consider shift (mean-recenter) vs affine choice on that evidence. If ch0 also exonerates: per-episode LOO at x4 = 7 cheap cells is the ladder's last rung. NO launch from the draft item; exec per no-GO-ask at a free GPU window.
+ch0 affine isolation cell EXECUTION (pre-reg drafted 07:0xZ 08-22, launch delegated per no-GO-ask): (1) materializer fontaine/scripts/make_clean_ch0fix_dataset.py — so101_pick_place_clean with ch0 (action AND state) affined by the frozen x' = 0.0923439813196304 + (x - 1.481974338423806) * 2.755193138766973 (float64 transform, cast back to source dtype), all else byte-identical, dataset name so101_pick_place_clean_ch0fix_n (draws holdout (2,), pre-verified); oracles: exact affine on ch0, byte-equal elsewhere, counts identical, transformed range inside demos observed support [-110.0, +79.6], holdout draw (2,), no-op guard if source ch0 std &gt; 20. (2) freeze final command block in-channel (democlean launcher verbatim, one delta: clean -&gt; clean_ch0fix_n in --train-data; repeat glob matches unchanged). (3) fit smoke, then launch w/ pruner unit from step 0; babysit entry at launch; H100 contention check (owner policy-server 8144) per standing rule. (4) endpoint battery (clone launch_gripfix_endpoint_battery.sh, name deltas) -&gt; sim100 frozen grid &gt;=20 ch0-distribution-IS-the-carrier / &lt;=10 suspect-list-exhausted (one-sided per the registered asymmetry note; next: per-episode LOO with a design pass weighing leave-K-out bisection first) / 11-19 ambiguous; paired reads vs democlean 8 (THE read) + gripfix 5 (edit-artifact comparison) + onerig 28 + control 11. Record-only: ch0fix pdnorm row vs clean's (ch0 x2.755, else pinned — live materializer oracle); eval-250 twin-curve vs democlean; paired-progress carries artifact detection. Gate 17 GPU-h (train ~13.7 + battery ~3). Probe canNOT clear the cell (decoupling banked 3x).
 
 </details>
 
@@ -230,9 +230,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (274)
+## ✅ Done (275)
 
 *closed — the full record stays in each fold*
+
+**`ch0-shift-isolation-prereg`** · `cpu`
+
+ch0-shift isolation cell pre-reg DRAFT (CPU, any window; the gripfix verdict's &lt;=10-branch follow-up, ladder rung 2 of the carrier hunt): draft the pre-registration for demos + clean with clean's ch0 shoulder-pan channel shifted…
+
+**boundary:** Queued 02:3xZ 08-22 at the gripfix verdict close (the pre-reg's registered &lt;=10-branch follow-up). || CLOSED 07:0xZ 08-22 work session: DRAFTED end-to-end with a measured form amendment — constant-freeze read (spec frozen in-channel 06:45Z post 1540612893836574780 + addendum 06:47Z post 1540613448264712243, BOTH before compute; scripts ch0_shift_constant_read.py + ch0_affine_addendum_read.py, oracles green: banked manifold-probe KS reproduced to 1e-9, shift-invariance sanity) REFUTED the shift form at zero GPU cost: clean ch0 mean sits 1.39 raw units from demos' (~0.05 demos-std) — the anomaly is SPREAD compression (std 10.16 vs 27.99), both shift candidates leave KS unmoved (0.295 -&gt; 0.286/0.308 vs ref 0.161). Moment-matched affine lands deep in-band (post-KS vs demos 0.047 action / 0.049 state; robust candidate 0.092/0.094 strictly worse; frozen decision rule from the addendum). Draft posts/2026-08-22-prereg-clean-ch0-affine.md freezes: x' = 0.0923439813196304 + (x - 1.481974338423806) * 2.755193138766973, ch0 action AND state; dataset name so101_pick_place_clean_ch0fix_n PRE-VERIFIED to draw holdout (2,) (gripfix Amendment-1 lesson applied before launch, split episode-identical to democlean); transformed range [-72.9, +50.6] inside demos observed support [-110.0, +79.6]; one-sided-ness registered (&gt;=20 decisive, &lt;=10 capped at suspect-list-exhausted — the x2.755 amplification enlarges the gripfix edit-artifact class); paired reads add gripfix 5/100 as the exonerated-suspect anchor. Report analysis__ch0_shift_constant_read.json + ECDF chart banked. Exec — ch0-affine-exec. · [pre-reg](posts/2026-08-22-prereg-clean-ch0-affine.md)
+
+<details><summary>full record</summary>
+
+ch0-shift isolation cell pre-reg DRAFT (CPU, any window; the gripfix verdict's &lt;=10-branch follow-up, ladder rung 2 of the carrier hunt): draft the pre-registration for demos + clean with clean's ch0 shoulder-pan channel shifted to the shared convention (the standing named suspect: only channel exceeding the demos&lt;-&gt;v2 reference KS both ways, x2.84 worst pdnorm amplification; transform form + frozen constants from the banked manifold-probe reads, action AND state columns, one variable). Same frozen verdict grid + paired reads (vs democlean 8 THE read / onerig 28 / control 11 / gripfix 5 joins as the exonerated-suspect anchor). Record the gripfix nuance in the design: channel edits touch state columns too — the remap itself can add off-manifold artifact (gripfix's certified -2.07 cm paired progress regression); consider shift (mean-recenter) vs affine choice on that evidence. If ch0 also exonerates: per-episode LOO at x4 = 7 cheap cells is the ladder's last rung. NO launch from the draft item; exec per no-GO-ask at a free GPU window.
+
+</details>
+
+---
 
 **`squint-twin-screen-prereg`** · `cpu`
 
