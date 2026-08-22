@@ -349,3 +349,36 @@ not fire. The screen runs pair 1 only.
 oracle, one detached unit, ~0.8 GPU-h); leg B (adaptation, both arms
 chained, ~4.5 GPU-h) after the oracle receipt is verified; Gate-2
 rollout harness at the next window. Cell gate ≤7 GPU-h unchanged.
+
+---
+
+## RESULTS (2026-08-22 13:57Z; appended 2026-08-22 23:0xZ work session): Gate 1 FAILED — screen closed F_INSTRUMENT
+
+*Full record: [results page](2026-08-22-squint-screen-results.md).
+Verdict artifact `outputs/squint_screen/eval/gate1.log`.*
+
+- **Gate 0: PASS** (preflight-2 receipts + leg A oracle — replay
+  tracking p50 0.0025 rad, no arm clip > 0.05 rad, round-trip
+  6.5e-8 rad, frames bit-exact pre-encode).
+- **Leg A COMPLETE** 05:43Z (~1.9 GPU-h): experts success 1.00 both
+  tasks; `squint_twin_demos_v1` banked, 100+100 episodes with
+  per-step ground-truth predicates.
+- **Leg B COMPLETE** 13:33Z (r4 full retrain ~4.4 GPU-h after the
+  ENOSPC + [resume-bug](2026-08-22-offload-mirror-bug.md) incident,
+  ~2.7 GPU-h re-spend, crossing recorded in-channel): frozen Slot-6
+  recipe both arms, probe twins onerig 2.47@500 / democlean
+  2.5187@500.
+- **Gate 1: FAIL.** Adapted onerig @500: band pilots 0/20 both tasks
+  (BELOW_BAND), cells completed to n=100 anyway — **0/100 lift,
+  0/100 place** vs the ≥20/100 best-task bar → `FAIL_F_INSTRUMENT`,
+  the pre-registered valid end. Milestone forensics: reached_object
+  20/100, grasps 3–4/100, item_lifted 7–10/100, success 0 — partial
+  competence, not a transport flatline. **No relative read attempted;
+  Gate-2 spend skipped; substitution ladder (Reach) logged, never
+  auto-run** — a future pre-registered session's call.
+- **Registered role per the frozen fail branch:** the twin is a
+  labeled-rollout generator only (idea #6 — the corpus survives and
+  banked its first 400 predicate-labeled episodes). It screens
+  nothing, gates nothing; the next eval tier stays sim100-only.
+  onerig 28/100 vs democlean 8/100 stands exactly where sim100
+  certified it.
