@@ -3,6 +3,34 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-22 07:20–07:2xZ (tick) — **routine leg B poll:
+healthy — step 320/500 arm 1 onerig, 15.03 s/step cumulative, loss
+1.45 → 1.41, probe 2.80@300, vram 62.43 vs the 71 gate. Discord
+fully quiet, queue green, `run_work_next` armed.***
+
+**Status**: `fontaine-squint-adapt` LIVE and healthy at step 320/500
+(arm 1 onerig): loss 1.41, probe `eval_chunk_mae` 4.20@100 →
+3.27@200 → 2.80@300 (record-only first wear, monotone down), vram
+62.43 vs the 71 gate, ~0.8 h to step 500 at the 15.03 s/step
+cumulative line — arm roll ~08:0x–08:1xZ (step reset = the roll).
+The windowed 3.1 steps/min read is the same short-window
+quantization noise as 06:52Z; the cumulative rate is on-recipe. Unit
+done ~10:3xZ.
+
+**Steering**: none — inbox empty, `read` empty, `history -n 5` all
+own posts, no reactions.
+
+**Done** (this tick): babysit poll (liveness 5 procs, both gates
+green, exit 0), Discord read + history, queue validate green (depth
+2, 15 open, stamp 07:05Z), `run_work_next` confirmed armed (07:09Z),
+now.md keep-3 + footer keep-2 rolls to archive 08-22.
+
+**Next**: chained work session owns the ch0-affine materializer
+(CPU-buildable) during the leg B window. Boundaries: arm roll
+~08:0x–08:1xZ (jsonl repoints to the democlean stem), leg B done
+~10:3xZ → launch `fontaine-squint-gate12` (leg C; phase A doubles as
+the live smoke), `ch0-affine-exec` at the window after leg C.*
+
 *Updated 2026-08-22 06:43–07:1xZ (work) — **the "ch0 shift" suspect
 dissolved under measurement, and the ladder's rung-2 cell is now an
 affine: the constant-freeze read (specs frozen in-channel before
@@ -74,47 +102,14 @@ repoints to the democlean stem), leg B done ~10:3xZ → launch
 `fontaine-squint-gate12` (leg C; phase A doubles as the live
 smoke).*
 
-*Updated 2026-08-22 06:02–06:5xZ (work) — **Gate-1/2 harness CPU build
-COMPLETE while leg B rides: the whole band-pilot → Gate-1 → Gate-2 →
-reads path is now one launch-ready detached unit, with the
-pre-registered McNemar + KM/KS analysis oracle-tested and the CDF
-panel chart rendering in the house scheme.***
-
-**Status**: `fontaine-squint-adapt` LIVE and healthy at step 160/500
-(arm 1 onerig): 15.96 s/step (≈ the 16.5 smoke), loss 2.17 → 1.80
-since last poll, first probe fact `eval_chunk_mae` 4.20@100
-(record-only first wear, no kill bar), vram 62.41 vs the 71 gate.
-Arm roll ~08:1xZ, unit done ~10:3xZ.
-
-**Steering**: none — inbox empty, `read` empty at both babysit
-checkpoints, `history -n 5` all own posts.
-
-**Done** (this session, `b066b8d3`): `squint-gate2-harness` CPU build
-COMPLETE — (1) `squint_gate12_leg.sh`: leg C as one detached unit
-(band pilot n=20 seeds 0–19 both tasks → 20–80 band verdicts →
-adapted onerig completed to n=100, pilot rows a reusable prefix of
-the paired 0–99 cell → Gate-1 best-task ≥20/100 with F-instrument
-exit skipping Gate-2 spend → adapt_democlean cells + unadapted @3000
-riders on the sim100 worn row → reads; leg-B-active +
-foreign-compute guards, kill-safe serve pattern). (2)
-`squint_screen_read.py`: McNemar exact p + seed-0 10k bootstrap
-reused from the sim100 machinery; KM/KS co-primary per the
-eval-design tier-3 sketch (fixed-horizon censoring reduces KM to the
-first_true_step ECDF; per-predicate KS + signed ΔAUC, macro-KS
-paired label-swap permutation p, seed-clustered bootstrap CI95);
-frozen expectation grid verbatim; CDF panel in the house dark scheme.
-Oracle self-test green (hand-computed McNemar 0.109375, censoring,
-KS extremes, permutation floor, band edges, grid cases) + synthetic
-end-to-end smoke green incl. rendered panel. check.py green.
-
-**Next**: `queue_cli.py next` → `ch0-shift-isolation-prereg` draft
-(chained work session; `run_work_next` armed). Boundaries: arm roll
-~08:1xZ 08-22 (step reset = the roll, not a stall), leg B done
-~10:3xZ → launch `fontaine-squint-gate12` (leg C; command in the
-script header — phase A doubles as the live smoke of the served-arm
-path).*
-
 ## Utilization footer
+
+Session 2026-08-22 07:20–07:2xZ (tick; 0 marginal GPU-h — leg B
+riding): **routine healthy poll of `fontaine-squint-adapt` — step
+320/500 arm 1, 15.03 s/step cumulative (windowed read again
+quantization-noisy), loss 1.41, probe record-only 2.80@300, vram
+62.43/71. Discord fully quiet; queue green depth 2 (15 open);
+`run_work_next` armed. Next boundary: arm roll ~08:0x–08:1xZ.**
 
 Session 2026-08-22 06:43–07:1xZ (work; exploit — ch0 carrier-hunt
 rung 2, 0 marginal GPU-h, leg B riding): **constant-freeze read
@@ -125,13 +120,6 @@ compression) and certified the moment affine (post-KS 0.047 vs band
 dataset name; `ch0-affine-exec` queued behind the squint GPU claim.
 Leg B healthy at 06:52Z (step 210/500, loss 1.70, probe 3.27@200,
 vram 62.43/71).**
-
-Session 2026-08-22 06:40–06:4xZ (tick; 0 marginal GPU-h — leg B
-riding): **routine healthy poll of `fontaine-squint-adapt` — step
-170/500 arm 1, 15.64 s/step windowed, loss 1.77, vram 62.4/71,
-probe record-only 4.20@100. Discord fully quiet; queue green depth
-2 (15 open); `run_work_next` armed. Next boundary: arm roll
-~08:1xZ.**
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
