@@ -9,7 +9,7 @@ mainline ledger, `docs/architecture.md` §7–8). Status tags: `queued`
 
 This page is the **index**: what is hot right now vs what is on ice.
 It is updated whenever an idea moves (the per-idea page is the
-record; the line here is the hook). *Index last updated 2026-08-13.*
+record; the line here is the hook). *Index last updated 2026-08-22.*
 
 ## Hot — actively pursued
 
@@ -924,7 +924,19 @@ record; the line here is the hook). *Index last updated 2026-08-13.*
   **non-instrument** (the six-entry list of what may never gate a
   verdict, each with its banked convicting exhibit). v1 slots named:
   sim-vs-rig calibration, Squint pre-reg, rig verdict-grid grammar
-  in KS terms, precision ceiling c.
+  in KS terms, precision ceiling c. Slot 2 DRAFTED 2026-08-22
+  ([Squint-twin qualification screen pre-reg](posts/2026-08-22-prereg-squint-twin-screen.md)):
+  tier decision resolved GO-for-qualification (wrist screen
+  F-instrument + the 28/100 competence floor both fired the 08-14
+  rule); three-gate design frozen — mechanical adapter (deg→rad +
+  gripper affine from the twin's own deploy path, 30→10 Hz
+  subsample-by-3, dual-camera 224 raw), sim-adaptation positive
+  control at treatment n (SAC-expert demos → bijou.train, ≥20/100
+  floor else F-instrument), qualification read = adapted onerig
+  28/100 vs democlean 8/100 paired-McNemar + first KS-on-CDF
+  rehearsal on the twin's free predicates; relative-only claims
+  contract, cell gate ≤7 GPU-h, launch pends preflight-2 receipts +
+  finalization amendment.
 - **`lit-arms` [#15 Literature-sourced arms](ideas/15-literature-arms.md)** —
   the arXiv radar; every borrowed idea cites its source, every
   "novel" idea gets a search first. Feeds the Papers section.

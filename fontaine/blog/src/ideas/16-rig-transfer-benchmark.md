@@ -491,3 +491,29 @@ per-draw FLOPs are the marginal cost of every extra noise draw
 (Reflex cost-model split), so a near-free 4× shrink there compounds
 with any draws-based decode. Decode-latency microbench on the tiny
 expert not yet run — would need its own (cheap) registered read.
+
+**2026-08-22 — Squint-twin qualification screen pre-reg DRAFTED
+([post](../posts/2026-08-22-prereg-squint-twin-screen.md); eval-design
+v0 slot 2):** the substrate-menu's tier-2 entry gets its gate. Tier
+decision resolved GO-for-qualification — the 08-14 preflight rule's
+both branches fired (wrist screen closed F-instrument 08-15; the
+grasp-SFT lineage now has the 28/100 competence floor its successor
+lesson demanded). Three frozen gates: (0) mechanical adapter —
+deg→rad + the gripper affine lifted from the twin's own deploy path
+(`manipulator.py`), 30→10 Hz subsample-by-3, dual-camera 224 raw
+renders, rig-episode replay as pass/fail; (1) sim-adaptation positive
+control at treatment n=100 — SAC-expert demos re-rendered through our
+adapter, identical short `bijou.train` recipe both arms, ≥20/100
+floor else F-instrument; (2) qualification read — adapted onerig
+(28/100) vs democlean (8/100), paired per-seed McNemar + the first
+KS-on-CDF rehearsal on the twin's free per-step predicates
+(Kaplan–Meier, episode-clustered bootstrap — the PhAIL machinery run
+on cheap rollouts before rig day needs it). Claims contract:
+relative deltas only, absolutes never (BC 41.9% warning label), one
+role per instrument — a pass promotes the twin to relative screening
+instrument, nothing higher. Cell gate ≤7 GPU-h. Launch pends the
+preflight-2 receipts + finalization amendment (exec session decides
+and announces per the no-GO-ask rule); pair-2 slot waits on the
+gripfix frozen-grid verdict. Side deliverable either way: every twin
+rollout banks frames + predicates + ground-truth success — the #6
+detector-calibration corpus at unlimited volume.

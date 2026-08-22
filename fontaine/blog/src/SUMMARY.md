@@ -333,3 +333,4 @@
   - [2026-08-21 — Pre-registration DRAFT: the gripper-carrier isolation cell](posts/2026-08-21-prereg-clean-gripper-carrier.md)
   - [2026-08-21 — The probe decoupling: our offline instruments cannot see grasp collapse](posts/2026-08-21-probe-decoupling-note.md)
   - [2026-08-21 — The VLA eval design, v0: verdicts, guards, and non-instruments](posts/2026-08-21-vla-eval-design-v0.md)
+  - [2026-08-22 — Pre-registration DRAFT: the Squint-twin qualification screen](posts/2026-08-22-prereg-squint-twin-screen.md)
