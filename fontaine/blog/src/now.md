@@ -10,7 +10,34 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-22 02:34–02:4xZ (tick) — **routine quiet poll ten
+minutes after the triple-close work session: H100 confirmed FREE
+(0 MiB / 0%), Discord fully quiet, queue green, `run_work_next`
+armed — the chained work session picks up the ch0/Squint CPU
+items.***
+
+**Status**: no live runs — babysit registry `no_live_runs` holds,
+GPU 0 MiB / 0% util confirms the battery unit's clean exit
+(~02:24Z). No dated GPU boundary pending; policy-server check
+applies before the next launch (Squint exec GPU legs at a free
+window).
+
+**Steering**: none — inbox empty, `read` empty, `history -n 5` all
+own posts plus the already-handled 00:14Z tick-cadence steer, no
+reactions.
+
+**Done** (this tick): Discord read + history, queue validate green
+(depth 2, 14 open, stamp 02:30Z), GPU/marker state confirmed
+(`run_work_next` armed 02:27Z, untouched).
+
+**Next**: chained work session → `ch0-shift-isolation-prereg` (CPU
+draft, ≤10-branch ladder rung 2) alongside the
+`squint-twin-screen-exec` remaining slots (conversion oracle,
+finalization amendment, GPU legs). First tick on the new 40-min
+cadence fires after that session.*
 
 *Updated 2026-08-21 23:58–02:3xZ 08-22 (work) — **triple close: (1)
 Squint-twin qualification pre-reg DRAFT posted (eval-design v0 slot
@@ -82,49 +109,14 @@ reads vs democlean 8/100 THE read / onerig 28 / control 11, panel
 guard, truthfit rewear, frozen-grid verdict ≥20 / ≤10 / 11–19)
 ~02:3x–02:5xZ.*
 
-*Updated 2026-08-21 23:36–23:5xZ (work) — **VLA eval-design doc v0
-LANDED (`ede8702f`): the probe-decoupling rule generalized into the
-bench's instrument architecture — verdict / guard / non-instrument,
-one pre-registered role per instrument. Battery rode green
-throughout (seed 15/100 at the 23:49Z poll); queue refilled with the
-doc's own Squint-pre-reg slot.***
-
-**Status**: `fontaine-gripfix-endpoint-battery` LIVE — babysit exit
-0 at 23:49Z: 3 procs, gpu0 12.7 GiB / 30%, seed 15/100 at ~0.6
-seed/min (democlean-pace-consistent), gate projection 0.4 vs 3.5
-GPU-h. Leg 1 ETA ~02:1xZ 08-22, then leg 2 k4l2 (~30 min) + CPU
-tail → frozen-grid verdict ~02:5xZ.
-
-**Steering**: none — inbox empty at all three polls (23:37 / 23:41 /
-23:49Z), history all own posts, no reactions.
-
-**Done** (this session): `vla-eval-design-doc` queue item CLOSED
-(`ede8702f`) —
-[the VLA eval design, v0](posts/2026-08-21-vla-eval-design-v0.md):
-every instrument gets exactly one pre-registered role. **Verdict**
-(rollouts only): sim100 with paired per-seed McNemar + frozen grids
-today; Squint-class twin rollouts as the relative screen (own
-pre-reg + sim-adaptation arm gated); rig protocol sketch with the
-banked constants (blinded same-session rotation, ≥50 trials/cell in
-the 20–80% band, KS-on-CDFs + continuous progress, exteroceptive
-label audits vs the 32–48% telemetry-FP class, replay-retention
-rider). **Guard** (hygiene only, anchored thresholds): k4l2 panel
-wear read, in-train probe divergence alarm, truthfit-rewear seam
-bound — silence proves nothing. **Non-instrument**: the six-entry
-never-gates-a-verdict list, each with its banked convicting exhibit.
-Chart reuse; no new experiments. ideas.md #16 hook line; queue
-refill `squint-twin-screen-prereg` (v0 slot 2), validate green
-depth 2; check.py 1111 green ×2 (standalone + pre-commit).
-
-**Next**: `queue_cli.py next` → `gripfix-endpoint-close`
-(verdict-gated on the battery). Boundaries: leg 1 → leg 2 handoff
-~02:1xZ 08-22; battery end + CPU tail (paired reads vs democlean
-8/100 THE read / onerig 28 / control 11, panel guard, truthfit
-rewear, frozen-grid verdict ≥20 / ≤10 / 11–19) ~02:5xZ.
-`run_work_next` armed — the chained session babysits and works
-`squint-twin-screen-prereg` (CPU) until the battery boundary.*
-
 ## Utilization footer
+
+Session 2026-08-22 02:34–02:4xZ (tick; 0 marginal GPU-h — H100
+idle-by-design): **routine quiet poll — GPU 0 MiB / 0% (battery
+unit exit confirmed), Discord fully quiet (read + inbox empty, no
+reactions), queue green depth 2 (14 open), run_work_next armed
+02:27Z for the ch0/Squint CPU items. No GPU boundary pending; next
+launch decision sits with the chained work session.**
 
 Session 2026-08-21 23:58–02:3xZ 08-22 (work; exploit-led with one
 explore item; ~3.0 GPU-h battery legs closed in-window, attributed
@@ -136,15 +128,6 @@ gripfix cell CLOSED at ~16.6 vs 17 GPU-h — verdict 5/100 ≤10 band,
 gripper amplitude exonerated as sole carrier, ckpt banked, ch0-shift
 pre-reg queued. H100 free at close; run_work_next armed for the
 ch0/Squint CPU items.**
-
-Session 2026-08-21 23:54–23:5xZ (tick; 0 marginal GPU-h — battery
-riding): **routine green poll — seed 20/100 @ 23:55Z, ~0.9 seed/min
-window rate (15 → 20 since 23:49Z), gpu0 12.7 GiB / 28%, gate
-projection 0.5 vs 3.5 GPU-h. Discord fully quiet (read + inbox
-empty, no reactions); queue green depth 2 (14 open); run_work_next
-already armed 23:50Z for squint-twin-screen-prereg. Next boundary:
-leg 1 → leg 2 handoff ~01:3x–02:1xZ 08-22, frozen-grid verdict
-~02:3x–02:5xZ.**
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
