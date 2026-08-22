@@ -220,6 +220,14 @@ def stage_rollout(
         if smoke:
             success = torch.ones_like(success.float()).bool()
         attempts += batch
+        # The vector env TRUNCATES + AUTO-RESETS on the final step: the
+        # post-step target/qpos of step horizon-1 are the NEW episode's
+        # reset state, not the episode's last command (04:3xZ 08-22
+        # incident: the reset pose's OPEN gripper replayed as a
+        # release -> 0/130 re-render successes). Drop that row; the
+        # banked episode is horizon-1 real steps.
+        targets = targets[:, :-1]
+        qpos_tr = qpos_tr[:, :-1]
         for i in torch.nonzero(success).reshape(-1).tolist():
             if len(kept) >= n_candidates:
                 break
@@ -282,7 +290,10 @@ def stage_rerender(task: str, keep: int, batch: int, *, smoke: bool = False) -> 
     states = torch.load(out / "rollout_states.pt", weights_only=False)
     seeds, targets, qpos_roll = data["seeds"], data["targets"], data["qpos"]
     n = len(seeds)
-    horizon = cfg["horizon"]
+    # Sized from the DATA, not the env registration: rollout banks
+    # horizon-1 real steps (the final row is the truncation-reset
+    # artifact, dropped there).
+    horizon = targets.shape[1]
 
     env = gym.make(
         cfg["dual_id"],

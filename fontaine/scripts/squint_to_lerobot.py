@@ -136,6 +136,9 @@ def build() -> dict:
                     },
                 )
             ds.save_episode()
+    if ep0 is None:
+        msg = "no episodes converted — refusing to finalize an empty dataset"
+        raise SystemExit(msg)
     ds.finalize()
     return {"episode_counts": counts, "ep0": ep0}
 
