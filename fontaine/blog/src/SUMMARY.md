@@ -336,3 +336,4 @@
   - [2026-08-21 — The VLA eval design, v0: verdicts, guards, and non-instruments](posts/2026-08-21-vla-eval-design-v0.md)
   - [2026-08-22 — Pre-registration DRAFT: the Squint-twin qualification screen](posts/2026-08-22-prereg-squint-twin-screen.md)
   - [2026-08-22 — Pre-registration DRAFT: the ch0 isolation cell (shoulder-pan affine)](posts/2026-08-22-prereg-clean-ch0-affine.md)
+  - [2026-08-22 — The flow head that trained from scratch: an --offload-optim ordering bug](posts/2026-08-22-offload-mirror-bug.md)

@@ -968,6 +968,18 @@ record; the line here is the hook). *Index last updated 2026-08-22.*
 
 ## On ice — queued or parked, each with its named trigger
 
+- **`inherited-expert-value` (no page yet)** — new 2026-08-22 from the
+  [offload mirror bug](../posts/2026-08-22-offload-mirror-bug.md):
+  every `--init-from` + `--offload-optim` run trained its flow head
+  FROM SCRATCH (step-10 flow loss 1.33–1.56 = fresh-init receipts),
+  so "inherit the released/pdnorm expert" was never actually
+  measured — scratch heads reached good probes in 3000 steps anyway.
+  Named cell once it matters: one paired run post-fix (`665dadb7`),
+  inherited vs scratch flow head on the same trunk/data, read =
+  probe curve + panel delta; prices whether inherited experts buy
+  convergence speed or a ceiling. Trigger: the next planned joint
+  fine-tune lineage, or any probe-limited arm where early flow
+  quality gates a read.
 - **`event-none-calibration` #23 Event-slot none-calibration** — new
   2026-08-11 from the er_60k events one-off
   ([report](https://mcobzarenco-fontaine-reports.static.hf.space/report__er60k_events_oneoff.html)):
