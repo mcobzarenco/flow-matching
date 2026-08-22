@@ -5,6 +5,44 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-22 23:10–23:2xZ (tick) — **routine ch0fix poll:
+healthy — step 100/3000, loss 0.953 monotone down, vram 62.19/71,
+disk 171G; the 0%-util duty cycle I caught mid-poll is a shared
+recipe characteristic (democlean's own trace runs 16.36 s/step mean),
+not starvation — no intervention, comparability preserved. ETA
+refines to ~12:0x–12:3xZ 08-23.***
+
+**Status**: `fontaine-v2-joint-pdnorm-ch0fix` LIVE and healthy — step
+100/3000, loss 1.91→0.953 monotone down (flow 0.033), per-window rate
+oscillating 14.9–16.7 s/step, vram 62.19 stable vs the 71 gate, disk
+171G vs the ≥90 line, host RAM 90G available. Babysit exit 0, both
+gates green. **Rate/util judgment call**: nvidia-smi sampling showed a
+~6 s-at-0% / ~9 s-at-100% duty cycle per step — checked against the
+democlean twin's own train log before judging: democlean averaged
+**16.36 s/step** (windows 14.7–24.5) under the identical launcher, so
+ch0fix at 14.9–16.7 is running *slightly faster than its twin*; the
+stall phase is the recipe's CPU-side step section, not input
+starvation, and a mid-run dataloader change would break
+recipe-verbatim comparability anyway (no-resume lineage → full
+retrain). ETA at twin-class rate: done ~12:0x–12:3xZ 08-23 (a shade
+later than the 11:2xZ first estimate) → sim100 battery vs democlean
+8/100.
+
+**Steering**: none — inbox empty, `read` empty, `history -n 5` all
+own posts, no reactions.
+
+**Done** (this tick): babysit poll (liveness 5 procs, exit 0), util
+duty-cycle investigation (multi-sample nvidia-smi + jsonl window
+rates + democlean twin trace comparison → healthy verdict), Discord
+read + history, queue validate green (depth 1 stated-reason, 14
+open), RAM/disk checks, `run_work_next` confirmed armed (23:09),
+now.md keep-3 + footer keep-2 rolls.
+
+**Next**: chained work session owns `carrier-hunt-rung3-prereg`
+(CPU, both contingent branches drafted ahead of the verdict).
+Boundary: ch0fix done ~12:0x–12:3xZ 08-23 → sim100 endpoint battery
+vs democlean 8/100; its verdict picks the rung-3 branch.*
+
 *Updated 2026-08-22 22:41–23:1xZ (work) — **squint screen CLOSED
 F_INSTRUMENT with the full close-out landed (results post + charts +
 pre-reg RESULTS append + queue closures), and `pdnorm_ch0fix` first
@@ -92,34 +130,15 @@ ch0fix first-poll (ch0 pdnorm scale ×2.755 live oracle, vram vs 71,
 input starvation check). Boundary: ch0fix done ~11:1x–11:3xZ 08-23 →
 endpoint sim100 battery vs democlean 8/100.*
 
-*Updated 2026-08-22 10:50–10:5xZ (tick) — **routine r4 poll: healthy
-— step 380/500 arm 1 onerig, 14.97 s/step cumulative, loss 1.42,
-probe 2.76@300 monotone down, vram 62.43/71, disk 154G vs the ≥90
-line. Discord fully quiet, queue green depth 3, `run_work_next`
-armed.***
-
-**Status**: `fontaine-squint-adapt-r4` LIVE and healthy at step
-380/500 (arm 1 onerig): loss 1.42, probe `eval_chunk_mae` 4.19@100 →
-3.24@200 → 2.76@300 (record-only, monotone down, tracking attempt-1's
-curve), vram 62.43 vs the 71 gate, disk 154 GiB free vs the ≥90
-babysit line, ~0.5 h to step 500 at 14.97 s/step cumulative — arm
-roll ~11:2xZ (step reset = the roll; jsonl repoints to the democlean
-stem). Unit done ~13:3x–13:4xZ.
-
-**Steering**: none — inbox empty, `read` empty, `history -n 5` all
-own posts, no reactions.
-
-**Done** (this tick): babysit poll (liveness 5 procs, both gates
-green, exit 0), Discord read + history, queue validate green (depth
-3, 16 open, stamp 09:16Z), disk check 154G, `run_work_next` confirmed
-armed (10:23Z), now.md keep-3 + footer keep-2 rolls to archive 08-22.
-
-**Next**: chained work session owns `bijou-resume-flow-state-bug`
-(CPU) during the r4 window and catches the arm roll ~11:2xZ. Leg B
-done ~13:3x–13:4xZ → launch `fontaine-squint-gate12` (leg C; phase A
-doubles as the live smoke), `ch0-affine-exec` at the window after.*
-
 ## Utilization footer
+
+Session 2026-08-22 23:10–23:2xZ (tick; 0 marginal GPU-h — ch0fix
+riding gpu0): **routine poll, healthy — step 100/3000, loss 0.953
+monotone down, vram 62.19/71, disk 171G; investigated a 0%-util duty
+cycle mid-step and cleared it against the democlean twin's own trace
+(16.36 s/step mean — ch0fix at 14.9–16.7 windows is the faster twin),
+no intervention. ETA refined ~12:0x–12:3xZ 08-23; `run_work_next`
+armed for the rung-3 pre-reg draft.**
 
 Session 2026-08-22 22:41–23:1xZ (work; exploit/close-out, 0 marginal
 GPU-h — ch0fix riding gpu0 the whole session): **squint qualification
@@ -129,15 +148,6 @@ rung-3 contingency refill, `847bae1c`); ch0fix first poll GREEN (step
 30/3000, 14.98 s/step, vram 62.19/71, 100% util) with the ch0
 ×2.7552 pdnorm live oracle verified from dataset stats. Next
 boundary: ch0fix done ~11:1x–11:3xZ 08-23.**
-
-Session 2026-08-22 22:22–22:5xZ (tick; outage recovery — ~8.4
-GPU-idle-h lost 13:57Z→22:2xZ to the exit-1 harness outage, not to
-scheduling; ~0.05 marginal GPU-h smoke + ch0fix 3000-step launch
-riding at close): **caught up a dead work session's landed-but-
-uncommitted state (`4e91601e`); leg B r4 complete, bijou resume bug
-closed fix-verified, leg C Gate-1 FAIL_F_INSTRUMENT (0/100 both
-tasks, screen closed per pre-reg); `fontaine-v2-joint-pdnorm-ch0fix`
-smoked + launched ~22:4xZ, done ~11:1x–11:3xZ 08-23.**
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
