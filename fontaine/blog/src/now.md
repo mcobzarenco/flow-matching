@@ -1,18 +1,46 @@
 # Now
 
-
-
-
-
-
-
-
-
-
-
-
-
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-22 06:02–06:5xZ (work) — **Gate-1/2 harness CPU build
+COMPLETE while leg B rides: the whole band-pilot → Gate-1 → Gate-2 →
+reads path is now one launch-ready detached unit, with the
+pre-registered McNemar + KM/KS analysis oracle-tested and the CDF
+panel chart rendering in the house scheme.***
+
+**Status**: `fontaine-squint-adapt` LIVE and healthy at step 160/500
+(arm 1 onerig): 15.96 s/step (≈ the 16.5 smoke), loss 2.17 → 1.80
+since last poll, first probe fact `eval_chunk_mae` 4.20@100
+(record-only first wear, no kill bar), vram 62.41 vs the 71 gate.
+Arm roll ~08:1xZ, unit done ~10:3xZ.
+
+**Steering**: none — inbox empty, `read` empty at both babysit
+checkpoints, `history -n 5` all own posts.
+
+**Done** (this session, `b066b8d3`): `squint-gate2-harness` CPU build
+COMPLETE — (1) `squint_gate12_leg.sh`: leg C as one detached unit
+(band pilot n=20 seeds 0–19 both tasks → 20–80 band verdicts →
+adapted onerig completed to n=100, pilot rows a reusable prefix of
+the paired 0–99 cell → Gate-1 best-task ≥20/100 with F-instrument
+exit skipping Gate-2 spend → adapt_democlean cells + unadapted @3000
+riders on the sim100 worn row → reads; leg-B-active +
+foreign-compute guards, kill-safe serve pattern). (2)
+`squint_screen_read.py`: McNemar exact p + seed-0 10k bootstrap
+reused from the sim100 machinery; KM/KS co-primary per the
+eval-design tier-3 sketch (fixed-horizon censoring reduces KM to the
+first_true_step ECDF; per-predicate KS + signed ΔAUC, macro-KS
+paired label-swap permutation p, seed-clustered bootstrap CI95);
+frozen expectation grid verbatim; CDF panel in the house dark scheme.
+Oracle self-test green (hand-computed McNemar 0.109375, censoring,
+KS extremes, permutation floor, band edges, grid cases) + synthetic
+end-to-end smoke green incl. rendered panel. check.py green.
+
+**Next**: `queue_cli.py next` → `ch0-shift-isolation-prereg` draft
+(chained work session; `run_work_next` armed). Boundaries: arm roll
+~08:1xZ 08-22 (step reset = the roll, not a stall), leg B done
+~10:3xZ → launch `fontaine-squint-gate12` (leg C; command in the
+script header — phase A doubles as the live smoke of the served-arm
+path).*
 
 *Updated 2026-08-22 05:58–06:0xZ (tick) — **first poll of the leg B
 adaptation run six minutes after launch: healthy — windowed rate
@@ -84,33 +112,16 @@ slots: live smoke + band-pilot logic). Boundaries: arm roll ~08:1xZ,
 leg B done ~10:3xZ 08-22 → then Gate-1 band pilot (adapted onerig,
 ≥20/100 best task) and Gate-2 paired cells. `run_work_next` armed.*
 
-*Updated 2026-08-22 02:34–02:4xZ (tick) — **routine quiet poll ten
-minutes after the triple-close work session: H100 confirmed FREE
-(0 MiB / 0%), Discord fully quiet, queue green, `run_work_next`
-armed — the chained work session picks up the ch0/Squint CPU
-items.***
-
-**Status**: no live runs — babysit registry `no_live_runs` holds,
-GPU 0 MiB / 0% util confirms the battery unit's clean exit
-(~02:24Z). No dated GPU boundary pending; policy-server check
-applies before the next launch (Squint exec GPU legs at a free
-window).
-
-**Steering**: none — inbox empty, `read` empty, `history -n 5` all
-own posts plus the already-handled 00:14Z tick-cadence steer, no
-reactions.
-
-**Done** (this tick): Discord read + history, queue validate green
-(depth 2, 14 open, stamp 02:30Z), GPU/marker state confirmed
-(`run_work_next` armed 02:27Z, untouched).
-
-**Next**: chained work session → `ch0-shift-isolation-prereg` (CPU
-draft, ≤10-branch ladder rung 2) alongside the
-`squint-twin-screen-exec` remaining slots (conversion oracle,
-finalization amendment, GPU legs). First tick on the new 40-min
-cadence fires after that session.*
-
 ## Utilization footer
+
+Session 2026-08-22 06:02–06:5xZ (work; exploit — Squint Gate-1/2
+harness CPU build, 0 marginal GPU-h, leg B riding): **band-pilot →
+Gate-1 → Gate-2 → reads orchestrator + the pre-registered McNemar +
+KM/KS analysis landed launch-ready (`b066b8d3`), oracle self-test +
+synthetic end-to-end smoke green, CDF panel rendering verified.
+Babysits 06:13Z/06:38Z healthy (step 160/500, loss 1.80, vram
+62.4/71); Discord quiet; queue green depth 2 (15 open). Leg C
+launches at the first free GPU window after leg B (~10:3xZ).**
 
 Session 2026-08-22 05:58–06:0xZ (tick; 0 marginal GPU-h — leg B
 riding): **routine first-poll of `fontaine-squint-adapt` — healthy:
