@@ -14,6 +14,34 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-22 05:58–06:0xZ (tick) — **first poll of the leg B
+adaptation run six minutes after launch: healthy — windowed rate
+15.75 s/step (better than the 16.5 smoke; babysit's 19.9 was
+warmup-inclusive), loss 5.68 → 4.25 by step 20, vram 62.4 vs the
+71 gate. Discord quiet, queue green, `run_work_next` armed.***
+
+**Status**: `fontaine-squint-adapt` LIVE and healthy at step 20/500
+(arm 1 onerig): `s_per_step` 15.747 windowed → arm 1 done ~08:05Z,
+democlean roll after; util bursty (0–100% samples) but the rate
+matches the frozen recipe's smoke, so no starvation call — recipe is
+frozen Slot 6 regardless. Grad norm 7.0, both loss heads moving
+(ar 2.78 / flow 1.50).
+
+**Steering**: none — inbox empty, `read` empty, `history -n 5` all
+own posts, no reactions.
+
+**Done** (this tick): babysit poll (liveness 5 procs, gates green),
+6-sample util check + jsonl windowed-rate read (the
+max-gpu-utilization first-poll rule), Discord read + history, queue
+validate green (depth 2, 15 open, stamp 05:55Z), marker confirmed
+armed (05:55Z).
+
+**Next**: chained work session works the CPU queue during the leg B
+window (`ch0-shift-isolation-prereg` draft, gate2-harness remaining
+slots). Boundaries: arm roll ~08:05Z (step counter reset = the roll,
+not a stall; jsonl repoints to the democlean stem), unit done
+~10:3xZ → Gate-1 band pilot.*
+
 *Updated 2026-08-22 02:37–06:0xZ (work) — **Squint exec session:
 finalization amendment posted + the whole demo pipeline built,
 smoke-tested, launched, root-cause-debugged twice, and closed green —
@@ -82,50 +110,15 @@ draft, ≤10-branch ladder rung 2) alongside the
 finalization amendment, GPU legs). First tick on the new 40-min
 cadence fires after that session.*
 
-*Updated 2026-08-21 23:58–02:3xZ 08-22 (work) — **triple close: (1)
-Squint-twin qualification pre-reg DRAFT posted (eval-design v0 slot
-2) + its preflight-2 CPU receipts executed green the same session;
-(2) owner steer executed same-minute (tick timer 20m → 40m); (3) the
-gripfix battery ridden to its boundary and CLOSED — VERDICT 5/100,
-≤10 band: the gripper amplitude is NOT the sole carrier.***
-
-**Status**: no live runs — H100 FREE (battery unit exited clean
-~02:24Z; GPU 0 MiB; policy-server check applies before any launch).
-Battery closed at ~3.0 vs the 3.5 GPU-h gate; cell honest total
-~16.6 vs 17.
-
-**Steering**: one owner message (00:14Z): default tick 20m → 40m —
-executed same-minute (installed unit + repo copy in sync, restart
-verified), replied in-channel + acked. Nothing else pending.
-
-**Done** (this session): (1) `squint-twin-screen-prereg` CLOSED
-(`0b7057d7`) —
-[Squint-twin qualification screen pre-reg DRAFT](posts/2026-08-22-prereg-squint-twin-screen.md):
-tier decision GO-for-qualification, three frozen gates (mechanical
-adapter / sim-adaptation positive control at n=100 / adapted onerig
-vs democlean qualification read), relative-only claims contract,
-≤7 GPU-h cell gate. (2) Preflight-2 receipts EXECUTED (`7316a8a6`,
-appendix on the pre-reg): dual-camera 224 subclass green, replay
-tracking p50 0.0025 rad, twin shoulder_lift limit ~2.7° tighter than
-our deepest demo pose (finalization re-price named), train_squint
-smoke green. (3) `gripfix-endpoint-close` CLOSED — **frozen-grid
-VERDICT 5/100 (≤10): gripper amplitude NOT the sole carrier**;
-paired vs democlean −3 p 0.375 (no recovery; paired Δprogress
-−2.07 cm CI-excl-0 — the remap certifiably hurt), vs onerig −23
-p 5.7e-06; guards green with gripfix 28.35 vs democlean 28.43
-truthfit — the third offline-blindness exhibit; ckpt banked
-weights-only; results append + verdict chart on the
-[pre-reg post](posts/2026-08-21-prereg-clean-gripper-carrier.md).
-Queue refills: `squint-twin-screen-exec`, `ch0-shift-isolation-prereg`.
-
-**Next**: `queue_cli.py next` → `ch0-shift-isolation-prereg` (CPU
-draft, the ≤10-branch follow-up: clean's shoulder-pan channel is the
-standing suspect) alongside the Squint exec item's remaining slots
-(conversion oracle, finalization amendment, GPU legs at a free
-window). No dated GPU boundary pending — the H100 is free until the
-next delegated launch. `run_work_next` armed.*
-
 ## Utilization footer
+
+Session 2026-08-22 05:58–06:0xZ (tick; 0 marginal GPU-h — leg B
+riding): **routine first-poll of `fontaine-squint-adapt` — healthy:
+step 20/500, windowed 15.75 s/step (≥ smoke), loss 5.68 → 4.25,
+vram 62.4 vs 71 gate; util-burst pattern checked per the first-poll
+rule, no starvation call (rate matches the frozen recipe). Discord
+fully quiet; queue green depth 2 (15 open); `run_work_next` armed
+05:55Z. Next boundary: arm roll ~08:05Z.**
 
 Session 2026-08-22 02:37–06:0xZ (work; exploit — Squint exec, ~1.9
 GPU-h leg A spent + leg B ~4.5 launched): **finalization amendment +
@@ -141,17 +134,6 @@ unit exit confirmed), Discord fully quiet (read + inbox empty, no
 reactions), queue green depth 2 (14 open), run_work_next armed
 02:27Z for the ch0/Squint CPU items. No GPU boundary pending; next
 launch decision sits with the chained work session.**
-
-Session 2026-08-21 23:58–02:3xZ 08-22 (work; exploit-led with one
-explore item; ~3.0 GPU-h battery legs closed in-window, attributed
-to the gripfix cell launched 23:23Z — no new GPU launches this
-session): **Squint qualification pre-reg drafted + preflight-2
-receipts green (CPU, rode the battery); owner tick-cadence steer
-executed same-minute; battery ridden to the boundary and the
-gripfix cell CLOSED at ~16.6 vs 17 GPU-h — verdict 5/100 ≤10 band,
-gripper amplitude exonerated as sole carrier, ckpt banked, ch0-shift
-pre-reg queued. H100 free at close; run_work_next armed for the
-ch0/Squint CPU items.**
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
