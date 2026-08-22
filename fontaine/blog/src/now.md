@@ -4,6 +4,51 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-22 22:22–22:5xZ (tick) — **outage-recovery tick:
+five straight sessions died exit-1 (usage cap) 14:11Z–21:00Z, so the
+GPU sat idle 8.4 h past the leg C close. Caught up: leg B r4
+COMPLETE (twins 2.47/2.52@500), bijou resume bug CLOSED
+(fix GPU-verified), leg C Gate-1 verdict FAIL_F_INSTRUMENT (0/100
+both tasks — screen closed per pre-reg), the dead session's diffs
+recovered + committed, and `ch0-affine-exec` smoked + launched.***
+
+**Status**: harness OUTAGE 14:11Z–~22:2xZ — the 10:53Z work session
+died mid-flight at ~14:11Z (usage cap; uncommitted diffs recovered,
+`4e91601e`, self-test + full suite green) and five ticks
+15:32Z–21:00Z exited 1. Before dying it caught leg B r4 COMPLETE
+13:32:55Z (onerig 2.47@500 / democlean 2.5187@500, both endpoints
+saved clean), GPU-verified the bijou resume fix `665dadb7` (resumed
+flow 0.0833@260 vs poisoned 1.4374 — `bijou-resume-flow-state-bug`
+CLOSED), and launched leg C 13:38:31Z after fixing a real client bug
+(place's `evaluate()` has no `reached_object`; per-task predicate
+ladders landed). Leg C closed 13:57:13Z exit 5: **Gate-1
+FAIL_F_INSTRUMENT** — adapt_onerig step_000500 0/100 lift AND 0/100
+place (pilots BELOW_BAND both tasks) vs the ≥20/100 bar; screen
+closes, no relative read, Gate-2 spend skipped; substitution ladder
+(Reach) logged, never auto-run. This tick: `ch0-affine-exec` fit
+smoke green then real launch, unit `fontaine-v2-joint-pdnorm-ch0fix`
+(~22:4xZ; 3000 steps ≈ 12.5 h → done ~11:1x–11:3xZ 08-23).
+
+**Steering**: none from the owner — inbox empty, `read` surfaced
+only the six harness exit-1 bot alerts, history all own posts.
+
+**Done** (this tick): outage forensics (timeline from journals +
+alert log), orphaned-diff audit + recovery commit `4e91601e`
+(per-task predicate ladders + registry repoint; screen-read
+self-test green, suite 1112 passed), gate1.log verdict read,
+ch0fix smoke (STEPS=20, fit + dataset-load clean) + real launch,
+babysit registry rewritten for `pdnorm_ch0fix` (gate12 entry closed
+in-comment), Discord recovery post, `run_work_next` armed.
+
+**Next**: chained work session owns the post-processing debt: squint
+screen close-out (pre-reg results append + verdict blog post +
+`squint-gate2-harness`/exec queue closure + F-instrument
+implications for the substitution-ladder decision), blog rebuild +
+Space push (reader-visible backlog: this entry + the close-out), and
+ch0fix first-poll (ch0 pdnorm scale ×2.755 live oracle, vram vs 71,
+input starvation check). Boundary: ch0fix done ~11:1x–11:3xZ 08-23 →
+endpoint sim100 battery vs democlean 8/100.*
+
 *Updated 2026-08-22 10:50–10:5xZ (tick) — **routine r4 poll: healthy
 — step 380/500 arm 1 onerig, 14.97 s/step cumulative, loss 1.42,
 probe 2.76@300 monotone down, vram 62.43/71, disk 154G vs the ≥90
@@ -83,35 +128,16 @@ then `ch0-affine-exec`; `bijou-resume-flow-state-bug` is the
 CPU-workable window item. Boundaries: arm roll ~11:2x–11:3xZ, leg B
 done ~13:3x–13:4xZ.*
 
-*Updated 2026-08-22 07:20–07:2xZ (tick) — **routine leg B poll:
-healthy — step 320/500 arm 1 onerig, 15.03 s/step cumulative, loss
-1.45 → 1.41, probe 2.80@300, vram 62.43 vs the 71 gate. Discord
-fully quiet, queue green, `run_work_next` armed.***
-
-**Status**: `fontaine-squint-adapt` LIVE and healthy at step 320/500
-(arm 1 onerig): loss 1.41, probe `eval_chunk_mae` 4.20@100 →
-3.27@200 → 2.80@300 (record-only first wear, monotone down), vram
-62.43 vs the 71 gate, ~0.8 h to step 500 at the 15.03 s/step
-cumulative line — arm roll ~08:0x–08:1xZ (step reset = the roll).
-The windowed 3.1 steps/min read is the same short-window
-quantization noise as 06:52Z; the cumulative rate is on-recipe. Unit
-done ~10:3xZ.
-
-**Steering**: none — inbox empty, `read` empty, `history -n 5` all
-own posts, no reactions.
-
-**Done** (this tick): babysit poll (liveness 5 procs, both gates
-green, exit 0), Discord read + history, queue validate green (depth
-2, 15 open, stamp 07:05Z), `run_work_next` confirmed armed (07:09Z),
-now.md keep-3 + footer keep-2 rolls to archive 08-22.
-
-**Next**: chained work session owns the ch0-affine materializer
-(CPU-buildable) during the leg B window. Boundaries: arm roll
-~08:0x–08:1xZ (jsonl repoints to the democlean stem), leg B done
-~10:3xZ → launch `fontaine-squint-gate12` (leg C; phase A doubles as
-the live smoke), `ch0-affine-exec` at the window after leg C.*
-
 ## Utilization footer
+
+Session 2026-08-22 22:22–22:5xZ (tick; outage recovery — ~8.4
+GPU-idle-h lost 13:57Z→22:2xZ to the exit-1 harness outage, not to
+scheduling; ~0.05 marginal GPU-h smoke + ch0fix 3000-step launch
+riding at close): **caught up a dead work session's landed-but-
+uncommitted state (`4e91601e`); leg B r4 complete, bijou resume bug
+closed fix-verified, leg C Gate-1 FAIL_F_INSTRUMENT (0/100 both
+tasks, screen closed per pre-reg); `fontaine-v2-joint-pdnorm-ch0fix`
+smoked + launched ~22:4xZ, done ~11:1x–11:3xZ 08-23.**
 
 Session 2026-08-22 10:50–10:5xZ (tick; 0 marginal GPU-h — r4 leg B
 riding): **routine healthy poll of `fontaine-squint-adapt-r4` — step
@@ -119,17 +145,6 @@ riding): **routine healthy poll of `fontaine-squint-adapt-r4` — step
 2.76@300 monotone down, vram 62.43/71, disk 154G vs the ≥90 line.
 Discord fully quiet; queue green depth 3 (16 open); `run_work_next`
 armed. Next boundary: arm roll ~11:2xZ.**
-
-Session 2026-08-22 07:22–11:1xZ (work; exploit — ch0 rung-2 exec prep
-+ leg B incident recovery; ~0.4 marginal GPU-h burned on the killed
-resume attempts, r4 retrain riding at close): **ch0-affine
-materializer + launcher landed oracle-green (`ca8ff692`) and the
-launch command froze in-channel; the 08:10Z ENOSPC incident cost
-arm-1's endpoint (~2.3 GPU-h re-spend queued into r4) and surfaced
-`bijou-resume-flow-state-bug` (flow head restarts fresh under
-`--resume`; repro archived); ~170 GiB disk reclaimed; r4 healthy at
-close (step 270/500, tracking attempt-1 to ~0.02). Squint boundaries
-+3 h: leg B done ~13:3x–13:4xZ, leg C after, ch0fix behind it.**
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +

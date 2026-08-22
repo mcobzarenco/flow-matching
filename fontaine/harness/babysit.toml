@@ -51,28 +51,51 @@
 # 1.4374; archive kept as a historical incident record, deletable at
 # the next disk squeeze).
 
+# squint_gate12 (leg C) CLOSED 13:57:13Z 08-22, exit 5 =
+# FAIL_F_INSTRUMENT (a pre-registered VALID end): adapt_onerig
+# step_000500 scored 0/100 lift AND 0/100 place (pilots BELOW_BAND
+# 0/20 both tasks, cells completed to n=100 anyway per the leg
+# script) — best task 0 vs the >=20/100 Gate-1 bar. Screen closes, no
+# relative read attempted, Gate-2 spend skipped; substitution ladder
+# (Reach, easier — new demos + adaptation leg) LOGGED in
+# band_pilot.log, never auto-run: a new pre-registered session's
+# decision. Post-processing (verdict blog post + pre-reg results
+# append + queue closure) owed to the chained work session. NOTE the
+# 13:40Z KeyError: the place pilot first died on the uniform
+# predicate ladder (place evaluate() has no reached_object); fixed
+# per-task in squint_twin_eval_client.py (commit 4e91601e), leg
+# relaunched 13:38:31Z and completed. GPU then sat idle 13:57Z ->
+# 22:2xZ: harness OUTAGE (usage cap / exit-1 sessions 14:11Z-21:00Z,
+# five failed ticks) — not a scheduling decision.
+
 [[run]]
-name = "squint_gate12"
-kind = "progress-log"
+name = "pdnorm_ch0fix"
+kind = "train-jsonl"
 host = "local"
-pgrep = "squint"
+pgrep = "pdnorm_ch0fix"
 pgrep_min = 1
 gpu_indices = [0]
 gpu_mem_min_mib = 8000
-log = "/home/ubuntu/flow-matching/outputs/squint_screen/eval/band_pilot.log"
-progress_re = "band"
-started_utc = "2026-08-22T13:38:31Z"
+jsonl = "/home/ubuntu/checkpoints/finetune/grasp_sft_v2_joint_1gpu_pdnorm_ch0fix/train_log.jsonl"
+total_steps = 3000
+probe_key = "eval_chunk_mae"
+vram_key = "vram_alloc_peak_gib"
+started_utc = "2026-08-22T22:38:31Z"
 gpu_hours_per_wall_hour = 1.0
-boundary = "leg C unit fontaine-squint-gate12 launched 13:38:31Z 08-22 (server up 13:38:56Z serving adapt_onerig step_000500 on 8145; owner rig server owns 8144, NEVER touched). Phases: A pilot n=20 both tasks (live smoke passed at launch) -> band verdicts -> complete onerig to n=100; B Gate-1 best task >=20/100 (exit 5 = F-instrument, screen closes); C/D adapt_democlean n=100 + unadapted @3000 riders; E reads + CDF panel to reports/. Rough wall: pilots ~1-2 h class, full leg into the evening; poll cadence = liveness + band_pilot.log/gate1.log + journalctl -u fontaine-squint-gate12. At exit: read gate1.log verdict, then ch0-affine-exec at the next free window (command frozen in-channel 1540627296807821333)."
+boundary = "ch0-affine isolation cell (carrier-hunt rung 2), unit fontaine-v2-joint-pdnorm-ch0fix, pre-reg posts/2026-08-22-prereg-clean-ch0-affine.md, command frozen in-channel 1540627296807821333. Recipe = democlean launcher verbatim, ONE delta: --train-data so101_pick_place_clean_ch0fix_n (frozen moment-matched ch0 affine, materializer oracles green). Fit smoke STEPS=20 passed 22:38:19Z 08-22 (unit success rc 0, dataset glob matched 3026->12104 frames) before the 22:38:31Z launch. 3000 steps x ~15 s/step => done ~11:1x-11:3xZ 08-23; endpoint battery (sim100 100-seed) at completion per the rung-1/democlean protocol. Recompute-stats gives ch0fix its own pdnorm row — ch0 scale moved x2.755 is the live oracle, checked at first poll."
 anchors = [
-    "~1 GPU-h priced for pilots + both n=100 cells + riders inside the exec item's <=7 cell gate (already crossed by the leg B incident, recorded in-channel 09:1xZ)",
-    "per-seed progress lines live in the unit JOURNAL, not the log file — band_pilot.log advances only at pilot completions (progress stalls there are not liveness failures; check journalctl before alarming)",
-    "adapted arms wear fontaine/squint_twin_demos_v1 stats; riders wear grasp_demos_v2/merged (sim100 worn-row rule)",
-    "exit 4 = no in-band task (substitution ladder logged, never auto-run); exit 5 = Gate-1 F-instrument; both are VALID ends, not failures to babysit-retry",
+    "seed 0 same-seed comparability vs democlean 8/100 banked; NO --resume on this lineage from pre-fix checkpoints (resume fix 665dadb7 is verified but the frozen recipe predates it — recover by full retrain per the standing incident rule)",
+    "vram: democlean-class (same family/batch); a NEW peak above ~70 = investigate",
+    "probe eval_chunk_mae is within-lineage only; the decision read is the endpoint sim100 battery vs democlean 8/100, not the probe",
+    "DISK: >=90G must stay free through saves (156G at launch; saves stage ~44G — the leg B ENOSPC class)",
+    "owner policy-server guard ran at launch (GPU had 0 compute apps); prune-superseded-optim handles within-run saves",
 ]
 [[run.gates]]
+kind = "vram_max_gib"
+value = 71.0
+[[run.gates]]
 kind = "gpu_hours_max"
-value = 7.0
+value = 16.0
 
 # gripfix endpoint battery entry PRUNED 02:3xZ 08-22 (was: launched
 # 23:23:39Z 08-21, unit fontaine-gripfix-endpoint-battery, protocol
