@@ -48,6 +48,15 @@ class CPUOffloadAdamW(torch.optim.Optimizer):
         weight_decay: float,
     ) -> None:
         self._pairs: list[tuple[nn.Parameter, nn.Parameter]] = []
+        # Mirrors snapshotted here go stale if checkpoint weights load
+        # into the live params AFTER construction (the construction
+        # site's real order under --init-from/--resume:
+        # load_family_weights runs after the optimizer is built) — the
+        # first write-back would silently revert those params to their
+        # built init (REALIZED 2026-08-22: the squint flow-head reset).
+        # The invariant is mirror == live param at step ENTRY, so the
+        # first step() re-captures before it reads.
+        self._mirrors_synced = False
         # Pinned grad buffers survive None-grad steps (the mirror's
         # .grad is swapped to None to reproduce AdamW's skip exactly,
         # then restored from here when the grad returns).
@@ -109,6 +118,16 @@ class CPUOffloadAdamW(torch.optim.Optimizer):
         closure: Callable[[], float] | None = None,
     ) -> float | None:
         assert closure is None  # the train loop never passes one
+        if not self._mirrors_synced:
+            # First step: re-capture the mirrors from the live params
+            # (D2H into pinned memory, fenced by the synchronize below
+            # with the grad copies). No-op for a fresh run — nothing
+            # mutates params between construction and step 1 except
+            # post-construction checkpoint loads, which is exactly the
+            # staleness being erased.
+            for param, mirror in self._pairs:
+                mirror.data.copy_(param.data, non_blocking=True)
+            self._mirrors_synced = True
         for param, mirror in self._pairs:
             if param.grad is None:
                 mirror.grad = None  # stock AdamW skips the param

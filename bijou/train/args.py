@@ -922,6 +922,26 @@ class TrainArgs:
                 "--joint-ce-weight scales the joint objective's CE term — "
                 f"this run resolves family {family}",
             )
+        if resume and family == "molmoact2_joint":
+            # The joint objective payload (ce_weight, insulate_flow) is a
+            # recorded fact a resumed run reconstructs from the
+            # checkpoint — a CLI passthrough here silently re-declared
+            # (or silently dropped) the KV seam once (REALIZED
+            # 2026-08-22: recovery attempt r2 resumed seam-OPEN). The
+            # flow-only family records no seam in its payload; its flag
+            # stays a per-run declaration.
+            if raw.insulate_flow is not None:
+                parser.error(
+                    "--insulate-flow is recorded in the checkpoint's "
+                    "objective payload — a resumed run reconstructs it "
+                    "(drop the flag)",
+                )
+            if raw.joint_ce_weight is not None:
+                parser.error(
+                    "--joint-ce-weight is recorded in the checkpoint's "
+                    "objective payload — a resumed run reconstructs it "
+                    "(drop the flag)",
+                )
         if raw.flow_decoder_init is not None:
             if resume:
                 parser.error(
@@ -968,7 +988,7 @@ class TrainArgs:
                 max_soft_tokens=arch["max_soft_tokens"],
                 max_crops=arch["max_crops"],
                 stream_counts=arch["stream_counts"],
-                insulate_flow=raw.insulate_flow,
+                insulate_flow=bool(raw.insulate_flow),
                 recompute_stats=raw.recompute_stats,
                 per_dataset_flow_norm=raw.per_dataset_flow_norm,
                 joint_ce_weight=(
@@ -1236,6 +1256,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--insulate-flow",
         action="store_true",
+        default=None,  # None = omitted (refusable under --resume) vs False
         help="knowledge insulation on the molmo_flow KV seam (their "
         "post-train recipe): the extracted per-layer K/V detach before "
         "the flow decoder, so flow gradients into every trunk parameter "

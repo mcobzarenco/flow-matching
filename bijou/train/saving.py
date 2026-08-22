@@ -643,7 +643,16 @@ def build_vla_metadata(
         backbone_vision_trained=(
             args.backbone_vision_lr is not None or inherited_vision_trained
         ),
-        objective=objective_to_json(build_objective(args)),
+        objective=objective_to_json(
+            # The joint objective may be checkpoint-reconstructed under
+            # --resume (ce_weight/insulate_flow are recorded facts, not
+            # CLI flags there) — read it back off the model, like the
+            # quantile tables above; other families' objectives resolve
+            # from args verbatim.
+            model.objective
+            if isinstance(model, MolmoAct2JointVLA)
+            else build_objective(args),
+        ),
         serving=serving_to_json(model.serving),
         components=components,
         artifacts=artifacts,

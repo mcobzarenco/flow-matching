@@ -262,3 +262,51 @@ def test_state_dict_roundtrip_resumes_bitwise() -> None:
         resumed_scheduler.step()
     final = torch.cat([p.detach().flatten().cpu() for p in params])
     assert torch.equal(final, full[-1])
+
+
+def test_weights_loaded_after_construction_survive_first_step() -> None:
+    """The construction site's real order: the optimizer is built BEFORE
+    load_family_weights copies checkpoint weights into the live params
+    (--init-from/--resume). Mirrors snapshotted at construction are
+    stale by the first step — writing them back silently reverted every
+    post-construction load to its built init (REALIZED 2026-08-22: the
+    squint flow-head reset at resume; every --init-from run's flow
+    decoder trained from scratch). The invariant pinned here is
+    "mirror == live param at step ENTRY": weights loaded after
+    construction must follow the exact AdamW trajectory of a reference
+    optimizer built AFTER the load — bitwise, from step 1."""
+    params, groups = make_problem(seed=17, device="cuda")
+    optimizer = CPUOffloadAdamW(groups, lr=1.0, betas=(0.9, 0.95), weight_decay=0.0)
+    # load_family_weights after construction: the live params change.
+    loader = torch.Generator().manual_seed(99)
+    loaded = [
+        torch.randn(*p.shape, generator=loader, dtype=torch.float32) for p in params
+    ]
+    with torch.no_grad():
+        for param, value in zip(params, loaded, strict=True):
+            param.copy_(value)
+    # Reference problem: identical, except its optimizer is constructed
+    # after the load (the order that was never wrong).
+    ref_params, ref_groups = make_problem(seed=17, device="cpu")
+    with torch.no_grad():
+        for param, value in zip(ref_params, loaded, strict=True):
+            param.copy_(value)
+    reference = torch.optim.AdamW(
+        ref_groups,
+        lr=1.0,
+        betas=(0.9, 0.95),
+        weight_decay=0.0,
+        fused=False,
+    )
+    for step in range(3):
+        optimizer.zero_grad(set_to_none=True)
+        reference.zero_grad(set_to_none=True)
+        synthetic_grads(step, params)
+        synthetic_grads(step, ref_params)
+        optimizer.step()
+        reference.step()
+        for ours, theirs in zip(params, ref_params, strict=True):
+            assert torch.equal(ours.detach().cpu(), theirs.detach()), (
+                f"step {step}: weights loaded after construction did not "
+                "survive (stale construction-time mirror wrote back)"
+            )

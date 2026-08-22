@@ -142,7 +142,11 @@ from ..models.molmoact2_flow import (
     molmoact2_action_quantiles,
     molmoact2_prompt_of,
 )
-from ..models.molmoact2_joint import JointObjective, MolmoAct2JointVLA
+from ..models.molmoact2_joint import (
+    JointObjective,
+    MolmoAct2JointVLA,
+    parse_joint_objective,
+)
 from ..models.objectives import ARObjective, FlowObjective, SnapflowObjective
 from ..models.serving import ARServing, FlowServing
 from ..offload_optim import CPUOffloadAdamW
@@ -1282,6 +1286,22 @@ def main() -> int:
     # exactly as before the unfreeze flags.
     backbone_dtype = torch.float32 if args.backbone_trained else None
     objective = build_objective(args)
+    if args.resume is not None and args.family == "molmoact2_joint":
+        # --resume continues the RECORDED run: the objective payload
+        # (ce_weight, insulate_flow) is a checkpoint fact, reconstructed
+        # here exactly like the stats table and the flow-norm scheme
+        # (args refused the explicit CLI knobs). A passthrough here once
+        # resumed the KV seam OPEN against CE-only Adam moments
+        # (recovery attempt r2, 2026-08-22).
+        assert source_metadata is not None
+        objective = parse_joint_objective(source_metadata.objective)
+        if is_main:
+            print(
+                f"resumed objective reconstructed from the checkpoint: "
+                f"ce_weight={objective.ce_weight:g}, "
+                f"insulate_flow={objective.insulate_flow}",
+                flush=True,
+            )
     model: TrainableVLA
     backbone_module: nn.Module
     serving: FlowServing | ARServing
@@ -1420,18 +1440,22 @@ def main() -> int:
                     serving=serving,
                     per_dataset_flow_norm=per_dataset_flow_norm,
                 )
+            seam_insulated = (
+                isinstance(objective, JointObjective) and objective.insulate_flow
+            ) or (args.family == "molmoact2_flow" and args.insulate_flow)
             schedule_desc = (
                 f"molmo_flow {molmo_flow_section.num_layers}-layer KV "
                 f"conditioning (seam "
-                f"{'INSULATED (KI)' if args.insulate_flow else 'open'}; "
+                f"{'INSULATED (KI)' if seam_insulated else 'open'}; "
                 f"t-law {molmo_flow_section.time_offset} + "
                 f"{molmo_flow_section.time_scale}*Beta("
                 f"{molmo_flow_section.beta_alpha}, "
                 f"{molmo_flow_section.beta_beta}))"
             )
             if args.family == "molmoact2_joint":
+                assert isinstance(objective, JointObjective)
                 schedule_desc += (
-                    f" + joint CE rider (λ={args.joint_ce_weight:g}, "
+                    f" + joint CE rider (λ={objective.ce_weight:g}, "
                     "flow KV extracted before the CE append)"
                 )
         backbone_module = molmoact2_backbone
