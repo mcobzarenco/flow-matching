@@ -212,3 +212,60 @@ sim100 / twin / rollout-free / rig), idea #6 (the labeled-rollout
 corpus: every twin episode banks frames + per-step predicates +
 ground-truth success — detector calibration data at unlimited
 volume).
+
+---
+
+## Appendix (2026-08-22 00:4xZ, same session): preflight-2 receipts — EXECUTED
+
+*The §"Preflight-2 receipts" list, run CPU-only in the twin's venv
+while the gripfix battery rode gpu0 (CUDA masked + lavapipe, GPU
+untouched). Probe: `fontaine/scripts/squint_preflight2.py`; facts:
+`outputs/squint_preflight2/facts.json` (mirrored to
+[fontaine-reports](https://mcobzarenco-fontaine-reports.static.hf.space/squint_preflight2/facts.json)).
+These are receipts, not results — the finalization amendment freezes
+the two re-priced lines below before any launch.*
+
+- **R1 dual-camera subclass: GREEN.** One env serves both views at
+  (1, 224, 224, 3) — the wrist camera inherited (mount + per-step
+  pose update), a static `third_camera` added on the base env's
+  existing `camera_mount` with `ThirdCameraEnv`'s published
+  pose/FOV constants. ~25 lines, as priced.
+  [Wrist](https://mcobzarenco-fontaine-reports.static.hf.space/squint_preflight2/dual_base_camera_224.png) ·
+  [third](https://mcobzarenco-fontaine-reports.static.hf.space/squint_preflight2/dual_third_camera_224.png).
+  **Kind-tag observation for the frozen slot:** the third view is an
+  elevated three-quarter view (eye 0.25 m up, ~40° down), not an
+  overhead — the honest vocabulary choice is `front` (or `side`),
+  not `top`; our checkpoints trained on top+wrist only, so the tag
+  is OOD either way. Frozen at finalization.
+- **R2 determinism entry gate: GREEN.** Same seed + same 10-step
+  action sequence twice → sensor bytes and qpos bit-equal (DR off).
+- **R3 Gate-0 rig-episode replay: tracking GREEN, limit line needs
+  the re-price.** `grasp_demos_v2/merged` ep 0 (449 frames @30 Hz →
+  150 twin steps @10 Hz) through the frozen mapping: **tracking p50
+  0.0025 rad** (gate <0.05 — 20× under), p95 0.148 (fast-transient
+  lag, consistent with 10 Hz steps over a 30 Hz path), gripper
+  transitions **3/3 commanded→achieved**. But the drafted "zero
+  limit violations" line is unmeetable as written: **41 clips**, all
+  ≤0.047 rad — forensics: 36× `wrist_flex` grazing its limit by
+  ≤0.0032 rad, 3× `shoulder_lift` at ≤0.0471 rad (the twin's
+  −1.7453 rad limit sits ~2.7° inside our demo's deepest reach
+  −1.792), 2× `elbow_flex` ≤0.003. A banked substrate fact, not an
+  adapter bug. **Finalization re-price (named slot):* Gate-0 limit
+  line becomes "no arm clip > 0.05 rad"* — preserving the intent
+  (catch unit/order/sign errors, which produce radian-scale clips)
+  without failing on the twin's genuinely tighter joint limits.
+- **R4 `train_squint.py` smoke: GREEN after dep install** (`wandb`,
+  `tensordict`, `torchrl`, `tqdm`, `torchvision` added to the
+  isolated venv — the 08-14 preflight installed eval deps only).
+  **Recorded venv drift:** the `torchrl` install upgraded the venv's
+  torch 2.6.0-cpu → 2.13.0+cu130. All receipts re-taken under the
+  final stack; the replay statistics are **bit-identical** across
+  the torch change (CPU PhysX physics unmoved). The exec session
+  inherits the venv as-is; `CUDA_VISIBLE_DEVICES` masking is what
+  keeps CPU legs off the GPU now that the build can see it.
+
+Open before FINAL: the LeRobot conversion oracle (needs the
+conversion tooling the exec item builds), the adaptation-recipe
+command block, instruction strings, the third-camera kind tag, the
+Gate-0 limit-line re-price above, and the pair-2 slot (gripfix
+verdict, tonight).
