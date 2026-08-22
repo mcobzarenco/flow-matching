@@ -1,7 +1,60 @@
 # Now
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-22 07:22–11:1xZ (work) — **two-part session: the
+ch0-affine materializer landed with all six oracles green and the
+launch command frozen in-channel — then a disk-full incident killed
+leg B's arm-1 endpoint save at 08:10Z, two `--resume` recovery
+attempts exposed a real bijou resume bug (flow head restarts at
+fresh-init loss while AR continues), and leg B relaunched from
+scratch (r4), pushing every squint boundary ~3 h right.***
+
+**Status**: `fontaine-squint-adapt-r4` LIVE and healthy at step
+270/500 (arm 1 onerig, full retrain, frozen recipe verbatim): loss
+1.58, probe `eval_chunk_mae` 4.19@100 → 3.24@200 — tracking
+attempt-1's curve to ~0.02 (1.826@140 vs 1.826; the recipe is
+reproducing), vram 62.43 vs the 71 gate, step_000250 saved clean,
+disk 154 GiB free vs the new ≥90 babysit line. Arm roll ~11:2x–11:3xZ
+(step reset = the roll; jsonl repoints to the democlean stem), unit
+done ~13:3x–13:4xZ → leg C at the free window, `ch0-affine-exec`
+behind it.
+
+**Steering**: none — inbox empty every poll, history all own posts.
+
+**Done** (this session, `ca8ff692` + `bfcfc1a7`): (1)
+**ch0-affine-exec CPU half**: `make_clean_ch0fix_dataset.py`
+materialized `so101_pick_place_clean_ch0fix_n` — frozen affine
+x′ = 0.0923… + (x − 1.4820…) × 2.7552… on ch0 action+state, all six
+pre-reg oracles hard-fail and green (bitwise affine, byte-equal
+elsewhere + sha256, counts 3399/7, support ⊂ demos, holdout `(2,)`,
+no-op guard); landed moments mean 0.0923 / std 27.99 = demos exactly;
+launcher = democlean body diff-verified with the single frozen
+`--train-data` delta; command block frozen in-channel
+(1540627296807821333). (2) **Leg B incident recovery**: ENOSPC
+post-mortem (a save stages ~44 GiB; disk was 99%), ~170 GiB
+reclaimed by pruning the closed pdnorm runs' weights-only
+intermediate checkpoints (endpoints + leg-C riders kept, queue/now
+grepped first), r4 relaunched 09:09:50Z after two resume attempts
+were killed early (~0.4 GPU-h); cell-gate crossing (~2.7 GPU-h
+incident re-spend) recorded in-channel
+(1540650526218264656/1540650571701297152). (3) **Integrity find**:
+`bijou-resume-flow-state-bug` queued — resume restarts the flow head
+at fresh-init loss (0.09 → 1.44 bitwise-deterministic, probe 2.80@300
+→ 9.19@300) with flow weights/tables/rows verified faithfully
+restored; sub-bug pinned (`insulate_flow` CLI passthrough under
+`--resume`, args.py:971, not payload-reconstructed); repro substrate
+archived (`…onerig_attempt1/`); until fixed, NO `--resume` on
+flow/joint lineages — recover by full retrain.
+
+**Next**: `queue_cli.py next` → `squint-gate2-harness` REMAINING =
+launch leg C (`fontaine-squint-gate12`) at the first free GPU window
+after leg B (~13:3x–13:4xZ 08-22; phase A doubles as the live smoke),
+then `ch0-affine-exec`; `bijou-resume-flow-state-bug` is the
+CPU-workable window item. Boundaries: arm roll ~11:2x–11:3xZ, leg B
+done ~13:3x–13:4xZ.*
 
 *Updated 2026-08-22 07:20–07:2xZ (tick) — **routine leg B poll:
 healthy — step 320/500 arm 1 onerig, 15.03 s/step cumulative, loss
@@ -75,34 +128,18 @@ after leg B (~10:3xZ 08-22; phase A doubles as the live smoke), then
 `ch0-affine-exec` at the window after leg C. Boundaries: arm roll
 ~08:1x–08:2xZ (step reset = the roll), leg B done ~10:3xZ.*
 
-*Updated 2026-08-22 06:40–06:4xZ (tick) — **routine leg B poll:
-healthy — step 170/500 arm 1 onerig, 15.64 s/step windowed, loss
-1.80 → 1.77, vram 62.4 vs the 71 gate. Discord quiet, queue green,
-`run_work_next` armed.***
-
-**Status**: `fontaine-squint-adapt` LIVE and healthy at step 170/500
-(arm 1 onerig): 15.64 s/step windowed (4.1 steps/min since the
-06:38Z sample), loss 1.77, probe `eval_chunk_mae` 4.20@100
-(record-only first wear, no kill bar), vram 62.41 vs the 71 gate,
-~1.4 h to step 500. Arm roll ~08:1xZ (step counter reset = the
-roll), unit done ~10:3xZ.
-
-**Steering**: none — inbox empty, `read` surfaced only our own
-06:39Z harness-complete post, `history -n 5` all own posts, no
-reactions.
-
-**Done** (this tick): babysit poll (liveness 5 procs, both gates
-green, exit 0), Discord read + history, queue validate green (depth
-2, 15 open, stamp 06:30Z), marker confirmed armed (06:39Z), now.md
-keep-3 + footer keep-2 rolls to archive 08-22.
-
-**Next**: chained work session works `ch0-shift-isolation-prereg`
-during the leg B window. Boundaries: arm roll ~08:1xZ (jsonl
-repoints to the democlean stem), leg B done ~10:3xZ → launch
-`fontaine-squint-gate12` (leg C; phase A doubles as the live
-smoke).*
-
 ## Utilization footer
+
+Session 2026-08-22 07:22–11:1xZ (work; exploit — ch0 rung-2 exec prep
++ leg B incident recovery; ~0.4 marginal GPU-h burned on the killed
+resume attempts, r4 retrain riding at close): **ch0-affine
+materializer + launcher landed oracle-green (`ca8ff692`) and the
+launch command froze in-channel; the 08:10Z ENOSPC incident cost
+arm-1's endpoint (~2.3 GPU-h re-spend queued into r4) and surfaced
+`bijou-resume-flow-state-bug` (flow head restarts fresh under
+`--resume`; repro archived); ~170 GiB disk reclaimed; r4 healthy at
+close (step 270/500, tracking attempt-1 to ~0.02). Squint boundaries
++3 h: leg B done ~13:3x–13:4xZ, leg C after, ch0fix behind it.**
 
 Session 2026-08-22 07:20–07:2xZ (tick; 0 marginal GPU-h — leg B
 riding): **routine healthy poll of `fontaine-squint-adapt` — step
