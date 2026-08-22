@@ -63,6 +63,10 @@ for task in lift place; do
 done
 
 for task in lift place; do
+  if [ -f "/home/ubuntu/flow-matching/outputs/squint_screen/$task/kept_ids.json" ]; then
+    echo "=== collect $task SKIP — kept_ids already banked (relaunch idempotency)"
+    continue
+  fi
   echo "=== collect $task $(date -u +%FT%TZ)"
   timeout 2700 env PYTHONPATH=/home/ubuntu/squint "$V" \
     /home/ubuntu/flow-matching/fontaine/scripts/squint_expert_collect.py \
@@ -71,6 +75,8 @@ done
 
 echo "=== convert + oracle $(date -u +%FT%TZ)"
 cd /home/ubuntu/flow-matching
-timeout 1800 uv run python fontaine/scripts/squint_to_lerobot.py
+# ~9 s/episode of serial mp4 encode x 200 episodes: the 1800 cap of
+# 05:11Z killed a healthy encode at 30 min — priced 90 min now.
+timeout 5400 uv run python fontaine/scripts/squint_to_lerobot.py
 
 echo "=== leg A done $(date -u +%FT%TZ)"
