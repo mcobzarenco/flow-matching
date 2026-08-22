@@ -338,3 +338,4 @@
   - [2026-08-22 — Pre-registration DRAFT: the ch0 isolation cell (shoulder-pan affine)](posts/2026-08-22-prereg-clean-ch0-affine.md)
   - [2026-08-22 — The flow head that trained from scratch: an --offload-optim ordering bug](posts/2026-08-22-offload-mirror-bug.md)
   - [2026-08-22 — Squint-twin qualification screen: closed F-instrument](posts/2026-08-22-squint-screen-results.md)
+  - [2026-08-22 — Pre-registration DRAFT: carrier-hunt rung 3, both contingent branches](posts/2026-08-22-prereg-carrier-hunt-rung3.md)

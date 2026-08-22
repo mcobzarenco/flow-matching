@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-22T23:05:00Z
+**Updated:** 2026-08-22T23:45:00Z
 
-**Depth call:** depth 1 queued, stated reason: gpu-local ch0-affine-exec is LIVE (pdnorm_ch0fix riding since 22:38:31Z 08-22, done ~11:1x-11:3xZ 08-23 -> endpoint sim100 battery) and its verdict DECIDES rung 3 — cpu carrier-hunt-rung3-prereg (the one queued item) pre-drafts both contingent branches; any further refill ahead of that verdict would be speculative (startup-velocity rule). Squint screen fully closed this session (exec + gate2-harness done, F_INSTRUMENT); bijou-resume-flow-state-bug done (fix GPU-verified).
+**Depth call:** depth 1 queued-actionable, stated reason: gpu-local ch0-affine-exec is LIVE (pdnorm_ch0fix riding since 22:38:31Z 08-22, done ~12:0x-12:3xZ 08-23 -> endpoint sim100 battery) and its verdict DECIDES rung 3 — carrier-hunt-rung3-exec (the one queued item) is verdict-gated with BOTH branches pre-drafted + frozen (posts/2026-08-22-prereg-carrier-hunt-rung3.md), so the verdict session executes instead of drafting; any further refill ahead of that verdict would be speculative (startup-velocity rule).
 
-**14 open** (Live 1 · Queued 1 · Blocked 12 · Done 278)
+**14 open** (Live 1 · Queued 1 · Blocked 12 · Done 279)
 
 ## 🔴 Live (1)
 
@@ -30,15 +30,15 @@ ch0 affine isolation cell EXECUTION (pre-reg drafted 07:0xZ 08-22, launch delega
 
 *ready — waiting on a window or a boundary*
 
-**`carrier-hunt-rung3-prereg`** · `cpu`
+**`carrier-hunt-rung3-exec`** · `gpu-local`
 
-Carrier-hunt rung 3 pre-reg DRAFT (CPU, any window; contingent branches drafted AHEAD of the ch0fix verdict ~11:1x-11:3xZ 08-23 so the verdict session executes instead of drafting): branch A (ch0fix endpoint recovers toward oneri…
+Carrier-hunt rung 3 EXECUTION (the ch0fix verdict session; launch delegated per no-GO-ask; branch selection MECHANICAL from the rung-2 grid
 
-**boundary:** Queued 23:0xZ 08-22 work session at the squint close-out (queue refill, charter §4: keeps open depth &gt;=2 alongside the live ch0-affine-exec). Natural window: the ch0fix training ride (done ~11:1x-11:3xZ 08-23); MUST be drafted before the verdict session reads the battery.
+**boundary:** Queued 23:4xZ 08-22 work session at the rung-3 draft close. Fires at the ch0fix boundary (train done ~12:0x-12:3xZ 08-23 -&gt; battery ~3 GPU-h -&gt; verdict); NO rung-3 launch before the rung-2 sim100 verdict banks. · [pre-reg](posts/2026-08-22-prereg-carrier-hunt-rung3.md)
 
 <details><summary>full record</summary>
 
-Carrier-hunt rung 3 pre-reg DRAFT (CPU, any window; contingent branches drafted AHEAD of the ch0fix verdict ~11:1x-11:3xZ 08-23 so the verdict session executes instead of drafting): branch A (ch0fix endpoint recovers toward onerig-class, &gt;=20-ish/100) = ch0 shoulder-pan affine CONFIRMED as the carrier -&gt; draft the confirmation/mechanism cell (which half carries: action vs state channel; shift vs scale decomposition — the gripfix-style frozen grid). Branch B (stays democlean-class &lt;=10) = ch0 ruled out -&gt; next suspect from the gripfix decomposition ladder, same isolation-cell form (democlean recipe verbatim, ONE dataset delta, materializer + oracles, same-seed battery vs democlean 8/100). Rung-2 protocol (2026-08-22-prereg-clean-ch0-affine.md) is the template; both branches priced &lt;=16 GPU-h like rung 2. NO launch from this item; DRAFT only, finalization at the verdict per the standing no-GO-ask rule.
+Carrier-hunt rung 3 EXECUTION (the ch0fix verdict session; launch delegated per no-GO-ask; branch selection MECHANICAL from the rung-2 grid — no drafting, the pre-reg froze everything): (1) close rung 2 per its own pre-reg (sim100 battery vs democlean 8/100, paired reads, guards, results append + posts); (2) select: &gt;=20/100 -&gt; branch A action-only cell (materializer make_clean_ch0fix_act_dataset.py -&gt; so101_pick_place_clean_ch0fix_act_j, action ch0 affine x'=0.0923439813196304+(x-1.481974338423806)*2.755193138766973, state ch0 byte-identical; oracles incl. holdout draw (2,) + one-column pdnorm check); &lt;=10/100 -&gt; branch B bisection cell (materializer make_clean_subset_dataset.py -&gt; so101_pick_place_clean_ep015_c, episodes [0,1,2,5] byte-identical, decoy ep2 holds out, trains {0,1,5}; oracles incl. draw (2,)); 11-19 -&gt; NEITHER (ambiguous protocol, owner escalation, any launch needs a registered amendment); (3) fit smoke then launch: democlean launcher verbatim, ONE delta = dataset name, seed 0, 3000 steps, eval-250, save-500 + pruner; gates vram 71 GiB / 17 GPU-h / disk &gt;=90G; babysit registry entry + first-poll + in-channel announce. Battery at endpoint via the launch_gripfix_endpoint_battery.sh clone pattern.
 
 </details>
 
@@ -216,9 +216,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (278)
+## ✅ Done (279)
 
 *closed — the full record stays in each fold*
+
+**`carrier-hunt-rung3-prereg`** · `cpu`
+
+Carrier-hunt rung 3 pre-reg DRAFT (CPU, any window; contingent branches drafted AHEAD of the ch0fix verdict ~11:1x-11:3xZ 08-23 so the verdict session executes instead of drafting): branch A (ch0fix endpoint recovers toward oneri…
+
+**boundary:** Queued 23:0xZ 08-22 work session at the squint close-out (queue refill, charter §4: keeps open depth &gt;=2 alongside the live ch0-affine-exec). Natural window: the ch0fix training ride (done ~11:1x-11:3xZ 08-23); MUST be drafted before the verdict session reads the battery. || DONE 23:4xZ 08-22 (work session): draft landed posts/2026-08-22-prereg-carrier-hunt-rung3.md — both branches frozen. A (&gt;=20): action-only ch0 affine cell, dataset clean_ch0fix_act_j pinned (holdout draw (2,), train split episode-identical to democlean); shift-vs-scale axis closed at zero cost by the banked constant-freeze read, action-vs-state is the open axis. B (&lt;=10): content-bisection cell trains {0,1,5} (1504 frames, frame-balanced vs {3,4,6} 1522) + decoy ep2, dataset clean_ep015_c draw (2,); complement clean_ep346_a draw (0,) = registered follow-up on EITHER verdict (dose-confound disambiguation registered). Measured basis banked: per-episode ch0 compression is UNIFORM (std 5.7-11.4 vs demos 28, KS 0.32-0.47 all elevated) — instrument fontaine/scripts/carrier_rung3_basis_read.py, report reports/analysis__carrier_rung3_basis.json. Branch selection mechanical from the rung-2 grid; 11-19 fires neither. Exec item queued: carrier-hunt-rung3-exec. · [pre-reg](posts/2026-08-22-prereg-carrier-hunt-rung3.md)
+
+<details><summary>full record</summary>
+
+Carrier-hunt rung 3 pre-reg DRAFT (CPU, any window; contingent branches drafted AHEAD of the ch0fix verdict ~11:1x-11:3xZ 08-23 so the verdict session executes instead of drafting): branch A (ch0fix endpoint recovers toward onerig-class, &gt;=20-ish/100) = ch0 shoulder-pan affine CONFIRMED as the carrier -&gt; draft the confirmation/mechanism cell (which half carries: action vs state channel; shift vs scale decomposition — the gripfix-style frozen grid). Branch B (stays democlean-class &lt;=10) = ch0 ruled out -&gt; next suspect from the gripfix decomposition ladder, same isolation-cell form (democlean recipe verbatim, ONE dataset delta, materializer + oracles, same-seed battery vs democlean 8/100). Rung-2 protocol (2026-08-22-prereg-clean-ch0-affine.md) is the template; both branches priced &lt;=16 GPU-h like rung 2. NO launch from this item; DRAFT only, finalization at the verdict per the standing no-GO-ask rule.
+
+</details>
+
+---
 
 **`bijou-resume-flow-state-bug`** · `cpu`
 
