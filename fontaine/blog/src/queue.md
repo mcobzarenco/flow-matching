@@ -2,39 +2,33 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-22T23:45:00Z
+**Updated:** 2026-08-23T12:20:00Z
 
-**Depth call:** depth 1 queued-actionable, stated reason: gpu-local ch0-affine-exec is LIVE (pdnorm_ch0fix riding since 22:38:31Z 08-22, done ~12:0x-12:3xZ 08-23 -> endpoint sim100 battery) and its verdict DECIDES rung 3 — carrier-hunt-rung3-exec (the one queued item) is verdict-gated with BOTH branches pre-drafted + frozen (posts/2026-08-22-prereg-carrier-hunt-rung3.md), so the verdict session executes instead of drafting; any further refill ahead of that verdict would be speculative (startup-velocity rule).
+**Depth call:** OWNER RETIREMENT PAUSE 2026-08-23 11:50Z (message 1541051920825716736): machine retiring, all work paused — evacuation-only session executed 12:0x-12:2xZ. ch0-affine-exec: train COMPLETE (step 3000, endpoint verified + banked weights-only to fontaine-checkpoints/grasp_sft_v2_joint_pdnorm_ch0fix_step3000), but the sim100 endpoint battery was STOPPED ~12:04Z before any seed completed (owner pause outranks) — the rung-2 verdict is UNBANKED and the frozen grid (prereg-clean-ch0-affine) still selects rung 3 mechanically whenever a future box re-runs the battery (launch_ch0fix_endpoint_battery.sh, checkpoint on HF). carrier-hunt-rung3-exec: blocked on that verdict + on new compute; BOTH branch materializers + launchers are committed and oracle-verified (datasets rebuild deterministically). No refill: program paused, no compute.
 
-**14 open** (Live 1 · Queued 1 · Blocked 12 · Done 279)
+**14 open** (Live 0 · Queued 0 · Blocked 14 · Done 279)
 
-## 🔴 Live (1)
+## 🔴 Live (0)
 
 *running right now (GPU or owner-window)*
 
-**`ch0-affine-exec`** · `gpu-local`
+*(empty)*
 
-ch0 affine isolation cell EXECUTION (pre-reg drafted 07:0xZ 08-22, launch delegated per no-GO-ask): (1) materializer fontaine/scripts/make_clean_ch0fix_dataset.py
-
-**boundary:** Queued 07:0xZ 08-22 at the pre-reg draft close. Sequenced BEHIND the squint screen's GPU claim: leg B -&gt; ~10:3xZ 08-22, leg C ~1 GPU-h after — this cell fires at the first free window after the squint leg C boundary unless owner steering reorders. | CPU HALF DONE 07:4xZ 08-22 (ca8ff692): materializer make_clean_ch0fix_dataset.py landed + RUN — so101_pick_place_clean_ch0fix_n materialized, all six oracles green (bitwise affine both columns, byte-equal elsewhere + sha256, counts 3399/7, support [-72.90,+50.63] in-band, holdout (2,), no-op guard); landed moments mean 0.0923 std 27.99 = demos exactly. Launcher launch_local_grasp_sft_v2_joint_1gpu_pdnorm_ch0fix_h100.sh = democlean body verbatim diff-verified, one --train-data delta; final command block frozen in-channel post 1540627296807821333. REMAINING: fit smoke + launch at the first free window after squint leg C, endpoint battery, grid verdict. | LEG B INCIDENT 08:10-09:1xZ 08-22 (posts 1540650526218264656/1540650571701297152): arm-1 endpoint save died ENOSPC (disk 99%); disk cleared to 196G (closed pdnorm runs' weights-only intermediates pruned, endpoints kept); two --resume attempts restarted the flow head at fresh-init loss (bijou --resume bug, queued bijou-resume-flow-state-bug); r4 = full retrain frozen recipe verbatim, unit fontaine-squint-adapt-r4 launched 09:09:50Z (step-10 loss 5.6788 == attempt-1, recipe reproducing). Cell gate crossing recorded ~2.7 GPU-h incident re-spend. NEW boundaries: arm roll ~11:2xZ, leg B done ~13:3x-13:4xZ, leg C at the free window after, ch0-affine-exec behind it. || LIVE 22:38:31Z 08-22 (outage-recovery tick): CPU half landed 4e91601e-lineage (materializer oracles all green, dataset so101_pick_place_clean_ch0fix_n); fit smoke rc 0 22:38:19Z -&gt; unit fontaine-v2-joint-pdnorm-ch0fix launched 22:38:31Z, 3000 steps ~15 s/step, done ~11:1x-11:3xZ 08-23, then the endpoint sim100 battery vs democlean 8/100 (same-seed). First poll 22:4x-22:5xZ GREEN: step 10 loss 4.05, vram peak 62.19 vs 71 gate, GPU 81% util no starvation; LIVE ORACLE GREEN: per-dataset pdnorm row from dataset stats — ch0 q99-q01 span 36.9283 -&gt; 101.7447 = x2.7552 exactly, std x2.7552, mean 1.482-&gt;0.0923 per the frozen affine, other channels byte-equal. Babysit entry pdnorm_ch0fix. · [pre-reg](posts/2026-08-22-prereg-clean-ch0-affine.md)
-
-<details><summary>full record</summary>
-
-ch0 affine isolation cell EXECUTION (pre-reg drafted 07:0xZ 08-22, launch delegated per no-GO-ask): (1) materializer fontaine/scripts/make_clean_ch0fix_dataset.py — so101_pick_place_clean with ch0 (action AND state) affined by the frozen x' = 0.0923439813196304 + (x - 1.481974338423806) * 2.755193138766973 (float64 transform, cast back to source dtype), all else byte-identical, dataset name so101_pick_place_clean_ch0fix_n (draws holdout (2,), pre-verified); oracles: exact affine on ch0, byte-equal elsewhere, counts identical, transformed range inside demos observed support [-110.0, +79.6], holdout draw (2,), no-op guard if source ch0 std &gt; 20. (2) freeze final command block in-channel (democlean launcher verbatim, one delta: clean -&gt; clean_ch0fix_n in --train-data; repeat glob matches unchanged). (3) fit smoke, then launch w/ pruner unit from step 0; babysit entry at launch; H100 contention check (owner policy-server 8144) per standing rule. (4) endpoint battery (clone launch_gripfix_endpoint_battery.sh, name deltas) -&gt; sim100 frozen grid &gt;=20 ch0-distribution-IS-the-carrier / &lt;=10 suspect-list-exhausted (one-sided per the registered asymmetry note; next: per-episode LOO with a design pass weighing leave-K-out bisection first) / 11-19 ambiguous; paired reads vs democlean 8 (THE read) + gripfix 5 (edit-artifact comparison) + onerig 28 + control 11. Record-only: ch0fix pdnorm row vs clean's (ch0 x2.755, else pinned — live materializer oracle); eval-250 twin-curve vs democlean; paired-progress carries artifact detection. Gate 17 GPU-h (train ~13.7 + battery ~3). Probe canNOT clear the cell (decoupling banked 3x).
-
-</details>
-
----
-
-## 🟢 Queued (1)
+## 🟢 Queued (0)
 
 *ready — waiting on a window or a boundary*
 
-**`carrier-hunt-rung3-exec`** · `gpu-local`
+*(empty)*
+
+## 🟡 Blocked (14)
+
+*waiting on a prerequisite, a boundary, or the owner*
+
+**`carrier-hunt-rung3-exec`** · `gpu-local` · **⛔ owner hold**
 
 Carrier-hunt rung 3 EXECUTION (the ch0fix verdict session; launch delegated per no-GO-ask; branch selection MECHANICAL from the rung-2 grid
 
-**boundary:** Queued 23:4xZ 08-22 work session at the rung-3 draft close. Fires at the ch0fix boundary (train done ~12:0x-12:3xZ 08-23 -&gt; battery ~3 GPU-h -&gt; verdict); NO rung-3 launch before the rung-2 sim100 verdict banks. · [pre-reg](posts/2026-08-22-prereg-carrier-hunt-rung3.md)
+**boundary:** RETIREMENT PAUSE 11:50Z 08-23: blocked on the rung-2 verdict (battery unrun) AND on new compute. Prep done + committed 0adb8f09: both branch materializers oracle-green (clean_ch0fix_act_j, clean_ep015_c), both launchers staged, selection stays mechanical per posts/2026-08-22-prereg-carrier-hunt-rung3.md. · [pre-reg](posts/2026-08-22-prereg-carrier-hunt-rung3.md)
 
 <details><summary>full record</summary>
 
@@ -44,9 +38,19 @@ Carrier-hunt rung 3 EXECUTION (the ch0fix verdict session; launch delegated per 
 
 ---
 
-## 🟡 Blocked (12)
+**`ch0-affine-exec`** · `gpu-local` · **⛔ owner hold**
 
-*waiting on a prerequisite, a boundary, or the owner*
+ch0 affine isolation cell EXECUTION (pre-reg drafted 07:0xZ 08-22, launch delegated per no-GO-ask): (1) materializer fontaine/scripts/make_clean_ch0fix_dataset.py
+
+**boundary:** RETIREMENT PAUSE: train complete + endpoint banked (HF ch0fix_step3000, weights-only); sim100 battery stopped pre-verdict at owner pause 11:50Z 08-23. Residual work when compute returns: re-run the endpoint battery from the HF checkpoint -&gt; bank the rung-2 verdict vs democlean 8/100 per the frozen grid. · [pre-reg](posts/2026-08-22-prereg-clean-ch0-affine.md)
+
+<details><summary>full record</summary>
+
+ch0 affine isolation cell EXECUTION (pre-reg drafted 07:0xZ 08-22, launch delegated per no-GO-ask): (1) materializer fontaine/scripts/make_clean_ch0fix_dataset.py — so101_pick_place_clean with ch0 (action AND state) affined by the frozen x' = 0.0923439813196304 + (x - 1.481974338423806) * 2.755193138766973 (float64 transform, cast back to source dtype), all else byte-identical, dataset name so101_pick_place_clean_ch0fix_n (draws holdout (2,), pre-verified); oracles: exact affine on ch0, byte-equal elsewhere, counts identical, transformed range inside demos observed support [-110.0, +79.6], holdout draw (2,), no-op guard if source ch0 std &gt; 20. (2) freeze final command block in-channel (democlean launcher verbatim, one delta: clean -&gt; clean_ch0fix_n in --train-data; repeat glob matches unchanged). (3) fit smoke, then launch w/ pruner unit from step 0; babysit entry at launch; H100 contention check (owner policy-server 8144) per standing rule. (4) endpoint battery (clone launch_gripfix_endpoint_battery.sh, name deltas) -&gt; sim100 frozen grid &gt;=20 ch0-distribution-IS-the-carrier / &lt;=10 suspect-list-exhausted (one-sided per the registered asymmetry note; next: per-episode LOO with a design pass weighing leave-K-out bisection first) / 11-19 ambiguous; paired reads vs democlean 8 (THE read) + gripfix 5 (edit-artifact comparison) + onerig 28 + control 11. Record-only: ch0fix pdnorm row vs clean's (ch0 x2.755, else pinned — live materializer oracle); eval-250 twin-curve vs democlean; paired-progress carries artifact detection. Gate 17 GPU-h (train ~13.7 + battery ~3). Probe canNOT clear the cell (decoupling banked 3x).
+
+</details>
+
+---
 
 **`demo-gen-v1.1-regen`** · `gpu-a100`
 
