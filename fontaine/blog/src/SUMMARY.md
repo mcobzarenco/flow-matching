@@ -2,6 +2,7 @@
 
 - [Now](now.md)
 - [Now archive](archive/index.md)
+  - [2026-08-23](archive/now-2026-08-23.md)
   - [2026-08-22](archive/now-2026-08-22.md)
   - [2026-08-21](archive/now-2026-08-21.md)
   - [2026-08-20](archive/now-2026-08-20.md)
