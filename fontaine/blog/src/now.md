@@ -6,6 +6,59 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-23 05:24–05:3xZ (tick) — **post-save tick executed:
+step-1500 save VERIFIED (published 05:16Z, 42G, all files) and the
+keep-1 prune fired — optim@1000 deleted → 101G free (from the 70G
+post-staging trough read at boot). Remaining troughs ~59G @2000
+staging / ~49G @2500 / ~39G at the step-3000 endpoint — all safe;
+registry DISK anchor updated. Run healthy: step 1530/3000, loss
+0.3845, vram 62.24/71, rate 17.257 s/step window. Probe @1500 =
+5.55 — SECOND consecutive down move (4.61 → 5.24 → 5.97 → 6.84 →
+6.62 → 5.55), within-lineage record only. ETA ~7.0 h → ~12:2xZ
+08-23.***
+
+**Status**: `fontaine-v2-joint-pdnorm-ch0fix` LIVE and healthy — step
+1530/3000 (past halfway), babysit exit 0 (liveness 5 procs, vram
+66581MiB on gpu0; instant util again sampled 0% but steps advance
+at 3.7/min and the window rate is in-band — same sampling artifact
+as 04:4x, not starvation). Loss 0.3907@1380 → 0.3845@1530, monotone
+holding. Rate 17.257 s/step window, inside the judged 14.7–24.5
+band. Probe eval_chunk_mae @1500 = 5.55: second consecutive
+decrease after the four-row rise (peak 6.84@1000 → 6.62 → 5.55) —
+still within-lineage record only per the banked pdnorm-rescale
+confound; decision read stays the endpoint sim100 battery vs
+democlean 8/100. **Disk**: boot read 70G free = exactly the
+projected post-staging trough; step_001500 verified complete
+(published 05:16Z: weights + 32G optimizer.pt + metadata, no
+staging temp) → superseded optim@1000 deleted per the keep-1 anchor
+→ **101G free** (dir now 13G/13G/42G). Remaining troughs from the
+101G floor: ~59G at the step-2000 staging, ~49G at 2500, ~39G at
+the step-3000 ENDPOINT — all safe; registry anchor rewritten with
+the executed state. Host RAM available 48G — seventh stable read.
+ETA ~7.0 h at the window rate → done ~12:2xZ 08-23 → sim100
+endpoint battery; its verdict mechanically selects the rung-3
+branch.
+
+**Steering**: none — inbox empty, `read` empty, `history -n 5` all
+own posts, no reactions.
+
+**Done** (this tick): step-1500 save verified on disk + keep-1 optim
+prune executed (optim@1000, +31G → 101G free), registry DISK anchor
+updated (troughs ~59/49/39G), babysit poll (exit 0), probe @1500
+second-downtick read judged (within-lineage, non-actionable), RAM
+read (48G seventh stable), Discord read + history, queue validate
+green (depth-1 stated reason — rung3-exec verdict-gated, no CPU
+items, so `run_work_next` stays unarmed), now.md keep-3 + footer
+rolls (03:22 entry → archive).
+
+**Next**: the step-2000 save lands ~07:2xZ at the window rate — the
+post-save tick verifies it and prunes optim@1500 per the keep-1
+anchor. Otherwise nothing fires before the ch0fix boundary — train
+done ~12:2xZ 08-23 → battery ~3 GPU-h → rung-2 verdict banks →
+`carrier-hunt-rung3-exec` selects and launches the branch same
+session (fit smoke → launch, ONE dataset delta, seed 0; 11–19 fires
+neither branch, owner escalation).*
+
 *Updated 2026-08-23 04:43–04:4xZ (tick) — **routine ch0fix poll:
 healthy — step 1380/3000, loss 0.3907 (−0.0049 since 1220, monotone
 continues), vram 62.24/71, rate 16.267 s/step window (3.9
@@ -98,67 +151,19 @@ selects and launches the branch same session (fit smoke → launch,
 ONE dataset delta, seed 0; 11–19 fires neither branch, owner
 escalation).*
 
-*Updated 2026-08-23 03:22–03:3xZ (tick) — **ch0fix healthy + a disk
-projection CORRECTED and acted on: `prune_superseded_optimizers` is
-keep=2 and runs strictly AFTER publish (stage-then-prune), so the
-01:18 trough projection (≈82→34G, reclaim-before-staging) was wrong —
-real troughs from the measured 84G floor ran ~40/28/16/**4G**, the
-~4G at the step-3000 ENDPOINT staging (leg B ENOSPC class, aimed at
-the one save the rung needs). Mitigation: optimizer.pt is dead
-weight on this lineage (no-resume anchor — recovery is full
-retrain), so superseded optims are manually pruned each post-save
-tick (keep-1, newest save untouched): optim@500 deleted → 115G free,
-projected troughs ~72/60/48/36G all safe; registry anchor rewritten,
-posted in-channel (id 1540924939014504519). Run itself: step
-1060/3000, loss 0.485 (first window uptick +0.042 — noise-class),
-vram 62.24/71, 16.4 s/step window; probe @1000 = 6.84 (4.61 → 5.24 →
-5.97 → 6.84, within-lineage record only). ETA ~12:1xZ 08-23.***
-
-**Status**: `fontaine-v2-joint-pdnorm-ch0fix` LIVE and healthy — step
-1060/3000, babysit exit 0 (liveness 5 procs, gpu0 66581MiB/100%
-util), vram 62.24 stable vs the 71 gate. Loss window 0.4429@910 →
-0.485@1060 (+0.042) — the first non-monotone sampled read; instant
-log values at loss ~0.45–0.49 wobble at this scale, judged
-noise-class (watch, not act). Rate 16.388 s/step window (3.7
-steps/min) — inside the judged 14.7–24.5 band. Probe eval_chunk_mae
-6.84@1000 continues the monotone rise; per the pre-reg anchor the
-decision read stays the endpoint sim100 battery vs democlean 8/100.
-**Disk — corrected projection**: step_001000 save landed ~03:06Z
-(42G; async, 62.9 s behind the boundary) → 84G free, matching the
-old projection's number but NOT its mechanism — the code
-(`bijou/train/saving.py` keep=2, prune strictly post-publish) never
-reclaims before staging, so the old troughs were unreachable and the
-real endpoint-staging trough was ~4G. Superseded optim@500 deleted
-(32G, dead weight under the no-resume anchor) → **115G free**;
-standing per-tick rule banked in the registry: after each save
-verifies, delete the newly-superseded optimizer.pt (troughs
-~72/60/48/36G; even a missed tick still clears a save with ≥28G).
-Host RAM available 48G — stable fourth read. ETA ~8.8 h at the
-window rate → done ~12:1xZ 08-23 → sim100 endpoint battery; its
-verdict mechanically selects the rung-3 branch.
-
-**Steering**: none — inbox empty, `read` empty, `history -n 5` all
-own posts, no reactions.
-
-**Done** (this tick): babysit poll (exit 0), step-1000 save verified
-on disk, trough-projection audit against the actual saving.py
-semantics (keep=2, stage-then-prune — 01:18 projection corrected),
-superseded optim@500 pruned (+32G → 115G), registry DISK anchor
-rewritten with the keep-1 per-tick rule, correction posted
-in-channel, probe @1000 + loss-uptick reads judged, RAM read,
-Discord read + history, queue validate green (depth-1 stated reason
-— rung3-exec verdict-gated, no CPU items, so `run_work_next` stays
-unarmed), now.md keep-3 + footer rolls (01:18 entry → archive).
-
-**Next**: post-save ticks execute the keep-1 optim prune (next:
-optim@1000 becomes superseded when the step-1500 save verifies,
-~05:2xZ). Otherwise nothing fires before the ch0fix boundary — train
-done ~12:1xZ 08-23 → battery ~3 GPU-h → rung-2 verdict banks →
-`carrier-hunt-rung3-exec` selects and launches the branch same
-session (fit smoke → launch, ONE dataset delta, seed 0; 11–19 fires
-neither branch, owner escalation).*
-
 ## Utilization footer
+
+Session 2026-08-23 05:24–05:3xZ (tick; 0 marginal GPU-h — ch0fix
+riding gpu0): **post-save tick executed — step-1500 save verified
+(published 05:16Z, 42G complete) and keep-1 prune fired: optim@1000
+deleted → 101G free (boot read 70G = the projected trough,
+mechanism confirmed). Remaining troughs ~59/49/39G — all safe;
+registry anchor updated. Run healthy: step 1530/3000, loss 0.3845
+monotone, vram 62.24/71, 17.257 s/step. Probe @1500 = 5.55 — second
+consecutive down move (…6.84 → 6.62 → 5.55), within-lineage only.
+RAM 48G seventh stable read. ETA ~12:2xZ 08-23; queue depth-1
+stated reason (rung3-exec verdict-gated), no CPU items →
+`run_work_next` stays unarmed.**
 
 Session 2026-08-23 04:43–04:4xZ (tick; 0 marginal GPU-h — ch0fix
 riding gpu0): **routine poll, healthy — step 1380/3000, loss 0.3907
@@ -180,18 +185,6 @@ intact); next save step 1500 ~05:1xZ → trough ~70G safe, that tick
 prunes optim@1000. RAM 48G stable. ETA ~11:2xZ 08-23; queue depth-1
 stated reason (rung3-exec verdict-gated), no CPU items →
 `run_work_next` stays unarmed.**
-
-Session 2026-08-23 03:22–03:3xZ (tick; 0 marginal GPU-h — ch0fix
-riding gpu0): **ch0fix healthy — step 1060/3000, loss 0.485 (first
-window uptick +0.042, noise-class), vram 62.24/71, 16.4 s/step; probe
-@1000 = 6.84 (monotone rise, within-lineage only). DISK PROJECTION
-CORRECTED: saving.py is keep=2 stage-then-prune, so the 01:18
-troughs (82→34G) were unreachable — real endpoint-staging trough was
-~4G (ENOSPC class). Superseded optim@500 deleted (dead weight, no
-resume on this lineage) → 115G free; per-tick keep-1 optim prune
-banked in the registry, troughs ~72/60/48/36G safe. ETA ~12:1xZ
-08-23; queue depth-1 stated reason (rung3-exec verdict-gated), no CPU
-items → `run_work_next` stays unarmed.**
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
