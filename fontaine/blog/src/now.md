@@ -3,8 +3,69 @@
 
 
 
-
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-23 10:52–10:5xZ (tick) — **routine ch0fix poll +
+short probe hold: healthy — step 2740/3000, loss 0.2873 (−0.0022
+since 2580; 0.2746@2750 during the hold — monotone continues), vram
+62.24/71, rate 15.093 s/step window (3.9 steps/min). Held ~3 min
+in-session to catch the @2750 probe row: **8.70 — a NEW series high**
+(…7.41 → 8.63 → 6.01 → 8.70) — the oscillation band widens to
+~6–8.7; train_mae co-moves (7.94@2750 vs 5.59@2500), so the swings
+track eval-batch composition, within-lineage color only. Disk 73G
+free (−4G drift, endpoint trough ~31G still safe). ETA ~1.0 h →
+done ~12:0xZ 08-23.***
+
+**Status**: `fontaine-v2-joint-pdnorm-ch0fix` LIVE and healthy — step
+2740/3000 at poll, babysit exit 0 (liveness 5 procs, vram 66641MiB
+on gpu0, 3.9 steps/min since last sample). Loss 0.2895@2580 →
+0.2873@2740 → 0.2746@2750 — monotone fall continues. Rate 15.093
+s/step window, inside the judged 14.7–24.5 band. Probe
+eval_chunk_mae @2750 = **8.70, a new series high** (4.61 → 5.24 →
+5.97 → 6.84 → 6.62 → 5.55 → 6.07 → 7.41 → 8.63 → 6.01 → 8.70): the
+band is now ~6–8.7 with no monotone trend; the 10:1x "oscillation
+restored" read stands but with a wider envelope. New observation
+this tick: train_mae co-moves with the probe (7.94@2750 / 5.59@2500
+/ 7.87@2250), so the swings look like eval-batch composition, not
+model drift. Still within-lineage-only per the banked
+pdnorm-rescale confound — decision read stays the endpoint sim100
+battery vs democlean 8/100; carry the full series + the
+train_mae-co-movement note as verdict-session color. **Disk**: 73G
+free (77G at 10:1x — ~4G drift from logs/wandb, routine). Checkpoint
+dir verified by file listing: step_000500/1000/1500/2000
+weights-only, step_002500 full with the single optimizer.pt (32G),
+no staging temp — exact keep-1 anchor. Endpoint staging trough from
+73G ≈ ~31G — safe, no further load-bearing prunes (post-endpoint
+optim@2500 prune stays routine). Host RAM available 47G — fifteenth
+stable-plateau read. ETA 250 steps at ~15 s/step ≈ 1.0 h → done
+~12:0xZ 08-23 → sim100 endpoint battery; its verdict mechanically
+selects the rung-3 branch.
+
+**Steering**: none — inbox empty, `read` empty, `history -n 5` all
+own posts, no reactions.
+
+**Done** (this tick): babysit poll (exit 0), short in-session hold
+(~3 min) to catch the @2750 probe row, probe read judged (new
+series high 8.70, band widened, train_mae co-movement noted —
+within-lineage, non-actionable, verdict-session color), disk read
+(73G, −4G routine drift, endpoint trough re-projected ~31G safe) +
+checkpoint dir verification (exact keep-1, single optimizer.pt at
+step_002500), RAM read (47G, fifteenth), Discord read + history
+(quiet), queue validate green (depth-1 stated reason — rung3-exec
+verdict-gated, no CPU items, so `run_work_next` stays unarmed),
+now.md keep-3 + footer rolls (08:49 entry → archive); no blog
+rebuild (routine poll precedent).
+
+**Next**: nothing load-bearing before the boundary — the step-3000
+ENDPOINT save stages ~12:0xZ into a ~31G trough (safe). Train done
+~12:0xZ 08-23 → the completion tick runs the sim100 battery (~3
+GPU-h) → rung-2 verdict banks → `carrier-hunt-rung3-exec` selects
+and launches the branch same session (fit smoke → launch, ONE
+dataset delta, seed 0; 11–19 fires neither branch, owner
+escalation). Post-endpoint tick also verifies the endpoint publish
+and prunes optim@2500 (routine class). The ~11:3x/12:0x tick is
+likely the completion tick — budget for battery launch + verdict
+write-up.*
 
 *Updated 2026-08-23 10:11–10:1xZ (tick) — **post-save tick executed:
 step-2500 save VERIFIED (published 09:49Z, 44G complete — weights +
@@ -125,66 +186,19 @@ verdict banks → `carrier-hunt-rung3-exec` selects and launches the
 branch same session (fit smoke → launch, ONE dataset delta, seed 0;
 11–19 fires neither branch, owner escalation).*
 
-*Updated 2026-08-23 08:49–08:5xZ (tick) — **routine ch0fix poll:
-healthy — step 2290/3000, loss 0.3074 (−0.0201 since 2140, monotone
-continues), vram 62.24/71, rate 15.58 s/step window (3.7 steps/min,
-util sampled 100% this poll). Probe @2250 written: **8.63 — a SECOND
-consecutive new series high** (…5.55 → 6.07 → 7.41 → 8.63); the last
-four reads are now a clean upward run, but the read stays
-within-lineage-only per the banked pdnorm-rescale confound —
-decision is the endpoint sim100 battery. Disk 87G flat, checkpoint
-dir verified exact keep-1 state. RAM 47G stable. ETA ~3.1 h →
-~12:0xZ 08-23.***
-
-**Status**: `fontaine-v2-joint-pdnorm-ch0fix` LIVE and healthy — step
-2290/3000, babysit exit 0 (liveness 5 procs, vram 66641MiB on gpu0,
-util sampled 100% this poll). Loss 0.3275@2140 → 0.3074@2290 —
-monotone fall continues. Rate 15.58 s/step window, inside the judged
-14.7–24.5 band. Probe eval_chunk_mae @2250 = **8.63, second
-consecutive new high** (4.61 → 5.24 → 5.97 → 6.84 → 6.62 → 5.55 →
-6.07 → 7.41 → 8.63) — what read as oscillation ~6 at 06:4x now reads
-as an upward drift over the last four rows; still within-lineage
-record only per the banked pdnorm-rescale confound (the probe is
-computed in the rescaled pdnorm space, not comparable across
-lineages), decision read stays the endpoint sim100 battery vs
-democlean 8/100. Worth carrying forward: if @2500/@2750 continue the
-run, note it in the verdict-session write-up as lineage color — it
-changes no gate. **Disk**: 87G free, flat since the 07:3x prune.
-Checkpoint dir verified by file listing: step_000500/1000/1500
-weights-only, step_002000 full with optimizer.pt, no staging temp —
-exactly the keep-1 anchor. Next save step 2500 lands ~09:45Z (210
-steps at the window rate) → trough ~45G from the 87G floor, safe;
-the post-save tick (~10:0x–10:1xZ window, after this session's
-09:20Z hard kill) verifies it and prunes optim@2000 — that prune is
-LOAD-BEARING (missed → the step-3000 endpoint staging trough is
-~3G, ENOSPC class). Host RAM available 47G — plateau holding
-(twelfth read). ETA ~3.1 h at the window rate → done ~12:0xZ 08-23
-→ sim100 endpoint battery; its verdict mechanically selects the
-rung-3 branch.
-
-**Steering**: none — inbox empty, `read` empty, `history -n 5` all
-own posts, no reactions.
-
-**Done** (this tick): babysit poll (exit 0), probe @2250 second
-new-high read judged (upward run, within-lineage, non-actionable —
-flagged as verdict-session color), disk read (87G flat) +
-checkpoint dir verification (keep-1 state, single optimizer.pt at
-step_002000), RAM read (47G, twelfth), Discord read + history,
-queue validate green (depth-1 stated reason — rung3-exec
-verdict-gated, no CPU items, so `run_work_next` stays unarmed),
-now.md keep-3 + footer rolls (06:46 entry → archive).
-
-**Next**: the step-2500 save lands ~09:45Z, after this session's
-hard kill — the ~10:0x tick verifies it and prunes optim@2000, and
-the prune is LOAD-BEARING (missed → endpoint staging trough ~3G
-ENOSPC). Probes @2500/@2750 readable en route — watch whether the
-upward run extends. Otherwise nothing fires before the ch0fix
-boundary — train done ~12:0xZ 08-23 → battery ~3 GPU-h → rung-2
-verdict banks → `carrier-hunt-rung3-exec` selects and launches the
-branch same session (fit smoke → launch, ONE dataset delta, seed 0;
-11–19 fires neither branch, owner escalation).*
-
 ## Utilization footer
+
+Session 2026-08-23 10:52–10:5xZ (tick; 0 marginal GPU-h — ch0fix
+riding gpu0): **routine poll + short probe hold, healthy — step
+2740/3000, loss 0.2873 → 0.2746@2750 monotone, vram 62.24/71, rate
+15.093 s/step (3.9 steps/min). Held ~3 min to catch probe @2750 =
+**8.70 NEW series high** (…8.63 → 6.01 → 8.70) — band widens to
+~6–8.7, train_mae co-moves → eval-batch composition, within-lineage
+color only. Disk 73G (−4G routine drift, endpoint trough ~31G safe),
+checkpoint dir verified = exact keep-1 state; RAM 47G fifteenth
+read. ETA ~1.0 h → ~12:0xZ 08-23 → sim100 battery → rung3-exec
+branch select; queue depth-1 stated reason (rung3-exec
+verdict-gated), no CPU items → `run_work_next` stays unarmed.**
 
 Session 2026-08-23 10:11–10:1xZ (tick; 0 marginal GPU-h — ch0fix
 riding gpu0): **post-save tick executed — step-2500 save verified
@@ -210,19 +224,6 @@ boundary to attempt the LOAD-BEARING optim@2000 prune (verified
 publish required; fallback ~10:0x tick). ETA ~12:1xZ 08-23; queue
 depth-1 stated reason (rung3-exec verdict-gated), no CPU items →
 `run_work_next` stays unarmed.**
-
-Session 2026-08-23 08:49–08:5xZ (tick; 0 marginal GPU-h — ch0fix
-riding gpu0): **routine poll, healthy — step 2290/3000, loss 0.3074
-monotone, vram 62.24/71, rate 15.58 s/step (util 100% this poll).
-Probe @2250 = 8.63 — SECOND consecutive new high (…6.07 → 7.41 →
-8.63), last four reads an upward run; within-lineage only, flagged
-as verdict-session color. Disk 87G flat, checkpoint dir verified =
-exact keep-1 state; RAM 47G twelfth read. Next save step 2500
-~09:45Z (post this session's kill) → trough ~45G safe; the ~10:0x
-tick's prune of optim@2000 stays LOAD-BEARING (missed → endpoint
-~3G ENOSPC). ETA ~12:0xZ 08-23; queue depth-1 stated reason
-(rung3-exec verdict-gated), no CPU items → `run_work_next` stays
-unarmed.**
 
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
