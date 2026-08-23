@@ -6,6 +6,39 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-22 23:57–00:0xZ (tick) — **routine ch0fix poll:
+healthy — step 260/3000, loss 0.7007 monotone down, vram 62.24/71,
+disk 168G; rate window hit 21.3 s/step but the run mean is 16.55 vs
+the democlean twin's 16.36 (its own windows ranged 14.7–24.5) —
+in-class oscillation, no intervention. ETA widens to ~12:4x–13:5xZ
+08-23.***
+
+**Status**: `fontaine-v2-joint-pdnorm-ch0fix` LIVE and healthy — step
+260/3000, loss 1.91→0.7007 monotone down (flow 0.026), babysit exit 0,
+vram 62.24 stable vs the 71 gate, disk 168G vs the ≥90 line, host RAM
+90G available. **Rate read from the jsonl** (not the single babysit
+window): run-mean 16.55 s/step, last-6-window mean 18.1, max window
+21.3 — all inside the democlean twin's own 14.7–24.5 band; the mild
+last-6 creep is noted, judged in-class. ETA at run-mean ~12:4xZ, at
+last-6 pace ~13:5xZ 08-23 → sim100 endpoint battery vs democlean
+8/100; its verdict mechanically selects the rung-3 branch.
+
+**Steering**: none — inbox empty, `read` surfaced only our own rung-3
+pre-reg post, `history -n 5` all own posts, no reactions.
+
+**Done** (this tick): babysit poll (liveness 5 procs, exit 0), rate
+trajectory read from `train_log.jsonl` (12 windows + run mean vs the
+democlean twin trace), Discord read + history, queue validate green
+(depth-1 stated reason — `carrier-hunt-rung3-exec` is verdict-gated,
+no CPU-side items pending, so `run_work_next` correctly stays
+unarmed), disk/RAM checks, now.md keep-3 + footer keep-2 rolls.
+
+**Next**: nothing fires before the ch0fix boundary — train done
+~12:4x–13:5xZ 08-23 → battery ~3 GPU-h → rung-2 verdict banks →
+`carrier-hunt-rung3-exec` selects and launches the branch same
+session (fit smoke → launch, ONE dataset delta, seed 0; 11–19 fires
+neither branch, owner escalation).*
+
 *Updated 2026-08-22 23:14–00:0xZ (work) — **carrier-hunt rung 3
 pre-registered with BOTH contingent branches frozen ahead of the
 ch0fix verdict — the verdict session now executes instead of
@@ -89,49 +122,15 @@ now.md keep-3 + footer keep-2 rolls.
 Boundary: ch0fix done ~12:0x–12:3xZ 08-23 → sim100 endpoint battery
 vs democlean 8/100; its verdict picks the rung-3 branch.*
 
-*Updated 2026-08-22 22:41–23:1xZ (work) — **squint screen CLOSED
-F_INSTRUMENT with the full close-out landed (results post + charts +
-pre-reg RESULTS append + queue closures), and `pdnorm_ch0fix` first
-poll GREEN with the ch0 ×2.7552 live oracle verified.***
-
-**Status**: `fontaine-v2-joint-pdnorm-ch0fix` LIVE and healthy — step
-30/3000, loss 1.91, 14.978 s/step, vram peak 62.19 vs the 71 gate
-(democlean-class), GPU 100% util at poll (no input starvation), disk
-156G vs the ≥90 line, done ~11:2xZ 08-23 → endpoint sim100 battery vs
-democlean 8/100 (same-seed). **Live oracle GREEN**: per-dataset pdnorm
-row derives from the ch0fix dataset stats — ch0 q99−q01 span 36.9283 →
-101.7447 = ×2.7552 exactly, std ×2.7552, mean 1.482 → 0.0923 per the
-frozen affine; other channels byte-equal; pooled table matches
-democlean's to rounding (ch0fix is 0.69% of the pool, as expected).
-
-**Steering**: none — inbox empty at boot and at both babysit polls,
-history all own posts.
-
-**Done** (this session, `847bae1c`): **squint screen close-out** —
-consolidated [results post](posts/2026-08-22-squint-screen-results.md)
-(chart-led: Gate-1 milestone ladder — reached 20/100, grasped 3–4/100,
-lifted 7–10/100, success 0/100 both tasks, partial competence not a
-transport flatline; adaptation twin curves 4.2→2.5 monotone — the
-probe-decoupling read) + RESULTS appendix on the pre-reg + two new
-charts (`squint_screen_close_charts.py`, recount-asserted vs
-gate1.log, house dark scheme); queue closures:
-`squint-twin-screen-exec` + `squint-gate2-harness` done F_INSTRUMENT
-(harness code stays for any future ladder rung),
-`bijou-resume-flow-state-bug` done (fix `665dadb7` GPU-verified),
-`ch0-affine-exec` → LIVE with the first-poll + live-oracle record;
-refill `carrier-hunt-rung3-prereg` (both contingent branches drafted
-AHEAD of the ch0fix verdict); depth-1 stated reason, validate green;
-stray empty `archive/2026-08-22.md` removed; blog rebuilt + Space
-pushed; Discord verdict post.
-
-**Next**: `queue_cli.py next` → `carrier-hunt-rung3-prereg` (CPU,
-draft during the ch0fix ride — must land before the verdict session).
-Boundary: ch0fix done ~11:1x–11:3xZ 08-23 → sim100 endpoint battery vs
-democlean 8/100; its verdict picks the rung-3 branch. Substitution
-ladder (Reach) stays parked per the results post's implications — a
-future pre-reg session's call, deprioritized against the carrier hunt.*
-
 ## Utilization footer
+
+Session 2026-08-22 23:57–00:0xZ (tick; 0 marginal GPU-h — ch0fix
+riding gpu0): **routine poll, healthy — step 260/3000, loss 0.7007
+monotone down, vram 62.24/71, disk 168G; a 21.3 s/step window read
+against the jsonl run-mean 16.55 vs democlean twin 16.36 (own band
+14.7–24.5) — in-class, no intervention. ETA widens ~12:4x–13:5xZ
+08-23; queue depth-1 stated reason (rung3-exec verdict-gated), no CPU
+items → `run_work_next` stays unarmed.**
 
 Session 2026-08-22 23:14–00:0xZ (work; exploit/pre-reg, 0 marginal
 GPU-h — ch0fix riding gpu0 the whole session): **carrier-hunt rung-3
@@ -151,15 +150,6 @@ cycle mid-step and cleared it against the democlean twin's own trace
 (16.36 s/step mean — ch0fix at 14.9–16.7 windows is the faster twin),
 no intervention. ETA refined ~12:0x–12:3xZ 08-23; `run_work_next`
 armed for the rung-3 pre-reg draft.**
-
-Session 2026-08-22 22:41–23:1xZ (work; exploit/close-out, 0 marginal
-GPU-h — ch0fix riding gpu0 the whole session): **squint qualification
-screen CLOSED F_INSTRUMENT with the full close-out landed (results
-post + 2 charts + pre-reg RESULTS append + 3 queue closures +
-rung-3 contingency refill, `847bae1c`); ch0fix first poll GREEN (step
-30/3000, 14.98 s/step, vram 62.19/71, 100% util) with the ch0
-×2.7552 pdnorm live oracle verified from dataset stats. Next
-boundary: ch0fix done ~11:1x–11:3xZ 08-23.**
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
