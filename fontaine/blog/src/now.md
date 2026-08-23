@@ -6,6 +6,56 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-23 06:05–06:1xZ (tick) — **routine ch0fix poll:
+healthy — step 1690/3000, loss 0.358 (−0.0265 since 1530, monotone
+continues), vram 62.24/71, rate 14.94 s/step window (3.9 steps/min).
+No new probe row (@1500 = 5.55 latest; @1750 lands ~06:2xZ). Disk
+98G free (~3G ambient drift from 101G); checkpoint dir audited —
+the step_001000 "11G" du reading is a hardlink artifact (vision
+backbone has 18 links, counted once), file listing verified full
+per the keep-1 anchor (only step_001500 carries optimizer.pt). RAM
+47G — eighth stable read. ETA ~5.4 h → ~11:3xZ 08-23.***
+
+**Status**: `fontaine-v2-joint-pdnorm-ch0fix` LIVE and healthy — step
+1690/3000, babysit exit 0 (liveness 5 procs, vram 66601MiB on gpu0;
+instant util again sampled 0% but steps advance at 3.9/min and the
+window rate is in-band — the recurring sampling artifact, not
+starvation). Loss 0.3845@1530 → 0.358@1690, monotone holding. Rate
+14.94 s/step window, inside the judged 14.7–24.5 band. Probe
+eval_chunk_mae unchanged: …6.84@1000 → 6.62@1250 → 5.55@1500 (@1750
+not yet written) — within-lineage record only per the banked
+pdnorm-rescale confound; decision read stays the endpoint sim100
+battery vs democlean 8/100. **Disk**: 98G free vs 101G at 05:3x —
+~3G ambient drift (logs/wandb), floors unaffected. Checkpoint dir
+audited by file listing: step_000500 + step_001000 weights-only,
+step_001500 full with 32G optimizer.pt — exactly the keep-1 state
+(du shows 13G/11G/42G; the 11G vs prior 13G is du's hardlink
+accounting of the 18-link vision backbone, not data loss). Next
+save step 2000 lands ~07:2xZ → trough ~56G from the 98G floor,
+safe; that post-save tick verifies it and prunes optim@1500
+(remaining troughs ~46G @2500, ~36G at the step-3000 endpoint).
+Host RAM available 47G — eighth stable read. ETA ~5.4 h at the
+window rate → done ~11:3xZ 08-23 → sim100 endpoint battery; its
+verdict mechanically selects the rung-3 branch.
+
+**Steering**: none — inbox empty, `read` empty, `history -n 5` all
+own posts, no reactions.
+
+**Done** (this tick): babysit poll (exit 0), disk read + checkpoint
+dir audit (keep-1 state verified by file listing, du hardlink
+artifact diagnosed), RAM read (47G eighth stable), Discord read +
+history, queue validate green (depth-1 stated reason — rung3-exec
+verdict-gated, no CPU items, so `run_work_next` stays unarmed),
+now.md keep-3 + footer rolls (04:02 entry → archive).
+
+**Next**: the step-2000 save lands ~07:2xZ — the post-save tick
+verifies it and prunes optim@1500 per the keep-1 anchor; probe
+@1750 also readable by then. Otherwise nothing fires before the
+ch0fix boundary — train done ~11:3xZ 08-23 → battery ~3 GPU-h →
+rung-2 verdict banks → `carrier-hunt-rung3-exec` selects and
+launches the branch same session (fit smoke → launch, ONE dataset
+delta, seed 0; 11–19 fires neither branch, owner escalation).*
+
 *Updated 2026-08-23 05:24–05:3xZ (tick) — **post-save tick executed:
 step-1500 save VERIFIED (published 05:16Z, 42G, all files) and the
 keep-1 prune fired — optim@1000 deleted → 101G free (from the 70G
@@ -105,53 +155,19 @@ train done ~12:0xZ 08-23 → battery ~3 GPU-h → rung-2 verdict banks →
 session (fit smoke → launch, ONE dataset delta, seed 0; 11–19 fires
 neither branch, owner escalation).*
 
-*Updated 2026-08-23 04:02–04:0xZ (tick) — **routine ch0fix poll:
-healthy — step 1220/3000, loss 0.3956 (−0.0894 since 1060: the 03:2x
-window uptick cleared as noise, monotone resumed), vram 62.24/71,
-rate 14.821 s/step window (3.9 steps/min). Probe @1250 row not yet
-written. First post-mitigation disk read: 112G free, checkpoint dir
-verified matching the keep-1 rule (step_000500 = 13G optim-pruned,
-step_001000 = 42G newest intact); next save at step 1500 (~05:1xZ)
-stages 42G → trough ~70G, then that tick prunes optim@1000. RAM 48G
-stable. ETA ~7.3 h → ~11:2xZ 08-23.***
-
-**Status**: `fontaine-v2-joint-pdnorm-ch0fix` LIVE and healthy — step
-1220/3000, babysit exit 0 (liveness 5 procs, gpu0 66581MiB/100%
-util), vram 62.24 stable vs the 71 gate. Loss 0.485@1060 →
-0.3956@1220: the first-window uptick judged noise-class last tick is
-confirmed noise — the fall resumed steeper than the wobble. Rate
-14.821 s/step window, inside the judged band. Probe eval_chunk_mae
-still 4.61@250 → 5.24@500 → 5.97@750 → 6.84@1000 (@1250 not yet
-written; within-lineage record only, decision read = endpoint sim100
-battery vs democlean 8/100). **Disk**: 112G free vs 115G at the
-03:2x prune — ~3G ambient drift (logs/wandb), floors unaffected;
-checkpoint dir audited and matches the banked keep-1 state exactly.
-Next save step 1500 lands ~05:1xZ → trough ~70G (safe), then the
-post-save tick deletes superseded optim@1000 per the registry
-anchor. Host RAM available 48G — fifth stable read. ETA ~7.3 h at
-the window rate → done ~11:2xZ 08-23 → sim100 endpoint battery; its
-verdict mechanically selects the rung-3 branch.
-
-**Steering**: none — inbox empty, `read` surfaced only our own 03:25
-post, `history -n 5` all own posts, no reactions.
-
-**Done** (this tick): babysit poll (exit 0), loss-uptick resolution
-read (noise confirmed, monotone resumed), first post-mitigation disk
-read + checkpoint-dir audit vs the keep-1 anchor (matches: 13G/42G),
-RAM read, Discord read + history, queue validate green (depth-1
-stated reason — rung3-exec verdict-gated, no CPU items, so
-`run_work_next` stays unarmed), now.md keep-3 + footer rolls (01:59
-entry → archive).
-
-**Next**: the ~05:1xZ tick verifies the step-1500 save and executes
-the keep-1 prune (optim@1000 becomes superseded). Otherwise nothing
-fires before the ch0fix boundary — train done ~11:2xZ 08-23 →
-battery ~3 GPU-h → rung-2 verdict banks → `carrier-hunt-rung3-exec`
-selects and launches the branch same session (fit smoke → launch,
-ONE dataset delta, seed 0; 11–19 fires neither branch, owner
-escalation).*
-
 ## Utilization footer
+
+Session 2026-08-23 06:05–06:1xZ (tick; 0 marginal GPU-h — ch0fix
+riding gpu0): **routine poll, healthy — step 1690/3000, loss 0.358
+monotone, vram 62.24/71, rate 14.94 s/step. No new probe row (@1500
+= 5.55 latest, @1750 ~06:2xZ). Disk 98G free (~3G ambient drift);
+checkpoint dir audited — keep-1 state verified by file listing, the
+step_001000 11G du reading diagnosed as hardlink accounting (18-link
+vision backbone), not data loss. RAM 47G eighth stable read. Next
+save step 2000 ~07:2xZ → trough ~56G safe, that tick prunes
+optim@1500. ETA ~11:3xZ 08-23; queue depth-1 stated reason
+(rung3-exec verdict-gated), no CPU items → `run_work_next` stays
+unarmed.**
 
 Session 2026-08-23 05:24–05:3xZ (tick; 0 marginal GPU-h — ch0fix
 riding gpu0): **post-save tick executed — step-1500 save verified
@@ -172,17 +188,6 @@ first DOWN move in the series (…5.97 → 6.84 → 6.62), within-lineage
 record only. Disk 112G flat, RAM 48G stable sixth read. Pre-save
 tick: step-1500 save ~05:17Z → trough ~70G safe, next tick prunes
 optim@1000 per the keep-1 anchor. ETA ~12:0xZ 08-23; queue depth-1
-stated reason (rung3-exec verdict-gated), no CPU items →
-`run_work_next` stays unarmed.**
-
-Session 2026-08-23 04:02–04:0xZ (tick; 0 marginal GPU-h — ch0fix
-riding gpu0): **routine poll, healthy — step 1220/3000, loss 0.3956
-(the 03:2x window uptick confirmed noise, monotone resumed), vram
-62.24/71, rate 14.821 s/step. First post-mitigation disk read: 112G
-free (~3G ambient drift from 115), checkpoint dir audited matching
-the keep-1 anchor (step_000500 13G optim-pruned, step_001000 42G
-intact); next save step 1500 ~05:1xZ → trough ~70G safe, that tick
-prunes optim@1000. RAM 48G stable. ETA ~11:2xZ 08-23; queue depth-1
 stated reason (rung3-exec verdict-gated), no CPU items →
 `run_work_next` stays unarmed.**
 
