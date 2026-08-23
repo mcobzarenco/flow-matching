@@ -6,6 +6,58 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-23 08:08–08:1xZ (tick) — **routine ch0fix poll:
+healthy — step 2140/3000, loss 0.3275 (−0.0081 since 2000, monotone
+continues), vram 62.24/71, rate 16.535 s/step window (3.4
+steps/min). No new probe row (@2000 = 7.41 latest; @2250 lands
+~08:5xZ). Disk 87G flat since the post-save prune; checkpoint dir
+verified — exactly the keep-1 state (only step_002000 carries
+optimizer.pt). RAM back to 47G (the 45G tenth read resolved as
+noise, plateau restored). ETA ~4.0 h → ~12:1xZ 08-23. The step-2500
+save lands ~09:5xZ; its post-save prune stays LOAD-BEARING.***
+
+**Status**: `fontaine-v2-joint-pdnorm-ch0fix` LIVE and healthy — step
+2140/3000, babysit exit 0 (liveness 5 procs, vram 66641MiB on gpu0;
+instant util sampled 0% this poll but steps advance at 3.4/min with
+the window rate in-band — the recurring sampling artifact, not
+starvation). Loss 0.3356@2000 → 0.3275@2140 — monotone fall
+continues. Rate 16.535 s/step window, inside the judged 14.7–24.5
+band. Probe eval_chunk_mae unchanged: …5.55@1500 → 6.07@1750 →
+7.41@2000 (@2250 lands ~08:5xZ) — the @2000 new-high stands as the
+latest read; within-lineage record only per the banked
+pdnorm-rescale confound, decision read stays the endpoint sim100
+battery vs democlean 8/100. **Disk**: 87G free, flat since the
+07:3x prune (ambient drift paused). Checkpoint dir verified by file
+listing: step_000500/1000/1500 weights-only, step_002000 full with
+optimizer.pt — exactly the keep-1 anchor, no staging temp. Next
+save step 2500 lands ~09:5xZ (360 steps at the window rate) →
+trough ~45G from the 87G floor, safe; the post-save tick verifies
+it and prunes optim@2000 — that prune is LOAD-BEARING (missed → the
+step-3000 endpoint staging trough is ~3G, ENOSPC class, aimed at
+the one save the rung needs). Host RAM available 47G — the 07:3x
+45G read resolved as noise, plateau restored (eleventh read). ETA
+~4.0 h at the window rate → done ~12:1xZ 08-23 → sim100 endpoint
+battery; its verdict mechanically selects the rung-3 branch.
+
+**Steering**: none — inbox empty, `read` empty, `history -n 5` all
+own posts, no reactions.
+
+**Done** (this tick): babysit poll (exit 0), disk read (87G flat) +
+checkpoint dir verification (keep-1 state, single optimizer.pt at
+step_002000), RAM read (47G, plateau restored), Discord read +
+history, queue validate green (depth-1 stated reason — rung3-exec
+verdict-gated, no CPU items, so `run_work_next` stays unarmed),
+now.md keep-3 + footer rolls (06:05 entry → archive).
+
+**Next**: the step-2500 save lands ~09:5xZ — that post-save tick
+verifies it and prunes optim@2000, and the prune is LOAD-BEARING
+(missed → endpoint staging trough ~3G ENOSPC). Probes @2250/@2500
+readable en route. Otherwise nothing fires before the ch0fix
+boundary — train done ~12:1xZ 08-23 → battery ~3 GPU-h → rung-2
+verdict banks → `carrier-hunt-rung3-exec` selects and launches the
+branch same session (fit smoke → launch, ONE dataset delta, seed 0;
+11–19 fires neither branch, owner escalation).*
+
 *Updated 2026-08-23 07:27–07:4xZ (tick) — **post-save tick executed:
 step-2000 save VERIFIED (published 07:29:18Z, 42G complete — staging
 watched live: 78G mid-stage, 56G trough = the projection exactly) and
@@ -120,57 +172,19 @@ selects and launches the branch same session (fit smoke → launch,
 ONE dataset delta, seed 0; 11–19 fires neither branch, owner
 escalation).*
 
-*Updated 2026-08-23 06:05–06:1xZ (tick) — **routine ch0fix poll:
-healthy — step 1690/3000, loss 0.358 (−0.0265 since 1530, monotone
-continues), vram 62.24/71, rate 14.94 s/step window (3.9 steps/min).
-No new probe row (@1500 = 5.55 latest; @1750 lands ~06:2xZ). Disk
-98G free (~3G ambient drift from 101G); checkpoint dir audited —
-the step_001000 "11G" du reading is a hardlink artifact (vision
-backbone has 18 links, counted once), file listing verified full
-per the keep-1 anchor (only step_001500 carries optimizer.pt). RAM
-47G — eighth stable read. ETA ~5.4 h → ~11:3xZ 08-23.***
-
-**Status**: `fontaine-v2-joint-pdnorm-ch0fix` LIVE and healthy — step
-1690/3000, babysit exit 0 (liveness 5 procs, vram 66601MiB on gpu0;
-instant util again sampled 0% but steps advance at 3.9/min and the
-window rate is in-band — the recurring sampling artifact, not
-starvation). Loss 0.3845@1530 → 0.358@1690, monotone holding. Rate
-14.94 s/step window, inside the judged 14.7–24.5 band. Probe
-eval_chunk_mae unchanged: …6.84@1000 → 6.62@1250 → 5.55@1500 (@1750
-not yet written) — within-lineage record only per the banked
-pdnorm-rescale confound; decision read stays the endpoint sim100
-battery vs democlean 8/100. **Disk**: 98G free vs 101G at 05:3x —
-~3G ambient drift (logs/wandb), floors unaffected. Checkpoint dir
-audited by file listing: step_000500 + step_001000 weights-only,
-step_001500 full with 32G optimizer.pt — exactly the keep-1 state
-(du shows 13G/11G/42G; the 11G vs prior 13G is du's hardlink
-accounting of the 18-link vision backbone, not data loss). Next
-save step 2000 lands ~07:2xZ → trough ~56G from the 98G floor,
-safe; that post-save tick verifies it and prunes optim@1500
-(remaining troughs ~46G @2500, ~36G at the step-3000 endpoint).
-Host RAM available 47G — eighth stable read. ETA ~5.4 h at the
-window rate → done ~11:3xZ 08-23 → sim100 endpoint battery; its
-verdict mechanically selects the rung-3 branch.
-
-**Steering**: none — inbox empty, `read` empty, `history -n 5` all
-own posts, no reactions.
-
-**Done** (this tick): babysit poll (exit 0), disk read + checkpoint
-dir audit (keep-1 state verified by file listing, du hardlink
-artifact diagnosed), RAM read (47G eighth stable), Discord read +
-history, queue validate green (depth-1 stated reason — rung3-exec
-verdict-gated, no CPU items, so `run_work_next` stays unarmed),
-now.md keep-3 + footer rolls (04:02 entry → archive).
-
-**Next**: the step-2000 save lands ~07:2xZ — the post-save tick
-verifies it and prunes optim@1500 per the keep-1 anchor; probe
-@1750 also readable by then. Otherwise nothing fires before the
-ch0fix boundary — train done ~11:3xZ 08-23 → battery ~3 GPU-h →
-rung-2 verdict banks → `carrier-hunt-rung3-exec` selects and
-launches the branch same session (fit smoke → launch, ONE dataset
-delta, seed 0; 11–19 fires neither branch, owner escalation).*
-
 ## Utilization footer
+
+Session 2026-08-23 08:08–08:1xZ (tick; 0 marginal GPU-h — ch0fix
+riding gpu0): **routine poll, healthy — step 2140/3000, loss 0.3275
+monotone, vram 62.24/71, rate 16.535 s/step. No new probe row
+(@2000 = 7.41 latest, @2250 ~08:5xZ). Disk 87G flat since the
+post-save prune; checkpoint dir verified = exact keep-1 state
+(single optimizer.pt at step_002000). RAM 47G — plateau restored
+(the 45G read was noise). Next save step 2500 ~09:5xZ → trough ~45G
+safe; the post-save prune of optim@2000 stays LOAD-BEARING (missed
+→ endpoint ~3G ENOSPC). ETA ~12:1xZ 08-23; queue depth-1 stated
+reason (rung3-exec verdict-gated), no CPU items → `run_work_next`
+stays unarmed.**
 
 Session 2026-08-23 07:27–07:4xZ (tick; 0 marginal GPU-h — ch0fix
 riding gpu0): **post-save tick executed — step-2000 save verified
@@ -195,18 +209,6 @@ read. Next save step 2000 ~07:24Z → trough ~56G safe, the post-save
 tick prunes optim@1500. ETA ~11:3xZ 08-23; queue depth-1 stated
 reason (rung3-exec verdict-gated), no CPU items → `run_work_next`
 stays unarmed.**
-
-Session 2026-08-23 06:05–06:1xZ (tick; 0 marginal GPU-h — ch0fix
-riding gpu0): **routine poll, healthy — step 1690/3000, loss 0.358
-monotone, vram 62.24/71, rate 14.94 s/step. No new probe row (@1500
-= 5.55 latest, @1750 ~06:2xZ). Disk 98G free (~3G ambient drift);
-checkpoint dir audited — keep-1 state verified by file listing, the
-step_001000 11G du reading diagnosed as hardlink accounting (18-link
-vision backbone), not data loss. RAM 47G eighth stable read. Next
-save step 2000 ~07:2xZ → trough ~56G safe, that tick prunes
-optim@1500. ETA ~11:3xZ 08-23; queue depth-1 stated reason
-(rung3-exec verdict-gated), no CPU items → `run_work_next` stays
-unarmed.**
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
