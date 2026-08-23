@@ -6,6 +6,44 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-23 01:59–02:0xZ (tick) — **routine ch0fix poll:
+healthy — step 750/3000 (quarter mark), loss 0.4882 monotone down,
+vram 62.24/71, rate 14.843 s/step window (4.1 steps/min since last
+sample). Disk 126G free — no new save since step_000500, matches the
+banked trough projection exactly. RAM available 48G (stable vs 49
+last tick — trend-watch holds, no drift). ETA ~11:2x–12:4xZ 08-23
+unchanged.***
+
+**Status**: `fontaine-v2-joint-pdnorm-ch0fix` LIVE and healthy — step
+750/3000, loss 1.91→0.4882 monotone down (−0.0366 since step 580),
+babysit exit 0 (liveness 5 procs, gpu0 66581MiB/52% util at poll
+instant), vram 62.24 stable vs the 71 gate. Probe eval_chunk_mae
+still 4.61@250 → 5.24@500 (the @750 row not yet written at poll
+time; within-lineage record only per the banked pdnorm-rescale
+confound). Disk 126G free vs the ≥90 anchor — flat since the
+step_000500 save, next save at step 1000 (~1 h) stages ~44G then
+prunes; the 01:18 trough projection (≈82→34G, all safe) governs, no
+re-alarm. Host RAM available 48G — stable, buff/cache absorbing.
+ETA: ~9.3 h at the window rate → done ~11:2x–12:4xZ 08-23 → sim100
+endpoint battery vs democlean 8/100; its verdict mechanically
+selects the rung-3 branch.
+
+**Steering**: none — inbox empty, `read` empty, `history -n 5` all
+own posts, no reactions.
+
+**Done** (this tick): babysit poll (exit 0), disk read vs the banked
+trough projection (126G flat — matches, no re-alarm), RAM
+trend-watch read (48G stable), Discord read + history, queue
+validate green (depth-1 stated reason — rung3-exec verdict-gated, no
+CPU items, so `run_work_next` stays unarmed), now.md keep-3 + footer
+rolls.
+
+**Next**: nothing fires before the ch0fix boundary — train done
+~11:2x–12:4xZ 08-23 → battery ~3 GPU-h → rung-2 verdict banks →
+`carrier-hunt-rung3-exec` selects and launches the branch same
+session (fit smoke → launch, ONE dataset delta, seed 0; 11–19 fires
+neither branch, owner escalation).*
+
 *Updated 2026-08-23 01:18–01:2xZ (tick) — **routine ch0fix poll:
 healthy — step 580/3000, loss 0.5248 monotone down, vram 62.24/71,
 rate 14.85 s/step window (3.9 steps/min since last sample). Disk
@@ -85,40 +123,16 @@ footer rolls.
 session (fit smoke → launch, ONE dataset delta, seed 0; 11–19 fires
 neither branch, owner escalation).*
 
-*Updated 2026-08-22 23:57–00:0xZ (tick) — **routine ch0fix poll:
-healthy — step 260/3000, loss 0.7007 monotone down, vram 62.24/71,
-disk 168G; rate window hit 21.3 s/step but the run mean is 16.55 vs
-the democlean twin's 16.36 (its own windows ranged 14.7–24.5) —
-in-class oscillation, no intervention. ETA widens to ~12:4x–13:5xZ
-08-23.***
-
-**Status**: `fontaine-v2-joint-pdnorm-ch0fix` LIVE and healthy — step
-260/3000, loss 1.91→0.7007 monotone down (flow 0.026), babysit exit 0,
-vram 62.24 stable vs the 71 gate, disk 168G vs the ≥90 line, host RAM
-90G available. **Rate read from the jsonl** (not the single babysit
-window): run-mean 16.55 s/step, last-6-window mean 18.1, max window
-21.3 — all inside the democlean twin's own 14.7–24.5 band; the mild
-last-6 creep is noted, judged in-class. ETA at run-mean ~12:4xZ, at
-last-6 pace ~13:5xZ 08-23 → sim100 endpoint battery vs democlean
-8/100; its verdict mechanically selects the rung-3 branch.
-
-**Steering**: none — inbox empty, `read` surfaced only our own rung-3
-pre-reg post, `history -n 5` all own posts, no reactions.
-
-**Done** (this tick): babysit poll (liveness 5 procs, exit 0), rate
-trajectory read from `train_log.jsonl` (12 windows + run mean vs the
-democlean twin trace), Discord read + history, queue validate green
-(depth-1 stated reason — `carrier-hunt-rung3-exec` is verdict-gated,
-no CPU-side items pending, so `run_work_next` correctly stays
-unarmed), disk/RAM checks, now.md keep-3 + footer keep-2 rolls.
-
-**Next**: nothing fires before the ch0fix boundary — train done
-~12:4x–13:5xZ 08-23 → battery ~3 GPU-h → rung-2 verdict banks →
-`carrier-hunt-rung3-exec` selects and launches the branch same
-session (fit smoke → launch, ONE dataset delta, seed 0; 11–19 fires
-neither branch, owner escalation).*
-
 ## Utilization footer
+
+Session 2026-08-23 01:59–02:0xZ (tick; 0 marginal GPU-h — ch0fix
+riding gpu0): **routine poll, healthy — step 750/3000 (quarter mark),
+loss 0.4882 monotone down, vram 62.24/71, rate 14.843 s/step. Disk
+126G flat since the step_000500 save — matches the banked trough
+projection, no re-alarm; RAM available 48G stable (trend-watch
+holds). ETA ~11:2x–12:4xZ 08-23; queue depth-1 stated reason
+(rung3-exec verdict-gated), no CPU items → `run_work_next` stays
+unarmed.**
 
 Session 2026-08-23 01:18–01:2xZ (tick; 0 marginal GPU-h — ch0fix
 riding gpu0): **routine poll, healthy — step 580/3000, loss 0.5248
@@ -138,14 +152,6 @@ window cleared as transient (last-6 windows all ~15.0, run-mean 16.04
 falling). ETA tightens ~11:2x–12:4xZ 08-23; queue depth-1 stated
 reason (rung3-exec verdict-gated), no CPU items → `run_work_next`
 stays unarmed.**
-
-Session 2026-08-22 23:57–00:0xZ (tick; 0 marginal GPU-h — ch0fix
-riding gpu0): **routine poll, healthy — step 260/3000, loss 0.7007
-monotone down, vram 62.24/71, disk 168G; a 21.3 s/step window read
-against the jsonl run-mean 16.55 vs democlean twin 16.36 (own band
-14.7–24.5) — in-class, no intervention. ETA widens ~12:4x–13:5xZ
-08-23; queue depth-1 stated reason (rung3-exec verdict-gated), no CPU
-items → `run_work_next` stays unarmed.**
 
 Trailing-7-day GPU-hours on experiments / total (window 2026-08-12
 00:00Z → 2026-08-19 08:45Z; rolled 08-19 from the 08-17 rebase +
