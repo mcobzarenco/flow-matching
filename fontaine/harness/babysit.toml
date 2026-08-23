@@ -87,8 +87,8 @@ anchors = [
     "seed 0 same-seed comparability vs democlean 8/100 banked; NO --resume on this lineage from pre-fix checkpoints (resume fix 665dadb7 is verified but the frozen recipe predates it — recover by full retrain per the standing incident rule)",
     "vram: democlean-class (same family/batch); a NEW peak above ~70 = investigate",
     "probe eval_chunk_mae is within-lineage only; the decision read is the endpoint sim100 battery vs democlean 8/100, not the probe",
-    "DISK: >=90G must stay free through saves (156G at launch; saves stage ~44G — the leg B ENOSPC class)",
-    "owner policy-server guard ran at launch (GPU had 0 compute apps); prune-superseded-optim handles within-run saves",
+    "DISK (corrected 03:3xZ 08-23): prune_superseded_optimizers is keep=2 and runs strictly AFTER publish — the 01:18Z trough projection (82->34G) wrongly assumed reclaim-before-staging; uncorrected troughs from the measured 84G floor were ~40/28/16/4G with ~4G at the step-3000 ENDPOINT staging (leg B ENOSPC class, would hit the one save that matters). MITIGATION ACTIVE: optimizer.pt is dead weight on this lineage (NO --resume anchor above — recovery is full retrain), so each post-save tick deletes the SUPERSEDED optimizer.pt manually (keep-1; newest save never touched). optim@500 deleted 03:2xZ -> 115G free; projected troughs ~72/60/48/36G, floors 72->92 after each tick prune — safe. If a tick is missed a save still clears with >=28G; do the prune at the next tick",
+    "owner policy-server guard ran at launch (GPU had 0 compute apps)",
 ]
 [[run.gates]]
 kind = "vram_max_gib"
