@@ -149,7 +149,7 @@ def materialize_dataset(
     kept: list[int],
     data: pa.Table,
     episodes: pa.Table,
-) -> dict[str, int]:
+) -> dict[int, int]:
     """Write one derived dataset; returns {source_episode: length}."""
     source_repo_id = repo_id_of(source_dir)
     new_index_of = {ep: i for i, ep in enumerate(kept)}
